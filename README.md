@@ -29,7 +29,7 @@ pip install pymongo rpy2  # may need sudo
 You'll need to get a MongoDB server listening on localhost by running `mongod`.
 
 In R, you'll need to install some stuff too, currently just the `ape` package:
-```r
+```
 install.packages("ape")
 ```
 
