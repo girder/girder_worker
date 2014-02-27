@@ -1,0 +1,7 @@
+{
+    "name": "Newick to vtkTree",
+    "inputs": [{"name": "input", "type": "tree", "format": "newick"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "vtktree"}],
+    "script_uri": "file://newick_to_vtktree.py",
+    "mode": "python"
+}

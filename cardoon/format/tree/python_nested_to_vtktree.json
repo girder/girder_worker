@@ -1,0 +1,7 @@
+{
+    "name": "Python Nested to vtkTree",
+    "inputs": [{"name": "input", "type": "tree", "format": "python.nested"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "vtktree"}],
+    "script_uri": "file://python_nested_to_vtktree.py",
+    "mode": "python"
+}

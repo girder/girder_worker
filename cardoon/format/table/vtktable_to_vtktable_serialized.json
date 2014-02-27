@@ -1,0 +1,7 @@
+{
+    "name": "vtkTable to vtkTable Serialized",
+    "inputs": [{"name": "input", "type": "table", "format": "vtktable"}],
+    "outputs": [{"name": "output", "type": "table", "format": "vtktable.serialized"}],
+    "script_uri": "file://vtktable_to_vtktable_serialized.py",
+    "mode": "python"
+}

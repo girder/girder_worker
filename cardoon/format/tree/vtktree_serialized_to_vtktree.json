@@ -1,0 +1,7 @@
+{
+    "name": "vtkTree Serialized to vtkTree",
+    "inputs": [{"name": "input", "type": "tree", "format": "vtktree.serialized"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "vtktree"}],
+    "script_uri": "file://vtktree_serialized_to_vtktree.py",
+    "mode": "python"
+}

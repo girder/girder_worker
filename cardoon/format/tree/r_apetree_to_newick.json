@@ -1,0 +1,7 @@
+{
+    "name": "R Ape Tree to Newick",
+    "inputs": [{"name": "input", "type": "tree", "format": "r.apetree"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "newick"}],
+    "script_uri": "file://r_apetree_to_newick.R",
+    "mode": "r"
+}
