@@ -3,10 +3,10 @@ Cardoon
 
 A flexible, simple script execution engine.
 
-It has scripting support for Python and R, automatic type conversion, and URI serialization.
+Cardoon has scripting support for Python and R, automatic type conversion, and URI serialization.
 
 Get Started
-===========
+-----------
 
 Get it:
 ```
@@ -48,12 +48,15 @@ export PYTHONPATH=`pwd`/Wrapping/Python:`pwd`/lib
 python -c "import vtk"  # should work without an error
 ````
 
-Want to run things remotely? On the server:
+Want to run things remotely? On the client and server install celery:
+```
+pip install celery
+```
+Then fire up the celery worker:
 ```
 python -m cardoon
 ```
-
-On the client:
+On the client, run a script akin to the following example:
 ```
 python clients/client.py
 ```
