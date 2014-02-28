@@ -74,6 +74,13 @@ def import_converters(search_paths):
             input_format[analysis["outputs"][0]["format"]] = [analysis]
     os.chdir(prevdir)
     
+    # print "digraph g {"
+    # for analysis_type, analysis_type_values in converters.iteritems():
+    #     for input_format, input_format_values in analysis_type_values.iteritems():
+    #         for output_format in input_format_values:
+    #             print '"' + input_format + '" -> "' + output_format + '"'
+    # print "}"
+
     max_steps = 3
     for i in range(max_steps):
         to_add = []
