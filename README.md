@@ -33,19 +33,20 @@ In R, you'll need to install some stuff too, currently just the `ape` package:
 install.packages("ape")
 ```
 
-Some things depend on VTK Python bindings. You'll likely need to build it from scratch (takes ~30 minutes).
+Some things depend on VTK Python bindings. Cardoon uses some features from
+cutting-edge VTK,
+so you'll likely need to build it from scratch (takes ~30 minutes).
 First get [CMake](http://www.cmake.org/), then do the following:
 ```
-wget http://www.vtk.org/files/release/6.1/VTK-6.1.0.tar.gz
-tar xzvf VTK-6.1.0.tar.gz
-cd VTK-6.1.0
+git clone git://vtk.org/VTK.git
+cd VTK
 mkdir build
 cd build
-cmake .. -DVTK_WRAP_PYTHON:BOOL=ON
+cmake .. -DVTK_WRAP_PYTHON:BOOL=ON -DBUILD_TESTING:BOOL=OFF
 make
 export PYTHONPATH=`pwd`/Wrapping/Python:`pwd`/lib
 python -c "import vtk"  # should work without an error
-```
+````
 
 Want to run things remotely? On the server:
 ```
