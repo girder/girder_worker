@@ -1,0 +1,7 @@
+{
+    "name": "Nexus to R Ape Tree",
+    "inputs": [{"name": "input", "type": "tree", "format": "nexus"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "r.apetree"}],
+    "script_uri": "file://nexus_to_r_apetree.R",
+    "mode": "r"
+}

@@ -24,6 +24,27 @@ class TestTree(unittest.TestCase):
             "mode": "r"
         }
         self.newick = "((ahli:0,allogus:1):2,rubribarbus:3);"
+        self.nexus = """#NEXUS
+
+
+BEGIN TAXA;
+    DIMENSIONS NTAX = 4;
+    TAXLABELS
+        A
+        B
+        C
+        D
+    ;
+END;
+BEGIN TREES;
+    TRANSLATE
+        1   A,
+        2   B,
+        3   C,
+        4   D
+    ;
+    TREE * UNTITLED = [&R] ((1:1,2:1):1,(3:1,4:1):1);
+END;"""
 
     def test_newick(self):
         outputs = cardoon.run(self.analysis,
@@ -56,3 +77,16 @@ class TestTree(unittest.TestCase):
         )
         self.assertEqual(outputs["b"]["format"], "newick")
         self.assertEqual(outputs["b"]["data"], self.newick)
+
+        outputs = cardoon.run(self.analysis_r,
+            inputs={"a": {"format": "nexus", "data": self.nexus}},
+            outputs={"b": {"format": "nexus"}}
+        )
+        self.assertEqual(outputs["b"]["format"], "nexus")
+
+        # Ignore spaces vs. tabs, and skip timestamp comment on line 2
+        out = "\n".join(outputs["b"]["data"].splitlines()[2:])
+        out = " ".join(out.split())
+        expected = "\n".join(self.nexus.splitlines()[2:])
+        expected = " ".join(expected.split())
+        self.assertEqual(out, expected)
