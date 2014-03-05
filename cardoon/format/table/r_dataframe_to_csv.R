@@ -1,0 +1,1 @@
+output = paste(capture.output(write.csv(input, row.names=FALSE)), collapse="\n")

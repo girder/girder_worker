@@ -1,0 +1,1 @@
+output<-read.csv(text=input)

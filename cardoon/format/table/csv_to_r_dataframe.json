@@ -1,0 +1,7 @@
+{
+    "name": "CSV to R Dataframe",
+    "inputs": [{"name": "input", "type": "table", "format": "csv"}],
+    "outputs": [{"name": "output", "type": "table", "format": "r.dataframe"}],
+    "script_uri": "file://csv_to_r_dataframe.R",
+    "mode": "r"
+}

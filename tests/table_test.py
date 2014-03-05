@@ -13,6 +13,13 @@ class TestTable(unittest.TestCase):
             "script": "c = a + b",
             "mode": "python"
         }
+        self.analysis_r = {
+            "name": "copy_table",
+            "inputs": [{"name": "a", "type": "table", "format": "r.dataframe"}],
+            "outputs": [{"name": "b", "type": "table", "format": "r.dataframe"}],
+            "script": "b <- a",
+            "mode": "r"
+        }
         import pymongo, bson
         self.db = pymongo.MongoClient("mongodb://localhost")["test"]
         self.db["a"].drop()
@@ -125,6 +132,18 @@ class TestTable(unittest.TestCase):
             })
         self.assertEqual(outputs["c"]["format"], "python.rows")
         self.assertEqual(outputs["c"]["data"], [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}])
+
+    def test_r_dataframe(self):
+        outputs = cardoon.run(self.analysis_r,
+            inputs={
+                "a": {"format": "python.rows", "data": [{"aa": 1, "bb": 2}]}
+            },
+            outputs={
+                "b": {"format": "python.rows"}
+            })
+        self.assertEqual(outputs["b"]["format"], "python.rows")
+        self.assertEqual(outputs["b"]["data"], [{"aa": 1, "bb": 2}])
+
 
 if __name__ == '__main__':
     unittest.main()
