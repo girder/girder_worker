@@ -10,6 +10,18 @@ import urllib2
 import cardoon.format
 import cardoon.uri
 
+def load(analysis_file):
+    with open(analysis_file) as f:
+        analysis = json.load(f)
+
+    if not "script" in analysis:
+        prevdir = os.getcwd()
+        os.chdir(os.path.dirname(analysis_file))
+        analysis["script"] = cardoon.uri.get_uri(analysis["script_uri"])
+        os.chdir(prevdir)
+
+    return analysis
+
 def run(analysis, inputs, outputs=None, auto_convert=True):
     analysis_inputs = {d["name"]: d for d in analysis["inputs"]}
     analysis_outputs = {d["name"]: d for d in analysis["outputs"]}
@@ -72,6 +84,9 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
             data = d["script_data"]
         else:
             raise Exception("Expected exact format match but '" + d["format"] + "' != '" + analysis_output["format"] + "'.")
+
+        del d["script_data"]
+
         if "uri" in d:
             cardoon.uri.put_uri(data, d["uri"])
         else:

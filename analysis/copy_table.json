@@ -1,0 +1,7 @@
+{
+    "name": "Copy Table",
+    "inputs": [{"name": "a", "type": "table", "format": "python.rows"}],
+    "outputs": [{"name": "b", "type": "table", "format": "python.rows"}],
+    "script": "b = a",
+    "mode": "python"
+}
