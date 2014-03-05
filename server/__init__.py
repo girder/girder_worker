@@ -1,14 +1,79 @@
+import celery
+import cherrypy
+import json
+from celery.result import AsyncResult
 from girder import events
+from StringIO import StringIO
+from girder.constants import AccessType
+
+
+celeryapp = celery.Celery('cardoon',
+    backend='mongodb://localhost/cardoon',
+    broker='mongodb://localhost/cardoon')
 
 def load(info):
     def cardoonItemGet(event):
         path = event.info['pathParams']
+        if len(path) >= 4 and path[1] == 'cardoon':
+            itemId = path[0]
+            jobId = path[2]
+            operation = path[3]
+            job = AsyncResult(jobId, backend=celeryapp.backend)
+            if operation == 'status':
+                response = {'status': job.state}
+                if job.state == celery.states.FAILURE:
+                    response['message'] = str(job.result)
+                elif job.state == 'PROGRESS':
+                    response['meta'] = str(job.result)
+                event.addResponse(response)
+                event.stopPropagation()
+                event.preventDefault()
+            elif operation == 'result':
+                response = {'result': job.result}
+                event.addResponse(response)
+                event.stopPropagation()
+                event.preventDefault()
+
+    def cardoonItemPost(event):
+        path = event.info['pathParams']
         if len(path) >= 2 and path[1] == 'cardoon':
-            # item = info['apiRoot'].item
-            event.addResponse("Haha you've been cardoon-ed!")
+            try:
+                params = json.load(cherrypy.request.body)
+                itemId = path[0]
+                itemApi = info['apiRoot'].item
+                user = itemApi.getCurrentUser()
+
+                item = itemApi.getObjectById(itemApi.model('item'), id=itemId,
+                    checkAccess=True, user=user,
+                    level=AccessType.READ)  # Access Check
+                files = [file for file in itemApi.model('item').childFiles(item=item)]
+
+                if len(files) > 1:
+                    raise Exception('Expected one file for running an analysis')
+
+                stream = itemApi.model('file').download(files[0], headers=False)()
+                io = StringIO()
+                for chunk in stream:
+                    io.write(chunk)
+                analysis = json.loads(io.getvalue())
+                asyncResult = celeryapp.send_task('cardoon.run', [analysis], params)
+                event.addResponse({'id': asyncResult.task_id})
+                event.stopPropagation()
+                event.preventDefault()
+
+            except:
+                import traceback, sys
+                traceback.print_exc(file=sys.stdout)
+
+    def cardoonItemDelete(event):
+        if len(path) >= 3 and path[1] == 'cardoon':
+            jobId = path[2]
+            task = AsyncResult(jobId, backend=celeryapp.backend)
+            task.revoke(celeryapp.broker_connection(), terminate=True)
+            event.addResponse({'status': job.state})
             event.stopPropagation()
             event.preventDefault()
 
-    name = 'rest.item.get.before'
-    handlerName = 'cardoon'
-    events.bind(name, handlerName, cardoonItemGet)
+    events.bind('rest.item.get.before', 'cardoon.get', cardoonItemGet)
+    events.bind('rest.item.post.before', 'cardoon.post', cardoonItemPost)
+    events.bind('rest.item.delete.before', 'cardoon.delete', cardoonItemDelete)
