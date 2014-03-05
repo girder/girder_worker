@@ -95,7 +95,11 @@ def import_converters(search_paths):
 
 def import_default_converters():
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    import_converters([os.path.join(cur_path, "table"), os.path.join(cur_path, "tree")])
+    import_converters([
+        os.path.join(cur_path, "table"),
+        os.path.join(cur_path, "tree"),
+        os.path.join(cur_path, "string")
+        ])
 
 def convert(data, input_type, input_format, output_format):
     import cardoon
