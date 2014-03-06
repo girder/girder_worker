@@ -1,0 +1,7 @@
+{
+    "name": "Rows to CSV",
+    "inputs": [{"name": "input", "type": "table", "format": "rows"}],
+    "outputs": [{"name": "output", "type": "table", "format": "csv"}],
+    "script_uri": "file://rows_to_csv.py",
+    "mode": "python"
+}

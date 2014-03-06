@@ -8,8 +8,8 @@ class TestTable(unittest.TestCase):
     def setUp(self):
         self.analysis = {
             "name": "append_tables",
-            "inputs": [{"name": "a", "type": "table", "format": "python.rows"}, {"name": "b", "type": "table", "format": "python.rows"}],
-            "outputs": [{"name": "c", "type": "table", "format": "python.rows"}],
+            "inputs": [{"name": "a", "type": "table", "format": "rows"}, {"name": "b", "type": "table", "format": "rows"}],
+            "outputs": [{"name": "c", "type": "table", "format": "rows"}],
             "script": "c = a + b",
             "mode": "python"
         }
@@ -107,41 +107,41 @@ class TestTable(unittest.TestCase):
                 "b": {"format": "bson.rows", "uri": "mongodb://localhost/test/b"}
             },
             outputs={
-                "c": {"format": "python.rows"}
+                "c": {"format": "rows"}
             })
-        self.assertEqual(outputs["c"]["format"], "python.rows")
+        self.assertEqual(outputs["c"]["format"], "rows")
         self.assertEqual(outputs["c"]["data"], [self.aobj, self.bobj])
 
     def test_chaining(self):
         outputs = cardoon.run(self.analysis,
             inputs={
-                "a": {"format": "python.rows", "data": [{"a": 1, "b": 2}]},
-                "b": {"format": "python.rows", "data": [{"a": 3, "b": 4}]}
+                "a": {"format": "rows", "data": [{"a": 1, "b": 2}]},
+                "b": {"format": "rows", "data": [{"a": 3, "b": 4}]}
             },
             outputs={
-                "c": {"format": "python.rows"}
+                "c": {"format": "rows"}
             })
 
         outputs = cardoon.run(self.analysis,
             inputs={
                 "a": outputs["c"],
-                "b": {"format": "python.rows", "data": [{"a": 5, "b": 6}]}
+                "b": {"format": "rows", "data": [{"a": 5, "b": 6}]}
             },
             outputs={
-                "c": {"format": "python.rows"}
+                "c": {"format": "rows"}
             })
-        self.assertEqual(outputs["c"]["format"], "python.rows")
+        self.assertEqual(outputs["c"]["format"], "rows")
         self.assertEqual(outputs["c"]["data"], [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}])
 
     def test_r_dataframe(self):
         outputs = cardoon.run(self.analysis_r,
             inputs={
-                "a": {"format": "python.rows", "data": [{"aa": 1, "bb": 2}]}
+                "a": {"format": "rows", "data": [{"aa": 1, "bb": 2}]}
             },
             outputs={
-                "b": {"format": "python.rows"}
+                "b": {"format": "rows"}
             })
-        self.assertEqual(outputs["b"]["format"], "python.rows")
+        self.assertEqual(outputs["b"]["format"], "rows")
         self.assertEqual(outputs["b"]["data"], [{"aa": 1, "bb": 2}])
 
 
@@ -152,8 +152,8 @@ def test():
 
     tree_copy = {
         "name": "tree_copy",
-        "inputs": [{"name": "a", "type": "tree", "format": "python.nested"}],
-        "outputs": [{"name": "b", "type": "tree", "format": "python.nested"}],
+        "inputs": [{"name": "a", "type": "tree", "format": "nested"}],
+        "outputs": [{"name": "b", "type": "tree", "format": "nested"}],
         "script": "b = a"
     }
 

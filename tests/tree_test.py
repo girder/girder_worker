@@ -6,8 +6,8 @@ class TestTree(unittest.TestCase):
     def setUp(self):
         self.analysis = {
             "name": "tree_copy",
-            "inputs": [{"name": "a", "type": "tree", "format": "python.nested"}],
-            "outputs": [{"name": "b", "type": "tree", "format": "python.nested"}],
+            "inputs": [{"name": "a", "type": "tree", "format": "nested"}],
+            "outputs": [{"name": "b", "type": "tree", "format": "nested"}],
             "script": "b = a"
         }
         self.analysis_vtk = {

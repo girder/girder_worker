@@ -1,7 +1,0 @@
-{
-    "name": "Python Rows to BSON Rows",
-    "inputs": [{"name": "input", "type": "table", "format": "python.rows"}],
-    "outputs": [{"name": "output", "type": "table", "format": "bson.rows"}],
-    "script_uri": "file://python_rows_to_bson_rows.py",
-    "mode": "python"
-}

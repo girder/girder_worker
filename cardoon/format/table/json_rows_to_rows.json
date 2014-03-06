@@ -1,0 +1,7 @@
+{
+    "name": "JSON Rows to Rows",
+    "inputs": [{"name": "input", "type": "table", "format": "json.rows"}],
+    "outputs": [{"name": "output", "type": "table", "format": "rows"}],
+    "script_uri": "file://json_rows_to_rows.py",
+    "mode": "python"
+}

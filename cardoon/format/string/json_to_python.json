@@ -1,7 +1,0 @@
-{
-    "name": "JSON to Python",
-    "inputs": [{"name": "input", "type": "string", "format": "json"}],
-    "outputs": [{"name": "output", "type": "string", "format": "python"}],
-    "script_uri": "file://json_to_python.py",
-    "mode": "python"
-}
