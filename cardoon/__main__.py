@@ -11,4 +11,8 @@ if __name__ == "__main__":
     def run(*pargs, **kwargs):
         return cardoon.run(*pargs, **kwargs)
 
+    @app.task
+    def convert(*pargs, **kwargs):
+        return cardoon.convert(*pargs, **kwargs)
+
     app.worker_main()
