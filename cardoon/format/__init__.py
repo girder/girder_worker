@@ -101,15 +101,4 @@ def import_default_converters():
         os.path.join(cur_path, "string")
         ])
 
-def convert(data, input_type, input_format, output_format):
-    import cardoon
-    if input_format == output_format:
-        return data
-    converter_path = converters[input_type][input_format][output_format]
-    data_descriptor = {"data": data, "format": input_format}
-    for c in converter_path:
-        output = cardoon.run(c, {"input": data_descriptor}, auto_convert=False)
-        data_descriptor = output["output"]
-    return data_descriptor["data"]
-
 import_default_converters()

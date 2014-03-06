@@ -1,5 +1,5 @@
 import csv, StringIO
-output = [d for d in csv.DictReader(StringIO.StringIO(input))]
+output = [d for d in csv.DictReader(input.splitlines())]
 
 # Attempt numeric conversion
 for row in output:

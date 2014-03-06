@@ -22,6 +22,26 @@ def load(analysis_file):
 
     return analysis
 
+def convert(type, input, output):
+    if "data" not in input:
+        input["data"] = cardoon.uri.get_uri(input["uri"])
+
+    if input["format"] == output["format"]:
+        data = input["data"]
+    else:
+        converter_path = cardoon.format.converters[type][input["format"]][output["format"]]
+        data_descriptor = input
+        for c in converter_path:
+            result = cardoon.run(c, {"input": data_descriptor}, auto_convert=False)
+            data_descriptor = result["output"]
+        data = data_descriptor["data"]
+
+    if "uri" in output:
+        cardoon.uri.put_uri(data, output["uri"])
+    else:
+        output["data"] = data
+    return output
+
 def run(analysis, inputs, outputs=None, auto_convert=True):
     analysis_inputs = {d["name"]: d for d in analysis["inputs"]}
     analysis_outputs = {d["name"]: d for d in analysis["outputs"]}
@@ -30,12 +50,13 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
 
     for name in inputs:
         d = inputs[name]
-        if "data" not in d:
-            d["data"] = cardoon.uri.get_uri(d["uri"])
         analysis_input = analysis_inputs[name]
         if auto_convert:
-            d["script_data"] = cardoon.format.convert(d["data"], analysis_input["type"], d["format"], analysis_input["format"])
+            converted = cardoon.convert(analysis_input["type"], d, {"format": analysis_input["format"]})
+            d["script_data"] = converted["data"]
         elif d["format"] == analysis_input["format"]:
+            if "data" not in d:
+                d["data"] = cardoon.uri.get_uri(d["uri"])
             d["script_data"] = d["data"]
         else:
             raise Exception("Expected exact format match but '" + d["format"] + "' != '" + analysis_input["format"] + "'.")
@@ -44,7 +65,7 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
     outputs = {} if outputs is None else outputs
     for name, analysis_output in analysis_outputs.iteritems():
         if name not in outputs:
-            outputs[name] = analysis_output
+            outputs[name] = {"format": analysis_output["format"]}
 
     if mode == "python":
         custom = imp.new_module("custom")
@@ -79,17 +100,15 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
     for name, analysis_output in analysis_outputs.iteritems():
         d = outputs[name]
         if auto_convert:
-            data = cardoon.format.convert(d["script_data"], analysis_output["type"], analysis_output["format"], d["format"])
+            outputs[name] = cardoon.convert(analysis_output["type"], {"data": d["script_data"], "format": analysis_output["format"]}, d)
         elif d["format"] == analysis_output["format"]:
             data = d["script_data"]
+            if "uri" in d:
+                cardoon.uri.put_uri(data, d["uri"])
+            else:
+                d["data"] = data
+            del d["script_data"]
         else:
             raise Exception("Expected exact format match but '" + d["format"] + "' != '" + analysis_output["format"] + "'.")
-
-        del d["script_data"]
-
-        if "uri" in d:
-            cardoon.uri.put_uri(data, d["uri"])
-        else:
-            d["data"] = data
 
     return outputs
