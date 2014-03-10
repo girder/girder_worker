@@ -11,6 +11,11 @@ celeryapp = celery.Celery('cardoon',
     backend='mongodb://localhost/cardoon',
     broker='mongodb://localhost/cardoon')
 
+def getItemMetadata(itemId, itemApi):
+    user = itemApi.getCurrentUser()
+    item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
+    return item['meta']
+
 def getItemContent(itemId, itemApi):
     user = itemApi.getCurrentUser()
 
@@ -55,14 +60,21 @@ def load(info):
             operation = path[3]
             job = AsyncResult(jobId, backend=celeryapp.backend)
             if operation == 'status':
-                response = {'status': job.state}
-                if job.state == celery.states.FAILURE:
-                    response['message'] = str(job.result)
-                elif job.state == 'PROGRESS':
-                    response['meta'] = str(job.result)
-                event.addResponse(response)
-                event.stopPropagation()
-                event.preventDefault()
+                try:
+                    response = {'status': job.state}
+                    if job.state == celery.states.FAILURE:
+                        response['message'] = str(job.result)
+                    elif job.state == 'PROGRESS':
+                        response['meta'] = str(job.result)
+                    event.addResponse(response)
+                    event.stopPropagation()
+                    event.preventDefault()
+                except Exception:
+                    import sys
+                    event.addResponse({'status': 'FAILURE', 'message': sys.exc_info()})
+                    event.stopPropagation()
+                    event.preventDefault()
+
             elif operation == 'result':
                 response = {'result': job.result}
                 event.addResponse(response)
@@ -75,11 +87,11 @@ def load(info):
             try:
                 params = json.load(cherrypy.request.body)
                 itemId = path[0]
-                itemApi = info['apiRoot'].ite
+                itemApi = info['apiRoot'].item
 
-                content = getItemContent(itemId, itemApi)
+                metadata = getItemMetadata(itemId, itemApi)
+                analysis = metadata["analysis"]
 
-                analysis = json.loads(content)
                 asyncResult = celeryapp.send_task('cardoon.run', [analysis], params)
                 event.addResponse({'id': asyncResult.task_id})
                 event.stopPropagation()
