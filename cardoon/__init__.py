@@ -107,8 +107,10 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
                 cardoon.uri.put_uri(data, d["uri"])
             else:
                 d["data"] = data
-            del d["script_data"]
         else:
             raise Exception("Expected exact format match but '" + d["format"] + "' != '" + analysis_output["format"] + "'.")
+
+        if "script_data" in outputs[name]:
+            del outputs[name]["script_data"]
 
     return outputs
