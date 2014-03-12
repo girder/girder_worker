@@ -5,7 +5,8 @@ from celery.result import AsyncResult
 from girder import events
 from StringIO import StringIO
 from girder.constants import AccessType
-
+import sys
+import traceback
 
 celeryapp = celery.Celery('cardoon',
     backend='mongodb://localhost/cardoon',
@@ -17,11 +18,14 @@ def getItemMetadata(itemId, itemApi):
     return item['meta']
 
 def getItemContent(itemId, itemApi):
-    user = itemApi.getCurrentUser()
+    # user = itemApi.getCurrentUser()
 
-    item = itemApi.getObjectById(itemApi.model('item'), id=itemId,
-        checkAccess=True, user=user,
-        level=AccessType.READ)  # Access Check
+    item = itemApi.getItem(id=itemId, params={})
+
+    # item = itemApi.getObjectById(itemApi.model('item'), id=itemId,
+    #     checkAccess=True, user=user,
+    #     level=AccessType.READ)  # Access Check
+
     files = [file for file in itemApi.model('item').childFiles(item=item)]
 
     if len(files) > 1:
@@ -34,82 +38,55 @@ def getItemContent(itemId, itemApi):
     return io.getvalue()
 
 def load(info):
-    def cardoonItemGet(event):
-        path = event.info['pathParams']
-        if len(path) >= 5 and path[1] == 'cardoon':
-            itemId = path[0]
-            inputType = path[2]
-            inputFormat = path[3]
-            outputFormat = path[4]
+    def cardoonConvert(itemId, inputType, inputFormat, outputFormat, params):
+        itemApi = info['apiRoot'].item
+
+        content = getItemContent(itemId, itemApi)
+
+        asyncResult = celeryapp.send_task('cardoon.convert', [inputType,
+            {"data": content, "format": inputFormat},
+            {"format": outputFormat}
+        ])
+
+        return asyncResult.get()
+
+    def cardoonRunStatus(itemId, jobId, params):
+        job = AsyncResult(jobId, backend=celeryapp.backend)
+        try:
+            response = {'status': job.state}
+            if job.state == celery.states.FAILURE:
+                response['message'] = str(job.result)
+            elif job.state == 'PROGRESS':
+                response['meta'] = str(job.result)
+            return response
+        except Exception:
+            return {'status': 'FAILURE', 'message': sys.exc_info()}
+
+    def cardoonRunResult(itemId, jobId, params):
+        job = AsyncResult(jobId, backend=celeryapp.backend)
+        return {'result': job.result}
+
+    def cardoonRun(itemId, params):
+        try:
+            params = json.load(cherrypy.request.body)
             itemApi = info['apiRoot'].item
 
-            content = getItemContent(itemId, itemApi)
+            metadata = getItemMetadata(itemId, itemApi)
+            analysis = metadata["analysis"]
 
-            asyncResult = celeryapp.send_task('cardoon.convert', [inputType,
-                {"data": content, "format": inputFormat},
-                {"format": outputFormat}
-            ])
+            asyncResult = celeryapp.send_task('cardoon.run', [analysis], params)
+            return {'id': asyncResult.task_id}
 
-            result = asyncResult.get()
-            event.addResponse(result)
-            event.stopPropagation()
-            event.preventDefault()
-        if len(path) >= 4 and path[1] == 'cardoon':
-            itemId = path[0]
-            jobId = path[2]
-            operation = path[3]
-            job = AsyncResult(jobId, backend=celeryapp.backend)
-            if operation == 'status':
-                try:
-                    response = {'status': job.state}
-                    if job.state == celery.states.FAILURE:
-                        response['message'] = str(job.result)
-                    elif job.state == 'PROGRESS':
-                        response['meta'] = str(job.result)
-                    event.addResponse(response)
-                    event.stopPropagation()
-                    event.preventDefault()
-                except Exception:
-                    import sys
-                    event.addResponse({'status': 'FAILURE', 'message': sys.exc_info()})
-                    event.stopPropagation()
-                    event.preventDefault()
+        except:
+            traceback.print_exc(file=sys.stdout)
 
-            elif operation == 'result':
-                response = {'result': job.result}
-                event.addResponse(response)
-                event.stopPropagation()
-                event.preventDefault()
+    def cardoonStopRun(jobId, params):
+        task = AsyncResult(jobId, backend=celeryapp.backend)
+        task.revoke(celeryapp.broker_connection(), terminate=True)
+        return {'status': job.state}
 
-    def cardoonItemPost(event):
-        path = event.info['pathParams']
-        if len(path) >= 2 and path[1] == 'cardoon':
-            try:
-                params = json.load(cherrypy.request.body)
-                itemId = path[0]
-                itemApi = info['apiRoot'].item
-
-                metadata = getItemMetadata(itemId, itemApi)
-                analysis = metadata["analysis"]
-
-                asyncResult = celeryapp.send_task('cardoon.run', [analysis], params)
-                event.addResponse({'id': asyncResult.task_id})
-                event.stopPropagation()
-                event.preventDefault()
-
-            except:
-                import traceback, sys
-                traceback.print_exc(file=sys.stdout)
-
-    def cardoonItemDelete(event):
-        if len(path) >= 3 and path[1] == 'cardoon':
-            jobId = path[2]
-            task = AsyncResult(jobId, backend=celeryapp.backend)
-            task.revoke(celeryapp.broker_connection(), terminate=True)
-            event.addResponse({'status': job.state})
-            event.stopPropagation()
-            event.preventDefault()
-
-    events.bind('rest.item.get.before', 'cardoon', cardoonItemGet)
-    events.bind('rest.item.post.before', 'cardoon', cardoonItemPost)
-    events.bind('rest.item.delete.before', 'cardoon', cardoonItemDelete)
+    info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvert)
+    info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':jobId', 'status'), cardoonRunStatus)
+    info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':jobId', 'result'), cardoonRunResult)
+    info['apiRoot'].item.route('POST', (':itemId', 'cardoon'), cardoonRun)
+    info['apiRoot'].item.route('DELETE', (':itemId', 'cardoon', ':jobId'), cardoonStopRun)
