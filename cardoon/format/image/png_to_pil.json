@@ -1,0 +1,7 @@
+{
+    "name": "PNG to PIL Image",
+    "inputs": [{"name": "input", "type": "image", "format": "png"}],
+    "outputs": [{"name": "output", "type": "image", "format": "pil"}],
+    "script_uri": "file://png_to_pil.py",
+    "mode": "python"
+}

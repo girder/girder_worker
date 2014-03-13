@@ -1,0 +1,7 @@
+{
+    "name": "PNG to PNG Base64",
+    "inputs": [{"name": "input", "type": "image", "format": "png"}],
+    "outputs": [{"name": "output", "type": "image", "format": "png.base64"}],
+    "script_uri": "file://png_to_png_base64.py",
+    "mode": "python"
+}
