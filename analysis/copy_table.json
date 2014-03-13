@@ -1,7 +1,7 @@
 {
     "name": "Copy Table",
-    "inputs": [{"name": "a", "type": "table", "format": "python.rows"}],
-    "outputs": [{"name": "b", "type": "table", "format": "python.rows"}],
+    "inputs": [{"name": "a", "type": "table", "format": "rows"}],
+    "outputs": [{"name": "b", "type": "table", "format": "rows"}],
     "script": "b = a",
     "mode": "python"
 }

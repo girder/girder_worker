@@ -3,8 +3,8 @@
     "inputs": [
         {"name": "table", "type": "table", "format": "r.dataframe"},
         {"name": "tree", "type": "tree", "format": "r.apetree"},
-        {"name": "column", "type": "string", "format": "python"},
-        {"name": "model", "type": "string", "domain": ["BM", "OU", "EB"], "format": "python"}
+        {"name": "column", "type": "string", "format": "text"},
+        {"name": "model", "type": "string", "domain": ["BM", "OU", "EB"], "format": "text"}
     ],
     "outputs": [
         {"name": "fit", "type": "table", "format": "r.dataframe"},

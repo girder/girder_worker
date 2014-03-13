@@ -6,8 +6,8 @@ celeryapp = celery.Celery('cardoon',
 
 analysis = {
     "name": "append_tables",
-    "inputs": [{"name": "a", "type": "table", "format": "python.rows"}, {"name": "b", "type": "table", "format": "python.rows"}],
-    "outputs": [{"name": "c", "type": "table", "format": "python.rows"}],
+    "inputs": [{"name": "a", "type": "table", "format": "rows"}, {"name": "b", "type": "table", "format": "rows"}],
+    "outputs": [{"name": "c", "type": "table", "format": "rows"}],
     "script": "c = a + b",
     "mode": "python"
 }
