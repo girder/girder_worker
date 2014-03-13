@@ -18,13 +18,7 @@ def getItemMetadata(itemId, itemApi):
     return item['meta']
 
 def getItemContent(itemId, itemApi):
-    # user = itemApi.getCurrentUser()
-
     item = itemApi.getItem(id=itemId, params={})
-
-    # item = itemApi.getObjectById(itemApi.model('item'), id=itemId,
-    #     checkAccess=True, user=user,
-    #     level=AccessType.READ)  # Access Check
 
     files = [file for file in itemApi.model('item').childFiles(item=item)]
 
@@ -38,6 +32,16 @@ def getItemContent(itemId, itemApi):
     return io.getvalue()
 
 def load(info):
+    def cardoonConvertData(inputType, inputFormat, outputFormat, params):
+        content = cherrypy.request.body.read()
+
+        asyncResult = celeryapp.send_task('cardoon.convert', [inputType,
+            {"data": content, "format": inputFormat},
+            {"format": outputFormat}
+        ])
+
+        return asyncResult.get()
+
     def cardoonConvert(itemId, inputType, inputFormat, outputFormat, params):
         itemApi = info['apiRoot'].item
 
@@ -85,6 +89,7 @@ def load(info):
         task.revoke(celeryapp.broker_connection(), terminate=True)
         return {'status': job.state}
 
+    info['apiRoot'].item.route('POST', ('cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvertData)
     info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvert)
     info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':jobId', 'status'), cardoonRunStatus)
     info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':jobId', 'result'), cardoonRunResult)
