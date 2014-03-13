@@ -48,6 +48,14 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
 
     mode = analysis["mode"] if "mode" in analysis else "python"
 
+    # If some inputs are not there, fill in with defaults
+    for name, analysis_input in analysis_inputs.iteritems():
+        if name not in inputs:
+            if "default" in analysis_input:
+                inputs[name] = analysis_input["default"]
+            else:
+                raise Exception("Required input '" + name + "' not provided.")
+
     for name in inputs:
         d = inputs[name]
         analysis_input = analysis_inputs[name]

@@ -8,7 +8,22 @@ class TestNumber(unittest.TestCase):
     def setUp(self):
         self.analysis = {
             "name": "add",
-            "inputs": [{"name": "a", "type": "number", "format": "number"}, {"name": "b", "type": "number", "format": "number"}],
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "number",
+                    "format": "number",
+                    "default": {
+                        "format": "json",
+                        "data": "0"
+                    }
+                },
+                {
+                    "name": "b",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
             "outputs": [{"name": "c", "type": "number", "format": "number"}],
             "script": "c = a + b",
             "mode": "python"
@@ -49,6 +64,26 @@ class TestNumber(unittest.TestCase):
             })
         self.assertEqual(outputs["c"]["format"], "number")
         self.assertEqual(outputs["c"]["data"], 4)
+
+    def test_default(self):
+        outputs = cardoon.run(self.analysis,
+            inputs={
+                "b": {"format": "number", "data": 2}
+            },
+            outputs={
+                "c": {"format": "number"}
+            })
+        self.assertEqual(outputs["c"]["format"], "number")
+        self.assertEqual(outputs["c"]["data"], 2)
+
+        self.assertRaisesRegexp(Exception, "^Required input 'b' not provided.$",
+            cardoon.run, self.analysis,
+            inputs={
+                "a": {"format": "number", "data": 2}
+            },
+            outputs={
+                "c": {"format": "number"}
+            })
 
 if __name__ == '__main__':
     unittest.main()
