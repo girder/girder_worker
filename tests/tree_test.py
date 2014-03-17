@@ -1,3 +1,4 @@
+import bson
 import cardoon
 import unittest
 
@@ -90,3 +91,31 @@ END;"""
         expected = "\n".join(self.nexus.splitlines()[2:])
         expected = " ".join(expected.split())
         self.assertEqual(out, expected)
+
+    def test_treestore(self):
+        output = cardoon.convert("tree", {"format": "newick", "data": self.newick}, {"format": "r.apetree"})
+        output = cardoon.convert("tree", output, {"format": "treestore"})
+        self.assertEqual(output["format"], "treestore")
+        rows = bson.decode_all(output["data"])
+        for d in rows:
+            if "rooted" in d:
+                root = d
+        self.assertNotEqual(root, None)
+        self.assertEqual(len(root["clades"]), 1)
+        def findId(id):
+            for d in rows:
+                if d["_id"] == id:
+                    return d
+        top = findId(root["clades"][0])
+        self.assertEqual(len(top["clades"]), 2)
+        internal = findId(top["clades"][0])
+        rubribarbus = findId(top["clades"][1])
+        ahli = findId(internal["clades"][0])
+        allogus = findId(internal["clades"][1])
+        self.assertEqual(internal["branch_length"], 2)
+        self.assertEqual(ahli["name"], "ahli")
+        self.assertEqual(ahli["branch_length"], 0)
+        self.assertEqual(allogus["name"], "allogus")
+        self.assertEqual(allogus["branch_length"], 1)
+        self.assertEqual(rubribarbus["name"], "rubribarbus")
+        self.assertEqual(rubribarbus["branch_length"], 3)

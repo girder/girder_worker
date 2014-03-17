@@ -1,0 +1,7 @@
+{
+    "name": "R Ape Tree to Tree Store",
+    "inputs": [{"name": "input", "type": "tree", "format": "r.apetree"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "treestore"}],
+    "script_uri": "file://r_apetree_to_treestore.py",
+    "mode": "python"
+}

@@ -87,9 +87,10 @@ def import_converters(search_paths):
         for analysis_type, analysis_type_values in converters.iteritems():
             for input_format, input_format_values in analysis_type_values.iteritems():
                 for output_format, converter in input_format_values.iteritems():
-                    for next_output_format, next_converter in analysis_type_values[output_format].iteritems():
-                        if input_format != next_output_format and next_output_format not in input_format_values:
-                            to_add.append((analysis_type, input_format, next_output_format, converter + next_converter))
+                    if output_format in analysis_type_values:
+                        for next_output_format, next_converter in analysis_type_values[output_format].iteritems():
+                            if input_format != next_output_format and next_output_format not in input_format_values:
+                                to_add.append((analysis_type, input_format, next_output_format, converter + next_converter))
         for c in to_add:
             converters[c[0]][c[1]][c[2]] = c[3]
 
