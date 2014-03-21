@@ -1,12 +1,15 @@
+import bson
 import celery
 import cherrypy
 import json
 from celery.result import AsyncResult
-from girder import events
 from StringIO import StringIO
 from girder.constants import AccessType
 import sys
 import traceback
+
+authenticated = ['jeffbaumes']
+safeFolders = [bson.objectid.ObjectId('5314be7cea33db24b6aa490c')]
 
 celeryapp = celery.Celery('cardoon',
     backend='mongodb://localhost/cardoon',
@@ -16,6 +19,11 @@ def getItemMetadata(itemId, itemApi):
     user = itemApi.getCurrentUser()
     item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
     return item['meta']
+
+def getParentFolder(itemId, itemApi):
+    user = itemApi.getCurrentUser()
+    item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
+    return item['folderId']
 
 def getItemContent(itemId, itemApi):
     item = itemApi.getItem(id=itemId, params={})
@@ -74,6 +82,10 @@ def load(info):
         try:
             params = json.load(cherrypy.request.body)
             itemApi = info['apiRoot'].item
+            user = itemApi.getCurrentUser()
+            if not user or user["login"] not in authenticated:
+                if getParentFolder(itemId, itemApi) not in safeFolders:
+                    return {'error': 'Unauthorized'}
 
             metadata = getItemMetadata(itemId, itemApi)
             analysis = metadata["analysis"]
@@ -82,12 +94,14 @@ def load(info):
             return {'id': asyncResult.task_id}
 
         except:
-            traceback.print_exc(file=sys.stdout)
+            s = StringIO()
+            traceback.print_exc(file=s)
+            return {'status': 'FAILURE', 'message': sys.exc_info(), 'traceback': s.getvalue()}
 
     def cardoonStopRun(jobId, params):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
-        return {'status': job.state}
+        return {'status': task.state}
 
     info['apiRoot'].item.route('POST', ('cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvertData)
     info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvert)
