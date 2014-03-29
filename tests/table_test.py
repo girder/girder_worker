@@ -133,6 +133,11 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["c"]["format"], "rows")
         self.assertEqual(outputs["c"]["data"], [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}])
 
+    def test_column_names(self):
+        output = cardoon.convert("table", {"format": "rows", "data": [{"a": 6, "b": 5}]}, {"format": "column.names"})
+        self.assertEqual(output["format"], "column.names")
+        self.assertEqual(output["data"], ["a", "b"])
+
     def test_r_dataframe(self):
         outputs = cardoon.run(self.analysis_r,
             inputs={

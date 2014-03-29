@@ -1,0 +1,7 @@
+{
+    "name": "Rows to Column Names",
+    "inputs": [{"name": "input", "type": "table", "format": "rows"}],
+    "outputs": [{"name": "output", "type": "table", "format": "column.names"}],
+    "script_uri": "file://rows_to_column_names.py",
+    "mode": "python"
+}
