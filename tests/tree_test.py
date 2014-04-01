@@ -55,6 +55,14 @@ END;"""
         self.assertEqual(outputs["b"]["format"], "newick")
         self.assertEqual(outputs["b"]["data"], self.newick)
 
+    def test_json(self):
+        outputs = cardoon.run(self.analysis,
+            inputs={"a": {"format": "newick", "data": self.newick}},
+            outputs={"b": {"format": "nested.json"}}
+        )
+        self.assertEqual(outputs["b"]["format"], "nested.json")
+        self.assertEqual(outputs["b"]["data"], '{"node_data": {"node name": "", "node weight": 0.0}, "children": [{"node_data": {"node name": "", "node weight": 2.0}, "edge_data": {"weight": 2.0}, "children": [{"node_data": {"node name": "ahli", "node weight": 2.0}, "edge_data": {"weight": 0.0}}, {"node_data": {"node name": "allogus", "node weight": 3.0}, "edge_data": {"weight": 1.0}}]}, {"node_data": {"node name": "rubribarbus", "node weight": 3.0}, "edge_data": {"weight": 3.0}}]}')
+
     def test_vtktree(self):
         outputs = cardoon.run(self.analysis_vtk,
             inputs={"a": {"format": "newick", "data": self.newick}},

@@ -22,11 +22,7 @@ def dict_to_vtkarrays(row, attributes):
     import vtk
     for key in row:
         value = row[key]
-        if isinstance(value, int):
-            arr = vtk.vtkIntArray()
-        elif isinstance(value, long):
-            arr = vtk.vtkLongArray()
-        elif isinstance(value, float):
+        if isinstance(value, (int, long, float)):
             arr = vtk.vtkDoubleArray()
         elif isinstance(value, str):
             arr = vtk.vtkStringArray()

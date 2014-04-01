@@ -1,0 +1,7 @@
+{
+    "name": "Nested to Nested JSON",
+    "inputs": [{"name": "input", "type": "tree", "format": "nested"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "nested.json"}],
+    "script_uri": "file://nested_to_nested_json.py",
+    "mode": "python"
+}

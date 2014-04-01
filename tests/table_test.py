@@ -32,13 +32,13 @@ class TestTable(unittest.TestCase):
     def test_json(self):
         outputs = cardoon.run(self.analysis,
             inputs={
-                "a": {"format": "json.rows", "data": '[{"aa": 1, "bb": 2}]'},
-                "b": {"format": "json.rows", "data": '[{"aa": 3, "bb": 4}]'}
+                "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
+                "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
             },
             outputs={
-                "c": {"format": "json.rows"}
+                "c": {"format": "rows.json"}
             })
-        self.assertEqual(outputs["c"]["format"], "json.rows")
+        self.assertEqual(outputs["c"]["format"], "rows.json")
         self.assertEqual(outputs["c"]["data"], '[{"aa": 1, "bb": 2}, {"aa": 3, "bb": 4}]')
 
     def test_bson(self):
@@ -58,8 +58,8 @@ class TestTable(unittest.TestCase):
         tmp = tempfile.mktemp()
         outputs = cardoon.run(self.analysis,
             inputs={
-                "a": {"format": "json.rows", "data": '[{"aa": 1, "bb": 2}]'},
-                "b": {"format": "json.rows", "data": '[{"aa": 3, "bb": 4}]'}
+                "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
+                "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
             },
             outputs={
                 "c": {"format": "csv", "uri": "file://" + tmp}
@@ -85,8 +85,8 @@ class TestTable(unittest.TestCase):
     def test_vtktable(self):
         outputs = cardoon.run(self.analysis,
             inputs={
-                "a": {"format": "json.rows", "data": '[{"aa": 1, "bb": 2}]'},
-                "b": {"format": "json.rows", "data": '[{"aa": 3, "bb": 4}]'}
+                "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
+                "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
             },
             outputs={
                 "c": {"format": "vtktable"}
