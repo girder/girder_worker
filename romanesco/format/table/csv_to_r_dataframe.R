@@ -1,1 +1,1 @@
-output<-read.csv(text=input)
+output<-read.csv(text=input, check.names=FALSE)
