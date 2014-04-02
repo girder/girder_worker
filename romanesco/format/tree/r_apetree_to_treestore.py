@@ -144,7 +144,7 @@ def importApeTreeToArbor(apeTree,data_coll):
     clearInternalNodeNames(apeTree,data_coll)
 
 
-# Adapting treestore conversion to cardoon
+# Adapting treestore conversion to romanesco
 
 class InMemoryCollection:
     items = []

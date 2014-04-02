@@ -1,4 +1,4 @@
-import cardoon
+import romanesco
 import os
 import tempfile
 import unittest
@@ -30,7 +30,7 @@ class TestTable(unittest.TestCase):
         self.db["b"].insert(self.bobj)
 
     def test_json(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
                 "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
@@ -43,7 +43,7 @@ class TestTable(unittest.TestCase):
 
     def test_bson(self):
         import pymongo
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "bson.rows", "uri": "mongodb://localhost/test/a"},
                 "b": {"format": "bson.rows", "uri": "mongodb://localhost/test/b"}
@@ -56,7 +56,7 @@ class TestTable(unittest.TestCase):
 
     def test_file(self):
         tmp = tempfile.mktemp()
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
                 "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
@@ -71,7 +71,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output.splitlines(), ["aa,bb", "1,2", "3,4"])
 
     def test_csv(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "csv", "data": 'a,b,c\n1,2,3'},
                 "b": {"format": "csv", "data": 'a,b,c\n4,5,6'}
@@ -83,7 +83,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"].splitlines(), ["a,b,c", "1,2,3", "4,5,6"])
 
     def test_vtktable(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
                 "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
@@ -101,7 +101,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(t.GetValueByName(1, "bb"), 4)
 
     def test_mongo_to_python(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "bson.rows", "uri": "mongodb://localhost/test/a"},
                 "b": {"format": "bson.rows", "uri": "mongodb://localhost/test/b"}
@@ -113,7 +113,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], [self.aobj, self.bobj])
 
     def test_chaining(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "rows", "data": [{"a": 1, "b": 2}]},
                 "b": {"format": "rows", "data": [{"a": 3, "b": 4}]}
@@ -122,7 +122,7 @@ class TestTable(unittest.TestCase):
                 "c": {"format": "rows"}
             })
 
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": outputs["c"],
                 "b": {"format": "rows", "data": [{"a": 5, "b": 6}]}
@@ -134,12 +134,12 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}])
 
     def test_column_names(self):
-        output = cardoon.convert("table", {"format": "rows", "data": [{"a": 6, "b": 5}]}, {"format": "column.names"})
+        output = romanesco.convert("table", {"format": "rows", "data": [{"a": 6, "b": 5}]}, {"format": "column.names"})
         self.assertEqual(output["format"], "column.names")
         self.assertEqual(output["data"], ["a", "b"])
 
     def test_r_dataframe(self):
-        outputs = cardoon.run(self.analysis_r,
+        outputs = romanesco.run(self.analysis_r,
             inputs={
                 "a": {"format": "rows", "data": [{"aa": 1, "bb": 2}]}
             },
@@ -162,7 +162,7 @@ def test():
         "script": "b = a"
     }
 
-    outputs = cardoon.run(tree_copy,
+    outputs = romanesco.run(tree_copy,
         inputs={"a": {"format": "newick", "uri": "file://anolis.phy"}},
         outputs={"b": {"format": "r.apetree"}}
     )
@@ -177,14 +177,14 @@ def test():
         "mode": "r"
     }
 
-    # outputs = cardoon.run(tree_copy,
+    # outputs = romanesco.run(tree_copy,
     #     inputs={"a": {"format": "newick", "uri": "file://anolis.phy"}},
     #     outputs={"b": {"format": "newick"}}
     # )
 
     # print outputs
 
-    # outputs = cardoon.run(tree_copy,
+    # outputs = romanesco.run(tree_copy,
     #     inputs={"a": outputs["b"]},
     #     outputs={"b": {"format": "newick", "uri": "file://anolis.phy.copy"}}
     # )

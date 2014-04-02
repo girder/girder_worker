@@ -1,17 +1,17 @@
-Cardoon
+Romanesco
 =======
 
 A flexible, simple script execution engine.
 
-Cardoon has scripting support for Python and R, automatic type conversion, and URI serialization.
+Romanesco has scripting support for Python and R, automatic type conversion, and URI serialization.
 
 Get Started
 -----------
 
 Get it:
 ```
-git clone https://github.com/arborworkflows/cardoon.git
-cd cardoon
+git clone https://github.com/arborworkflows/romanesco.git
+cd romanesco
 ```
 
 Test it:
@@ -33,7 +33,7 @@ In R, you'll need to install some stuff too, currently just the `ape` package:
 install.packages("ape")
 ```
 
-Some things depend on VTK Python bindings. Cardoon uses some features from
+Some things depend on VTK Python bindings. Romanesco uses some features from
 cutting-edge VTK,
 so you'll likely need to build it from scratch (takes ~30 minutes).
 First get [CMake](http://www.cmake.org/), then do the following:
@@ -54,7 +54,7 @@ pip install celery
 ```
 Then fire up the celery worker:
 ```
-python -m cardoon
+python -m romanesco
 ```
 On the client, run a script akin to the following example:
 ```

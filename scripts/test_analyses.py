@@ -1,10 +1,10 @@
-import cardoon
+import romanesco
 import json
 
 fit_continuous = json.load(open("packaged/fit_continuous.json"))
 print fit_continuous
 
-output = cardoon.run(fit_continuous,
+output = romanesco.run(fit_continuous,
     inputs={
         "tree": {"format": "newick", "uri": "file://anolis.phy"},
         "table": {"format": "csv", "uri": "file://anolisDataAppended.csv"},

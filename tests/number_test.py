@@ -1,4 +1,4 @@
-import cardoon
+import romanesco
 import os
 import tempfile
 import unittest
@@ -30,7 +30,7 @@ class TestNumber(unittest.TestCase):
         }
 
     def test_numeric(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "number", "data": 1},
                 "b": {"format": "number", "data": 2}
@@ -42,7 +42,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], 3)
 
     def test_json(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "json", "data": "1"},
                 "b": {"format": "json", "data": "2"}
@@ -54,7 +54,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], "3")
 
     def test_float(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "number", "data": 1.5},
                 "b": {"format": "number", "data": 2.5}
@@ -66,7 +66,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], 4)
 
     def test_default(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "b": {"format": "number", "data": 2}
             },
@@ -77,7 +77,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], 2)
 
         self.assertRaisesRegexp(Exception, "^Required input 'b' not provided.$",
-            cardoon.run, self.analysis,
+            romanesco.run, self.analysis,
             inputs={
                 "a": {"format": "number", "data": 2}
             },

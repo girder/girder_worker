@@ -1,4 +1,4 @@
-from cardoon.format import dict_to_vtkarrays, dict_to_vtkrow
+from romanesco.format import dict_to_vtkarrays, dict_to_vtkrow
 import vtk
 
 vtk_builder = vtk.vtkMutableDirectedGraph()

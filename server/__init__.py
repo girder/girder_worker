@@ -11,9 +11,9 @@ import traceback
 authenticated = ['jeffbaumes']
 safeFolders = [bson.objectid.ObjectId('5314be7cea33db24b6aa490c')]
 
-celeryapp = celery.Celery('cardoon',
-    backend='mongodb://localhost/cardoon',
-    broker='mongodb://localhost/cardoon')
+celeryapp = celery.Celery('romanesco',
+    backend='mongodb://localhost/romanesco',
+    broker='mongodb://localhost/romanesco')
 
 def getItemMetadata(itemId, itemApi):
     user = itemApi.getCurrentUser()
@@ -40,29 +40,29 @@ def getItemContent(itemId, itemApi):
     return io.getvalue()
 
 def load(info):
-    def cardoonConvertData(inputType, inputFormat, outputFormat, params):
+    def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
-        asyncResult = celeryapp.send_task('cardoon.convert', [inputType,
+        asyncResult = celeryapp.send_task('romanesco.convert', [inputType,
             {"data": content, "format": inputFormat},
             {"format": outputFormat}
         ])
 
         return asyncResult.get()
 
-    def cardoonConvert(itemId, inputType, inputFormat, outputFormat, params):
+    def romanescoConvert(itemId, inputType, inputFormat, outputFormat, params):
         itemApi = info['apiRoot'].item
 
         content = getItemContent(itemId, itemApi)
 
-        asyncResult = celeryapp.send_task('cardoon.convert', [inputType,
+        asyncResult = celeryapp.send_task('romanesco.convert', [inputType,
             {"data": content, "format": inputFormat},
             {"format": outputFormat}
         ])
 
         return asyncResult.get()
 
-    def cardoonRunStatus(itemId, jobId, params):
+    def romanescoRunStatus(itemId, jobId, params):
         job = AsyncResult(jobId, backend=celeryapp.backend)
         try:
             response = {'status': job.state}
@@ -74,11 +74,11 @@ def load(info):
         except Exception:
             return {'status': 'FAILURE', 'message': sys.exc_info()}
 
-    def cardoonRunResult(itemId, jobId, params):
+    def romanescoRunResult(itemId, jobId, params):
         job = AsyncResult(jobId, backend=celeryapp.backend)
         return {'result': job.result}
 
-    def cardoonRun(itemId, params):
+    def romanescoRun(itemId, params):
         try:
             params = json.load(cherrypy.request.body)
             itemApi = info['apiRoot'].item
@@ -90,7 +90,7 @@ def load(info):
             metadata = getItemMetadata(itemId, itemApi)
             analysis = metadata["analysis"]
 
-            asyncResult = celeryapp.send_task('cardoon.run', [analysis], params)
+            asyncResult = celeryapp.send_task('romanesco.run', [analysis], params)
             return {'id': asyncResult.task_id}
 
         except:
@@ -98,14 +98,14 @@ def load(info):
             traceback.print_exc(file=s)
             return {'status': 'FAILURE', 'message': sys.exc_info(), 'traceback': s.getvalue()}
 
-    def cardoonStopRun(jobId, params):
+    def romanescoStopRun(jobId, params):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
         return {'status': task.state}
 
-    info['apiRoot'].item.route('POST', ('cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvertData)
-    info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':inputType', ':inputFormat', ':outputFormat'), cardoonConvert)
-    info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':jobId', 'status'), cardoonRunStatus)
-    info['apiRoot'].item.route('GET', (':itemId', 'cardoon', ':jobId', 'result'), cardoonRunResult)
-    info['apiRoot'].item.route('POST', (':itemId', 'cardoon'), cardoonRun)
-    info['apiRoot'].item.route('DELETE', (':itemId', 'cardoon', ':jobId'), cardoonStopRun)
+    info['apiRoot'].item.route('POST', ('romanesco', ':inputType', ':inputFormat', ':outputFormat'), romanescoConvertData)
+    info['apiRoot'].item.route('GET', (':itemId', 'romanesco', ':inputType', ':inputFormat', ':outputFormat'), romanescoConvert)
+    info['apiRoot'].item.route('GET', (':itemId', 'romanesco', ':jobId', 'status'), romanescoRunStatus)
+    info['apiRoot'].item.route('GET', (':itemId', 'romanesco', ':jobId', 'result'), romanescoRunResult)
+    info['apiRoot'].item.route('POST', (':itemId', 'romanesco'), romanescoRun)
+    info['apiRoot'].item.route('DELETE', (':itemId', 'romanesco', ':jobId'), romanescoStopRun)

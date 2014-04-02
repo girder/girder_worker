@@ -1,5 +1,5 @@
 import base64
-import cardoon
+import romanesco
 import math
 import operator
 import os
@@ -41,7 +41,7 @@ class TestImage(unittest.TestCase):
         }
 
     def test_base64(self):
-        outputs = cardoon.run(self.analysis,
+        outputs = romanesco.run(self.analysis,
             inputs={
                 "a": {"format": "png.base64", "data": self.image},
             })
@@ -51,7 +51,7 @@ class TestImage(unittest.TestCase):
     def test_convert(self):
         tmp = tempfile.mktemp();
 
-        output = cardoon.convert("image",
+        output = romanesco.convert("image",
             {"format": "png.base64", "data": self.image},
             {"format": "png", "uri": "file://" + tmp})
 
@@ -60,13 +60,13 @@ class TestImage(unittest.TestCase):
         self.assertEqual(output["format"], "png")
         self.assertEqual(base64.b64encode(value), self.image)
 
-        output = cardoon.convert("image",
+        output = romanesco.convert("image",
             {"format": "png.base64", "data": self.image},
             {"format": "pil"})
 
         tmp = tempfile.mktemp();
 
-        output = cardoon.convert("image",
+        output = romanesco.convert("image",
             output,
             {"format": "png"})
 

@@ -1,8 +1,8 @@
 import celery
 
-celeryapp = celery.Celery('cardoon',
-    backend='mongodb://localhost/cardoon',
-    broker='mongodb://localhost/cardoon')
+celeryapp = celery.Celery('romanesco',
+    backend='mongodb://localhost/romanesco',
+    broker='mongodb://localhost/romanesco')
 
 analysis = {
     "name": "append_tables",
@@ -12,7 +12,7 @@ analysis = {
     "mode": "python"
 }
 
-async_result = celeryapp.send_task("cardoon.run", [analysis], {
+async_result = celeryapp.send_task("romanesco.run", [analysis], {
     "inputs": {
         "a": {"format": "json.rows", "data": '[{"aa": 1, "bb": 2}]'},
         "b": {"format": "json.rows", "data": '[{"aa": 3, "bb": 4}]'}

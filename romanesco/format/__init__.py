@@ -1,7 +1,7 @@
 import json
 import glob
 import os
-import cardoon.uri
+import romanesco.uri
 
 def vtkrow_to_dict(attributes, i):
     row = {}
@@ -58,7 +58,7 @@ def import_converters(search_paths):
             with open(filename) as f:
                 analysis = json.load(f)
             if not "script" in analysis:
-                analysis["script"] = cardoon.uri.get_uri(analysis["script_uri"])
+                analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])
             if analysis["inputs"][0]["type"] not in converters:
                 converters[analysis["inputs"][0]["type"]] = {}
             analysis_type = converters[analysis["inputs"][0]["type"]]

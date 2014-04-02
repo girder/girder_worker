@@ -1,4 +1,4 @@
-from cardoon.format import vtkrow_to_dict
+from romanesco.format import vtkrow_to_dict
 import vtk
 
 def process_node(vtknode, node):
