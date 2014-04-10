@@ -1,0 +1,1 @@
+output <- unserialize(charToRaw(input))

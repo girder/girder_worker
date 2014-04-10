@@ -1,0 +1,7 @@
+{
+    "name": "R serialized to R object",
+    "inputs": [{"name": "input", "type": "r", "format": "serialized"}],
+    "outputs": [{"name": "output", "type": "r", "format": "object"}],
+    "script_uri": "file://serialized_to_object.R",
+    "mode": "r"
+}

@@ -99,9 +99,13 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
             d = outputs[name]
             d["script_data"] = rpy2.robjects.globalenv[str(name)]
 
-            # Hack to detect scalar values from R
-            if len(d["script_data"]) == 1:
-                d["script_data"] = d["script_data"][0]
+            # Hack to detect scalar values from R.
+            # The R value might not have a len() so wrap in a try/except.
+            try:
+                if len(d["script_data"]) == 1:
+                    d["script_data"] = d["script_data"][0]
+            except TypeError:
+                pass
     else:
         raise Exception("Unsupported analysis mode")
 
