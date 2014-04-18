@@ -1,8 +1,9 @@
-import csv, StringIO
-output = [d for d in csv.DictReader(input.splitlines())]
+import csv
+reader = csv.DictReader(input.splitlines())
+output = {"fields": reader.fieldnames, "rows": [d for d in reader]}
 
 # Attempt numeric conversion
-for row in output:
+for row in output["rows"]:
     for col in row:
         try:
             row[col] = int(row[col])

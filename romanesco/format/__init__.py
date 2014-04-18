@@ -18,9 +18,9 @@ def vtkrow_to_dict(attributes, i):
         row[attributes.GetAbstractArray(c).GetName()] = value
     return row
 
-def dict_to_vtkarrays(row, attributes):
+def dict_to_vtkarrays(row, fields, attributes):
     import vtk
-    for key in row:
+    for key in fields:
         value = row[key]
         if isinstance(value, (int, long, float)):
             arr = vtk.vtkDoubleArray()

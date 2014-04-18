@@ -2,6 +2,7 @@ import romanesco
 import os
 import tempfile
 import unittest
+import collections
 
 class TestTable(unittest.TestCase):
 
@@ -10,7 +11,7 @@ class TestTable(unittest.TestCase):
             "name": "append_tables",
             "inputs": [{"name": "a", "type": "table", "format": "rows"}, {"name": "b", "type": "table", "format": "rows"}],
             "outputs": [{"name": "c", "type": "table", "format": "rows"}],
-            "script": "c = a + b",
+            "script": "c = {'fields': a['fields'], 'rows': a['rows'] + b['rows']}",
             "mode": "python"
         }
         self.analysis_r = {
@@ -23,23 +24,23 @@ class TestTable(unittest.TestCase):
         import pymongo, bson
         self.db = pymongo.MongoClient("mongodb://localhost")["test"]
         self.db["a"].drop()
-        self.aobj = {'_id': bson.ObjectId('530cdb1add29bc5628984303'), 'bar': 2.0, 'foo': 1.0}
+        self.aobj = collections.OrderedDict([('_id', bson.ObjectId('530cdb1add29bc5628984303')), ('bar', 2.0), ('foo', 1.0)])
         self.db["a"].insert(self.aobj)
         self.db["b"].drop()
-        self.bobj = {'_id': bson.ObjectId('530cdb23dd29bc5628984304'), 'bar': 4.0, 'foo': 3.0}
+        self.bobj = collections.OrderedDict([('_id', bson.ObjectId('530cdb23dd29bc5628984304')), ('bar', 4.0), ('foo', 3.0)])
         self.db["b"].insert(self.bobj)
 
     def test_json(self):
         outputs = romanesco.run(self.analysis,
             inputs={
-                "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
-                "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
+                "a": {"format": "rows.json", "data": '{"fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]}'},
+                "b": {"format": "rows.json", "data": '{"fields": ["aa", "bb"], "rows": [{"aa": 3, "bb": 4}]}'}
             },
             outputs={
                 "c": {"format": "rows.json"}
             })
         self.assertEqual(outputs["c"]["format"], "rows.json")
-        self.assertEqual(outputs["c"]["data"], '[{"aa": 1, "bb": 2}, {"aa": 3, "bb": 4}]')
+        self.assertEqual(outputs["c"]["data"], '{"fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}, {"aa": 3, "bb": 4}]}')
 
     def test_bson(self):
         import pymongo
@@ -58,8 +59,8 @@ class TestTable(unittest.TestCase):
         tmp = tempfile.mktemp()
         outputs = romanesco.run(self.analysis,
             inputs={
-                "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
-                "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
+                "a": {"format": "rows.json", "data": '{"fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]}'},
+                "b": {"format": "rows.json", "data": '{"fields": ["aa", "bb"], "rows": [{"aa": 3, "bb": 4}]}'}
             },
             outputs={
                 "c": {"format": "csv", "uri": "file://" + tmp}
@@ -85,8 +86,8 @@ class TestTable(unittest.TestCase):
     def test_vtktable(self):
         outputs = romanesco.run(self.analysis,
             inputs={
-                "a": {"format": "rows.json", "data": '[{"aa": 1, "bb": 2}]'},
-                "b": {"format": "rows.json", "data": '[{"aa": 3, "bb": 4}]'}
+                "a": {"format": "rows.json", "data": '{"fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]}'},
+                "b": {"format": "rows.json", "data": '{"fields": ["aa", "bb"], "rows": [{"aa": 3, "bb": 4}]}'}
             },
             outputs={
                 "c": {"format": "vtktable"}
@@ -110,13 +111,13 @@ class TestTable(unittest.TestCase):
                 "c": {"format": "rows"}
             })
         self.assertEqual(outputs["c"]["format"], "rows")
-        self.assertEqual(outputs["c"]["data"], [self.aobj, self.bobj])
+        self.assertEqual(outputs["c"]["data"], {'fields': ['_id', 'bar', 'foo'], 'rows': [self.aobj, self.bobj]})
 
     def test_chaining(self):
         outputs = romanesco.run(self.analysis,
             inputs={
-                "a": {"format": "rows", "data": [{"a": 1, "b": 2}]},
-                "b": {"format": "rows", "data": [{"a": 3, "b": 4}]}
+                "a": {"format": "rows", "data": {"fields": ["a", "b"], "rows": [{"a": 1, "b": 2}]}},
+                "b": {"format": "rows", "data": {"fields": ["a", "b"], "rows": [{"a": 3, "b": 4}]}}
             },
             outputs={
                 "c": {"format": "rows"}
@@ -125,67 +126,30 @@ class TestTable(unittest.TestCase):
         outputs = romanesco.run(self.analysis,
             inputs={
                 "a": outputs["c"],
-                "b": {"format": "rows", "data": [{"a": 5, "b": 6}]}
+                "b": {"format": "rows", "data": {"fields": ["a", "b"], "rows": [{"a": 5, "b": 6}]}}
             },
             outputs={
                 "c": {"format": "rows"}
             })
         self.assertEqual(outputs["c"]["format"], "rows")
-        self.assertEqual(outputs["c"]["data"], [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}])
+        self.assertEqual(outputs["c"]["data"], {"fields": ["a", "b"], "rows": [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}]})
 
     def test_column_names(self):
-        output = romanesco.convert("table", {"format": "rows", "data": [{"a": 6, "b": 5}]}, {"format": "column.names"})
+        output = romanesco.convert("table", {"format": "rows", "data": {"fields": ["a", "b"], "rows": [{"a": 6, "b": 5}]}}, {"format": "column.names"})
         self.assertEqual(output["format"], "column.names")
         self.assertEqual(output["data"], ["a", "b"])
 
     def test_r_dataframe(self):
         outputs = romanesco.run(self.analysis_r,
             inputs={
-                "a": {"format": "rows", "data": [{"aa": 1, "bb": 2}]}
+                "a": {"format": "rows", "data": {"fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]}}
             },
             outputs={
                 "b": {"format": "rows"}
             })
         self.assertEqual(outputs["b"]["format"], "rows")
-        self.assertEqual(outputs["b"]["data"], [{"aa": 1, "bb": 2}])
+        self.assertEqual(outputs["b"]["data"], {"fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]})
 
 
 if __name__ == '__main__':
     unittest.main()
-
-def test():
-
-    tree_copy = {
-        "name": "tree_copy",
-        "inputs": [{"name": "a", "type": "tree", "format": "nested"}],
-        "outputs": [{"name": "b", "type": "tree", "format": "nested"}],
-        "script": "b = a"
-    }
-
-    outputs = romanesco.run(tree_copy,
-        inputs={"a": {"format": "newick", "uri": "file://anolis.phy"}},
-        outputs={"b": {"format": "r.apetree"}}
-    )
-
-    print outputs
-
-    tree_copy_r = {
-        "name": "tree_copy_r",
-        "inputs": [{"name": "a", "type": "tree", "format": "r.apetree"}],
-        "outputs": [{"name": "b", "type": "tree", "format": "r.apetree"}],
-        "script": "b <- a",
-        "mode": "r"
-    }
-
-    # outputs = romanesco.run(tree_copy,
-    #     inputs={"a": {"format": "newick", "uri": "file://anolis.phy"}},
-    #     outputs={"b": {"format": "newick"}}
-    # )
-
-    # print outputs
-
-    # outputs = romanesco.run(tree_copy,
-    #     inputs={"a": outputs["b"]},
-    #     outputs={"b": {"format": "newick", "uri": "file://anolis.phy.copy"}}
-    # )
-

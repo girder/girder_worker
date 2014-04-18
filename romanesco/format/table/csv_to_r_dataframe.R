@@ -1,2 +1,6 @@
 output<-read.csv(text=input, check.names=FALSE)
-row.names(output)<-output[,1]
+
+# If first column contains unique values, set the row names
+if (anyDuplicated(output[,1]) == 0) {
+    row.names(output)<-output[,1]
+}

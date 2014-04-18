@@ -1,4 +1,7 @@
 from romanesco.format import vtkrow_to_dict
-output = []
+
+output = {"fields": [], "rows": []}
+for c in range(input.GetNumberOfColumns()):
+    output["fields"].append(input.GetColumnName(c))
 for r in range(input.GetNumberOfRows()):
-    output.append(vtkrow_to_dict(input.GetRowData(), r))
+    output["rows"].append(vtkrow_to_dict(input.GetRowData(), r))
