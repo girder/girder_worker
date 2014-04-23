@@ -90,14 +90,16 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
     elif mode == "r":
         import rpy2.robjects
 
-        for name in inputs:
-            rpy2.robjects.globalenv[str(name)] = inputs[name]["script_data"]
+        env = rpy2.robjects.Environment()
 
-        rpy2.robjects.r(analysis["script"])
+        for name in inputs:
+            env[str(name)] = inputs[name]["script_data"]
+
+        rpy2.robjects.reval(analysis["script"], env)
 
         for name, analysis_output in analysis_outputs.iteritems():
             d = outputs[name]
-            d["script_data"] = rpy2.robjects.globalenv[str(name)]
+            d["script_data"] = env[str(name)]
 
             # Hack to detect scalar values from R.
             # The R value might not have a len() so wrap in a try/except.
