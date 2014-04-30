@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "tsv"}],
+    "outputs": [{"name": "output", "type": "table", "format": "rows"}],
+    "script_uri": "file://tsv_to_rows.py",
+    "mode": "python"
+}

@@ -1,7 +1,35 @@
+import csv
 import json
 import glob
 import os
 import romanesco.uri
+
+def csv_to_rows(input, *pargs, **kwargs):
+    if csv.Sniffer().has_header(input[:2048]):
+        reader = csv.DictReader(input.splitlines(), *pargs, **kwargs)
+        rows = [d for d in reader]
+        fields = reader.fieldnames
+    else:
+        reader = csv.reader(input.splitlines(), *pargs, **kwargs)
+        rows = [{"Column " + str(index + 1): value for index, value in enumerate(row)} for row in reader]
+        fields = []
+        if len(rows) > 0:
+            fields = ["Column " + str(index + 1) for index in range(len(rows[0]))]
+
+    output = {"fields": fields, "rows": rows}
+
+    # Attempt numeric conversion
+    for row in output["rows"]:
+        for col in row:
+            try:
+                row[col] = int(row[col])
+            except:
+                try:
+                    row[col] = float(row[col])
+                except:
+                    pass
+
+    return output
 
 def vtkrow_to_dict(attributes, i):
     row = {}

@@ -83,6 +83,18 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["c"]["format"], "csv")
         self.assertEqual(outputs["c"]["data"].splitlines(), ["a,b,c", "1,2,3", "4,5,6"])
 
+    def test_tsv(self):
+        outputs = romanesco.run(self.analysis,
+            inputs={
+                "a": {"format": "csv", "data": 'a,b,c\n1,2,3'},
+                "b": {"format": "tsv", "data": 'a\tb\tc\n4\t5\t6'}
+            },
+            outputs={
+                "c": {"format": "tsv"}
+            })
+        self.assertEqual(outputs["c"]["format"], "tsv")
+        self.assertEqual(outputs["c"]["data"].splitlines(), ["a\tb\tc", "1\t2\t3", "4\t5\t6"])
+
     def test_vtktable(self):
         outputs = romanesco.run(self.analysis,
             inputs={
