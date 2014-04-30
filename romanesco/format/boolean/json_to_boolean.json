@@ -1,0 +1,7 @@
+{
+    "name": "JSON to Boolean",
+    "inputs": [{"name": "input", "type": "boolean", "format": "json"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script_uri": "file://json_to_boolean.py",
+    "mode": "python"
+}

@@ -16,6 +16,14 @@ def process_node(vtknode, node):
         process_node(vtkchild, n)
         node["children"].append(n)
 
+node_fields = []
+for c in range(input.GetVertexData().GetNumberOfArrays()):
+    node_fields.append(input.GetVertexData().GetAbstractArray(c).GetName())
+
+edge_fields = []
+for c in range(input.GetEdgeData().GetNumberOfArrays()):
+    edge_fields.append(input.GetEdgeData().GetAbstractArray(c).GetName())
+
 vtkroot = input.GetRoot()
-output = {"node_data": vtkrow_to_dict(input.GetVertexData(), vtkroot)}
+output = {"node_fields": node_fields, "edge_fields": edge_fields, "node_data": vtkrow_to_dict(input.GetVertexData(), vtkroot)}
 process_node(vtkroot, output)

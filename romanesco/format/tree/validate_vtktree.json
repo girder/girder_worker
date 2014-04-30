@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "tree", "format": "vtktree"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "import vtk\noutput = isinstance(input, vtk.vtkTree)",
+    "mode": "python"
+}

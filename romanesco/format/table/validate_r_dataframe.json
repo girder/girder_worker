@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "r.dataframe"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "import rpy2.robjects\noutput = isinstance(input, rpy2.robjects.robject.RObjectMixin)",
+    "mode": "python"
+}

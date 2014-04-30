@@ -22,6 +22,13 @@ def load(analysis_file):
 
     return analysis
 
+def isvalid(type, binding):
+    if "data" not in binding:
+        binding["data"] = romanesco.uri.get_uri(binding["uri"])
+    validator = romanesco.format.validators[type][binding["format"]]
+    outputs = romanesco.run(validator, {"input": binding}, auto_convert=False, validate=False)
+    return outputs["output"]["data"]
+
 def convert(type, input, output):
     if "data" not in input:
         input["data"] = romanesco.uri.get_uri(input["uri"])
@@ -42,7 +49,7 @@ def convert(type, input, output):
         output["data"] = data
     return output
 
-def run(analysis, inputs, outputs=None, auto_convert=True):
+def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
     analysis_inputs = {d["name"]: d for d in analysis["inputs"]}
     analysis_outputs = {d["name"]: d for d in analysis["outputs"]}
 
@@ -113,8 +120,14 @@ def run(analysis, inputs, outputs=None, auto_convert=True):
 
     for name, analysis_output in analysis_outputs.iteritems():
         d = outputs[name]
+        script_output = {"data": d["script_data"], "format": analysis_output["format"]}
+
+        # Validate the output
+        if validate and not romanesco.isvalid(analysis_output["type"], script_output):
+            raise Exception("Output " + name + " (" + str(type(script_output["data"])) + ") is not in the expected type (" + analysis_output["type"] + ") and format (" + d["format"] + ").")
+
         if auto_convert:
-            outputs[name] = romanesco.convert(analysis_output["type"], {"data": d["script_data"], "format": analysis_output["format"]}, d)
+            outputs[name] = romanesco.convert(analysis_output["type"], script_output, d)
         elif d["format"] == analysis_output["format"]:
             data = d["script_data"]
             if "uri" in d:

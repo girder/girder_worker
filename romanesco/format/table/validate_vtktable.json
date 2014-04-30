@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "vtktable"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "import vtk\noutput = isinstance(input, vtk.vtkTable)",
+    "mode": "python"
+}

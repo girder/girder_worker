@@ -49,6 +49,7 @@ def dict_to_vtkrow(row, attributes):
             raise Exception("[dict_to_vtkrow] Unexpected key: " + key)
 
 converters = {}
+validators = {}
 
 def import_converters(search_paths):
     prevdir = os.getcwd()
@@ -57,25 +58,49 @@ def import_converters(search_paths):
         for filename in glob.glob(os.path.join(path, "*.json")):
             with open(filename) as f:
                 analysis = json.load(f)
+
             if not "script" in analysis:
                 analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])
-            if analysis["inputs"][0]["type"] not in converters:
-                converters[analysis["inputs"][0]["type"]] = {}
-            analysis_type = converters[analysis["inputs"][0]["type"]]
-            if analysis["inputs"][0]["format"] not in analysis_type:
-                analysis_type[analysis["inputs"][0]["format"]] = {}
-            input_format = analysis_type[analysis["inputs"][0]["format"]]
-            if analysis["outputs"][0]["format"] not in input_format:
-                input_format[analysis["outputs"][0]["format"]] = {}
-            input_format[analysis["outputs"][0]["format"]] = [analysis]
+
+            if os.path.basename(filename).startswith("validate_"):
+
+                # This is a validator
+                in_type = analysis["inputs"][0]["type"]
+                in_format = analysis["inputs"][0]["format"]
+                if in_type not in validators:
+                    validators[in_type] = {}
+                validators[in_type][in_format] = analysis
+
+            else:
+
+                # This is a converter
+                in_type = analysis["inputs"][0]["type"]
+                in_format = analysis["inputs"][0]["format"]
+                out_format = analysis["outputs"][0]["format"]
+                if in_type not in converters:
+                    converters[in_type] = {}
+                analysis_type = converters[in_type]
+                if in_format not in analysis_type:
+                    analysis_type[in_format] = {}
+                input_format = analysis_type[in_format]
+                if out_format not in input_format:
+                    input_format[out_format] = {}
+                input_format[out_format] = [analysis]
+
     os.chdir(prevdir)
     
     # print "digraph g {"
     # for analysis_type, analysis_type_values in converters.iteritems():
     #     for input_format, input_format_values in analysis_type_values.iteritems():
     #         for output_format in input_format_values:
-    #             print '"' + input_format + '" -> "' + output_format + '"'
+    #             print '"' + analysis_type + ":" + input_format + '" -> "' + analysis_type + ":" + output_format + '"'
     # print "}"
+
+    print "from,to"
+    for analysis_type, analysis_type_values in converters.iteritems():
+        for input_format, input_format_values in analysis_type_values.iteritems():
+            for output_format in input_format_values:
+                print analysis_type + ":" + input_format + "," + analysis_type + ":" + output_format
 
     max_steps = 3
     for i in range(max_steps):
@@ -92,6 +117,6 @@ def import_converters(search_paths):
 
 def import_default_converters():
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    import_converters([os.path.join(cur_path, t) for t in ["r", "table", "tree", "string", "number", "image"]])
+    import_converters([os.path.join(cur_path, t) for t in ["r", "table", "tree", "string", "number", "image", "boolean"]])
 
 import_default_converters()
