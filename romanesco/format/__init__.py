@@ -5,7 +5,7 @@ import os
 import romanesco.uri
 
 def csv_to_rows(input, *pargs, **kwargs):
-    if csv.Sniffer().has_header(input[:2048]):
+    if csv.Sniffer().has_header('\n'.join(input[:2048].splitlines())):
         reader = csv.DictReader(input.splitlines(), *pargs, **kwargs)
         rows = [d for d in reader]
         fields = reader.fieldnames
