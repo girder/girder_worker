@@ -3,9 +3,89 @@ import json
 import glob
 import os
 import romanesco.uri
+from StringIO import StringIO
+
+def has_header(sample):
+    # Creates a dictionary of types of data in each column. If any
+    # column is of a single type (say, integers), *except* for the first
+    # row, then the first row is presumed to be labels. If the type
+    # can't be determined, it is assumed to be a string in which case
+    # the length of the string is the determining factor: if all of the
+    # rows except for the first are the same length, it's a header.
+    # Finally, a 'vote' is taken at the end for each column, adding or
+    # subtracting from the likelihood of the first row being a header.
+    #
+    # This is from Python's csv.py, with added condition so empty cells
+    # don't cause inconsistent columns.
+
+    rdr = csv.reader(StringIO(sample), csv.Sniffer().sniff(sample))
+
+    header = rdr.next() # assume first row is header
+
+    columns = len(header)
+    columnTypes = {}
+    for i in range(columns): columnTypes[i] = None
+
+    checked = 0
+    for row in rdr:
+        # arbitrary number of rows to check, to keep it sane
+        if checked > 20:
+            break
+        checked += 1
+
+        if len(row) != columns:
+            continue # skip rows that have irregular number of columns
+
+        for col in columnTypes.keys():
+
+            # don't penalize empty cells
+            if row[col] == "":
+                continue
+
+            for thisType in [int, long, float, complex]:
+                try:
+                    thisType(row[col])
+                    break
+                except (ValueError, OverflowError):
+                    pass
+            else:
+                # fallback to length of string
+                thisType = len(row[col])
+
+            # treat longs as ints
+            if thisType == long:
+                thisType = int
+
+            if thisType != columnTypes[col]:
+                if columnTypes[col] is None: # add new column type
+                    columnTypes[col] = thisType
+                else:
+                    # type is inconsistent, remove column from
+                    # consideration
+                    del columnTypes[col]
+
+    # finally, compare results against first row and "vote"
+    # on whether it's a header
+    hasHeader = 0
+    for col, colType in columnTypes.items():
+        if type(colType) == type(0): # it's a length
+            if len(header[col]) != colType:
+                hasHeader += 1
+            else:
+                hasHeader -= 1
+        else: # attempt typecast
+            try:
+                colType(header[col])
+            except (ValueError, TypeError):
+                hasHeader += 1
+            else:
+                hasHeader -= 1
+
+    return hasHeader > 0
 
 def csv_to_rows(input, *pargs, **kwargs):
-    if csv.Sniffer().has_header('\n'.join(input[:2048].splitlines())):
+    header = has_header('\n'.join(input[:2048].splitlines()))
+    if header:
         reader = csv.DictReader(input.splitlines(), *pargs, **kwargs)
         rows = [d for d in reader]
         fields = reader.fieldnames
