@@ -1,4 +1,4 @@
-Types and Formats
+Types and formats
 =================
 
 In Romanesco, every analysis input and output is typed. A `type` in Romanesco is a
