@@ -11,6 +11,7 @@ def get_uri(uri):
         Web URIs are retrieved via a GET request.
         File paths may be relative to the current working directory by omitting a third slash and directly
         beginning the relative path.
+    :returns: The data from the URI as a string.
 
     .. _`standard connection string format`: http://docs.mongodb.org/manual/reference/connection-string/#standard-connection-string-format
     """
