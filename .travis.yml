@@ -1,0 +1,34 @@
+# it is not really python, but there is no R support on Travis CI yet
+language: python
+
+# environment variables
+env:
+  - R_LIBS_USER=~/R PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib
+
+# install dependencies
+install:
+  # download VTK
+  - wget http://midas3.kitware.com/midas/download/bitstream/366741/vtk-precise64.tar.gz
+  - tar xzvf vtk-precise64.tar.gz -C ~
+  # install R
+  - sudo apt-add-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu `lsb_release -cs`/"
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+  - sudo apt-get update
+  - sudo apt-get install r-base-dev
+  - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
+  - R --version
+  - R -e '.libPaths(); sessionInfo()'
+  # install R packages
+  - Rscript -e 'install.packages(c("ape","geiger"), repos=c("http://cran.cnr.Berkeley.edu"))'
+  # install Python packages
+  - pip install --allow-external PIL --allow-unverified PIL -r requirements.txt
+  - pip install pep8 coverage
+
+# run tests
+script:
+  - mkdir _build
+  - cd _build
+  - cmake -D PYTHON_COVERAGE:BOOL=ON ..
+  - ctest -V -S ../cmake/travis_build.cmake
+  - ctest -V -S ../cmake/travis_submit.cmake
+  - cd ..
