@@ -13,18 +13,18 @@ as ``"table"`` for the table type.
 An explicit representation of data is called a `format` in Romanesco. A format
 is a low-level description of data layout. For example, the table type may have
 formats for CSV, database table, R data frame, or JSON. The format may be text,
-serialized binary, or even in-memory data layouts. A format is also
+serialized binary, or even in-memory data layouts. Just like types, a format is
 specified by a string unique to your Romanesco environment, such as ``"csv"``
-for the CSV format. Formats under the same type should be reasonably convertable
+for the CSV format. Formats under the same type should be convertable
 between each other.
 
 Notice that the above uses the phrases such as "may be defined" and "may have formats".
 This is because at its core Romanesco does not contain types or formats.
 The :py:func:`romanesco.run` function will attempt to match given input bindings
-to the analysis inputs, validating data and performing conversions as needed.
+to analysis inputs, validating data and performing conversions as needed.
 To make Romanesco aware of certain types and formats, you must define validation and
 conversion routines. These routines are themselves Romanesco algorithms of a
-particular form which are loaded with
+particular form, loaded with
 :py:func:`romanesco.format.import_converters`. See that function's documentation
 for how to define validators and converters.
 

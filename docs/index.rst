@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Romanesco: A simple, flexible script execution engine.
-======================================================
+Romanesco: A simple, flexible execution engine
+==============================================
 
 .. toctree::
    :maxdepth: 2
@@ -13,7 +13,9 @@ Romanesco: A simple, flexible script execution engine.
    types-and-formats
    api-docs
 
-Romanesco has scripting support for Python and R, automatic type conversion, and URI serialization.
+Romanesco is a simple, flexible execution engine
+that features cross-language scripting support (currently Python and R),
+automatic format conversion, and URI serialization.
 
 Get Started
 -----------

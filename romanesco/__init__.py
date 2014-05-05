@@ -68,9 +68,9 @@ def convert(type, input, output):
         ``{"format": format, "uri", uri}``, where ``uri`` specifies
         where to place the converted data.
     :returns: The output binding
-        dict with an additional field ``"data"`` containing the converted data,
-        if ``"uri"`` is not in the output binding.
-        If ``"uri"`` is present, saves the data to the specified ``"uri"`` and
+        dict with an additional field ``"data"`` containing the converted data.
+        If ``"uri"`` is present in the output binding, instead saves the data
+        to the specified URI and
         returns the output binding unchanged.
     """
 
