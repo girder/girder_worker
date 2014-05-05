@@ -15,8 +15,8 @@ def has_header(sample):
     # Finally, a 'vote' is taken at the end for each column, adding or
     # subtracting from the likelihood of the first row being a header.
     #
-    # This is from Python's csv.py, with added condition so empty cells
-    # don't cause inconsistent columns.
+    # This is from Python's csv.py, with an added condition so empty cells
+    # don't result in inconsistent columns.
 
     rdr = csv.reader(StringIO(sample), csv.Sniffer().sniff(sample))
 
@@ -160,6 +160,30 @@ converters = {}
 validators = {}
 
 def import_converters(search_paths):
+    """
+    Import converters and validators from the specified search paths.
+    These functions are loaded into the dictionaries
+    ``romanesco.format.converters`` and ``romanesco.format.validators``
+    and are made available to :py:func:`romanesco.convert`
+    and :py:func:`romanesco.isvalid`.
+
+    Any files in a search path matching ``validate_*.json`` are loaded
+    as validators. Validators should be fast (ideally O(1)) algorithms
+    for determining if data is of the specified format. These are algorithms
+    that have a single input named ``"input"`` and a single output named
+    ``"output"``. The input has the type and format to be checked.
+    The output must have type and format ``"boolean"``. The script performs
+    the validation and sets the output variable to either true or false.
+
+    Any other ``.json`` files are imported as convertes.
+    A converter is simply an analysis with one input named ``"input"`` and one
+    output named ``"output"``. The input and output should have matching
+    type but should be of different formats.
+
+    :param search_paths: A list of search paths relative to the current
+        working directory.
+    """
+
     prevdir = os.getcwd()
     for path in search_paths:
         os.chdir(path)
@@ -197,19 +221,6 @@ def import_converters(search_paths):
 
     os.chdir(prevdir)
     
-    # print "digraph g {"
-    # for analysis_type, analysis_type_values in converters.iteritems():
-    #     for input_format, input_format_values in analysis_type_values.iteritems():
-    #         for output_format in input_format_values:
-    #             print '"' + analysis_type + ":" + input_format + '" -> "' + analysis_type + ":" + output_format + '"'
-    # print "}"
-
-    print "from,to"
-    for analysis_type, analysis_type_values in converters.iteritems():
-        for input_format, input_format_values in analysis_type_values.iteritems():
-            for output_format in input_format_values:
-                print analysis_type + ":" + input_format + "," + analysis_type + ":" + output_format
-
     max_steps = 3
     for i in range(max_steps):
         to_add = []
@@ -223,7 +234,36 @@ def import_converters(search_paths):
         for c in to_add:
             converters[c[0]][c[1]][c[2]] = c[3]
 
+def print_conversion_graph():
+    """
+    Print a graph of supported conversion paths in DOT format to standard output.
+    """
+
+    print "digraph g {"
+    for analysis_type, analysis_type_values in converters.iteritems():
+        for input_format, input_format_values in analysis_type_values.iteritems():
+            for output_format in input_format_values:
+                print '"' + analysis_type + ":" + input_format + '" -> "' + analysis_type + ":" + output_format + '"'
+    print "}"
+
+def print_conversion_table():
+    """
+    Print a table of supported conversion paths in CSV format with ``"from"`` and ``"to"`` columns
+    to standard output.
+    """
+
+    print "from,to"
+    for analysis_type, analysis_type_values in converters.iteritems():
+        for input_format, input_format_values in analysis_type_values.iteritems():
+            for output_format in input_format_values:
+                print analysis_type + ":" + input_format + "," + analysis_type + ":" + output_format
+
 def import_default_converters():
+    """
+    Import converters from the default search paths. This is called when the
+    :py:mod:`romanesco.format` module is first loaded.
+    """
+
     cur_path = os.path.dirname(os.path.realpath(__file__))
     import_converters([os.path.join(cur_path, t) for t in ["r", "table", "tree", "string", "number", "image", "boolean"]])
 
