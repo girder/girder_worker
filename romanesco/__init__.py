@@ -11,6 +11,15 @@ import romanesco.format
 import romanesco.uri
 
 def load(analysis_file):
+    """
+    Load an analysis JSON into memory, resolving any ``"script_uri"`` fields
+    by replacing it with a ``"script"`` field containing the contents pointed to
+    by ``"script_uri"`` (see :py:mod:`romanesco.uri` for URI formats).
+
+    :param analysis_file: The path to the JSON file to load.
+    :returns: The analysis as a dictionary.
+    """
+
     with open(analysis_file) as f:
         analysis = json.load(f)
 
@@ -23,6 +32,20 @@ def load(analysis_file):
     return analysis
 
 def isvalid(type, binding):
+    """
+    Determine whether a data binding is of the appropriate type and format.
+
+    :param type: The expected type specifier string of the binding.
+    :param binding: A binding dict of the form
+        ``{"format": format, "data", data}``, where ``format`` is the format
+        specifier string, and ``data`` is the raw data to test.
+        The dict may also be of the form
+        ``{"format": format, "uri", uri}``, where ``uri`` is the location of the
+        data (see :py:mod:`romanesco.uri` for URI formats).
+    :returns: ``True`` if the binding matches the type and format,
+        ``False`` otherwise.
+    """
+
     if "data" not in binding:
         binding["data"] = romanesco.uri.get_uri(binding["uri"])
     validator = romanesco.format.validators[type][binding["format"]]
@@ -30,6 +53,29 @@ def isvalid(type, binding):
     return outputs["output"]["data"]
 
 def convert(type, input, output):
+    """
+    Convert data from one format to another.
+
+    :param type: The type specifier string of the input data.
+    :param input: A binding dict of the form
+        ``{"format": format, "data", data}``, where ``format`` is the format
+        specifier string, and ``data`` is the raw data to convert.
+        The dict may also be of the form
+        ``{"format": format, "uri", uri}``, where ``uri`` is the location of the
+        data (see :py:mod:`romanesco.uri` for URI formats).
+    :param output: A binding of the form
+        ``{"format": format}``, where ``format`` is the format
+        specifier string to convert the data to.
+        The binding may also be in the form
+        ``{"format": format, "uri", uri}``, where ``uri`` specifies
+        where to place the converted data.
+    :returns: The output binding
+        dict with an additional field ``"data"`` containing the converted data,
+        if ``"uri"`` is not in the output binding.
+        If ``"uri"`` is present, saves the data to the specified ``"uri"`` and
+        returns the output binding unchanged.
+    """
+
     if "data" not in input:
         input["data"] = romanesco.uri.get_uri(input["uri"])
 
@@ -50,6 +96,68 @@ def convert(type, input, output):
     return output
 
 def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
+    """
+    Run a Romanesco analysis with the specified input bindings and returns
+    the outputs.
+
+    :param analysis: A dictionary specifying the analysis to run. An analysis
+        consists of the fields:
+
+        :inputs: A list of input dicts of the form
+            ``{"name": name, "type": type, "format": format}``
+            where ``name`` is the variable name used in the script,
+            ``type`` is the type specifier string for the input,
+            and ``format`` is the format specifier string for the input.
+        :outputs: A list of output specifier dicts of the form
+            ``{"name": name, "type": type, "format": format}``
+            where ``name`` is the variable name used in the script,
+            ``type`` is the type specifier string for the output,
+            and ``format`` is the format specifier string for the output.
+        :mode: The mode of the analysis, currently ``"r"`` or ``"python"``.
+        :script: The script to execute. The script should assume variables
+            with names matching the inputs are already set with the provided
+            types and formats. After performing the desired computation,
+            the analysis should set
+            variables with names matching the outputs, ensuring these are
+            in the provided output types and formats.
+    :param inputs: A dictionary specifying input bindings.
+        It should be of the form ``name: binding`` where ``name``
+        is the name of the input and ``binding`` is a data binding of the form
+        ``{"format": format, "data", data}``. ``format`` is the format
+        specifier string, and ``data`` is the raw data.
+        The binding may also be of the form
+        ``{"format": format, "uri", uri}``, where ``uri`` is the location of the
+        data (see :py:mod:`romanesco.uri` for URI formats).
+    :param outputs: An optional dictionary specifying output formats and locations.
+        It should be of the form ``name: binding``
+        where ``name``
+        is the name of the output and ``binding`` is a data binding of the form
+        ``{"format": format}``.
+        The binding may also be of the form
+        ``{"format": format, "uri", uri}``, where ``uri`` is the location where
+        to put the data. If this argument is omitted, output bindings matching
+        the analysis format speficiers are returned with inline ``"data"`` fields.
+    :param auto_convert: If ``True`` (the default), perform format conversions
+        on inputs and outputs with :py:func:`convert` if they do not
+        match the formats specified in the input and output bindings.
+        If ``False``, an expection is raised for input or output bindings
+        do not match the formats specified in the analysis.
+    :param validate: If ``True`` (the default), perform input and output
+        validation with :py:func:`isvalid` to ensure input bindings are in the
+        appropriate format and outputs generated by the script are
+        formatted correctly. This guards against dirty input as well as
+        buggy scripts that do not produce the correct type of output. An invalid
+        input or output will raise an exception. If ``False``, perform no
+        validation.
+    :returns: A dictionary of the form ``name: binding`` where ``name`` is
+        the name of the output and ``binding`` is an output binding of the form
+        ``{"format": format, "data": data}``. If the `outputs` parameter
+        is specified, the formats of these bindings will match those given in
+        `outputs`. Additionally, ``"data"`` may be absent if an output URI
+        was provided. Instead, those outputs will be saved to that URI and
+        the output binding will contain the location in the ``"uri"`` field.
+    """
+
     analysis_inputs = {d["name"]: d for d in analysis["inputs"]}
     analysis_outputs = {d["name"]: d for d in analysis["outputs"]}
 
@@ -66,6 +174,11 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
     for name in inputs:
         d = inputs[name]
         analysis_input = analysis_inputs[name]
+
+        # Validate the input
+        if validate and not romanesco.isvalid(analysis_input["type"], d):
+            raise Exception("Input " + name + " (Python type " + str(type(d["data"])) + ") is not in the expected type (" + analysis_input["type"] + ") and format (" + d["format"] + ").")
+
         if auto_convert:
             converted = romanesco.convert(analysis_input["type"], d, {"format": analysis_input["format"]})
             d["script_data"] = converted["data"]
