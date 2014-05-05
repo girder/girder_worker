@@ -10,6 +10,7 @@ Romanesco: A simple, flexible script execution engine.
    :maxdepth: 2
 
    installation
+   types-and-formats
    api-docs
 
 Romanesco has scripting support for Python and R, automatic type conversion, and URI serialization.
