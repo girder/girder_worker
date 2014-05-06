@@ -22,7 +22,7 @@ def load(analysis_file):
     with open(analysis_file) as f:
         analysis = json.load(f)
 
-    if not "script" in analysis:
+    if "script" not in analysis:
         prevdir = os.getcwd()
         os.chdir(os.path.dirname(analysis_file))
         analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])

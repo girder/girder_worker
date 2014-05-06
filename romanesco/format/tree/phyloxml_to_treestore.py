@@ -37,7 +37,7 @@ def recursive_clade(obj, data_coll, tree_coll=None):
     for key in obj.__dict__.keys():
         attr = getattr(obj, key)
         if attr and attr is not None:
-            #debugging
+            # debugging
             print "key = %s, attr = %s" % (key, attr)
 
             # get all non-recursive clade attributes first
@@ -74,8 +74,8 @@ def recursive_clade(obj, data_coll, tree_coll=None):
                 # treeDict['children'].append({'treeLink':child_id['treeId'],
                 #                              'dataLink':child_id['dataId']})
                 treeDict['clades'].append(child_id['treeId'])
-    #if args.debug_level >= 1:
-    #print "object name: ", obj.name, tempDict
+    # if args.debug_level >= 1:
+    # print "object name: ", obj.name, tempDict
     # insert into mongodb here
 
     # add mongodb id
@@ -83,8 +83,8 @@ def recursive_clade(obj, data_coll, tree_coll=None):
     if tree_coll is not None:
         treeDict['dataLink'] = tempDict['_id']
         insertIntoMongo(treeDict, tree_coll)
-    #if args.debug_level >= 1:
-    #print tempDict
+    # if args.debug_level >= 1:
+    # print tempDict
     # CRL - added option for return withou treeDict
     if tree_coll is not None:
         return {'dataId': tempDict['_id'], 'treeId': treeDict['_id']}
