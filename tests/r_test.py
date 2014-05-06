@@ -34,14 +34,14 @@ class TestR(unittest.TestCase):
 
     def test_array(self):
         outputs = romanesco.run(self.array_out, inputs={}, outputs={"output": {"format": "serialized"}})
-        self.assertEqual(outputs["output"]["data"], "A\n2\n196610\n131840\n14\n3\n1\n2\n3\n")
+        self.assertEqual('\n'.join(outputs["output"]["data"].split('\n')[3:]), "131840\n14\n3\n1\n2\n3\n")
 
         outputs = romanesco.run(self.array_in, inputs={"input": outputs["output"]}, outputs={"output": {"format": "serialized"}})
-        self.assertEqual(outputs["output"]["data"], "A\n2\n196610\n131840\n14\n5\n1\n2\n3\n4\n5\n")
+        self.assertEqual('\n'.join(outputs["output"]["data"].split('\n')[3:]), "131840\n14\n5\n1\n2\n3\n4\n5\n")
 
     def test_function(self):
         outputs = romanesco.run(self.function_out, inputs={}, outputs={"output": {"format": "serialized"}})
-        self.assertEqual(outputs["output"]["data"], "A\n2\n196610\n131840\n1027\n4\n0\n253\n254\n19\n29\n254\n254\n254\n254\n1026\n1\n262153\n6\noutput\n1027\n511\n1026\n1\n262153\n1\nx\n251\n254\n6\n1\n262153\n1\n{\n2\n6\n1\n262153\n6\nreturn\n2\n6\n1\n262153\n1\n*\n2\n1023\n2\n1023\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n1026\n1023\n251\n254\n6\n1279\n2\n6\n1535\n2\n6\n1791\n2\n1023\n2\n1023\n254\n254\n254\n")
+        self.assertEqual('\n'.join(outputs["output"]["data"].split('\n')[3:]), "131840\n1027\n4\n0\n253\n254\n19\n29\n254\n254\n254\n254\n1026\n1\n262153\n6\noutput\n1027\n511\n1026\n1\n262153\n1\nx\n251\n254\n6\n1\n262153\n1\n{\n2\n6\n1\n262153\n6\nreturn\n2\n6\n1\n262153\n1\n*\n2\n1023\n2\n1023\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n254\n1026\n1023\n251\n254\n6\n1279\n2\n6\n1535\n2\n6\n1791\n2\n1023\n2\n1023\n254\n254\n254\n")
         outputs = romanesco.run(self.function_in, inputs={"input": outputs["output"]})
         self.assertEqual(outputs["output"]["data"], 16)
 
