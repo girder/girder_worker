@@ -18,11 +18,11 @@ def returnNodeNameFromIndex(apeTree, index):
         leafIndex = 2
         countIndex = 1
     else:
-        #print "alternative ape tree compondent order case"
+        # print "alternative ape tree compondent order case"
         leafIndex = 1
         countIndex = 2
     leafCount = len(apeTree[leafIndex])
-    #print "lookup for index:",index
+    # print "lookup for index:",index
     if index < leafCount+1:
         # node is a taxon, return the species name
         nodeName = apeTree[leafIndex][index-1]
@@ -42,12 +42,12 @@ def addApeTreeNodesIntoTreeStore(apeTree, data_coll):
         leafIndex = 2
         countIndex = 1
     else:
-        #print "alternative ape tree compondent order case"
+        # print "alternative ape tree compondent order case"
         leafIndex = 1
         countIndex = 2
     # calculate how many nodes are here
     leafCount = len(apeTree[leafIndex])
-    #printApeTree(apeTree)
+    # printApeTree(apeTree)
     # print "apeTree[countIndex]:",apeTree[countIndex]
     # print "apeTree[countIndex][0]:",apeTree[countIndex][0]
     totalNodes = leafCount + int(apeTree[countIndex][0])
@@ -68,7 +68,7 @@ def addApeTreeEdgesIntoTreeStore(apeTree, data_coll):
     # go through the edge table and add fields to the nodes in the collection
     edgeCount = len(apeTree[0])/2
     # print "found edge count to be: ",edgeCount
-    #print "edges:",apeTree[3]
+    # print "edges:",apeTree[3]
     for edgeIndex in range(0, edgeCount):
         startNodeIndex = int(apeTree[0][edgeIndex])
         endNodeIndex = int(apeTree[0][edgeCount+edgeIndex])
@@ -77,14 +77,14 @@ def addApeTreeEdgesIntoTreeStore(apeTree, data_coll):
         endNodeQuery = {'name': returnNodeNameFromIndex(apeTree, endNodeIndex)}
         startNode = data_coll.find_one(startNodeQuery)
         endNode = data_coll.find_one(endNodeQuery)
-        #print "edgeIndex: ",edgeIndex,"endnode:  ", endNode
+        # print "edgeIndex: ",edgeIndex,"endnode:  ", endNode
         # add branch length to end node
         try:
             endNode['branch_length'] = apeTree[3][edgeIndex]
         except TypeError:
             print "error on edgeIndex or no branchlength:", edgeIndex
 
-        #print "edgeIndex: ",edgeIndex,"endnode:  ", endNode
+        # print "edgeIndex: ",edgeIndex,"endnode:  ", endNode
         data_coll.update(endNodeQuery, endNode)
         # add edge leaving start node and going to endnode
         startNode['clades'].append(endNode['_id'])
@@ -98,7 +98,7 @@ def addHandleNodeIntoTreeStore(apeTree, data_coll):
         leafIndex = 2
         countIndex = 1
     else:
-        #print "alternative ape tree compondent order case"
+        # print "alternative ape tree compondent order case"
         leafIndex = 1
         countIndex = 2
     leafCount = len(apeTree[leafIndex])
@@ -107,7 +107,7 @@ def addHandleNodeIntoTreeStore(apeTree, data_coll):
     rootNodeQuery = {'name': returnNodeNameFromIndex(apeTree, leafCount+1)}
     rootNode = data_coll.find_one(rootNodeQuery)
     handlenode = dict()
-    #handlenode['name'] = ''
+    # handlenode['name'] = ''
     handlenode['rooted'] = True
     handlenode['clades'] = []
     handlenode['clades'].append(rootNode['_id'])

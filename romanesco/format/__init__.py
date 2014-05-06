@@ -200,7 +200,7 @@ def import_converters(search_paths):
             with open(filename) as f:
                 analysis = json.load(f)
 
-            if not "script" in analysis:
+            if "script" not in analysis:
                 analysis["script"] = romanesco.uri.get_uri(
                     analysis["script_uri"])
 
