@@ -1,6 +1,7 @@
 from romanesco.format import vtkrow_to_dict
 import vtk
 
+
 def process_node(vtknode, node):
     num_children = input.GetNumberOfChildren(vtknode)
     if num_children > 0:
@@ -10,7 +11,7 @@ def process_node(vtknode, node):
         v = vtkrow_to_dict(input.GetVertexData(), vtkchild)
         edge = vtk.vtkGraphEdge()
         input.GetInEdge(vtkchild, 0, edge)
-        vtkparentedge = edge.GetId();
+        vtkparentedge = edge.GetId()
         e = vtkrow_to_dict(input.GetEdgeData(), vtkparentedge)
         n = {"edge_data": e, "node_data": v}
         process_node(vtkchild, n)
@@ -25,5 +26,11 @@ for c in range(input.GetEdgeData().GetNumberOfArrays()):
     edge_fields.append(input.GetEdgeData().GetAbstractArray(c).GetName())
 
 vtkroot = input.GetRoot()
-output = {"node_fields": node_fields, "edge_fields": edge_fields, "node_data": vtkrow_to_dict(input.GetVertexData(), vtkroot)}
+
+output = {
+    "node_fields": node_fields,
+    "edge_fields": edge_fields,
+    "node_data": vtkrow_to_dict(input.GetVertexData(), vtkroot)
+}
+
 process_node(vtkroot, output)

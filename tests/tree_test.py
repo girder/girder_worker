@@ -2,6 +2,7 @@ import bson
 import romanesco
 import unittest
 
+
 class TestTree(unittest.TestCase):
 
     def setUp(self):
@@ -48,7 +49,8 @@ BEGIN TREES;
 END;"""
 
     def test_newick(self):
-        outputs = romanesco.run(self.analysis,
+        outputs = romanesco.run(
+            self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "newick"}}
         )
@@ -56,15 +58,28 @@ END;"""
         self.assertEqual(outputs["b"]["data"], self.newick)
 
     def test_json(self):
-        outputs = romanesco.run(self.analysis,
+        outputs = romanesco.run(
+            self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "nested.json"}}
         )
         self.assertEqual(outputs["b"]["format"], "nested.json")
-        self.assertEqual(outputs["b"]["data"], '{"edge_fields": ["weight"], "node_fields": ["node name", "node weight"], "node_data": {"node name": "", "node weight": 0.0}, "children": [{"node_data": {"node name": "", "node weight": 2.0}, "edge_data": {"weight": 2.0}, "children": [{"node_data": {"node name": "ahli", "node weight": 2.0}, "edge_data": {"weight": 0.0}}, {"node_data": {"node name": "allogus", "node weight": 3.0}, "edge_data": {"weight": 1.0}}]}, {"node_data": {"node name": "rubribarbus", "node weight": 3.0}, "edge_data": {"weight": 3.0}}]}')
+        self.assertEqual(
+            outputs["b"]["data"],
+            '{"edge_fields": ["weight"], "node_fields": '
+            '["node name", "node weight"], "node_data": '
+            '{"node name": "", "node weight": 0.0}, "children": '
+            '[{"node_data": {"node name": "", "node weight": 2.0}, '
+            '"edge_data": {"weight": 2.0}, "children": [{"node_data": '
+            '{"node name": "ahli", "node weight": 2.0}, "edge_data": '
+            '{"weight": 0.0}}, {"node_data": {"node name": "allogus", '
+            '"node weight": 3.0}, "edge_data": {"weight": 1.0}}]}, '
+            '{"node_data": {"node name": "rubribarbus", "node weight": 3.0}, '
+            '"edge_data": {"weight": 3.0}}]}')
 
     def test_vtktree(self):
-        outputs = romanesco.run(self.analysis_vtk,
+        outputs = romanesco.run(
+            self.analysis_vtk,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "newick"}}
         )
@@ -72,22 +87,27 @@ END;"""
         self.assertEqual(outputs["b"]["data"], self.newick)
 
     def test_r_apetree(self):
-        outputs = romanesco.run(self.analysis,
+        outputs = romanesco.run(
+            self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "r.apetree"}}
         )
         self.assertEqual(outputs["b"]["format"], "r.apetree")
-        self.assertEqual(str(outputs["b"]["data"])[:52], '\nPhylogenetic tree with 3 tips and 2 internal nodes.')
+        self.assertEqual(
+            str(outputs["b"]["data"])[:52],
+            '\nPhylogenetic tree with 3 tips and 2 internal nodes.')
 
     def test_r(self):
-        outputs = romanesco.run(self.analysis_r,
+        outputs = romanesco.run(
+            self.analysis_r,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "newick"}}
         )
         self.assertEqual(outputs["b"]["format"], "newick")
         self.assertEqual(outputs["b"]["data"], self.newick)
 
-        outputs = romanesco.run(self.analysis_r,
+        outputs = romanesco.run(
+            self.analysis_r,
             inputs={"a": {"format": "nexus", "data": self.nexus}},
             outputs={"b": {"format": "nexus"}}
         )
@@ -101,7 +121,10 @@ END;"""
         self.assertEqual(out, expected)
 
     def test_treestore(self):
-        output = romanesco.convert("tree", {"format": "newick", "data": self.newick}, {"format": "r.apetree"})
+        output = romanesco.convert(
+            "tree",
+            {"format": "newick", "data": self.newick},
+            {"format": "r.apetree"})
         output = romanesco.convert("tree", output, {"format": "treestore"})
         self.assertEqual(output["format"], "treestore")
         rows = bson.decode_all(output["data"])
@@ -110,10 +133,12 @@ END;"""
                 root = d
         self.assertNotEqual(root, None)
         self.assertEqual(len(root["clades"]), 1)
+
         def findId(id):
             for d in rows:
                 if d["_id"] == id:
                     return d
+
         top = findId(root["clades"][0])
         self.assertEqual(len(top["clades"]), 2)
         internal = findId(top["clades"][0])
