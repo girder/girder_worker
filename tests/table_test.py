@@ -233,6 +233,25 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["b"]["data"], {
             "fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]})
 
+    def test_header_detection(self):
+        output = romanesco.convert(
+            "table",
+            {"format": "csv", "data": "a,b,c\n7,1,c\n8,2,f\n9,3,i"},
+            {"format": "rows"}
+        )
+        self.assertEqual(output["data"]["fields"], ["a", "b", "c"])
+        self.assertEqual(len(output["data"]["rows"]), 3)
+
+        output = romanesco.convert(
+            "table",
+            {"format": "csv", "data": "1,2,3\n7,10,\n,11,\n,12,"},
+            {"format": "rows"}
+        )
+        self.assertEqual(
+            output["data"]["fields"],
+            ["Column 1", "Column 2", "Column 3"]
+        )
+        self.assertEqual(len(output["data"]["rows"]), 4)
 
 if __name__ == '__main__':
     unittest.main()
