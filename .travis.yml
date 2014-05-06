@@ -1,6 +1,8 @@
 # it is not really python, but there is no R support on Travis CI yet
 language: python
 
+services: mongodb
+
 # environment variables
 env:
   - R_LIBS_USER=~/R PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib
@@ -14,7 +16,7 @@ install:
   - sudo apt-add-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu `lsb_release -cs`/"
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
   - sudo apt-get update
-  - sudo apt-get install r-base-dev
+  - sudo apt-get install r-base-dev zlib1g-dev
   - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
