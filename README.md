@@ -1,4 +1,4 @@
-Romanesco
+Romanesco [![Build Status](https://travis-ci.org/arborworkflows/romanesco.png?branch=master)](https://travis-ci.org/arborworkflows/romanesco)
 =========
 
 A flexible, simple script execution engine.
