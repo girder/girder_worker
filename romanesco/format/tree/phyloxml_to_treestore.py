@@ -6,6 +6,7 @@ from Bio.Phylo import BaseTree
 import pymongo
 import logging
 
+
 def recursive_attr(obj):
     """recursively parase through phyloXML data that is not a Clade"""
     dictionary = {}
@@ -24,7 +25,7 @@ def recursive_attr(obj):
         return obj
 
 
-def recursive_clade(obj, data_coll, tree_coll = None):
+def recursive_clade(obj, data_coll, tree_coll=None):
     """recursively parse through phyloXML"""
     # instantiate variables
     clade_children = []
@@ -49,12 +50,14 @@ def recursive_clade(obj, data_coll, tree_coll = None):
                 for elem in attr:
                     if isinstance(elem, BaseTree.Clade):
                         clade_children.append(elem)
-                    # if it's a complex phyloxml TreeElement attribute, parse it using recurisve_attr
+                    # if it's a complex phyloxml TreeElement attribute, parse
+                    # it using recurisve_attr
                     else:
-                        print "  elem3, attr = %s, type = %s" % (attr, type(elem))
+                        print ("  elem3, attr = %s, type = %s"
+                               % (attr, type(elem)))
                         tempDictList.append(recursive_attr(elem))
                 tempDict[key] = tempDictList
-            else: #isinstance(attr, BaseTree.TreeElement):
+            else:  # isinstance(attr, BaseTree.TreeElement):
                 tempDict[key] = recursive_attr(attr)
     # process all clades that are children of obj
     if clade_children:
@@ -66,8 +69,10 @@ def recursive_clade(obj, data_coll, tree_coll = None):
             tempDict['clades'].append(child_id['dataId'])
 
             if tree_coll is not None:
-            # if we want to insert dataLink data in the treeDict, this is how we'd do it
-            #    treeDict['children'].append({'treeLink':child_id['treeId'], 'dataLink':child_id['dataId']})
+                # if we want to insert dataLink data in the treeDict, this is
+                # how we'd do it
+                # treeDict['children'].append({'treeLink':child_id['treeId'],
+                #                              'dataLink':child_id['dataId']})
                 treeDict['clades'].append(child_id['treeId'])
     #if args.debug_level >= 1:
     #print "object name: ", obj.name, tempDict
@@ -82,9 +87,10 @@ def recursive_clade(obj, data_coll, tree_coll = None):
     #print tempDict
     # CRL - added option for return withou treeDict
     if tree_coll is not None:
-        return {'dataId':tempDict['_id'], 'treeId':treeDict['_id']}
+        return {'dataId': tempDict['_id'], 'treeId': treeDict['_id']}
     else:
-        return {'dataId':tempDict['_id']}       
+        return {'dataId': tempDict['_id']}
+
 
 def insertIntoMongo(item, collection):
     return collection.insert(item)

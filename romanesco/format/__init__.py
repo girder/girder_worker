@@ -5,6 +5,7 @@ import os
 import romanesco.uri
 from StringIO import StringIO
 
+
 def has_header(sample):
     # Creates a dictionary of types of data in each column. If any
     # column is of a single type (say, integers), *except* for the first
@@ -20,11 +21,12 @@ def has_header(sample):
 
     rdr = csv.reader(StringIO(sample), csv.Sniffer().sniff(sample))
 
-    header = rdr.next() # assume first row is header
+    header = rdr.next()  # assume first row is header
 
     columns = len(header)
     columnTypes = {}
-    for i in range(columns): columnTypes[i] = None
+    for i in range(columns):
+        columnTypes[i] = None
 
     checked = 0
     for row in rdr:
@@ -34,7 +36,7 @@ def has_header(sample):
         checked += 1
 
         if len(row) != columns:
-            continue # skip rows that have irregular number of columns
+            continue  # skip rows that have irregular number of columns
 
         for col in columnTypes.keys():
 
@@ -57,7 +59,7 @@ def has_header(sample):
                 thisType = int
 
             if thisType != columnTypes[col]:
-                if columnTypes[col] is None: # add new column type
+                if columnTypes[col] is None:  # add new column type
                     columnTypes[col] = thisType
                 else:
                     # type is inconsistent, remove column from
@@ -68,12 +70,12 @@ def has_header(sample):
     # on whether it's a header
     hasHeader = 0
     for col, colType in columnTypes.items():
-        if type(colType) == type(0): # it's a length
+        if isinstance(colType, int):  # it's a length
             if len(header[col]) != colType:
                 hasHeader += 1
             else:
                 hasHeader -= 1
-        else: # attempt typecast
+        else:  # attempt typecast
             try:
                 colType(header[col])
             except (ValueError, TypeError):
@@ -83,6 +85,7 @@ def has_header(sample):
 
     return hasHeader > 0
 
+
 def csv_to_rows(input, *pargs, **kwargs):
     header = has_header('\n'.join(input[:2048].splitlines()))
     if header:
@@ -91,10 +94,12 @@ def csv_to_rows(input, *pargs, **kwargs):
         fields = reader.fieldnames
     else:
         reader = csv.reader(input.splitlines(), *pargs, **kwargs)
-        rows = [{"Column " + str(index + 1): value for index, value in enumerate(row)} for row in reader]
+        rows = [{"Column " + str(index + 1): value
+                 for index, value in enumerate(row)} for row in reader]
         fields = []
         if len(rows) > 0:
-            fields = ["Column " + str(index + 1) for index in range(len(rows[0]))]
+            fields = ["Column " + str(index + 1)
+                      for index in range(len(rows[0]))]
 
     output = {"fields": fields, "rows": rows}
 
@@ -111,6 +116,7 @@ def csv_to_rows(input, *pargs, **kwargs):
 
     return output
 
+
 def vtkrow_to_dict(attributes, i):
     row = {}
     for c in range(attributes.GetNumberOfArrays()):
@@ -126,6 +132,7 @@ def vtkrow_to_dict(attributes, i):
         row[attributes.GetAbstractArray(c).GetName()] = value
     return row
 
+
 def dict_to_vtkarrays(row, fields, attributes):
     import vtk
     for key in fields:
@@ -139,7 +146,8 @@ def dict_to_vtkarrays(row, fields, attributes):
         else:
             arr = vtk.vtkStringArray()
         arr.SetName(key)
-        attributes.AddArray(arr)    
+        attributes.AddArray(arr)
+
 
 def dict_to_vtkrow(row, attributes):
     for key in row:
@@ -158,6 +166,7 @@ def dict_to_vtkrow(row, attributes):
 
 converters = {}
 validators = {}
+
 
 def import_converters(search_paths):
     """
@@ -192,7 +201,8 @@ def import_converters(search_paths):
                 analysis = json.load(f)
 
             if not "script" in analysis:
-                analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])
+                analysis["script"] = romanesco.uri.get_uri(
+                    analysis["script_uri"])
 
             if os.path.basename(filename).startswith("validate_"):
 
@@ -220,43 +230,59 @@ def import_converters(search_paths):
                 input_format[out_format] = [analysis]
 
     os.chdir(prevdir)
-    
+
     max_steps = 3
     for i in range(max_steps):
         to_add = []
         for analysis_type, analysis_type_values in converters.iteritems():
-            for input_format, input_format_values in analysis_type_values.iteritems():
-                for output_format, converter in input_format_values.iteritems():
+            for input_format, input_format_values in \
+                    analysis_type_values.iteritems():
+                for output_format, converter in \
+                        input_format_values.iteritems():
                     if output_format in analysis_type_values:
-                        for next_output_format, next_converter in analysis_type_values[output_format].iteritems():
-                            if input_format != next_output_format and next_output_format not in input_format_values:
-                                to_add.append((analysis_type, input_format, next_output_format, converter + next_converter))
+                        output_formats = analysis_type_values[output_format]
+                        for next_output_format, next_converter in \
+                                output_formats.iteritems():
+                            if input_format != next_output_format and \
+                                    next_output_format not in \
+                                    input_format_values:
+                                to_add.append((analysis_type, input_format,
+                                               next_output_format,
+                                               converter + next_converter))
         for c in to_add:
             converters[c[0]][c[1]][c[2]] = c[3]
 
+
 def print_conversion_graph():
     """
-    Print a graph of supported conversion paths in DOT format to standard output.
+    Print a graph of supported conversion paths in DOT format to standard
+    output.
     """
 
     print "digraph g {"
     for analysis_type, analysis_type_values in converters.iteritems():
-        for input_format, input_format_values in analysis_type_values.iteritems():
+        for input_format, input_format_values in \
+                analysis_type_values.iteritems():
             for output_format in input_format_values:
-                print '"' + analysis_type + ":" + input_format + '" -> "' + analysis_type + ":" + output_format + '"'
+                print '"' + analysis_type + ":" + input_format + '" -> "' \
+                    + analysis_type + ":" + output_format + '"'
     print "}"
+
 
 def print_conversion_table():
     """
-    Print a table of supported conversion paths in CSV format with ``"from"`` and ``"to"`` columns
-    to standard output.
+    Print a table of supported conversion paths in CSV format with ``"from"``
+    and ``"to"`` columns to standard output.
     """
 
     print "from,to"
     for analysis_type, analysis_type_values in converters.iteritems():
-        for input_format, input_format_values in analysis_type_values.iteritems():
+        for input_format, input_format_values in \
+                analysis_type_values.iteritems():
             for output_format in input_format_values:
-                print analysis_type + ":" + input_format + "," + analysis_type + ":" + output_format
+                print analysis_type + ":" + input_format + "," \
+                    + analysis_type + ":" + output_format
+
 
 def import_default_converters():
     """
@@ -265,6 +291,7 @@ def import_default_converters():
     """
 
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    import_converters([os.path.join(cur_path, t) for t in ["r", "table", "tree", "string", "number", "image", "boolean"]])
+    import_converters([os.path.join(cur_path, t) for t in [
+        "r", "table", "tree", "string", "number", "image", "boolean"]])
 
 import_default_converters()
