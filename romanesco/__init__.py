@@ -222,7 +222,17 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
     elif mode == "r":
         import rpy2.robjects
 
-        env = rpy2.robjects.Environment()
+        env = rpy2.robjects.globalenv
+
+        # Clear out workspace variables and packages
+        rpy2.robjects.reval("""
+            rm(list = ls())
+            pkgs <- names(sessionInfo()$otherPkgs)
+            if (!is.null(pkgs)) {
+                pkgs <- paste('package:', pkgs, sep = "")
+                lapply(pkgs, detach, character.only = TRUE, unload = TRUE)
+            }
+            """, env)
 
         for name in inputs:
             env[str(name)] = inputs[name]["script_data"]
