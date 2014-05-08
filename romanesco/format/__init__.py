@@ -87,7 +87,11 @@ def has_header(sample):
 
 
 def csv_to_rows(input, *pargs, **kwargs):
-    header = has_header('\n'.join(input[:2048].splitlines()))
+
+    # Take a data sample to determine headers, but
+    # don't include incomplete last line
+    header = has_header('\n'.join(input[:2048].splitlines()[:-1]))
+
     if header:
         reader = csv.DictReader(input.splitlines(), *pargs, **kwargs)
         rows = [d for d in reader]
