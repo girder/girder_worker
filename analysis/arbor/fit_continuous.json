@@ -1,0 +1,57 @@
+{
+    "inputs": [
+        {
+            "type": "table",
+            "name": "table",
+            "format": "r.dataframe"
+        },
+        {
+            "type": "tree",
+            "name": "tree",
+            "format": "r.apetree"
+        },
+        {
+            "domain": {
+                "input": "table",
+                "format": "column.names"
+            },
+            "type": "string",
+            "name": "column",
+            "format": "text"
+        },
+        {
+            "default": {
+                "data": "BM",
+                "format": "text"
+            },
+            "domain": [
+                "BM",
+                "OU",
+                "EB"
+            ],
+            "type": "string",
+            "name": "model",
+            "format": "text"
+        }
+    ],
+    "outputs": [
+        {
+            "type": "image",
+            "name": "treePlot",
+            "format": "png.base64"
+        },
+        {
+            "type": "tree",
+            "name": "result",
+            "format": "r.apetree"
+        },
+        {
+            "type": "table",
+            "name": "fit",
+            "format": "r.dataframe"
+        }
+    ],
+    "mode": "r",
+    "name": "Fit continuous",
+    "script_uri": "file://fit_continuous.R"
+}

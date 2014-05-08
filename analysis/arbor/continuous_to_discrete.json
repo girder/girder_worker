@@ -1,0 +1,33 @@
+{
+    "inputs": [
+        {
+            "type": "table",
+            "name": "table",
+            "format": "r.dataframe"
+        },
+        {
+            "domain": {
+                "input": "table",
+                "format": "column.names"
+            },
+            "type": "string",
+            "name": "column",
+            "format": "text"
+        },
+        {
+            "type": "number",
+            "name": "thresh",
+            "format": "number"
+        }
+    ],
+    "outputs": [
+        {
+            "type": "table",
+            "name": "newtable",
+            "format": "r.dataframe"
+        }
+    ],
+    "mode": "r",
+    "name": "Continuous to discrete",
+    "script_uri": "file://continuous_to_discrete.R"
+}

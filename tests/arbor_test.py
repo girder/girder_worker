@@ -1,0 +1,67 @@
+import romanesco
+import unittest
+import os
+
+
+class TestArbor(unittest.TestCase):
+
+    def setUp(self):
+        self.prevdir = os.getcwd()
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(cur_path)
+        self.arbor_path = os.path.join(cur_path, "..", "analysis", "arbor")
+
+    def test_pgls(self):
+        pgls = romanesco.load(os.path.join(self.arbor_path, "pgls.json"))
+        tree_file = os.path.join("data", "anolis.phy")
+        table_file = os.path.join("data", "anolisDataAppended.csv")
+        outputs = romanesco.run(
+            pgls,
+            {
+                "tree": {"format": "newick", "uri": "file://" + tree_file},
+                "table": {"format": "csv", "uri": "file://" + table_file},
+                "correlation": {"format": "text", "data": "BM"},
+                "ind_variable": {"format": "text", "data": "SVL"},
+                "dep_variable": {"format": "text", "data": "PCI_limbs"}
+            }
+        )
+        # print outputs
+
+    def test_fit_continuous(self):
+        fit_continuous = romanesco.load(
+            os.path.join(self.arbor_path, "fit_continuous.json"))
+        tree_file = os.path.join("data", "anolis.phy")
+        table_file = os.path.join("data", "anolisDataAppended.csv")
+        outputs = romanesco.run(
+            fit_continuous,
+            {
+                "tree": {"format": "newick", "uri": "file://" + tree_file},
+                "table": {"format": "csv", "uri": "file://" + table_file},
+                "column": {"format": "text", "data": "SVL"},
+                "model": {"format": "text", "data": "BM"}
+            }
+        )
+        # print outputs
+
+    def test_cont2disc(self):
+        cont2disc = romanesco.load(
+            os.path.join(self.arbor_path, "continuous_to_discrete.json"))
+        table_file = os.path.join("data", "anolisDataAppended.csv")
+        outputs = romanesco.run(
+            cont2disc,
+            {
+                "table": {"format": "csv", "uri": "file://" + table_file},
+                "column": {"format": "text", "data": "SVL"},
+                "thresh": {"format": "number", "data": 3.5}
+            },
+            {
+                "newtable": {"format": "rows"}
+            }
+        )
+        # print outputs["newtable"]
+
+    def tearDown(self):
+        os.chdir(self.prevdir)
+
+if __name__ == '__main__':
+    unittest.main()

@@ -24,7 +24,9 @@ def load(analysis_file):
 
     if "script" not in analysis:
         prevdir = os.getcwd()
-        os.chdir(os.path.dirname(analysis_file))
+        parent = os.path.dirname(analysis_file)
+        if parent != "":
+            os.chdir(os.path.dirname(analysis_file))
         analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])
         os.chdir(prevdir)
 

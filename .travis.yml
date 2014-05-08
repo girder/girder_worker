@@ -21,7 +21,8 @@ install:
   - R --version
   - R -e '.libPaths(); sessionInfo()'
   # install R packages
-  - Rscript -e 'install.packages(c("ape","geiger"), repos=c("http://cran.cnr.Berkeley.edu"))'
+  - Rscript -e 'install.packages(c("ape","geiger","nlme","devtools"), repos=c("http://cran.cnr.Berkeley.edu"))'
+  - R -e 'options(repos="http://cran.cnr.Berkeley.edu");library(devtools);install_github("cardoonTools", "hafen")'
   # install Python packages
   - pip install --allow-external PIL --allow-unverified PIL -r requirements.txt
   - pip install pep8 coverage
