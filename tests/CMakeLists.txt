@@ -38,6 +38,7 @@ if(PYTHON_STYLE_TESTS)
   add_python_style_test(pep8_style_core_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
+add_python_test(arbor)
 add_python_test(image)
 add_python_test(number)
 add_python_test(r)

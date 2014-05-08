@@ -1,0 +1,63 @@
+{
+    "inputs": [
+        {
+            "type": "tree",
+            "name": "tree",
+            "format": "r.apetree"
+        },
+        {
+            "type": "table",
+            "name": "table",
+            "format": "r.dataframe"
+        },
+        {
+            "domain": [
+                "BM",
+                "OU",
+                "Pagel",
+                "ACDC"
+            ],
+            "type": "string",
+            "name": "correlation",
+            "format": "text"
+        },
+        {
+            "domain": {
+                "input": "table",
+                "format": "column.names"
+            },
+            "type": "string",
+            "name": "ind_variable",
+            "format": "text"
+        },
+        {
+            "domain": {
+                "input": "table",
+                "format": "column.names"
+            },
+            "type": "string",
+            "name": "dep_variable",
+            "format": "text"
+        }
+    ],
+    "script_uri": "file://pgls.R",
+    "mode": "r",
+    "name": "PGLS",
+    "outputs": [
+        {
+            "type": "table",
+            "name": "coefficients",
+            "format": "r.dataframe"
+        },
+        {
+            "type": "table",
+            "name": "modelfit_summary",
+            "format": "r.dataframe"
+        },
+        {
+            "type": "image",
+            "name": "pglsPlot",
+            "format": "png.base64"
+        }
+    ]
+}
