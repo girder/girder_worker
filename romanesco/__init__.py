@@ -2,6 +2,7 @@ import imp
 import json
 import StringIO
 import csv
+import functools
 import tempfile
 import os
 import urllib2
@@ -100,6 +101,44 @@ def convert(type, input, output):
     else:
         output["data"] = data
     return output
+
+
+def toposort(data):
+    """
+    General-purpose topoligical sort function. Dependencies are expressed as a
+    dictionary whose keys are items and whose values are a set of dependent
+    items. Output is a list of sets in topological order. This is a generator
+    function that returns a sequence of sets in topological order.
+
+    :param data: The dependency information.
+    :type data: dict
+    :returns: Yields a list of sorted sets representing the sorted order.
+    """
+    if not data:
+        return
+
+    # Ignore self dependencies.
+    for k, v in data.items():
+        v.discard(k)
+
+    # Find all items that don't depend on anything.
+    extra = functools.reduce(
+        set.union, data.itervalues()) - set(data.iterkeys())
+    # Add empty dependences where needed
+    data.update({item: set() for item in extra})
+
+    # Perform the toposort.
+    while True:
+        ordered = set(item for item, dep in data.iteritems() if not dep)
+        if not ordered:
+            break
+        yield ordered
+        data = {item: (dep - ordered)
+                for item, dep in data.iteritems() if item not in ordered}
+    # Detect any cycles in the dependency graph.
+    if data:
+        raise Exception('Cyclic dependencies detected:\n%s' % '\n'.join(
+                        repr(x) for x in data.iteritems()))
 
 
 def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
@@ -252,6 +291,58 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
                     d["script_data"] = d["script_data"][0]
             except TypeError:
                 pass
+
+    elif mode == "workflow":
+        # Make map of steps
+        steps = {step["id"]: step for step in analysis["steps"]}
+
+        # Make map of input bindings
+        bindings = {step["id"]: {} for step in analysis["steps"]}
+
+        # Create dependency graph and downstream pointers
+        dependencies = {}
+        downstream = {}
+        for conn in analysis["connections"]:
+
+            # Add dependency graph link for internal links
+            if "input_step" in conn and "output_step" in conn:
+                dep = dependencies.setdefault(conn["input_step"], set())
+                dep.add(conn["output_step"])
+
+            # Add downstream links for links with output
+            if "output_step" in conn:
+                ds = downstream.setdefault(conn["output_step"], {})
+                ds_list = ds.setdefault(conn["output"], [])
+                ds_list.append(conn)
+
+            # Set initial bindings for inputs
+            if "input_step" in conn and "output_step" not in conn:
+                name = conn["name"]
+                bindings[conn["input_step"]][conn["input"]] = {
+                    "format": analysis_inputs[name]["format"],
+                    "data": inputs[name]["script_data"]
+                }
+
+        # Traverse analyses in topological order
+        for step_set in toposort(dependencies):
+            for step in step_set:
+
+                # Run step
+                out = run(steps[step]["analysis"], bindings[step])
+
+                # Update bindings of downstream analyses
+                if step in downstream:
+                    for name, conn_list in downstream[step].iteritems():
+                        for conn in conn_list:
+                            if "input_step" in conn:
+                                # This is a connection to a downstream step
+                                b = bindings[conn["input_step"]]
+                                b[conn["input"]] = out[name]
+                            else:
+                                # This is a connection to a final output
+                                o = outputs[conn["name"]]
+                                o["script_data"] = out[name]["data"]
+
     else:
         raise Exception("Unsupported analysis mode")
 
