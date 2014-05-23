@@ -300,14 +300,13 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
         bindings = {step["id"]: {} for step in analysis["steps"]}
 
         # Create dependency graph and downstream pointers
-        dependencies = {}
+        dependencies = {step["id"]: set() for step in analysis["steps"]}
         downstream = {}
         for conn in analysis["connections"]:
 
             # Add dependency graph link for internal links
             if "input_step" in conn and "output_step" in conn:
-                dep = dependencies.setdefault(conn["input_step"], set())
-                dep.add(conn["output_step"])
+                dependencies[conn["input_step"]].add(conn["output_step"])
 
             # Add downstream links for links with output
             if "output_step" in conn:
