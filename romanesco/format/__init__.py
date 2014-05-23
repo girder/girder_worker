@@ -124,16 +124,21 @@ def csv_to_rows(input, *pargs, **kwargs):
 def vtkrow_to_dict(attributes, i):
     row = {}
     for c in range(attributes.GetNumberOfArrays()):
-        variant_value = attributes.GetAbstractArray(c).GetVariantValue(i)
-        if variant_value.IsInt():
-            value = variant_value.ToInt()
-        elif variant_value.IsLong():
-            value = variant_value.ToLong()
-        elif variant_value.IsDouble() or variant_value.IsFloat():
-            value = variant_value.ToDouble()
-        else:
-            value = variant_value.ToString()
-        row[attributes.GetAbstractArray(c).GetName()] = value
+        arr = attributes.GetAbstractArray(c)
+        values = []
+        comp = arr.GetNumberOfComponents()
+        for c in range(comp):
+            variant_value = arr.GetVariantValue(i*comp + c)
+            if variant_value.IsInt():
+                value = variant_value.ToInt()
+            elif variant_value.IsLong():
+                value = variant_value.ToLong()
+            elif variant_value.IsDouble() or variant_value.IsFloat():
+                value = variant_value.ToDouble()
+            else:
+                value = variant_value.ToString()
+            values.append(value)
+        row[arr.GetName()] = values[0] if len(values) == 1 else values
     return row
 
 
@@ -141,6 +146,10 @@ def dict_to_vtkarrays(row, fields, attributes):
     import vtk
     for key in fields:
         value = row[key]
+        comp = 1
+        if isinstance(value, list):
+            comp = len(value)
+            value = value[0]
         if isinstance(value, (int, long, float)):
             arr = vtk.vtkDoubleArray()
         elif isinstance(value, str):
@@ -150,19 +159,24 @@ def dict_to_vtkarrays(row, fields, attributes):
         else:
             arr = vtk.vtkStringArray()
         arr.SetName(key)
+        arr.SetNumberOfComponents(comp)
         attributes.AddArray(arr)
 
 
 def dict_to_vtkrow(row, attributes):
     for key in row:
         value = row[key]
-        if not isinstance(value, (int, long, float, str, unicode)):
+        if not isinstance(value, (list, int, long, float, str, unicode)):
             value = str(value)
         found = False
         for i in range(attributes.GetNumberOfArrays()):
             arr = attributes.GetAbstractArray(i)
             if arr.GetName() == key:
-                arr.InsertNextValue(value)
+                if isinstance(value, list):
+                    for v in value:
+                        arr.InsertNextValue(v)
+                else:
+                    arr.InsertNextValue(value)
                 found = True
                 break
         if not found:
@@ -296,6 +310,8 @@ def import_default_converters():
 
     cur_path = os.path.dirname(os.path.realpath(__file__))
     import_converters([os.path.join(cur_path, t) for t in [
-        "r", "table", "tree", "string", "number", "image", "boolean"]])
+        "r", "table", "tree",
+        "string", "number", "image",
+        "boolean", "geometry"]])
 
 import_default_converters()
