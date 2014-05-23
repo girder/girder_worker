@@ -10,7 +10,7 @@ env:
 # install dependencies
 install:
   # download VTK
-  - wget http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz
+  - wget http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz -O vtk-precise64.tar.gz
   - tar xzvf vtk-precise64.tar.gz -C ~
   # install R
   - sudo apt-add-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu `lsb_release -cs`/"
