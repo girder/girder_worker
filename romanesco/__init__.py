@@ -105,7 +105,7 @@ def convert(type, input, output):
 
 def toposort(data):
     """
-    General-purpose topoligical sort function. Dependencies are expressed as a
+    General-purpose topological sort function. Dependencies are expressed as a
     dictionary whose keys are items and whose values are a set of dependent
     items. Output is a list of sets in topological order. This is a generator
     function that returns a sequence of sets in topological order.
