@@ -1,5 +1,5 @@
 {
-    "inputs": [{"name": "input", "type": "tree", "format": "vtktree.serialized"}],
+    "inputs": [{"name": "input", "type": "geometry", "format": "vtkpolydata.serialized"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
     "script": "output = isinstance(input, (str, unicode))",
     "mode": "python"

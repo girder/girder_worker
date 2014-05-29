@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "geometry", "format": "vtkpolydata"}],
+    "outputs": [{"name": "output", "type": "geometry", "format": "vtkpolydata.serialized"}],
+    "script_uri": "file://vtkpolydata_to_vtkpolydata_serialized.py",
+    "mode": "python"
+}

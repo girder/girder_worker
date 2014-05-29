@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 import collections
+import vtk
 
 
 class TestTable(unittest.TestCase):
@@ -252,6 +253,58 @@ class TestTable(unittest.TestCase):
             ["Column 1", "Column 2", "Column 3"]
         )
         self.assertEqual(len(output["data"]["rows"]), 4)
+
+    def test_sniffer(self):
+        output = romanesco.convert(
+            "table",
+            {"format": "csv", "uri": (
+                "file://" +
+                os.path.dirname(os.path.realpath(__file__)) +
+                "/data/test.csv"
+            )},
+            {"format": "rows"}
+        )
+        self.assertEqual(len(output["data"]["fields"]), 32)
+        self.assertEqual(output["data"]["fields"][:3], [
+            "FACILITY", "ADDRESS", "DATE OF INSPECTION"
+        ])
+        self.assertEqual(len(output["data"]["rows"]), 14)
+
+    def test_vector(self):
+        rows = {
+            "fields": ["a", "b"],
+            "rows": [
+                {"a": [1, 2, 3], "b": ['1', '2']},
+                {"a": [4, 5, 6], "b": ['3', '4']}
+            ]
+        }
+
+        # Conversion to vtkTable
+        vtktable = romanesco.convert(
+            "table",
+            {"format": "rows", "data": rows},
+            {"format": "vtktable"}
+        )["data"]
+        self.assertEqual(vtktable.GetNumberOfRows(), 2)
+        self.assertEqual(vtktable.GetNumberOfColumns(), 2)
+        a = vtktable.GetColumnByName("a")
+        b = vtktable.GetColumnByName("b")
+        self.assertEqual(a.GetNumberOfComponents(), 3)
+        self.assertEqual(b.GetNumberOfComponents(), 2)
+        self.assertTrue(isinstance(a, vtk.vtkDoubleArray))
+        self.assertTrue(isinstance(b, vtk.vtkStringArray))
+        for i in range(6):
+            self.assertEqual(a.GetValue(i), i + 1)
+        for i in range(4):
+            self.assertEqual(b.GetValue(i), str(i + 1))
+
+        # Conversion back to rows
+        rows2 = romanesco.convert(
+            "table",
+            {"format": "vtktable", "data": vtktable},
+            {"format": "rows"}
+        )["data"]
+        self.assertEqual(rows2, rows)
 
 if __name__ == '__main__':
     unittest.main()
