@@ -6,7 +6,7 @@ import romanesco.uri
 from StringIO import StringIO
 
 
-def has_header(sample):
+def has_header(sample, dialect):
     # Creates a dictionary of types of data in each column. If any
     # column is of a single type (say, integers), *except* for the first
     # row, then the first row is presumed to be labels. If the type
@@ -19,7 +19,7 @@ def has_header(sample):
     # This is from Python's csv.py, with an added condition so empty cells
     # don't result in inconsistent columns.
 
-    rdr = csv.reader(StringIO(sample), csv.Sniffer().sniff(sample))
+    rdr = csv.reader(StringIO(sample), dialect=dialect)
 
     header = rdr.next()  # assume first row is header
 
@@ -86,18 +86,23 @@ def has_header(sample):
     return hasHeader > 0
 
 
-def csv_to_rows(input, *pargs, **kwargs):
+def csv_to_rows(input):
+
+    # csv package does not support unicode
+    input = str(input)
 
     # Take a data sample to determine headers, but
     # don't include incomplete last line
-    header = has_header('\n'.join(input[:2048].splitlines()[:-1]))
+    sample = '\n'.join(input[:5000].splitlines()[:-1])
+    dialect = csv.Sniffer().sniff(sample)
+    header = has_header(sample, dialect)
 
     if header:
-        reader = csv.DictReader(input.splitlines(), *pargs, **kwargs)
+        reader = csv.DictReader(input.splitlines(), dialect=dialect)
         rows = [d for d in reader]
         fields = reader.fieldnames
     else:
-        reader = csv.reader(input.splitlines(), *pargs, **kwargs)
+        reader = csv.reader(input.splitlines(), dialect=dialect)
         rows = [{"Column " + str(index + 1): value
                  for index, value in enumerate(row)} for row in reader]
         fields = []

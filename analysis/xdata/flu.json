@@ -1,0 +1,13 @@
+{
+    "inputs": [],
+    "outputs": [
+        {
+            "type": "table",
+            "name": "data",
+            "format": "csv"
+        }
+    ],
+    "mode": "python",
+    "name": "Flu trends",
+    "script_uri": "file://flu.py"
+}
