@@ -57,6 +57,15 @@ class TestTable(unittest.TestCase):
             ('bar', 4.0), ('foo', 3.0)])
         self.db["b"].insert(self.bobj)
 
+        # Change dir for loading analyses
+        self.prevdir = os.getcwd()
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(cur_path)
+        self.analysis_path = os.path.join(cur_path, "..", "analysis")
+
+    def tearDown(self):
+        os.chdir(self.prevdir)
+
     def test_json(self):
         outputs = romanesco.run(
             self.analysis,
@@ -257,11 +266,10 @@ class TestTable(unittest.TestCase):
     def test_sniffer(self):
         output = romanesco.convert(
             "table",
-            {"format": "csv", "uri": (
-                "file://" +
-                os.path.dirname(os.path.realpath(__file__)) +
-                "/data/test.csv"
-            )},
+            {
+                "format": "csv",
+                "uri": "file://" + os.path.join("data", "test.csv")
+            },
             {"format": "rows"}
         )
         self.assertEqual(len(output["data"]["fields"]), 32)
@@ -269,6 +277,19 @@ class TestTable(unittest.TestCase):
             "FACILITY", "ADDRESS", "DATE OF INSPECTION"
         ])
         self.assertEqual(len(output["data"]["rows"]), 14)
+
+        flu = romanesco.load(os.path.join(
+            self.analysis_path, "xdata", "flu.json"))
+
+        output = romanesco.run(
+            flu,
+            inputs={},
+            outputs={"data": {"type": "table", "format": "rows"}}
+        )
+        self.assertEqual(len(output["data"]["data"]["fields"]), 162)
+        self.assertEqual(output["data"]["data"]["fields"][:3], [
+            "Date", "United States", "Alabama"
+        ])
 
     def test_vector(self):
         rows = {
