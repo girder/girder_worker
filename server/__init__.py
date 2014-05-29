@@ -8,22 +8,34 @@ from girder.constants import AccessType
 import sys
 import traceback
 
-authenticated = ['jeffbaumes']
-safeFolders = [bson.objectid.ObjectId('5314be7cea33db24b6aa490c')]
+# If you desire authentication to run analyses (strongly encouraged),
+# Add the following to the girder config file:
+#
+# [romanesco]
+#
+# # Default is false, set to True to disallow free-for-all analysis execution
+# # and limit execution to the user and folder white lists below.
+# # require_auth: True
+#
+# # Whitelisted users who can run any analysis.
+# # full_access_users: ["user1", "user2"]
+#
+# # Whitelisted folders where any user (including those not logged in)
+# # can run analyses defined in these folders.
+# # safe_folders: [bson.objectid.ObjectId("5314be7cea33db24b6aa490c")]
 
-celeryapp = celery.Celery('romanesco',
-    backend='mongodb://localhost/romanesco',
-    broker='mongodb://localhost/romanesco')
 
 def getItemMetadata(itemId, itemApi):
     user = itemApi.getCurrentUser()
     item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
     return item['meta']
 
+
 def getParentFolder(itemId, itemApi):
     user = itemApi.getCurrentUser()
     item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
     return item['folderId']
+
 
 def getItemContent(itemId, itemApi):
     item = itemApi.getItem(id=itemId, params={})
@@ -39,11 +51,18 @@ def getItemContent(itemId, itemApi):
         io.write(chunk)
     return io.getvalue()
 
+
 def load(info):
+    celeryapp = celery.Celery(
+        'romanesco',
+        backend='mongodb://localhost/romanesco',
+        broker='mongodb://localhost/romanesco')
+
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
-        asyncResult = celeryapp.send_task('romanesco.convert', [inputType,
+        asyncResult = celeryapp.send_task('romanesco.convert', [
+            inputType,
             {"data": content, "format": inputFormat},
             {"format": outputFormat}
         ])
@@ -55,7 +74,8 @@ def load(info):
 
         content = getItemContent(itemId, itemApi)
 
-        asyncResult = celeryapp.send_task('romanesco.convert', [inputType,
+        asyncResult = celeryapp.send_task('romanesco.convert', [
+            inputType,
             {"data": content, "format": inputFormat},
             {"format": outputFormat}
         ])
@@ -83,29 +103,65 @@ def load(info):
             params = json.load(cherrypy.request.body)
             itemApi = info['apiRoot'].item
             user = itemApi.getCurrentUser()
-            if not user or user["login"] not in authenticated:
-                if getParentFolder(itemId, itemApi) not in safeFolders:
-                    return {'error': 'Unauthorized'}
+            conf = info['config'].get('romanesco', {})
+            requireAuth = conf.get('require_auth', False)
+            fullAccessUsers = conf.get('full_access_users', [])
+            safeFolders = conf.get('safe_folders', [])
+            if (
+                requireAuth
+                and (not user or user['login'] not in fullAccessUsers)
+                and getParentFolder(itemId, itemApi) not in safeFolders
+            ):
+                return {'error': 'Unauthorized'}
 
             metadata = getItemMetadata(itemId, itemApi)
             analysis = metadata["analysis"]
 
-            asyncResult = celeryapp.send_task('romanesco.run', [analysis], params)
+            asyncResult = celeryapp.send_task(
+                'romanesco.run', [analysis], params)
             return {'id': asyncResult.task_id}
 
         except:
             s = StringIO()
             traceback.print_exc(file=s)
-            return {'status': 'FAILURE', 'message': sys.exc_info(), 'traceback': s.getvalue()}
+            return {
+                'status': 'FAILURE',
+                'message': sys.exc_info(),
+                'traceback': s.getvalue()
+            }
 
     def romanescoStopRun(jobId, params):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
         return {'status': task.state}
 
-    info['apiRoot'].item.route('POST', ('romanesco', ':inputType', ':inputFormat', ':outputFormat'), romanescoConvertData)
-    info['apiRoot'].item.route('GET', (':itemId', 'romanesco', ':inputType', ':inputFormat', ':outputFormat'), romanescoConvert)
-    info['apiRoot'].item.route('GET', (':itemId', 'romanesco', ':jobId', 'status'), romanescoRunStatus)
-    info['apiRoot'].item.route('GET', (':itemId', 'romanesco', ':jobId', 'result'), romanescoRunResult)
-    info['apiRoot'].item.route('POST', (':itemId', 'romanesco'), romanescoRun)
-    info['apiRoot'].item.route('DELETE', (':itemId', 'romanesco', ':jobId'), romanescoStopRun)
+    info['apiRoot'].item.route(
+        'POST',
+        ('romanesco', ':inputType', ':inputFormat', ':outputFormat'),
+        romanescoConvertData)
+
+    info['apiRoot'].item.route(
+        'GET',
+        (':itemId', 'romanesco', ':inputType', ':inputFormat',
+         ':outputFormat'),
+        romanescoConvert)
+
+    info['apiRoot'].item.route(
+        'GET',
+        (':itemId', 'romanesco', ':jobId', 'status'),
+        romanescoRunStatus)
+
+    info['apiRoot'].item.route(
+        'GET',
+        (':itemId', 'romanesco', ':jobId', 'result'),
+        romanescoRunResult)
+
+    info['apiRoot'].item.route(
+        'POST',
+        (':itemId', 'romanesco'),
+        romanescoRun)
+
+    info['apiRoot'].item.route(
+        'DELETE',
+        (':itemId', 'romanesco', ':jobId'),
+        romanescoStopRun)
