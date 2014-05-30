@@ -74,6 +74,21 @@ A list of rows with ordered, named column attributes. Formats:
 
 :``"rows.json"``: The equivalent JSON representation of the ``"rows"`` format.
 
+:``"objectlist"``: A Python list of dictionaries of the form ``field: value``
+    where ``field`` is the field name and ``value`` is the value
+    of the field for that row. For example: ::
+
+        [{"one": 1, "two": 2}, {"one": 3, "two": 4}]
+
+    This is identical to the ``"rows"`` field of the ``"rows"`` format.
+    Note that this format does not preserve column ordering.
+
+:``"objectlist.json"``: The equivalent JSON representation of the
+    ``"objectlist"`` format.
+
+:``"objectlist.bson"``: The equivalent BSON representation of the
+    ``"objectlist"`` format. This is the format of MongoDB collections.
+
 :``"csv"``: A string containing the contents of a comma-separated CSV file.
     Column headers will be reasonably detected if present, otherwise
     columns will be named ``"Column 1"``, ``Column 2"``, etc.
@@ -81,9 +96,6 @@ A list of rows with ordered, named column attributes. Formats:
 
 :``"tsv"``: A string containing the contents of a tab-separated TSV file.
     Column headers are detected the same as for the ``"csv"`` format.
-
-:``"bson.rows"``: A BSON-encoded list of objects of the form ``field: value``,
-    for example a serialized MongoDB collection.
 
 :``"r.dataframe"``: An R data frame. If the first column contains unique values,
     these are set as the row names of the data frame.
@@ -169,3 +181,14 @@ An arbitrary R object.
 :``"object"``: An in-memory R object.
 
 :``"serialized"``: An R object serialized with R's ``serialize`` function.
+
+`"geometry"` type
+-----------------------
+3D geometry. Formats:
+
+:``"vtkpolydata"``: A vtkPolyData_ object.
+
+:``"vtkpolydata.serialized"``: A vtkPolyData serialized with vtkPolyDataWriter_.
+
+.. _vtkPolyData: http://www.vtk.org/doc/nightly/html/classvtkPolyData.html
+.. _vtkPolyDataWriter: http://www.vtk.org/doc/nightly/html/classvtkPolyDataWriter.html

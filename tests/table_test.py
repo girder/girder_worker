@@ -85,18 +85,18 @@ class TestTable(unittest.TestCase):
             self.analysis,
             inputs={
                 "a": {
-                    "format": "bson.rows",
+                    "format": "objectlist.bson",
                     "uri": "mongodb://localhost/test/a"},
                 "b": {
-                    "format": "bson.rows",
+                    "format": "objectlist.bson",
                     "uri": "mongodb://localhost/test/b"}
             },
             outputs={
                 "c": {
-                    "format": "bson.rows",
+                    "format": "objectlist.bson",
                     "uri": "mongodb://localhost/test/temp"}
             })
-        self.assertEqual(outputs["c"]["format"], "bson.rows")
+        self.assertEqual(outputs["c"]["format"], "objectlist.bson")
         coll = pymongo.MongoClient("mongodb://localhost")["test"]["temp"]
         self.assertEqual([d for d in coll.find()], [self.aobj, self.bobj])
 
@@ -164,11 +164,11 @@ class TestTable(unittest.TestCase):
             self.analysis,
             inputs={
                 "a": {
-                    "format": "bson.rows",
+                    "format": "objectlist.bson",
                     "uri": "mongodb://localhost/test/a"
                 },
                 "b": {
-                    "format": "bson.rows",
+                    "format": "objectlist.bson",
                     "uri": "mongodb://localhost/test/b"
                 }
             },
@@ -326,6 +326,45 @@ class TestTable(unittest.TestCase):
             {"format": "rows"}
         )["data"]
         self.assertEqual(rows2, rows)
+
+    def test_objectlist(self):
+        rows = {
+            "fields": ["a", "b"],
+            "rows": [
+                {"a": 1, "b": 'x'},
+                {"a": 4, "b": 'y'}
+            ]
+        }
+        objectlist = romanesco.convert(
+            "table",
+            {"format": "rows", "data": rows},
+            {"format": "objectlist"}
+        )["data"]
+        # Should have same row data
+        self.assertEqual(objectlist, rows["rows"])
+
+        rows2 = romanesco.convert(
+            "table",
+            {"format": "objectlist", "data": objectlist},
+            {"format": "rows"}
+        )["data"]
+        # Should have same fields but could be in different order
+        self.assertEqual(set(rows["fields"]), set(rows2["fields"]))
+        # Should have same row data
+        self.assertEqual(rows["rows"], rows2["rows"])
+
+        # Make sure we can go back and forth to JSON
+        objectlist = romanesco.convert(
+            "table",
+            romanesco.convert(
+                "table",
+                {"format": "objectlist", "data": rows["rows"]},
+                {"format": "objectlist.json"}
+            ),
+            {"format": "objectlist"}
+        )["data"]
+        self.assertEqual(rows["rows"], objectlist)
+
 
 if __name__ == '__main__':
     unittest.main()

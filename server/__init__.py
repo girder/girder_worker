@@ -6,7 +6,6 @@ from celery.result import AsyncResult
 from StringIO import StringIO
 from girder.constants import AccessType
 import sys
-import traceback
 
 # If you desire authentication to run analyses (strongly encouraged),
 # Add the following to the girder config file:
@@ -92,7 +91,11 @@ def load(info):
                 response['meta'] = str(job.result)
             return response
         except Exception:
-            return {'status': 'FAILURE', 'message': sys.exc_info()}
+            return {
+                'status': 'FAILURE',
+                'message': sys.exc_info(),
+                'trace': sys.exc_info()[2]
+            }
 
     def romanescoRunResult(itemId, jobId, params):
         job = AsyncResult(jobId, backend=celeryapp.backend)
@@ -122,12 +125,10 @@ def load(info):
             return {'id': asyncResult.task_id}
 
         except:
-            s = StringIO()
-            traceback.print_exc(file=s)
             return {
                 'status': 'FAILURE',
                 'message': sys.exc_info(),
-                'traceback': s.getvalue()
+                'trace': sys.exc_info()[2]
             }
 
     def romanescoStopRun(jobId, params):
