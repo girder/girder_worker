@@ -1,0 +1,7 @@
+{
+    "name": "Rows to Column Names Continuous",
+    "inputs": [{"name": "input", "type": "table", "format": "rows"}],
+    "outputs": [{"name": "output", "type": "table", "format": "column.names.continuous"}],
+    "script_uri": "file://rows_to_column_names_continuous.py",
+    "mode": "python"
+}
