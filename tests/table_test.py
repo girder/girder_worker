@@ -228,18 +228,24 @@ class TestTable(unittest.TestCase):
     def test_column_names_discrete(self):
         output = romanesco.convert("table", {
             "format": "rows",
-            "data": {"fields": ["a", "b","disc"], "rows": [{"a": 6, "b": 5, "disc": "yes"}]}
+            "data": {
+                "fields": ["a", "b", "disc"],
+                "rows": [{"a": 6, "b": 5, "disc": "yes"}]
+            }
         }, {"format": "column.names.discrete"})
         self.assertEqual(output["format"], "column.names.discrete")
         self.assertEqual(output["data"], ["disc"])
 
-   def test_column_names_continuous(self):
+    def test_column_names_continuous(self):
         output = romanesco.convert("table", {
             "format": "rows",
-            "data": {"fields": ["a", "b","disc"], "rows": [{"a": 6, "b": 5, "disc": "yes"}]}
-        }, {"format": "column.names.continous"})
+            "data": {
+                "fields": ["a", "b", "disc"],
+                "rows": [{"a": 6, "b": 5, "disc": "yes"}]
+            }
+        }, {"format": "column.names.continuous"})
         self.assertEqual(output["format"], "column.names.continuous")
-        self.assertEqual(output["data"], ["a","b"])
+        self.assertEqual(output["data"], ["a", "b"])
 
     def test_r_dataframe(self):
         outputs = romanesco.run(

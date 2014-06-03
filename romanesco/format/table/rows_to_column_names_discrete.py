@@ -1,4 +1,4 @@
 output = []
 for column in input["fields"]:
-    if isinstance(data["rows"][0][column],str):
+    if isinstance(input["rows"][0][column], (str, unicode)):
         output.append(column)
