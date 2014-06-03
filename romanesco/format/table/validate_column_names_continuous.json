@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "column.names.continuous"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "output = isinstance(input, list)",
+    "mode": "python"
+}
