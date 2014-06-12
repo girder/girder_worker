@@ -5,6 +5,7 @@ import csv
 import functools
 import tempfile
 import os
+import sys
 import urllib2
 import romanesco.format
 import romanesco.uri
@@ -254,7 +255,17 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
         for name in inputs:
             custom.__dict__[name] = inputs[name]["script_data"]
 
-        exec analysis["script"] in custom.__dict__
+        try:
+            exec analysis["script"] in custom.__dict__
+        except Exception, e:
+            trace = sys.exc_info()[2]
+            lines = analysis["script"].split("\n")
+            lines = [(str(i+1) + ": " + lines[i]) for i in xrange(len(lines))]
+            error = (
+                str(e) + "\nScript:\n" + "\n".join(lines)
+                + "\nAnalysis:\n" + json.dumps(analysis, indent=4)
+            )
+            raise Exception(error), None, trace
 
         for name, analysis_output in analysis_outputs.iteritems():
             d = outputs[name]

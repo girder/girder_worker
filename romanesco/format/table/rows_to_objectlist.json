@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "rows"}],
+    "outputs": [{"name": "output", "type": "table", "format": "objectlist"}],
+    "script_uri": "file://rows_to_objectlist.py",
+    "mode": "python"
+}

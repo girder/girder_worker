@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "objectlist"}],
+    "outputs": [{"name": "output", "type": "table", "format": "objectlist.json"}],
+    "script_uri": "file://objectlist_to_objectlist_json.py",
+    "mode": "python"
+}

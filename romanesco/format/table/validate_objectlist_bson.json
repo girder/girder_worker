@@ -1,5 +1,5 @@
 {
-    "inputs": [{"name": "input", "type": "table", "format": "bson.rows"}],
+    "inputs": [{"name": "input", "type": "table", "format": "objectlist.bson"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
     "script": "output = isinstance(input, str)",
     "mode": "python"
