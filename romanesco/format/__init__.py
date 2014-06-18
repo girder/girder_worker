@@ -22,6 +22,7 @@ def has_header(sample, dialect):
     rdr = csv.reader(StringIO(sample), dialect=dialect)
 
     header = rdr.next()  # assume first row is header
+    print header
 
     columns = len(header)
     columnTypes = {}
@@ -95,6 +96,7 @@ def csv_to_rows(input):
     # don't include incomplete last line
     sample = '\n'.join(input[:5000].splitlines()[:-1])
     dialect = csv.Sniffer().sniff(sample)
+    dialect.skipinitialspace = True
     header = has_header(sample, dialect)
 
     if header:
