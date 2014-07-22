@@ -265,6 +265,22 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["b"]["data"], {
             "fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]})
 
+    def test_flu(self):
+        output = romanesco.convert(
+            "table",
+            {
+                "format": "csv",
+                "uri": "file://" + os.path.join("data", "flu.csv")
+            },
+            {"format": "column.names"}
+        )
+        self.assertEqual(output["format"], "column.names")
+        self.assertEqual(len(output["data"]), 162)
+        self.assertEqual(
+            output["data"][:3],
+            ['Date', 'United States', 'Alabama']
+        )
+
     def test_header_detection(self):
         output = romanesco.convert(
             "table",
@@ -308,10 +324,24 @@ class TestTable(unittest.TestCase):
             inputs={},
             outputs={"data": {"type": "table", "format": "rows"}}
         )
-        self.assertEqual(len(output["data"]["data"]["fields"]), 162)
         self.assertEqual(output["data"]["data"]["fields"][:3], [
             "Date", "United States", "Alabama"
         ])
+
+    def test_big_header(self):
+        output = romanesco.convert(
+            "table",
+            {
+                "format": "csv",
+                "uri": "file://" + os.path.join("data", "RadiomicsData.csv")
+            },
+            {"format": "rows"}
+        )
+        self.assertEqual(len(output["data"]["fields"]), 454)
+        self.assertEqual(output["data"]["fields"][:3], [
+            "GLCM_autocorr", "GLCM_clusProm", "GLCM_clusShade"
+        ])
+        self.assertEqual(len(output["data"]["rows"]), 99)
 
     def test_vector(self):
         rows = {
