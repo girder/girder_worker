@@ -3,6 +3,7 @@ import json
 import glob
 import os
 import romanesco.uri
+import math
 from StringIO import StringIO
 
 
@@ -124,7 +125,13 @@ def csv_to_rows(input):
                 row[col] = int(row[col])
             except:
                 try:
+                    orig = row[col]
                     row[col] = float(row[col])
+
+                    # Disallow NaN, Inf, -Inf since this does not
+                    # pass through JSON converters cleanly
+                    if math.isnan(row[col]) or math.isinf(row[col]):
+                        row[col] = orig
                 except:
                     pass
 

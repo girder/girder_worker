@@ -4,6 +4,8 @@ import tempfile
 import unittest
 import collections
 import vtk
+import json
+import math
 
 
 class TestTable(unittest.TestCase):
@@ -342,6 +344,27 @@ class TestTable(unittest.TestCase):
             "GLCM_autocorr", "GLCM_clusProm", "GLCM_clusShade"
         ])
         self.assertEqual(len(output["data"]["rows"]), 99)
+
+    def test_nan(self):
+        output = romanesco.convert(
+            "table",
+            {
+                "format": "csv",
+                "uri": "file://" + os.path.join("data", "RadiomicsData.csv")
+            },
+            {"format": "rows.json"}
+        )
+        data = json.loads(output["data"])
+        self.assertEqual(len(data["fields"]), 454)
+        self.assertEqual(data["fields"][:3], [
+            "GLCM_autocorr", "GLCM_clusProm", "GLCM_clusShade"
+        ])
+        self.assertEqual(len(data["rows"]), 99)
+        for row in data["rows"]:
+            for field in row:
+                if isinstance(row[field], float):
+                    self.assertFalse(math.isnan(row[field]))
+                    self.assertFalse(math.isinf(row[field]))
 
     def test_vector(self):
         rows = {
