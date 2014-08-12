@@ -57,6 +57,36 @@ def load(info):
         backend='mongodb://localhost/romanesco',
         broker='mongodb://localhost/romanesco')
 
+    def romanescoCreateModule(params):
+        """Create a new romanesco module."""
+
+        collectionApi = info['apiRoot'].collection
+
+        collectionApi.requireParams(['name'], params)
+
+        user = collectionApi.getCurrentUser()
+        public = collectionApi.boolParam('public', params, default=False)
+
+        collection = collectionApi.model('collection').createCollection(
+            name=params['name'], description=params.get('description'),
+            public=public, creator=user)
+
+        folderApi = info['apiRoot'].folder
+
+        folderApi.createFolder({
+            'name': 'Data',
+            'public': public,
+            'parentType': 'collection',
+            'parentId': collection['_id']})
+
+        folderApi.createFolder({
+            'name': 'Analyses',
+            'public': public,
+            'parentType': 'collection',
+            'parentId': collection['_id']})
+
+        return collectionApi.model('collection').filter(collection)
+
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
@@ -135,6 +165,11 @@ def load(info):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
         return {'status': task.state}
+
+    info['apiRoot'].collection.route(
+        'POST',
+        ('romanesco', 'module'),
+        romanescoCreateModule)
 
     info['apiRoot'].item.route(
         'POST',
