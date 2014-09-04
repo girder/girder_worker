@@ -1,4 +1,5 @@
 import bson
+import json
 import romanesco
 import unittest
 
@@ -61,11 +62,10 @@ END;"""
         outputs = romanesco.run(
             self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
-            outputs={"b": {"format": "nested.json"}}
+            outputs={"b": {"format": "nested"}}
         )
-        self.assertEqual(outputs["b"]["format"], "nested.json")
-        self.assertEqual(
-            outputs["b"]["data"],
+        self.assertEqual(outputs["b"]["format"], "nested")
+        expected = json.loads(
             '{"edge_fields": ["weight"], "node_fields": '
             '["node name", "node weight"], "node_data": '
             '{"node name": "", "node weight": 0.0}, "children": '
@@ -76,6 +76,44 @@ END;"""
             '"node weight": 3.0}, "edge_data": {"weight": 1.0}}]}, '
             '{"node_data": {"node name": "rubribarbus", "node weight": 3.0}, '
             '"edge_data": {"weight": 3.0}}]}')
+
+        expected = {
+            "edge_fields": ["weight"],
+            "node_fields": ["node name", "node weight"],
+            "node_data": {"node name": "", "node weight": 0.0},
+            "children": [
+                {
+                    "node_data": {"node name": "", "node weight": 2.0},
+                    "edge_data": {"weight": 2.0},
+                    "children": [
+                        {
+                            "node_data": {
+                                "node name": "ahli",
+                                "node weight": 2.0
+                            },
+                            "edge_data": {"weight": 0.0}
+                        },
+                        {
+                            "node_data": {
+                                "node name": "allogus",
+                                "node weight": 3.0
+                            },
+                            "edge_data": {"weight": 1.0}
+                        }
+                    ]
+                },
+                {
+                    "node_data": {
+                        "node name": "rubribarbus",
+                        "node weight": 3.0
+                    },
+                    "edge_data": {"weight": 3.0}
+                }
+            ]
+        }
+
+        self.assertEqual(
+            outputs["b"]["data"], expected)
 
     def test_vtktree(self):
         outputs = romanesco.run(
