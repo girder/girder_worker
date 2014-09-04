@@ -1,0 +1,7 @@
+{
+    "name": "R Ape Tree to Nested",
+    "inputs": [{"name": "input", "type": "tree", "format": "r.apetree"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "nested"}],
+    "script_uri": "file://r_apetree_to_nested.py",
+    "mode": "python"
+}

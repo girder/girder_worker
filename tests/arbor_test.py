@@ -1,6 +1,7 @@
 import romanesco
 import unittest
 import os
+import json
 
 
 class TestArbor(unittest.TestCase):
@@ -59,6 +60,25 @@ class TestArbor(unittest.TestCase):
             }
         )
         # print outputs["newtable"]
+
+    def test_mammal_tree(self):
+        mammal = romanesco.load(
+            os.path.join("data", "Mammal tree extraction.json"))
+        outputs = romanesco.run(
+            mammal,
+            {
+                "table": {
+                    "format": "csv",
+                    "uri": "file://" +
+                           os.path.join("data", "mammal_lnMass_tiny.csv")
+                },
+                "outRowCount": {"format": "number", "data": 19}
+            },
+            {
+                "tree": {"format": "nested"}
+            }
+        )
+        # print json.dumps(outputs["tree"], indent=2)
 
     def tearDown(self):
         os.chdir(self.prevdir)

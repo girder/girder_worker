@@ -24,7 +24,7 @@ def load(analysis_file):
     with open(analysis_file) as f:
         analysis = json.load(f)
 
-    if "script" not in analysis:
+    if "script" not in analysis and analysis.get("mode") != "workflow":
         prevdir = os.getcwd()
         parent = os.path.dirname(analysis_file)
         if parent != "":
