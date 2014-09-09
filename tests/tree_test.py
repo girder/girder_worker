@@ -1,4 +1,5 @@
 import bson
+import os
 import romanesco
 import unittest
 
@@ -47,6 +48,13 @@ BEGIN TREES;
     ;
     TREE * UNTITLED = [&R] ((1:1,2:1):1,(3:1,4:1):1);
 END;"""
+        # Change dir for loading analyses
+        self.prevdir = os.getcwd()
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(cur_path)
+
+    def tearDown(self):
+        os.chdir(self.prevdir)
 
     def test_newick(self):
         outputs = romanesco.run(
@@ -145,6 +153,16 @@ END;"""
         expected = "\n".join(self.nexus.splitlines()[2:])
         expected = " ".join(expected.split())
         self.assertEqual(out, expected)
+
+    def test_non_binary_tree(self):
+        output = romanesco.convert(
+            "tree",
+            {
+                "format": "newick",
+                "uri": "file://" +
+                       os.path.join("data", "geospiza_from_otl.phy")
+            },
+            {"format": "nested"})
 
     def test_treestore(self):
         output = romanesco.convert(

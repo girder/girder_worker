@@ -43,6 +43,8 @@ for edgeIndex in range(edgeCount):
         endNode['edge_data'] = {'weight': input[3][edgeIndex]}
     except TypeError:
         print "error on edgeIndex or no branchlength:", edgeIndex
+    except IndexError:
+        print "error on edgeIndex or no branchlength:", edgeIndex
 
     # add edge leaving start node and going to endnode
     startNode['children'].append(endNode)
@@ -53,7 +55,9 @@ output['edge_fields'] = ['weight']
 
 
 def nodeWeights(node, cur):
-    cur += node.get('edge_data', {'weight': 0.0})['weight']
+    weight = node.get('edge_data', {'weight': 0.0})['weight']
+    if isinstance(weight, (int, float)):
+        cur += weight
     node['node_data']['node weight'] = cur
     for c in node.get('children', []):
         nodeWeights(c, cur)
