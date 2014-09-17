@@ -6,9 +6,9 @@ node_fields = input["node_fields"]
 edge_fields = input["edge_fields"]
 dict_to_vtkarrays(input["node_data"], node_fields, vtk_builder.GetVertexData())
 if "children" in input and len(input["children"]) > 0:
-    dict_to_vtkarrays(input["children"][0]["edge_data"], edge_fields,
-                      vtk_builder.GetEdgeData())
-
+    if "edge_data" in input["children"][0]:
+        dict_to_vtkarrays(input["children"][0]["edge_data"], edge_fields,
+                          vtk_builder.GetEdgeData())
 
 def process_node(vtknode, node):
     if "children" in node:
@@ -16,7 +16,8 @@ def process_node(vtknode, node):
             vtkchild = vtk_builder.AddVertex()
             vtkparentedge = vtk_builder.AddGraphEdge(vtknode, vtkchild).GetId()
             dict_to_vtkrow(n["node_data"], vtk_builder.GetVertexData())
-            dict_to_vtkrow(n["edge_data"], vtk_builder.GetEdgeData())
+            if "edge_data" in n:
+                dict_to_vtkrow(n["edge_data"], vtk_builder.GetEdgeData())
             process_node(vtkchild, n)
 vtk_builder.AddVertex()
 dict_to_vtkrow(input["node_data"], vtk_builder.GetVertexData())

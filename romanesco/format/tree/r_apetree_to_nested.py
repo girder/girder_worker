@@ -1,21 +1,42 @@
+# The R phylo tree format is a list where the elements
+# are not guaranteed to be in any particular order.
+# Here we determine which element is which.
+element_names_sexp = input.do_slot("names")
+element_names = [x for x in element_names_sexp]
 
-if len(input[1]) == 1:
-    leafIndex = 2
-    countIndex = 1
+# required elements
+tipLabelIndex = -1
+if 'tip.label' in element_names:
+    tipLabelIndex = element_names.index('tip.label')
 else:
-    leafIndex = 1
-    countIndex = 2
+    print "Error: tip.label not found in input ape tree"
 
-leafCount = len(input[leafIndex])
+nNodeIndex = -1
+if 'Nnode' in element_names:
+    nNodeIndex = element_names.index('Nnode')
+else:
+    print "Error: Nnode not found in input ape tree"
 
+edgeIndex = -1
+if 'edge' in element_names:
+    edgeIndex = element_names.index('edge')
+else:
+    print "Error: edge not found in input ape tree"
+
+# optional element (edge lengths)
+edgeLengthIndex = -1
+if 'edge.length' in element_names:
+    edgeLengthIndex = element_names.index('edge.length')
 
 def nodeNameFromIndex(index):
+    global tipLabelIndex
     if index < leafCount + 1:
         # node is a taxon, return the species name
-        return input[leafIndex][index - 1]
+        return input[tipLabelIndex][index - 1]
     return ""
 
-totalNodes = leafCount + int(input[countIndex][0])
+leafCount = len(input[tipLabelIndex])
+totalNodes = leafCount + int(input[nNodeIndex][0])
 
 nodes = []
 nodeMap = {}
@@ -31,20 +52,21 @@ for index in range(1, totalNodes + 1):
     nodeMap[index] = node
 
 # go through the edge table and add fields to the nodes in the collection
-edgeCount = len(input[0])/2
+edgeCount = len(input[edgeIndex])/2
 
-for edgeIndex in range(edgeCount):
-    startNodeIndex = int(input[0][edgeIndex])
-    endNodeIndex = int(input[0][edgeCount + edgeIndex])
+for edge in range(edgeCount):
+    startNodeIndex = int(input[edgeIndex][edge])
+    endNodeIndex = int(input[edgeIndex][edgeCount + edge])
     startNode = nodeMap[startNodeIndex]
     endNode = nodeMap[endNodeIndex]
-    # add branch length to end node
-    try:
-        endNode['edge_data'] = {'weight': input[3][edgeIndex]}
-    except TypeError:
-        print "error on edgeIndex or no branchlength:", edgeIndex
-    except IndexError:
-        print "error on edgeIndex or no branchlength:", edgeIndex
+    if edgeLengthIndex != -1:
+        # add branch length to end node
+        try:
+            endNode['edge_data'] = {'weight': input[edgeLengthIndex][edge]}
+        except TypeError:
+            print "error on edge or no branchlength:", edge
+        except IndexError:
+            print "error on edge or no branchlength:", edge
 
     # add edge leaving start node and going to endnode
     startNode['children'].append(endNode)
@@ -52,7 +74,6 @@ for edgeIndex in range(edgeCount):
 output = nodeMap[leafCount + 1]
 output['node_fields'] = ['node name', 'node weight']
 output['edge_fields'] = ['weight']
-
 
 def nodeWeights(node, cur):
     weight = node.get('edge_data', {'weight': 0.0})['weight']
