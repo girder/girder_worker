@@ -23,23 +23,28 @@ if 'edge' in element_names:
 else:
     print "Error: edge not found in input ape tree"
 
-# optional element (edge lengths)
+# optional elements
 edgeLengthIndex = -1
 if 'edge.length' in element_names:
     edgeLengthIndex = element_names.index('edge.length')
 
-def nodeNameFromIndex(index):
-    global tipLabelIndex
-    if index < leafCount + 1:
-        # node is a taxon, return the species name
-        return input[tipLabelIndex][index - 1]
-    return ""
+nodeLabelIndex = -1
+if 'node.label' in element_names:
+    nodeLabelIndex = element_names.index('node.label')
 
 leafCount = len(input[tipLabelIndex])
 totalNodes = leafCount + int(input[nNodeIndex][0])
 
 nodes = []
 nodeMap = {}
+
+def nodeNameFromIndex(index):
+    if index < leafCount + 1:
+        # node is a taxon, return the species name
+        return input[tipLabelIndex][index - 1]
+    elif nodeLabelIndex != -1:
+        return input[nodeLabelIndex][index - 1 - leafCount]
+    return ""
 
 # loop through the nodes and create a dict for each one
 for index in range(1, totalNodes + 1):
