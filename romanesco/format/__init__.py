@@ -92,16 +92,24 @@ def csv_to_rows(input):
     # csv package does not support unicode
     input = str(input)
 
-    # Take a data sample to determine headers, but
-    # don't include incomplete last line
-    sample = ''
-    sampleSize = 0
-    while len(sample) == 0:
-        sampleSize += 5000
-        sample = '\n'.join(input[:sampleSize].splitlines()[:-1])
-    dialect = csv.Sniffer().sniff(sample)
-    dialect.skipinitialspace = True
-    header = has_header(sample, dialect)
+    # Special case: detect single-column files.
+    # This check assumes that our only valid delimiters are commas and tabs.
+    firstLine = input.split('\n')[0]
+    if not ('\t' in firstLine or ',' in firstLine):
+        header = False
+        dialect = 'excel'
+
+    else:
+        # Take a data sample to determine headers, but
+        # don't include incomplete last line
+        sample = ''
+        sampleSize = 0
+        while len(sample) == 0:
+            sampleSize += 5000
+            sample = '\n'.join(input[:sampleSize].splitlines()[:-1])
+        dialect = csv.Sniffer().sniff(sample)
+        dialect.skipinitialspace = True
+        header = has_header(sample, dialect)
 
     if header:
         reader = csv.DictReader(input.splitlines(), dialect=dialect)
