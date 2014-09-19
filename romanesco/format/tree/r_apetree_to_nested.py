@@ -38,6 +38,7 @@ totalNodes = leafCount + int(input[nNodeIndex][0])
 nodes = []
 nodeMap = {}
 
+
 def nodeNameFromIndex(index):
     if index < leafCount + 1:
         # node is a taxon, return the species name
@@ -79,6 +80,7 @@ for edge in range(edgeCount):
 output = nodeMap[leafCount + 1]
 output['node_fields'] = ['node name', 'node weight']
 output['edge_fields'] = ['weight']
+
 
 def nodeWeights(node, cur):
     weight = node.get('edge_data', {'weight': 0.0})['weight']

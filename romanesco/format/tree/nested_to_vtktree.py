@@ -10,6 +10,7 @@ if "children" in input and len(input["children"]) > 0:
         dict_to_vtkarrays(input["children"][0]["edge_data"], edge_fields,
                           vtk_builder.GetEdgeData())
 
+
 def process_node(vtknode, node):
     if "children" in node:
         for n in node["children"]:
