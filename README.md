@@ -1,4 +1,4 @@
-Romanesco [![Build Status](https://travis-ci.org/kitware/romanesco.png?branch=master)](https://travis-ci.org/kitware/romanesco)
+Romanesco [![Build Status](https://travis-ci.org/Kitware/romanesco.png?branch=master)](https://travis-ci.org/Kitware/romanesco)
 =========
 
 A flexible, simple script execution engine.
