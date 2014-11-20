@@ -236,6 +236,103 @@ class TestWorkflow(unittest.TestCase):
             ]
         }
 
+        self.visualization = {
+            "mode": "workflow",
+            "inputs": [
+                {
+                    "name": "x",
+                    "type": "number",
+                    "format": "number"
+                },
+                {
+                    "name": "y",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "result",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "steps": [
+                {
+                    "id": 1,
+                    "analysis": self.add,
+                },
+                {
+                    "id": 2,
+                    "analysis": self.multiply,
+                },
+                {
+                    "id": 3,
+                    "analysis": self.multiply,
+                },
+                {
+                    "id": 4,
+                    "visualization": True,
+                    "analysis": {
+                        "inputs": [
+                            {
+                                "name": "x",
+                                "type": "number",
+                                "format": "number"
+                            }
+                        ]
+                    },
+                    "name": "numbervis"
+                }
+            ],
+            "connections": [
+                {
+                    "name": "x",
+                    "input_step": 2,
+                    "input": "in1"
+                },
+                {
+                    "name": "x",
+                    "input_step": 2,
+                    "input": "in2"
+                },
+                {
+                    "name": "y",
+                    "input_step": 3,
+                    "input": "in1"
+                },
+                {
+                    "name": "y",
+                    "input_step": 3,
+                    "input": "in2"
+                },
+                {
+                    "output_step": 2,
+                    "output": "out",
+                    "input_step": 1,
+                    "input": "a"
+                },
+                {
+                    "output_step": 3,
+                    "output": "out",
+                    "input_step": 1,
+                    "input": "b"
+                },
+                {
+                    "name": "result",
+                    "output_step": 1,
+                    "output": "c"
+                },
+                {
+                    "output_step": 1,
+                    "output": "c",
+                    "input_step": 4,
+                    "input": "x"
+                }
+            ]
+        }
+
+
     def test_workflow(self):
         outputs = romanesco.run(
             self.workflow,
@@ -264,6 +361,26 @@ class TestWorkflow(unittest.TestCase):
             })
         self.assertEqual(outputs["result"]["format"], "number")
         self.assertEqual(outputs["result"]["data"], (2*2)+(3*3))
+
+    def test_visualization(self):
+        outputs = romanesco.run(
+            self.visualization,
+            inputs={
+                "x": {"format": "number", "data": 2},
+                "y": {"format": "number", "data": 3}
+            })
+        self.assertEqual(outputs["result"]["format"], "number")
+        self.assertEqual(outputs["result"]["data"], (2*2)+(3*3))
+        self.assertEqual(outputs["_visualizations"], [{
+            "mode": "preset",
+            "type": "numbervis",
+            "inputs": {
+                "x": {
+                    "format": "number",
+                    "data": (2*2)+(3*3)
+                }
+            }
+        }])
 
 if __name__ == '__main__':
     unittest.main()
