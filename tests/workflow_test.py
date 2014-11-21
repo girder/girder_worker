@@ -332,7 +332,6 @@ class TestWorkflow(unittest.TestCase):
             ]
         }
 
-
     def test_workflow(self):
         outputs = romanesco.run(
             self.workflow,
