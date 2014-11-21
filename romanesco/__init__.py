@@ -337,7 +337,8 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
         for step_set in toposort(dependencies):
             for step in step_set:
                 # Visualizations cannot be executed
-                if "visualization" in steps[step] and steps[step]["visualization"]:
+                if ("visualization" in steps[step]
+                        and steps[step]["visualization"]):
                     continue
 
                 # Run step
@@ -356,7 +357,6 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
                                 o = outputs[conn["name"]]
                                 o["script_data"] = out[name]["data"]
 
-
         # Output visualization paramaters
         outputs["_visualizations"] = []
         for step in analysis["steps"]:
@@ -372,34 +372,53 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
                         vis_input = step_input
 
                 if not vis_input:
-                    raise Exception("Could not find visualization input named " + b + ".")
+                    raise Exception(
+                        "Could not find visualization input named " + b + "."
+                    )
 
                 # Validate the output
-                if validate and not romanesco.isvalid(vis_input["type"], script_output):
+                if (validate and not
+                        romanesco.isvalid(vis_input["type"], script_output)):
                     raise Exception(
                         "Output " + name + " ("
                         + str(type(script_output["data"]))
                         + ") is not in the expected type ("
                         + vis_input["type"] + ") and format ("
-                        + d["format"] + ").")
+                        + d["format"] + ")."
+                    )
 
                 if auto_convert:
-                    vis_bindings[b] = romanesco.convert(vis_input["type"], script_output, {"format": vis_input["format"]})
+                    vis_bindings[b] = romanesco.convert(
+                        vis_input["type"],
+                        script_output,
+                        {"format": vis_input["format"]}
+                    )
 
                 elif script_output["format"] == vis_input["format"]:
                     data = script_output["data"]
                     if "uri" in script_output:
                         romanesco.uri.put_uri(data, script_output["uri"])
                     else:
-                        vis_bindings[b] = {"type": vis_input["type"], "format": vis_input["format"], "data": data}
+                        vis_bindings[b] = {
+                            "type": vis_input["type"],
+                            "format": vis_input["format"],
+                            "data": data
+                        }
                 else:
-                    raise Exception("Expected exact format match but '" + script_output["format"]
-                    + "' != '" + vis_input["format"] + "'.")
+                    raise Exception(
+                        "Expected exact format match but '"
+                        + script_output["format"]
+                        + "' != '" + vis_input["format"] + "'."
+                    )
 
                 if "script_data" in vis_bindings[b]:
                     del vis_bindings[b]["script_data"]
 
-            outputs["_visualizations"].append({"mode": "preset", "type": step["name"], "inputs": vis_bindings})
+            outputs["_visualizations"].append({
+                "mode": "preset",
+                "type": step["name"],
+                "inputs": vis_bindings
+            })
 
     else:
         raise Exception("Unsupported analysis mode")

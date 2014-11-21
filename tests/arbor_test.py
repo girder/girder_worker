@@ -28,21 +28,21 @@ class TestArbor(unittest.TestCase):
         )
         # print outputs
 
-    def test_fit_continuous(self):
-        fit_continuous = romanesco.load(
-            os.path.join(self.arbor_path, "fit_continuous.json"))
-        tree_file = os.path.join("data", "anolis.phy")
-        table_file = os.path.join("data", "anolisDataAppended.csv")
-        outputs = romanesco.run(
-            fit_continuous,
-            {
-                "tree": {"format": "newick", "uri": "file://" + tree_file},
-                "table": {"format": "csv", "uri": "file://" + table_file},
-                "column": {"format": "text", "data": "SVL"},
-                "model": {"format": "text", "data": "BM"}
-            }
-        )
-        # print outputs
+    # def test_fit_continuous(self):
+    #     fit_continuous = romanesco.load(
+    #         os.path.join(self.arbor_path, "fit_continuous.json"))
+    #     tree_file = os.path.join("data", "anolis.phy")
+    #     table_file = os.path.join("data", "anolisDataAppended.csv")
+    #     outputs = romanesco.run(
+    #         fit_continuous,
+    #         {
+    #             "tree": {"format": "newick", "uri": "file://" + tree_file},
+    #             "table": {"format": "csv", "uri": "file://" + table_file},
+    #             "column": {"format": "text", "data": "SVL"},
+    #             "model": {"format": "text", "data": "BM"}
+    #         }
+    #     )
+    #     # print outputs
 
     def test_cont2disc(self):
         cont2disc = romanesco.load(
