@@ -1,4 +1,5 @@
 {
     "name": "Romanesco",
-    "description": "Analytics execution engine."
+    "description": "Analytics execution engine.",
+    "version": "0.1.0"
 }

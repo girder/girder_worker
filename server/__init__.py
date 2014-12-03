@@ -5,6 +5,7 @@ import json
 from celery.result import AsyncResult
 from StringIO import StringIO
 from girder.constants import AccessType
+from girder.api import access
 import sys
 
 # If you desire authentication to run analyses (strongly encouraged),
@@ -57,6 +58,7 @@ def load(info):
         backend='mongodb://localhost/romanesco',
         broker='mongodb://localhost/romanesco')
 
+    @access.public
     def romanescoCreateModule(params):
         """Create a new romanesco module."""
 
@@ -87,6 +89,7 @@ def load(info):
 
         return collectionApi.model('collection').filter(collection)
 
+    @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
@@ -98,6 +101,7 @@ def load(info):
 
         return asyncResult.get()
 
+    @access.public
     def romanescoConvert(itemId, inputType, inputFormat, outputFormat, params):
         itemApi = info['apiRoot'].item
 
@@ -111,6 +115,7 @@ def load(info):
 
         return asyncResult.get()
 
+    @access.public
     def romanescoRunStatus(itemId, jobId, params):
         job = AsyncResult(jobId, backend=celeryapp.backend)
         try:
@@ -127,10 +132,12 @@ def load(info):
                 'trace': sys.exc_info()[2]
             }
 
+    @access.public
     def romanescoRunResult(itemId, jobId, params):
         job = AsyncResult(jobId, backend=celeryapp.backend)
         return {'result': job.result}
 
+    @access.public
     def romanescoRun(itemId, params):
         try:
             params = json.load(cherrypy.request.body)
@@ -161,6 +168,7 @@ def load(info):
                 'trace': sys.exc_info()[2]
             }
 
+    @access.public
     def romanescoStopRun(jobId, params):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
