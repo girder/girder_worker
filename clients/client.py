@@ -6,19 +6,19 @@ celeryapp = celery.Celery('romanesco',
 
 analysis = {
     "name": "append_tables",
-    "inputs": [{"name": "a", "type": "table", "format": "rows"}, {"name": "b", "type": "table", "format": "rows"}],
-    "outputs": [{"name": "c", "type": "table", "format": "rows"}],
+    "inputs": [{"name": "a", "type": "table", "format": "objectlist"}, {"name": "b", "type": "table", "format": "objectlist"}],
+    "outputs": [{"name": "c", "type": "table", "format": "objectlist"}],
     "script": "c = a + b",
     "mode": "python"
 }
 
 async_result = celeryapp.send_task("romanesco.run", [analysis], {
     "inputs": {
-        "a": {"format": "json.rows", "data": '[{"aa": 1, "bb": 2}]'},
-        "b": {"format": "json.rows", "data": '[{"aa": 3, "bb": 4}]'}
+        "a": {"format": "objectlist", "data": [{"aa": 1, "bb": 2}]},
+        "b": {"format": "objectlist", "data": [{"aa": 3, "bb": 4}]}
     },
     "outputs": {
-        "c": {"format": "json.rows", "uri": "file://output.json"}
+        "c": {"format": "objectlist.json", "uri": "file://output.json"}
     }
 })
 
