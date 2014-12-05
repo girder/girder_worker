@@ -142,7 +142,8 @@ def load(info):
     def getTaskId(jobId):
         # Get the celery task ID for this job.
         jobApi = info['apiRoot'].job
-        job = jobApi.model('job', 'jobs').load(jobId, user=jobApi.getCurrentUser(), level=AccessType.READ)
+        job = jobApi.model('job', 'jobs').load(
+            jobId, user=jobApi.getCurrentUser(), level=AccessType.READ)
         return job["taskId"]
 
     def romanescoRunStatus(itemId, jobId, params):
@@ -171,31 +172,51 @@ def load(info):
 
     def romanescoRunOutput(itemId, jobId, params):
         jobApi = info['apiRoot'].job
+        taskId = getTaskId(jobId)
         timeout = 300
         cherrypy.response.headers['Content-Type'] = 'text/event-stream'
         cherrypy.response.headers['Cache-Control'] = 'no-cache'
 
         def sseMessage(output):
-            return 'data: {}\n\n'.format(output)
+            return 'event: log\ndata: {}\n\n'.format(output)
 
         def streamGen():
             start = time.time()
+            endtime = None
             oldLog = ''
-            while time.time() - start < timeout and\
-                    cherrypy.engine.state == cherrypy.engine.states.STARTED:
-                # Display new log info from this job since the last execution of this loop.
-                job = jobApi.model('job', 'jobs').load(jobId, user=jobApi.getCurrentUser(),
-                                                       level=AccessType.READ)
+            while (time.time() - start < timeout
+                    and cherrypy.engine.state == cherrypy.engine.states.STARTED
+                    and (endtime is None or time.time() < endtime)):
+                # Display new log info from this job since the
+                # last execution of this loop.
+                job = jobApi.model('job', 'jobs').load(
+                    jobId,
+                    user=jobApi.getCurrentUser(),
+                    level=AccessType.READ)
                 newLog = job['log']
                 if newLog != oldLog:
                     start = time.time()
                     logDiff = newLog[newLog.find(oldLog) + len(oldLog):]
                     oldLog = newLog
-                    # We send a separate message for each line, as I discovered that
-                    # any information after the first newline was being lost...
+                    # We send a separate message for each line,
+                    # as I discovered that any information after the
+                    # first newline was being lost...
                     for line in logDiff.rstrip().split('\n'):
                         yield sseMessage(line)
+                if endtime is None:
+                    result = AsyncResult(taskId, backend=celeryapp.backend)
+                    if (result.state == celery.states.FAILURE or
+                            result.state == celery.states.SUCCESS or
+                            result.state == celery.states.REVOKED):
+                        # Stop checking for messages in 5 seconds
+                        endtime = time.time() + 5
                 time.sleep(0.5)
+
+            # Signal the end of the stream
+            yield 'event: eof\ndata: null\n\n'
+
+            # One more for good measure - client should not get this
+            yield 'event: past-end\ndata: null\n\n'
 
         return streamGen
 
@@ -307,4 +328,3 @@ def load(info):
         romanescoStopRun)
 
     events.bind('jobs.schedule', 'romanesco', schedule)
-
