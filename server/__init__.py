@@ -2,10 +2,18 @@ import bson
 import celery
 import cherrypy
 import json
+import os
+import sys
+import time
+
 from celery.result import AsyncResult
 from StringIO import StringIO
 from girder.constants import AccessType
-import sys
+
+from girder import events
+from girder.utility.model_importer import ModelImporter
+from girder.plugins.jobs.constants import JobStatus
+
 
 # If you desire authentication to run analyses (strongly encouraged),
 # Add the following to the girder config file:
@@ -56,6 +64,26 @@ def load(info):
         'romanesco',
         backend='mongodb://localhost/romanesco',
         broker='mongodb://localhost/romanesco')
+
+    def schedule(event):
+        """
+        This is bound to the "jobs.schedule" event, and will be triggered any time
+        a job is scheduled. This handler will process any job that has the
+        handler field set to "romanesco_handler".
+        """
+        job = event.info
+        if job['handler'] == 'romanesco_handler':
+            # Stop event propagation since we have taken care of scheduling.
+            event.stopPropagation()
+
+            # Send the task to celery
+            asyncResult = celeryapp.send_task(
+                'romanesco.run', job['args'], job['kwargs'])
+
+            # Set the job status to queued and record the task ID from celery.
+            job['status'] = JobStatus.QUEUED
+            job['taskId'] = asyncResult.task_id
+            ModelImporter.model('job', 'jobs').save(job)
 
     def romanescoCreateModule(params):
         """Create a new romanesco module."""
@@ -111,14 +139,24 @@ def load(info):
 
         return asyncResult.get()
 
+    def getTaskId(jobId):
+        # Get the celery task ID for this job.
+        jobApi = info['apiRoot'].job
+        job = jobApi.model('job', 'jobs').load(
+            jobId, user=jobApi.getCurrentUser(), level=AccessType.READ)
+        return job["taskId"]
+
     def romanescoRunStatus(itemId, jobId, params):
-        job = AsyncResult(jobId, backend=celeryapp.backend)
+        taskId = getTaskId(jobId)
+
+        # Get the celery result for the corresponding task ID.
+        result = AsyncResult(taskId, backend=celeryapp.backend)
         try:
-            response = {'status': job.state}
-            if job.state == celery.states.FAILURE:
-                response['message'] = str(job.result)
-            elif job.state == 'PROGRESS':
-                response['meta'] = str(job.result)
+            response = {'status': result.state}
+            if result.state == celery.states.FAILURE:
+                response['message'] = str(result.result)
+            elif result.state == 'PROGRESS':
+                response['meta'] = str(result.result)
             return response
         except Exception:
             return {
@@ -128,12 +166,63 @@ def load(info):
             }
 
     def romanescoRunResult(itemId, jobId, params):
-        job = AsyncResult(jobId, backend=celeryapp.backend)
+        taskId = getTaskId(jobId)
+        job = AsyncResult(taskId, backend=celeryapp.backend)
         return {'result': job.result}
+
+    def romanescoRunOutput(itemId, jobId, params):
+        jobApi = info['apiRoot'].job
+        taskId = getTaskId(jobId)
+        timeout = 300
+        cherrypy.response.headers['Content-Type'] = 'text/event-stream'
+        cherrypy.response.headers['Cache-Control'] = 'no-cache'
+
+        def sseMessage(output):
+            return 'event: log\ndata: {}\n\n'.format(output)
+
+        def streamGen():
+            start = time.time()
+            endtime = None
+            oldLog = ''
+            while (time.time() - start < timeout
+                    and cherrypy.engine.state == cherrypy.engine.states.STARTED
+                    and (endtime is None or time.time() < endtime)):
+                # Display new log info from this job since the
+                # last execution of this loop.
+                job = jobApi.model('job', 'jobs').load(
+                    jobId,
+                    user=jobApi.getCurrentUser(),
+                    level=AccessType.READ)
+                newLog = job['log']
+                if newLog != oldLog:
+                    start = time.time()
+                    logDiff = newLog[newLog.find(oldLog) + len(oldLog):]
+                    oldLog = newLog
+                    # We send a separate message for each line,
+                    # as I discovered that any information after the
+                    # first newline was being lost...
+                    for line in logDiff.rstrip().split('\n'):
+                        yield sseMessage(line)
+                if endtime is None:
+                    result = AsyncResult(taskId, backend=celeryapp.backend)
+                    if (result.state == celery.states.FAILURE or
+                            result.state == celery.states.SUCCESS or
+                            result.state == celery.states.REVOKED):
+                        # Stop checking for messages in 5 seconds
+                        endtime = time.time() + 5
+                time.sleep(0.5)
+
+            # Signal the end of the stream
+            yield 'event: eof\ndata: null\n\n'
+
+            # One more for good measure - client should not get this
+            yield 'event: past-end\ndata: null\n\n'
+
+        return streamGen
 
     def romanescoRun(itemId, params):
         try:
-            params = json.load(cherrypy.request.body)
+            # Make sure that we have permission to perform this analysis.
             itemApi = info['apiRoot'].item
             user = itemApi.getCurrentUser()
             conf = info['config'].get('romanesco', {})
@@ -147,24 +236,55 @@ def load(info):
             ):
                 return {'error': 'Unauthorized'}
 
+            # Get the analysis to run.
             metadata = getItemMetadata(itemId, itemApi)
             analysis = metadata["analysis"]
 
-            asyncResult = celeryapp.send_task(
-                'romanesco.run', [analysis], params)
-            return {'id': asyncResult.task_id}
+            # Create the job record.
+            jobModel = itemApi.model('job', 'jobs')
+            job = jobModel.createJob(
+                title=analysis['name'], type='romanesco_task',
+                handler='romanesco_handler', user=user)
 
+            # Create a token that is scoped for updating the job.
+            jobToken = jobModel.createJobToken(job)
+
+            # Get the analysis parameters (includes inputs & outputs).
+            params = json.load(cherrypy.request.body)
+
+            # We need to pass the URL to the job API down to the Celery job.
+            # The URL returned from cherrypy includes /item/<itemId>,
+            # which we trim off here.
+            apiUrl = os.path.dirname(cherrypy.url())
+            apiUrl = apiUrl[0:apiUrl.rfind("/", 0, apiUrl.rfind("/"))]
+            url = '{}/job/{}'.format(apiUrl, job['_id'])
+
+            # These parameters are used to get stdout/stderr back from Celery
+            # to Girder.
+            params['url'] = url
+            params['headers'] = {'Girder-Token': jobToken['_id']}
+
+            job['kwargs'] = params
+            job['args'] = [analysis]
+            job = jobModel.save(job)
+
+            # Schedule the job (triggers the schedule method above)
+            jobModel.scheduleJob(job)
+            return {'id': job["_id"]}
         except:
+            import traceback
             return {
                 'status': 'FAILURE',
                 'message': sys.exc_info(),
-                'trace': sys.exc_info()[2]
+                'trace': traceback.format_exc(sys.exc_info()[2])
             }
+
 
     def romanescoStopRun(jobId, params):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
         return {'status': task.state}
+
 
     info['apiRoot'].collection.route(
         'POST',
@@ -193,6 +313,11 @@ def load(info):
         romanescoRunResult)
 
     info['apiRoot'].item.route(
+        'GET',
+        (':itemId', 'romanesco', ':jobId', 'output'),
+        romanescoRunOutput)
+
+    info['apiRoot'].item.route(
         'POST',
         (':itemId', 'romanesco'),
         romanescoRun)
@@ -201,3 +326,5 @@ def load(info):
         'DELETE',
         (':itemId', 'romanesco', ':jobId'),
         romanescoStopRun)
+
+    events.bind('jobs.schedule', 'romanesco', schedule)
