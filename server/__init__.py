@@ -9,6 +9,8 @@ import time
 from celery.result import AsyncResult
 from StringIO import StringIO
 from girder.constants import AccessType
+from girder.api import access
+import sys
 
 from girder import events
 from girder.utility.model_importer import ModelImporter
@@ -65,6 +67,7 @@ def load(info):
         backend='mongodb://localhost/romanesco',
         broker='mongodb://localhost/romanesco')
 
+    @access.public
     def schedule(event):
         """
         This is bound to the "jobs.schedule" event, and will be triggered any time
@@ -85,6 +88,7 @@ def load(info):
             job['taskId'] = asyncResult.task_id
             ModelImporter.model('job', 'jobs').save(job)
 
+    @access.public
     def romanescoCreateModule(params):
         """Create a new romanesco module."""
 
@@ -115,6 +119,7 @@ def load(info):
 
         return collectionApi.model('collection').filter(collection)
 
+    @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
@@ -126,6 +131,7 @@ def load(info):
 
         return asyncResult.get()
 
+    @access.public
     def romanescoConvert(itemId, inputType, inputFormat, outputFormat, params):
         itemApi = info['apiRoot'].item
 
@@ -139,6 +145,7 @@ def load(info):
 
         return asyncResult.get()
 
+    @access.public
     def getTaskId(jobId):
         # Get the celery task ID for this job.
         jobApi = info['apiRoot'].job
@@ -146,6 +153,7 @@ def load(info):
             jobId, user=jobApi.getCurrentUser(), level=AccessType.READ)
         return job["taskId"]
 
+    @access.public
     def romanescoRunStatus(itemId, jobId, params):
         taskId = getTaskId(jobId)
 
@@ -165,11 +173,13 @@ def load(info):
                 'trace': sys.exc_info()[2]
             }
 
+    @access.public
     def romanescoRunResult(itemId, jobId, params):
         taskId = getTaskId(jobId)
         job = AsyncResult(taskId, backend=celeryapp.backend)
         return {'result': job.result}
 
+    @access.public
     def romanescoRunOutput(itemId, jobId, params):
         jobApi = info['apiRoot'].job
         taskId = getTaskId(jobId)
@@ -220,6 +230,7 @@ def load(info):
 
         return streamGen
 
+    @access.public
     def romanescoRun(itemId, params):
         try:
             # Make sure that we have permission to perform this analysis.
@@ -280,6 +291,7 @@ def load(info):
             }
 
 
+    @access.public
     def romanescoStopRun(jobId, params):
         task = AsyncResult(jobId, backend=celeryapp.backend)
         task.revoke(celeryapp.broker_connection(), terminate=True)
