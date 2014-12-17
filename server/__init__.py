@@ -236,6 +236,7 @@ def load(info):
             # Make sure that we have permission to perform this analysis.
             itemApi = info['apiRoot'].item
             user = itemApi.getCurrentUser()
+
             conf = info['config'].get('romanesco', {})
             requireAuth = conf.get('require_auth', False)
             fullAccessUsers = conf.get('full_access_users', [])
@@ -253,9 +254,12 @@ def load(info):
 
             # Create the job record.
             jobModel = itemApi.model('job', 'jobs')
+            public = False
+            if user == None:
+                public = True
             job = jobModel.createJob(
                 title=analysis['name'], type='romanesco_task',
-                handler='romanesco_handler', user=user)
+                handler='romanesco_handler', user=user, public=public)
 
             # Create a token that is scoped for updating the job.
             jobToken = jobModel.createJobToken(job)
