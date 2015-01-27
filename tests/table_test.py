@@ -135,15 +135,15 @@ class TestTable(unittest.TestCase):
         outputs = romanesco.run(
             self.analysis,
             inputs={
-                "a": {"format": "csv", "data": 'one\ntwo'},
-                "b": {"format": "csv", "data": 'three\nfour'}
+                "a": {"format": "csv", "data": 'A\none\ntwo'},
+                "b": {"format": "csv", "data": 'A\nthree\nfour'}
             },
             outputs={
                 "c": {"format": "csv"}
             })
         self.assertEqual(outputs["c"]["format"], "csv")
         self.assertEqual(outputs["c"]["data"].splitlines(),
-                         ["Column 1", "one", "two", "three", "four"])
+                         ["A", "one", "two", "three", "four"])
 
     def test_tsv(self):
         outputs = romanesco.run(
@@ -313,9 +313,9 @@ class TestTable(unittest.TestCase):
         )
         self.assertEqual(
             output["data"]["fields"],
-            ["Column 1", "Column 2", "Column 3"]
+            ["1", "2", "3"]
         )
-        self.assertEqual(len(output["data"]["rows"]), 4)
+        self.assertEqual(len(output["data"]["rows"]), 3)
 
     def test_sniffer(self):
         output = romanesco.convert(
