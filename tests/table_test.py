@@ -233,6 +233,22 @@ class TestTable(unittest.TestCase):
             "rows": [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}]
         })
 
+    def test_objectlist_to_rows(self):
+        objlist = [{"a": {"b": 5}}, {"a": {"b": {"c": 3}}}]
+        output = romanesco.convert("table", {
+            "format": "objectlist",
+            "data": objlist
+        }, {"format": "rows"})
+        self.assertEqual(output["format"], "rows")
+        self.assertEqual(output["data"], {
+            "fields": ["a.b", "a.b.c"],
+            "rows": [{"a.b": 5}, {"a.b.c": 3}]})
+        output = romanesco.convert("table", {
+            "format": "rows",
+            "data": output["data"]
+        }, {"format": "objectlist"})
+        self.assertEqual(output["data"], objlist)
+
     def test_column_names(self):
         output = romanesco.convert("table", {
             "format": "rows",
