@@ -4,6 +4,7 @@ import collections
 field_map = collections.OrderedDict()
 rows = []
 
+
 def subkeys(path, obj, row):
     if isinstance(obj, dict):
         for k in obj:
