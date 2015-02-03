@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "table", "format": "jsonlines"}],
+    "outputs": [{"name": "output", "type": "table", "format": "objectlist"}],
+    "script_uri": "file://jsonlines_to_objectlist.py",
+    "mode": "python"
+}
