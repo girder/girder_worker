@@ -470,6 +470,14 @@ class TestTable(unittest.TestCase):
         )["data"]
         self.assertEqual(rows["rows"], objectlist)
 
+    def test_jsonlines(self):
+        output = romanesco.convert("table", {
+            "format": "jsonlines",
+            "data": '{"a": 1, "b": 2}\n{"a": 3, "b": 4}'
+        }, {"format": "objectlist"})
+        self.assertEqual(output["format"], "objectlist")
+        self.assertEqual(output["data"], [{"a": 1, "b": 2}, {"a": 3, "b": 4}])
+
 
 if __name__ == '__main__':
     unittest.main()
