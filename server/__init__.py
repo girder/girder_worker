@@ -117,6 +117,12 @@ def load(info):
             'parentType': 'collection',
             'parentId': collection['_id']})
 
+        folderApi.createFolder({
+            'name': 'Visualizations',
+            'public': public,
+            'parentType': 'collection',
+            'parentId': collection['_id']})
+
         return collectionApi.model('collection').filter(collection)
 
     @access.public
@@ -255,7 +261,7 @@ def load(info):
             # Create the job record.
             jobModel = itemApi.model('job', 'jobs')
             public = False
-            if user == None:
+            if user is None:
                 public = True
             job = jobModel.createJob(
                 title=analysis['name'], type='romanesco_task',
