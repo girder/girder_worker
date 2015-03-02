@@ -20,10 +20,14 @@ class Task(GaiaObject):
         """Initialize an abstract task."""
 
         #: Input connection mapping
-        self._inputs = {p.name: p(self) for p in self.input_ports}
+        self._inputs = {}
+        for p in self.input_ports:
+            self._inputs[p] = p(self)
 
         #: Output connection mapping
-        self._outputs = {p.name: p(self) for p in self.output_ports}
+        self._outputs = {}
+        for p in self.output_ports:
+            self._outputs[p] = p(self)
 
     @property
     def inputs(self):
