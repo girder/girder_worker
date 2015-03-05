@@ -22,12 +22,12 @@ class Task(GaiaObject):
         #: Input connection mapping
         self._inputs = {}
         for p in self.input_ports:
-            self._inputs[p] = p(self)
+            self._inputs[p.name] = p(self)
 
         #: Output connection mapping
         self._outputs = {}
         for p in self.output_ports:
-            self._outputs[p] = p(self)
+            self._outputs[p.name] = p(self)
 
     @property
     def inputs(self):
@@ -59,7 +59,7 @@ class Task(GaiaObject):
         """
         if name not in self._inputs:
             raise ValueError("Invalid port name '{}'".format(name))
-        return self._inputs[name].other
+        return self._inputs[name]
 
     def get_input_task(self, name):
         """Return the task attached to the given input port.
