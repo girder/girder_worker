@@ -1,5 +1,7 @@
 """This module defines an abstract data interface used by all tasks."""
 
+from six import add_metaclass
+
 from .base import GaiaObject
 from .factory import create_registry
 
@@ -7,11 +9,12 @@ from .factory import create_registry
 DataTypeRegistry = create_registry()
 
 
+@add_metaclass(DataTypeRegistry)
 class Data(GaiaObject):
 
     """Base data type used by Gaia."""
 
-    __metaclass__ = DataTypeRegistry
+    pass
 
 
 class GeospatialData(Data):

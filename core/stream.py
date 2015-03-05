@@ -1,5 +1,7 @@
 """This module defines a data stream that flows through a pipeline."""
 
+from six import add_metaclass
+
 from .base import GaiaObject
 from .factory import create_registry
 
@@ -7,6 +9,7 @@ from .factory import create_registry
 StreamRegistry = create_registry()
 
 
+@add_metaclass(StreamRegistry)
 class Stream(GaiaObject):
 
     """Define the interface for a data stream.
@@ -22,8 +25,6 @@ class Stream(GaiaObject):
     that object on read.  The reference to the object is deleted after
     reading.
     """
-
-    __metaclass__ = StreamRegistry
 
     def __init__(self, source_port, sink_port):
         """Create the stream between to ports.

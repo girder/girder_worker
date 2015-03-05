@@ -1,6 +1,7 @@
 """This module defines messages passed between tasks in a pipeline."""
 
 import json
+from six import add_metaclass
 
 from .base import GaiaObject
 from .factory import create_registry
@@ -9,6 +10,7 @@ from .factory import create_registry
 MessageRegistry = create_registry()
 
 
+@add_metaclass(MessageRegistry)
 class Message(GaiaObject, dict):
 
     """Define an inter-type message specification.
@@ -21,7 +23,7 @@ class Message(GaiaObject, dict):
     tasks individually to optimize the pipeline globally.
     """
 
-    __metaclass__ = MessageRegistry
+    pass
 
 
 class JSONMessage(Message):
