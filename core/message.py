@@ -38,5 +38,4 @@ class JSONMessage(Message):
 
 
 registry = MessageRegistry.registry()
-
 __all__ = ('registry',)
