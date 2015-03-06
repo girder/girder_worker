@@ -1,6 +1,6 @@
 """This module defines tasks executed in the pipeline."""
 
-from .base import GaiaObject
+from gaia.core.base import GaiaObject
 
 
 class Task(GaiaObject):
@@ -39,7 +39,7 @@ class Task(GaiaObject):
         """Return the dictionary of output ports."""
         return self._outputs
 
-    def set_input(self, name, port, **kw):
+    def set_input(self, name='', port=None, **kw):
         """Connect the given input to a port on another task.
 
         :param basestring name: An input port name
@@ -51,7 +51,7 @@ class Task(GaiaObject):
 
         port.connect(self._inputs[name])
 
-    def get_input(self, name):
+    def get_input(self, name=''):
         """Return the output port attached to the given input port.
 
         :param basestring name: An input port name
@@ -61,7 +61,7 @@ class Task(GaiaObject):
             raise ValueError("Invalid port name '{}'".format(name))
         return self._inputs[name]
 
-    def get_input_task(self, name):
+    def get_input_task(self, name=''):
         """Return the task attached to the given input port.
 
         :param basestring name: An input port name
@@ -72,7 +72,7 @@ class Task(GaiaObject):
             return None
         return port.other
 
-    def get_output(self, name):
+    def get_output(self, name=''):
         """Return the input port connected to the given output.
 
         :param basestring name: An input port name
@@ -82,7 +82,7 @@ class Task(GaiaObject):
             raise ValueError("Invalid port name '{}'".format(name))
         return self._outputs[name]
 
-    def get_output_task(self, name):
+    def get_output_task(self, name=''):
         """Return the task attached to the given output port.
 
         :param basestring name: An output port name

@@ -2,8 +2,8 @@
 
 from six import add_metaclass
 
-from .base import GaiaObject
-from .factory import create_registry
+from gaia.core.base import GaiaObject
+from gaia.core.factory import create_registry
 
 
 StreamRegistry = create_registry()

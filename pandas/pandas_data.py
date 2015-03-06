@@ -2,7 +2,7 @@
 
 from pandas import DataFrame as _DataFrame
 
-from ..core.data import registry as data_registry
+from gaia.core.data import registry as data_registry
 
 
 class PandasDataFrame(data_registry['Data'], _DataFrame):

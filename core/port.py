@@ -1,6 +1,6 @@
 """This module defines I/O ports that serve as interfaces between tasks."""
 
-from .base import GaiaObject
+from gaia.core.base import GaiaObject
 
 
 class Port(GaiaObject):
@@ -23,7 +23,7 @@ class Port(GaiaObject):
     def __init__(self, task):
         """Initialize the port on a given task.
 
-        :param class other: The associated task.
+        :param :py:class:task.Task task: The associated task.
         """
 
         self._task = task
@@ -46,9 +46,10 @@ class Port(GaiaObject):
     def connect(self, other):
         """Connect two ports together.
 
-        :param Port other: The port on another task
+        :param other: The port on another task
+        :type other: :py:class:Port
         :returns: self
-        :rtype: Port
+        :rtype: :py:class:Port
         """
 
         # We can relax this if support for cyclic graphs is added
@@ -112,7 +113,8 @@ class OutputPort(Port):
     def compat(self, input_port):
         """Check compatibility for data passed between to classes.
 
-        :param InputPort input_port: Data sink
+        :param input_port: Data sink
+        :type input_port: :py:class:InputPort
         :returns: If connection can be made to the given input class.
         :rtype: bool
         """
@@ -129,9 +131,10 @@ class OutputPort(Port):
     def connect(self, other):
         """Negotiate a common format and connect two tasks together.
 
-        :param InputPort other: The input port on another task to connect to.
+        :param  other: The input port on another task to connect to.
+        :type other: :py:class:InputPort
         :returns: self
-        :rtype: OutputPort
+        :rtype: :py:class:OutputPort
         :raises TypeError: if the ports are not compatible
         """
         if not isinstance(other, InputPort):
