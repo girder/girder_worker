@@ -1,12 +1,9 @@
-from task import Task
-from port import Port, InputPort, OutputPort
-from pipeline import Pipeline
-from base import GaiaObject
+from gaia.core.task import Task
+from gaia.core.port import Port, InputPort, OutputPort
+from gaia.core.pipeline import Pipeline
+from gaia.core.base import GaiaObject
 
-import data
-import message
-import stream
-import io
+from gaia.core import data, message, stream, io
 
 __all__ = (
     'Task',

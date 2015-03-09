@@ -42,7 +42,7 @@ class Task(GaiaObject):
     def set_input(self, name='', port=None, **kw):
         """Connect the given input to a port on another task.
 
-        :param basestring name: An input port name
+        :param str name: An input port name
         :param :py:class:OutputPort port: The output port on the other task to use
         """
 
@@ -54,7 +54,7 @@ class Task(GaiaObject):
     def get_input(self, name=''):
         """Return the output port attached to the given input port.
 
-        :param basestring name: An input port name
+        :param str name: An input port name
         :rtype: :py:class:OutputPort or None
         """
         if name not in self._inputs:
@@ -64,7 +64,7 @@ class Task(GaiaObject):
     def get_input_task(self, name=''):
         """Return the task attached to the given input port.
 
-        :param basestring name: An input port name
+        :param str name: An input port name
         :rtype: :py:class:Task or None
         """
         port = self.get_input(name)
@@ -75,7 +75,7 @@ class Task(GaiaObject):
     def get_output(self, name=''):
         """Return the input port connected to the given output.
 
-        :param basestring name: An input port name
+        :param str name: An input port name
         :rtype: :py:class:OutputPort or None
         """
         if name not in self._outputs:
@@ -85,7 +85,7 @@ class Task(GaiaObject):
     def get_output_task(self, name=''):
         """Return the task attached to the given output port.
 
-        :param basestring name: An output port name
+        :param str name: An output port name
         :rtype: :py:class:Task or None
         """
         port = self.get_output(name)

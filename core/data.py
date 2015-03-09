@@ -21,9 +21,9 @@ class Data(GaiaObject):
         This is a convenience method for generating data type specific port classes.
 
         :param type kind: The port class to subclass from
-        :param basestring type_name: The class name to generate
-        :param basestring name: The port name
-        :param basestring description: The port description
+        :param str type_name: The class name to generate
+        :param str name: The port name
+        :param str description: The port description
         :returns: The new port class
         """
         d = {

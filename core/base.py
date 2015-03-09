@@ -1,5 +1,7 @@
 """Define the common parent type for all classes contained in the package."""
 
+import six
+
 
 class GaiaObject(object):
 
@@ -13,7 +15,7 @@ class GaiaObject(object):
     def __init__(self, *arg, **kw):
         """Initialize instance properties."""
 
-        for key, value in self._gaiaproperties.iteritems():
+        for key, value in six.iteritems(self._gaiaproperties):
             getattr(self.__class__, key).fset(self, kw.pop(key, value))
 
     def describe(self, tab=''):
@@ -21,9 +23,9 @@ class GaiaObject(object):
 
         Should be overloaded by subclasses.
 
-        :param basestring tab: Prepend every line added with the given string.
+        :param str tab: Prepend every line added with the given string.
         :returns: Self description ending in a new line.
-        :rtype: basestring
+        :rtype: str
         """
         return tab + self.type_string() + '\n'
 
@@ -32,7 +34,7 @@ class GaiaObject(object):
         """Return a string description of a class type.
 
         :returns: Class name
-        :rtype: basestring
+        :rtype: str
         """
         return cls.__name__
 
@@ -57,12 +59,12 @@ class GaiaObject(object):
         >>> class MyCls(GaiaObject): pass
         >>> MyCls.add_property('foo')
         >>> c = MyCls()
-        >>> print c.foo
+        >>> print(c.foo)
         None
         >>> c.foo = 'bar'
-        >>> print c.foo
+        >>> print(c.foo)
         bar
-        >>> print MyCls.foo.__doc__
+        >>> print(MyCls.foo.__doc__)
         Get or set property "foo".
         >>> del c.foo
         >>> c.foo is None
@@ -72,7 +74,7 @@ class GaiaObject(object):
         Example of using a custom validator:
 
         >>> def isString(val):
-        ...     if not isinstance(val, basestring):
+        ...     if not isinstance(val, six.string_types):
         ...         raise TypeError('Invalid type')
         >>> class MyCls(GaiaObject): pass
         >>> MyCls.add_property('foo', validator=isString, default='')
