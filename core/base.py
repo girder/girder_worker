@@ -14,7 +14,7 @@ class GaiaObject(object):
         """Initialize instance properties."""
 
         for key, value in six.iteritems(kw):
-            if getattr(self.__class__, key):
+            if hasattr(self.__class__, key):
                 getattr(self.__class__, key).fset(self, value)
 
     def describe(self, tab=''):
@@ -39,7 +39,8 @@ class GaiaObject(object):
 
     @classmethod
     def add_property(cls, name,
-                     default=None, doc=None, validator=None):
+                     default=None, doc=None,
+                     validator=None, on_change=None):
         """Add a new property getter/setter/deleter to the class.
 
         A property is stored as a private attribute on the class instances.  This
@@ -52,12 +53,13 @@ class GaiaObject(object):
         :param str doc: The property docstring
         :param default: The default property value
         :param function validator: A method that returns True on valid input
+        :param function on_change: A method to call when the value changes
 
         Default behavior of properties:
 
         >>> class MyCls(GaiaObject): pass
         >>> MyCls.add_property('foo')
-        >>> c = MyCls()
+        >>> c = MyCls(other='ignored')
         >>> print(c.foo)
         None
         >>> c.foo = 'bar'
@@ -68,20 +70,20 @@ class GaiaObject(object):
         >>> del c.foo
         >>> c.foo is None
         True
+        >>> c = MyCls(foo='initial')
+        >>> print(c.foo)
+        initial
 
         Example of setting the docstring:
 
-        >>> class MyCls(GaiaObject): pass
         >>> MyCls.add_property('foo', doc='property foo')
         >>> MyCls.foo.__doc__ == 'property foo'
         True
-
 
         Example of using a custom validator:
 
         >>> def isString(val):
         ...     return isinstance(val, six.string_types)
-        >>> class MyCls(GaiaObject): pass
         >>> MyCls.add_property('foo', validator=isString, default='')
         >>> c = MyCls()
         >>> c.foo = 'a'
@@ -92,6 +94,18 @@ class GaiaObject(object):
         >>> del c.foo
         >>> c.foo == ''
         True
+
+        Using the ``on_change`` method:
+
+        >>> def update(self, prop, value):
+        ...     print('Property "{0}" changed to "{1}"'.format(prop, value))
+        >>> MyCls.add_property('foo', on_change=update)
+        >>> c = MyCls(foo='initial')
+        Property "foo" changed to "initial"
+        >>> c.foo = 'initial'
+        >>> c.foo = 'new'
+        Property "foo" changed to "new"
+
         """
 
         # The private attribute name
@@ -103,6 +117,7 @@ class GaiaObject(object):
 
         # the setter
         def set_prop(self, value):
+            current = prop(self)
             if validator is not None:
                 valid = validator(value)
                 if not valid:
@@ -110,6 +125,8 @@ class GaiaObject(object):
                         'Invalid value for property "{0}"'.format(name)
                     )
             setattr(self, pvt, value)
+            if on_change is not None and current != value:
+                on_change(self, name, value)
             return self
 
         def del_prop(self):
