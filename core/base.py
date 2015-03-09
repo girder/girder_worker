@@ -70,6 +70,13 @@ class GaiaObject(object):
         >>> c.foo is None
         True
 
+        Example of setting the docstring:
+
+        >>> class MyCls(GaiaObject): pass
+        >>> MyCls.add_property('foo', doc='property foo')
+        >>> MyCls.foo.__doc__ == 'property foo'
+        True
+
 
         Example of using a custom validator:
 
