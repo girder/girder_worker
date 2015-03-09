@@ -29,6 +29,10 @@ class Task(GaiaObject):
         for p in self.output_ports:
             self._outputs[p.name] = p(self)
 
+        #: data cache
+        self._input_data = {}
+        self._output_data = {}
+
     @property
     def inputs(self):
         """Return the dictionary of input ports."""
@@ -72,6 +76,14 @@ class Task(GaiaObject):
             return None
         return port.other
 
+    def _set_input_data(self, name=''):
+        """Set the data for the given input port."""
+        task = self.get_input_task(name)
+        if task is None:
+            return None
+        port = self.get_input(name)
+        return port.get_output()
+
     def get_output(self, name=''):
         """Return the input port connected to the given output.
 
@@ -93,6 +105,14 @@ class Task(GaiaObject):
             return None
         return port.other
 
+    def get_output_data(self, name=''):
+        """Return the data for the given port."""
+
+        if self.dirty:
+            self.run()
+
+        return self._output_data.get(name)
+
     def run(self, *arg, **kw):
         """Execute the task.
 
@@ -102,6 +122,17 @@ class Task(GaiaObject):
         the input ports are all connected and raises an error if they
         aren't.
         """
+
         for port in self.input_ports:
-            if self.get_input_task(port.name) is None:
+            itask = self.get_input_task(port.name)
+            iport = self.get_input(port.name)
+            if itask is None:
                 raise Exception("Input port '{0}' not connected.".format(port.name))
+            self._input_data[port.name] = itask.get_output_data(iport.name)
+
+
+Task.add_property(
+    'dirty',
+    doc='Stores the current cache state of the Task',
+    default=True
+)
