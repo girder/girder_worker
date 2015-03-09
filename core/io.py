@@ -1,7 +1,6 @@
 """This module defines abstract I/O tasks."""
 
 from gaia.core.task import Task
-from gaia.core.port import Port
 
 
 class Source(Task):
