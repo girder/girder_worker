@@ -64,6 +64,9 @@ class GaiaObject(object):
         bar
         >>> print MyCls.foo.__doc__
         Get or set property "foo".
+        >>> del c.foo
+        >>> c.foo is None
+        True
 
 
         Example of using a custom validator:
@@ -79,6 +82,9 @@ class GaiaObject(object):
         Traceback (most recent call last):
             ...
         TypeError: Invalid type
+        >>> del c.foo
+        >>> c.foo == ''
+        True
         """
 
         # The private attribute name
@@ -102,7 +108,7 @@ class GaiaObject(object):
         cls._gaiaproperties[name] = default
 
         if doc is None:
-            doc = 'Get or set property "{}".'.format(name)
+            doc = 'Get or set property "{0}".'.format(name)
 
         # add the property methods
         setattr(cls, name, property(prop, set_prop, del_prop, doc))

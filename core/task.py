@@ -47,7 +47,7 @@ class Task(GaiaObject):
         """
 
         if name not in self._inputs:
-            raise ValueError("Invalid port name '{}'".format(name))
+            raise ValueError("Invalid port name '{0}'".format(name))
 
         port.connect(self._inputs[name])
 
@@ -58,7 +58,7 @@ class Task(GaiaObject):
         :rtype: :py:class:OutputPort or None
         """
         if name not in self._inputs:
-            raise ValueError("Invalid port name '{}'".format(name))
+            raise ValueError("Invalid port name '{0}'".format(name))
         return self._inputs[name]
 
     def get_input_task(self, name=''):
@@ -79,7 +79,7 @@ class Task(GaiaObject):
         :rtype: :py:class:OutputPort or None
         """
         if name not in self._outputs:
-            raise ValueError("Invalid port name '{}'".format(name))
+            raise ValueError("Invalid port name '{0}'".format(name))
         return self._outputs[name]
 
     def get_output_task(self, name=''):
@@ -104,4 +104,4 @@ class Task(GaiaObject):
         """
         for port in self.input_ports:
             if self.get_input_task(port.name) is None:
-                raise Exception("Input port '{}' not connected.".format(port.name))
+                raise Exception("Input port '{0}' not connected.".format(port.name))

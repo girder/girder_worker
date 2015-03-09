@@ -62,14 +62,14 @@ class Port(GaiaObject):
 
     def _describe(self, kind, tab=''):
         """Return a string describing the port."""
-        return "{}{} port '{}': {}\n".format(
+        return "{0}{1} port '{2}': {3}\n".format(
             tab, kind, self.name, self.description
         )
 
     @classmethod
     def type_string(cls):
         """Return a string description of the port."""
-        return '{} {}: {}'.format(cls.__name__, cls.name, cls.description)
+        return '{0} {1}: {2}'.format(cls.__name__, cls.name, cls.description)
 
 
 class InputPort(Port):
@@ -94,7 +94,7 @@ class InputPort(Port):
         Calls connect on the output port.
         """
         if not isinstance(other, OutputPort):
-            raise TypeError("Invalid connection with {}".format(other))
+            raise TypeError("Invalid connection with {0}".format(other))
         return super(InputPort, self).connect(other)
 
     def describe(self, tab=''):
@@ -138,7 +138,7 @@ class OutputPort(Port):
         :raises TypeError: if the ports are not compatible
         """
         if not isinstance(other, InputPort):
-            raise TypeError("Invalid connection with {}".format(other))
+            raise TypeError("Invalid connection with {0}".format(other))
         if not self.compat(other):
             raise TypeError(
                 "Incompatible port connection: " + str(self) +
