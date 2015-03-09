@@ -1,5 +1,7 @@
 """This module defines abstract I/O tasks."""
 
+import os
+
 from gaia.core.task import Task
 
 
@@ -30,10 +32,16 @@ class Sink(Task):
 
 class FileSource(Source):
 
-    """This class defines the interface for reading local files."""
+    """This class defines the interface for reading files."""
 
-    def file_name(self, file_name=None):
-        """Get or set the file name to read."""
+    pass
 
-        if file_name is None:
-            return getattr(self, '_file_name')
+FileSource.add_property(
+    'file_name',
+    validator=os.path.exists
+)
+
+__all__ = (
+    'Source', 'Sink',
+    'FileSource'
+)

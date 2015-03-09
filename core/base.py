@@ -10,13 +10,12 @@ class GaiaObject(object):
     As needed, add generic class methods provided universally here.
     """
 
-    _gaiaproperties = {}
-
     def __init__(self, *arg, **kw):
         """Initialize instance properties."""
 
-        for key, value in six.iteritems(self._gaiaproperties):
-            getattr(self.__class__, key).fset(self, kw.pop(key, value))
+        for key, value in six.iteritems(kw):
+            if getattr(self.__class__, key):
+                getattr(self.__class__, key).fset(self, value)
 
     def describe(self, tab=''):
         """Return a string representation of the instance.
@@ -52,7 +51,7 @@ class GaiaObject(object):
         :param str name: The property name
         :param str doc: The property docstring
         :param default: The default property value
-        :param function validator: A method that raises and exception on invalid input
+        :param function validator: A method that returns True on valid input
 
         Default behavior of properties:
 
@@ -81,8 +80,7 @@ class GaiaObject(object):
         Example of using a custom validator:
 
         >>> def isString(val):
-        ...     if not isinstance(val, six.string_types):
-        ...         raise TypeError('Invalid type')
+        ...     return isinstance(val, six.string_types)
         >>> class MyCls(GaiaObject): pass
         >>> MyCls.add_property('foo', validator=isString, default='')
         >>> c = MyCls()
@@ -90,7 +88,7 @@ class GaiaObject(object):
         >>> c.foo = 1
         Traceback (most recent call last):
             ...
-        TypeError: Invalid type
+        ValueError: Invalid value for property "foo"
         >>> del c.foo
         >>> c.foo == ''
         True
@@ -106,15 +104,16 @@ class GaiaObject(object):
         # the setter
         def set_prop(self, value):
             if validator is not None:
-                validator(value)
+                valid = validator(value)
+                if not valid:
+                    raise ValueError(
+                        'Invalid value for property "{0}"'.format(name)
+                    )
             setattr(self, pvt, value)
             return self
 
         def del_prop(self):
             setattr(self, pvt, default)
-
-        # register the property name
-        cls._gaiaproperties[name] = default
 
         if doc is None:
             doc = 'Get or set property "{0}".'.format(name)
