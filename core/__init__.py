@@ -3,7 +3,7 @@ from gaia.core.port import Port, InputPort, OutputPort
 from gaia.core.pipeline import Pipeline
 from gaia.core.base import GaiaObject
 
-from gaia.core import data, message, stream, io
+from gaia.core import data, message, stream
 
 __all__ = (
     'Task',
@@ -12,6 +12,5 @@ __all__ = (
     'GaiaObject',
     'data',
     'message',
-    'stream',
-    'io'
+    'stream'
 )
