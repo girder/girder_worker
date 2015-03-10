@@ -56,13 +56,11 @@ class Task(GaiaObject):
         port.connect(self._inputs[name])
 
     def get_input(self, name=''):
-        """Return the output port attached to the given input port.
+        """Return the given input port.
 
         :param str name: An input port name
         :rtype: :py:class:OutputPort or None
         """
-        if name not in self._inputs:
-            raise ValueError("Invalid port name '{0}'".format(name))
         return self._inputs[name]
 
     def get_input_task(self, name=''):
@@ -71,10 +69,10 @@ class Task(GaiaObject):
         :param str name: An input port name
         :rtype: :py:class:Task or None
         """
-        port = self.get_input(name)
+        port = self.get_input(name).other
         if port is None:
             return None
-        return port.other
+        return port.task
 
     def _set_input_data(self, name=''):
         """Set the data for the given input port."""
@@ -85,7 +83,7 @@ class Task(GaiaObject):
         return port.get_output()
 
     def get_output(self, name=''):
-        """Return the input port connected to the given output.
+        """Return the given output port.
 
         :param str name: An input port name
         :rtype: :py:class:OutputPort or None
@@ -100,10 +98,10 @@ class Task(GaiaObject):
         :param str name: An output port name
         :rtype: :py:class:Task or None
         """
-        port = self.get_output(name)
+        port = self.get_output(name).other
         if port is None:
             return None
-        return port.other
+        return port.task
 
     def get_output_data(self, name=''):
         """Return the data for the given port."""

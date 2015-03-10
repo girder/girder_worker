@@ -39,7 +39,10 @@ class Data(GaiaObject):
         if type_name is None:
             type_name = cls.__name__ + 'InputPort'
 
-        return cls.make_port(InputPort, type_name, name, description)
+        port = cls.make_port(InputPort, type_name, name, description)
+        port.accepts = lambda self: set((cls,))
+
+        return port
 
     @classmethod
     def make_output_port(cls, name='', description='output', type_name=None):
@@ -48,7 +51,10 @@ class Data(GaiaObject):
         if type_name is None:
             type_name = cls.__name__ + 'OutputPort'
 
-        return cls.make_port(OutputPort, type_name, name, description)
+        port = cls.make_port(OutputPort, type_name, name, description)
+        port.emits = lambda self: set((cls,))
+
+        return port
 
 
 class GeospatialData(Data):

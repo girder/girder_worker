@@ -26,8 +26,13 @@ except ImportError:
 if geopandas is not None:
     from geopandas_data import GeopandasDataFrame
     from geopandas_reader import GeopandasReader
+    from geopandas_plot import GeopandasPlot
 
-    __all__ += ('GeopandasDataFrame', 'GeopandasReader')
+    __all__ += (
+        'GeopandasDataFrame',
+        'GeopandasReader',
+        'GeopandasPlot'
+    )
 
 try:
     import xray
