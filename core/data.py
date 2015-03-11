@@ -65,4 +65,4 @@ class GeospatialData(Data):
 
 
 registry = DataTypeRegistry.registry()
-__all__ = ('registry',)
+__all__ = ('registry', 'Data', 'GeospatialData')

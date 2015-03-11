@@ -40,4 +40,4 @@ class JSONMessage(Message):
 
 
 registry = MessageRegistry.registry()
-__all__ = ('registry',)
+__all__ = ('registry', 'Message', 'JSONMessage')

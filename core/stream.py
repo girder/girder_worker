@@ -75,5 +75,4 @@ class Stream(GaiaObject):
 
 
 registry = StreamRegistry.registry()
-
-__all__ = ('registry',)
+__all__ = ('registry', 'Stream')
