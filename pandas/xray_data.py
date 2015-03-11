@@ -2,7 +2,7 @@
 
 from xray import Dataset as _Dataset
 
-from ..core.data import registry as data_registry
+# from ..core.data import registry as data_registry
 
 
 class XrayDataset(_Dataset):
