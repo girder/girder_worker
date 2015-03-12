@@ -342,7 +342,9 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
                     continue
 
                 # Run step
+                print "--- beginning: %s ---" % steps[step]["name"]
                 out = run(steps[step]["analysis"], bindings[step])
+                print "--- finished: %s ---" % steps[step]["name"]
 
                 # Update bindings of downstream analyses
                 if step in downstream:
