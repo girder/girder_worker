@@ -22,7 +22,7 @@ Get Started
 
 Get it: ::
 
-    git clone https://github.com/arborworkflows/romanesco.git
+    git clone https://github.com/Kitware/romanesco.git
     cd romanesco
 
 
@@ -80,4 +80,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
