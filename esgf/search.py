@@ -7,6 +7,8 @@ import six
 from six.moves import xrange
 import requests
 
+verbose = False
+
 
 def raw(host, query):
     """Search the given esgf host with the given query object.
@@ -131,7 +133,10 @@ def _normalize_variable(doc, ivar):
 def _normalize_doc(doc):
     """Normalize a single document from a raw ESGF search."""
     norm = {
-        'variables': [_normalize_variable(doc, i) for i in xrange(len(doc.get('variable', [])))]
+        'variables': {
+            doc['variable'][i]: _normalize_variable(doc, i)
+            for i in xrange(len(doc.get('variable', [])))
+        }
     }
     for url in doc.get('url', []):
         url_parsed = url.split('|')
@@ -150,8 +155,8 @@ def _normalize_doc(doc):
         else:
             unhandled = True
 
-        if unhandled:
-                six.print_('Unknown URL type "{0}"'.format(url), sys.stderr)
+        if unhandled and verbose:  # pragma: nocover
+            six.print_('Unknown URL type "{0}"'.format(url), sys.stderr)
 
     norm['urls'] = doc.get('url', [])
     norm['size'] = doc.get('size')
@@ -190,10 +195,10 @@ def _sizeof_fmt(num, suffix='B'):
         if abs(num) < 1024.0:
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+    return "%.1f%s%s" % (num, 'Y', suffix)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
 
     import json
     import argparse
