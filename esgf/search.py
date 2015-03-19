@@ -132,12 +132,12 @@ def _normalize_variable(doc, ivar):
 
 def _normalize_doc(doc):
     """Normalize a single document from a raw ESGF search."""
-    norm = {
-        'variables': {
-            doc['variable'][i]: _normalize_variable(doc, i)
-            for i in xrange(len(doc.get('variable', [])))
-        }
-    }
+    variables = {}
+
+    for i in xrange(len(doc.get('variable', []))):
+        variables[doc['variable'][i]] = _normalize_variable(doc, i)
+    norm = {'variables': variables}
+
     for url in doc.get('url', []):
         url_parsed = url.split('|')
         unhandled = False
