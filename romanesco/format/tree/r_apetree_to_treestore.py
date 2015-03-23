@@ -1,3 +1,5 @@
+import bson
+
 #  *********************************************
 #  **** converting from APE to Arbor below *****
 #  *********************************************
@@ -182,5 +184,4 @@ class InMemoryCollection:
 c = InMemoryCollection()
 importApeTreeToArbor(input, c)
 
-import bson
 output = "".join([bson.BSON.encode(d) for d in c.items])
