@@ -2,7 +2,6 @@ import csv
 import json
 import glob
 import os
-import romanesco.uri
 import math
 from StringIO import StringIO
 
@@ -152,9 +151,11 @@ def import_converters(search_paths):
             with open(filename) as f:
                 analysis = json.load(f)
 
-            if "script" not in analysis:
+            """if "script" not in analysis:
+                # TODO get_uri no longer exists
                 analysis["script"] = romanesco.uri.get_uri(
                     analysis["script_uri"])
+            """
 
             if os.path.basename(filename).startswith("validate_"):
 

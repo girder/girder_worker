@@ -1,6 +1,6 @@
 {
     "name": "Romanesco",
-    "description": "Analytics execution engine.",
+    "description": "Batch processing engine.",
     "version": "0.1.0",
     "dependencies": ["jobs"]
 }
