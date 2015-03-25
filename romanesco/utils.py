@@ -1,8 +1,11 @@
+import contextlib
 import functools
 import os
 import requests
+import romanesco
 import shutil
 import sys
+import tempfile
 import time
 import zipfile
 
@@ -184,15 +187,38 @@ def toposort(data):
                         repr(x) for x in data.iteritems()))
 
 
-def cleanup(tmpDir):
-    """
-    Cleanup from a job is performed by this function. For now, this is simply
-    deleting the temp directory.
+@contextlib.contextmanager
+def tmpdir(cleanup=True):
+    # Make the temp dir underneath tmp_root config setting
+    root = os.path.abspath(romanesco.config.get('romanesco', 'tmp_root'))
+    try:
+        os.makedirs(root)
+    except OSError:
+        if not os.path.isdir(root):
+            raise
+    path = tempfile.mkdtemp(dir=root)
 
-    :param tmpDir: The temporary directory to remove.
+    yield path
+
+    # Cleanup the temp dir
+    if cleanup and os.path.isdir(path):
+        shutil.rmtree(path)
+
+
+def with_tmpdir(fn):
     """
-    if os.path.isdir(tmpDir):
-        shutil.rmtree(tmpDir)
+    This function is provided as a convenience to allow use as a decorator of
+    a function rather than using "with tmpdir()" around the whole function
+    body. It passes the generated temp dir path into the function as the
+    special kwarg "_tmp_dir".
+    """
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        cleanup = kwargs.get('cleanup', True)
+        with tmpdir(cleanup=cleanup) as tmp_dir:
+            kwargs['_tmp_dir'] = tmp_dir
+            return fn(*args, **kwargs)
+    return wrapped
 
 
 def extractZip(path, dest, flatten=False):

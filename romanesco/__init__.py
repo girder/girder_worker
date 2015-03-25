@@ -5,8 +5,14 @@ import os
 import romanesco.format
 import romanesco.io
 
-from . import tasks
+from ConfigParser import ConfigParser
+from . import tasks, utils
 
+
+# Read the configuration files
+_cfgs = ('worker.dist.cfg', 'worker.local.cfg')
+config = ConfigParser()
+config.read([os.path.join(os.path.dirname(__file__), f) for f in _cfgs])
 
 # Maps task modes to their implementation
 _taskMap = {
@@ -112,6 +118,7 @@ def convert(type, input, output):
     return output
 
 
+@utils.with_tmpdir
 def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         **kwargs):
     """
@@ -177,7 +184,7 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
             d["script_data"] = converted["data"]
         elif (d.get("format", task_input.get("format")) ==
               task_input.get("format")):
-            d["data"] = romanesco.io.fetch(d)
+            d["data"] = romanesco.io.fetch(d, **kwargs)
             d["script_data"] = d["data"]
         else:
             raise Exception("Expected exact format match but '%s != %s'." % (

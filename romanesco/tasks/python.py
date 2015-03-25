@@ -13,11 +13,11 @@ def run(task, inputs, outputs, task_inputs, task_outputs):
         exec task["script"] in custom.__dict__
     except Exception, e:
         trace = sys.exc_info()[2]
-        lines = analysis["script"].split("\n")
+        lines = task["script"].split("\n")
         lines = [(str(i+1) + ": " + lines[i]) for i in xrange(len(lines))]
         error = (
             str(e) + "\nScript:\n" + "\n".join(lines)
-            + "\nAnalysis:\n" + json.dumps(analysis, indent=4)
+            + "\nTask:\n" + json.dumps(task, indent=4)
         )
         raise Exception(error), None, trace
 
