@@ -3,16 +3,17 @@ import re
 import requests
 
 
-def _readFilenameFromResponse(request):
+def _readFilenameFromResponse(request, url):
     """
     This helper will derive a filename from the HTTP response, first attempting
     to use the content disposition header, otherwise falling back to the last
     token of the URL.
     """
-    match = re.search('filename="(.*)"', request.headers['Content-Disposition'])
+    match = re.search('filename="(.*)"',
+                      request.headers.get('Content-Disposition', ''))
 
     if match is None:
-        return [t for t in request.url.split('/') if t][-1]
+        return [t for t in url.split('/') if t][-1]
     else:
         return match.group(1)
 
@@ -26,29 +27,39 @@ def fetch(spec, **kwargs):
     if 'url' not in spec:
         raise Exception('No URL specified for HTTP input.')
 
+    url = spec['url']
+    target = spec.get('target', 'file')
     method = getattr(requests, spec.get('method', 'get').lower())
-    request = method(spec['url'], headers=spec.get('headers', {}))
+    request = method(url, headers=spec.get('headers', {}), stream=True)
 
     try:
         request.raise_for_status()
     except:
-        print 'HTTP fetch failed (%s). Response: %s' % \
-            (spec['url'], request.text)
+        print 'HTTP fetch failed (%s). Response: %s' % (url, request.text)
         raise
 
-    filename = spec.get('filename', _readFilenameFromResponse(request))
-    path = os.path.join(tmpDir, filename)
+    if target == 'file':
+        if 'filename' in spec:
+            filename = spec['filename']
+        else:
+            filename = _readFilenameFromResponse(request, url)
 
-    total = 0
-    maxSize = spec.get('maxSize')
+        path = os.path.join(tmpDir, filename)
 
-    with open(path, 'wb') as out:
-        for buf in request.iter_content(32768):
-            length = len(buf)
-            if maxSize and length + total > maxSize:
-                raise Exception('Exceeded max download size of {} bytes.'
-                                .format(maxSize))
-            out.write(buf)
-            total += length
+        total = 0
+        maxSize = spec.get('maxSize')
 
-    return path
+        with open(path, 'wb') as out:
+            for buf in request.iter_content(65536):
+                length = len(buf)
+                if maxSize and length + total > maxSize:
+                    raise Exception(
+                        'Exceeded max download size of %d bytes.' % maxSize)
+                out.write(buf)
+                total += length
+
+        return path
+    elif target == 'memory':
+        return ''.join(request.iter_content(65536))
+    else:
+        raise Exception('Invalid HTTP fetch target: ' + target)

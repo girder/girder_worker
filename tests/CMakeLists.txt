@@ -39,6 +39,7 @@ if(PYTHON_STYLE_TESTS)
 endif()
 
 add_python_test(arbor)
+add_python_test(fetch)
 add_python_test(geometry)
 add_python_test(image)
 add_python_test(number)
