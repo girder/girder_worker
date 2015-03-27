@@ -111,9 +111,8 @@ def convert(type, input, output):
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
-    if "uri" in output:
-        # TODO replace next line
-        romanesco.uri.put_uri(data, output["uri"])
+    if "mode" in output:
+        romanesco.io.push(data, output)
     else:
         output["data"] = data
     return output
@@ -233,8 +232,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
                 task_output["type"], script_output, d)
         elif d["format"] == task_output["format"]:
             data = d["script_data"]
-            if "uri" in d:  # TODO remove this
-                romanesco.uri.put_uri(data, d["uri"])
+            if d.get("mode"):
+                romanesco.io.push(data, d)
             else:
                 d["data"] = data
         else:

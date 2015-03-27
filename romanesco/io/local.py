@@ -4,3 +4,11 @@ def fetch(spec, **kwargs):
     """
     with open(spec['path'], 'rb') as f:
         return f.read()
+
+
+def push(data, spec):
+    """
+    Write a blob of data in memory to a file specified in ``spec['path']``.
+    """
+    with open(spec['path'], 'wb') as out:
+        out.write(data)

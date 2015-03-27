@@ -3,24 +3,12 @@ from __future__ import absolute_import
 from . import http, local, mongodb
 
 
-def fetch(spec, **kwargs):
-    """
-    This function can be called on any valid input binding specification and is
-    responsible for performing any operations necessary to fetch the data. Once
-    any fetch operations are complete, this returns the value to which the
-    corresponding variable should be set.
-
-    :param input_spec: The specification of the input to fetch. This is a
-        LOCATION_SPEC type in the Romanesco grammar.
-    :type input_spec: dict
-    """
-    if 'mode' not in spec:
-        raise Exception('Missing input mode.')
+def _detectMode(spec):
     mode = spec.get('mode', 'auto')
 
     if mode == 'auto':
         # We guess the mode based on the "url" value
-        if not 'url' in spec:
+        if 'url' not in spec:
             raise Exception('Fetch mode "auto" requires a "url" field.')
         scheme = spec['url'].split(':', 1)[0]
 
@@ -32,6 +20,22 @@ def fetch(spec, **kwargs):
         else:
             mode = scheme
 
+    return mode
+
+
+def fetch(spec, **kwargs):
+    """
+    This function can be called on any valid input binding specification and is
+    responsible for performing any operations necessary to fetch the data. Once
+    any fetch operations are complete, this returns the value to which the
+    corresponding variable should be set.
+
+    :param input_spec: The specification of the input to fetch. This is a
+        LOCATION_SPEC type in the Romanesco grammar.
+    :type input_spec: dict
+    """
+    mode = _detectMode(spec)
+
     if mode == 'http':
         return http.fetch(spec, **kwargs)
     elif mode == 'mongodb':
@@ -41,34 +45,26 @@ def fetch(spec, **kwargs):
     elif mode == 'inline':
         return spec['data']
     else:
-        raise Exception('Unknown input fetch mode (%s) ' + mode)
+        raise Exception('Unknown input fetch mode: ' + mode)
 
 
-def put_uri(data, uri):
+def push(data, spec):
     """
-    Save data to a URI.
+    The opposite of fetch, this is responsible for writing data to some
+    destination in a specified mode defined by ``spec``.
 
-    :param data: The data, normally a byte string.
-    :param uri: The URI to save the data to in the form ``scheme://path``.
-        Web URIs are not currently supported, but ``"mongodb"`` and ``"file"``
-        schemes are supported identically to :py:func:`get_uri`. Existing files
-        and MongoDB collections are replaced by the data.
+    :param data: The data to push
+    :type data: opaque
+    :param spec: The output spec
+    :type spec: dict
     """
+    mode = _detectMode(spec)
 
-    scheme = uri.split(":")[0]
-    if scheme == "mongodb":
-        import pymongo
-        import bson
-        parts = uri.split("/")
-        db = parts[3]
-        collection = parts[4]
-        bson_data = bson.decode_all(data)
-        pymongo.MongoClient(uri)[db][collection].drop()
-        if len(bson_data) > 0:
-            pymongo.MongoClient(uri)[db][collection].insert(bson_data)
-    elif scheme == "file":
-        out_file = open(uri[7:], 'w')
-        out_file.write(data)
-        out_file.close()
+    if mode == 'http':
+        return http.push(data, spec)
+    elif mode == 'mongodb':
+        return mongodb.push(data, spec)
+    elif mode == 'local':
+        return local.push(data, spec)
     else:
-        raise Exception("URI scheme not supported")
+        raise Exception('Unknown output push mode: ' + mode)

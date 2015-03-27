@@ -69,14 +69,26 @@ class TestPythonMode(unittest.TestCase):
             self.assertEqual(contents, 'dummy file contents')
 
             # Use automatically detected filename
-            del inputs['x']['filename']
+            inputs = {
+                'x': {
+                    'mode': 'http',
+                    'url': 'https://foo.com/file.txt',
+                    'target': 'file'
+                }
+            }
 
             out = romanesco.run(task, inputs=inputs, cleanup=False,
                                 validate=False, auto_convert=False)
             self.assertTrue(out['y']['data'].endswith('file.txt_suffix'))
 
             # Download to memory instead of a file
-            inputs['x']['target'] = 'memory'
+            inputs = {
+                'x': {
+                    'mode': 'http',
+                    'url': 'https://foo.com/file.txt',
+                    'target': 'memory'
+                }
+            }
             out = romanesco.run(task, inputs=inputs, cleanup=False,
                                 validate=False, auto_convert=False)
             self.assertEqual(out['y']['data'], 'dummy file contents_suffix')
