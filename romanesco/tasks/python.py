@@ -16,8 +16,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs):
         lines = task["script"].split("\n")
         lines = [(str(i+1) + ": " + lines[i]) for i in xrange(len(lines))]
         error = (
-            str(e) + "\nScript:\n" + "\n".join(lines)
-            + "\nTask:\n" + json.dumps(task, indent=4)
+            str(e) + "\nScript:\n" + "\n".join(lines) +
+            "\nTask:\n" + json.dumps(task, indent=4)
         )
         raise Exception(error), None, trace
 

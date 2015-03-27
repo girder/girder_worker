@@ -18,8 +18,8 @@ class TestTable(unittest.TestCase):
                 {"name": "b", "type": "table", "format": "rows"}
             ],
             "outputs": [{"name": "c", "type": "table", "format": "rows"}],
-            "script": ("c = {'fields': a['fields'],"
-                       + "'rows': a['rows'] + b['rows']}"),
+            "script": ("c = {'fields': a['fields'], 'rows': a['rows'] +"
+                       " b['rows']}"),
             "mode": "python"
         }
         self.analysis_r = {
@@ -36,13 +36,13 @@ class TestTable(unittest.TestCase):
         self.test_input = {
             "a": {
                 "format": "rows.json",
-                "data": ('{"fields": ["aa", "bb"],'
-                         + '"rows": [{"aa": 1, "bb": 2}]}')
+                "data": ('{"fields": ["aa", "bb"], '
+                         '"rows": [{"aa": 1, "bb": 2}]}')
             },
             "b": {
                 "format": "rows.json",
                 "data": ('{"fields": ["aa", "bb"],'
-                         + '"rows": [{"aa": 3, "bb": 4}]}')
+                         '"rows": [{"aa": 3, "bb": 4}]}')
             }
         }
         import pymongo
@@ -79,7 +79,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(
             outputs["c"]["data"],
             '{"fields": ["aa", "bb"], '
-            + '"rows": [{"aa": 1, "bb": 2}, {"aa": 3, "bb": 4}]}')
+            '"rows": [{"aa": 1, "bb": 2}, {"aa": 3, "bb": 4}]}')
 
     def test_bson(self):
         import pymongo

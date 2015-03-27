@@ -38,16 +38,16 @@ def load(task_file):
 
     if "script" not in task and task.get("mode") != "workflow":
         prevdir = os.getcwd()
-        parent = os.path.dirname(analysis_file)
+        parent = os.path.dirname(task_file)
         if parent != "":
-            os.chdir(os.path.dirname(analysis_file))
-        analysis["script"] = romanesco.io.fetch({
+            os.chdir(os.path.dirname(task_file))
+        task["script"] = romanesco.io.fetch({
             "url": task["script_uri"],
             "target": "memory"
         })
         os.chdir(prevdir)
 
-    return analysis
+    return task
 
 
 def isvalid(type, binding):
