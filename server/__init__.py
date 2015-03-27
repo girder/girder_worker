@@ -14,6 +14,7 @@ import sys
 from girder import events
 from girder.api import access, rest
 from girder.api.describe import Description
+from girder.models.model_base import AccessException
 from girder.utility.model_importer import ModelImporter
 from girder.plugins.jobs.constants import JobStatus
 
@@ -33,12 +34,6 @@ from girder.plugins.jobs.constants import JobStatus
 # # Whitelisted folders where any user (including those not logged in)
 # # can run analyses defined in these folders.
 # # safe_folders: [bson.objectid.ObjectId("5314be7cea33db24b6aa490c")]
-
-
-def getParentFolder(itemId, itemApi):
-    user = itemApi.getCurrentUser()
-    item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
-    return item['folderId']
 
 
 def getItemContent(itemId, itemApi):
@@ -226,12 +221,10 @@ def load(info):
         requireAuth = conf.get('require_auth', False)
         fullAccessUsers = conf.get('full_access_users', [])
         safeFolders = conf.get('safe_folders', [])
-        if (
-            requireAuth
-            and (not user or user['login'] not in fullAccessUsers)
-            and getParentFolder(itemId, itemApi) not in safeFolders
-        ):
-            return {'error': 'Unauthorized'}
+
+        if (requireAuth and (not user or user['login'] not in fullAccessUsers)
+                and item['folderId'] not in safeFolders):
+            raise AccessException('Unauthorized user.')
 
         analysis = item.get('meta', {}).get('analysis')
 
