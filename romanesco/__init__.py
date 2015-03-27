@@ -42,7 +42,6 @@ def load(task_file):
         if parent != "":
             os.chdir(os.path.dirname(analysis_file))
         analysis["script"] = romanesco.io.fetch({
-            "mode": task.get("mode", "http"),
             "url": task["script_uri"],
             "target": "memory"
         })
@@ -107,7 +106,6 @@ def convert(type, input, output):
         converter_path = converter_type[input["format"]][output["format"]]
         data_descriptor = input
         for c in converter_path:
-            print c
             result = romanesco.run(c, {"input": data_descriptor},
                                    auto_convert=False)
             data_descriptor = result["output"]
@@ -168,6 +166,14 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
 
     if mode not in _taskMap:
         raise Exception("Invalid mode: %s" % mode)
+
+    # If some inputs are not there, fill in with defaults
+    for name, task_input in task_inputs.iteritems():
+        if name not in inputs:
+            if "default" in task_input:
+                inputs[name] = task_input["default"]
+            else:
+                raise Exception("Required input '%s' not provided." % name)
 
     for name, d in inputs.iteritems():
         task_input = task_inputs[name]
