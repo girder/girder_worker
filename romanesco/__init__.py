@@ -22,26 +22,30 @@ _taskMap = {
 }
 
 
-def load(analysis_file):
+def load(task_file):
     """
-    Load an analysis JSON into memory, resolving any ``"script_uri"`` fields
+    Load a task JSON into memory, resolving any ``"script_uri"`` fields
     by replacing it with a ``"script"`` field containing the contents pointed
-    to by ``"script_uri"`` (see :py:mod:`romanesco.uri` for URI formats).
+    to by ``"script_uri"`` (see :py:mod:`romanesco.uri` for URI formats). A
+    ``script_fetch_mode`` field may also be set
 
     :param analysis_file: The path to the JSON file to load.
     :returns: The analysis as a dictionary.
     """
 
-    with open(analysis_file) as f:
-        analysis = json.load(f)
+    with open(task_file) as f:
+        task = json.load(f)
 
-    if "script" not in analysis and analysis.get("mode") != "workflow":
+    if "script" not in task and task.get("mode") != "workflow":
         prevdir = os.getcwd()
         parent = os.path.dirname(analysis_file)
         if parent != "":
             os.chdir(os.path.dirname(analysis_file))
-        # TODO replace next line (romanesco.uri no longer exists)
-        analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])
+        analysis["script"] = romanesco.io.fetch({
+            "mode": task.get("mode", "http"),
+            "url": task["script_uri"],
+            "target": "memory"
+        })
         os.chdir(prevdir)
 
     return analysis
@@ -62,8 +66,7 @@ def isvalid(type, binding):
         ``False`` otherwise.
     """
     if "data" not in binding:
-        # TODO replace next line
-        binding["data"] = romanesco.uri.get_uri(binding["uri"])
+        binding["data"] = romanesco.io.fetch(binding)
     validator = romanesco.format.validators[type][binding["format"]]
     outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
                             validate=False)
@@ -95,8 +98,7 @@ def convert(type, input, output):
     """
 
     if "data" not in input:
-        # TODO replace next line
-        input["data"] = romanesco.uri.get_uri(input["uri"])
+        input["data"] = romanesco.io.fetch(input)
 
     if input["format"] == output["format"]:
         data = input["data"]
@@ -105,6 +107,7 @@ def convert(type, input, output):
         converter_path = converter_type[input["format"]][output["format"]]
         data_descriptor = input
         for c in converter_path:
+            print c
             result = romanesco.run(c, {"input": data_descriptor},
                                    auto_convert=False)
             data_descriptor = result["output"]
@@ -159,8 +162,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         was provided. Instead, those outputs will be saved to that URI and
         the output binding will contain the location in the ``"uri"`` field.
     """
-    task_inputs = {d["name"]: d for d in task.get("input", ())}
-    task_outputs = {d["name"]: d for d in task.get("output", ())}
+    task_inputs = {d["name"]: d for d in task.get("inputs", ())}
+    task_outputs = {d["name"]: d for d in task.get("outputs", ())}
     mode = task.get("mode") or "python"
 
     if mode not in _taskMap:
@@ -184,7 +187,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
             d["script_data"] = converted["data"]
         elif (d.get("format", task_input.get("format")) ==
               task_input.get("format")):
-            d["data"] = romanesco.io.fetch(d, **kwargs)
+            if "data" not in d:
+                d["data"] = romanesco.io.fetch(d, **kwargs)
             d["script_data"] = d["data"]
         else:
             raise Exception("Expected exact format match but '%s != %s'." % (

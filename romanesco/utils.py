@@ -41,7 +41,7 @@ class JobManager(object):
         :type interval: int or float
         """
         if headers is None:
-            headers={}
+            headers = {}
 
         self.logPrint = logPrint
         self.method = method
@@ -120,7 +120,6 @@ class JobManager(object):
         """
         httpMethod = getattr(requests, self.method.lower())
         httpMethod(self.url, headers=self.headers, data={'status': status})
-
 
     def updateProgress(self, total=None, current=None, message=None,
                        forceFlush=False):

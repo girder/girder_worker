@@ -23,22 +23,18 @@ class TestPythonMode(unittest.TestCase):
         task = {
             'mode': 'python',
             'script': 'y = x + "_suffix"',
-            'input': [
-                {
+            'inputs': [{
                 'id': 'x',
                 'name': 'x',
                 'format': 'string',
                 'type': 'string'
-                }
-            ],
-            'output': [
-                {
+            }],
+            'outputs': [{
                 'id': 'y',
                 'name': 'y',
                 'format': 'string',
                 'type': 'string'
-                }
-            ]
+            }]
         }
 
         inputs = {
@@ -60,7 +56,7 @@ class TestPythonMode(unittest.TestCase):
         with httmock.HTTMock(fetchMock):
             # Use user-specified filename
             out = romanesco.run(task, inputs=inputs, cleanup=False,
-                                    validate=False, auto_convert=False)
+                                validate=False, auto_convert=False)
 
             val = out['y']['data']
             self.assertTrue(val.endswith('override.txt_suffix'))
@@ -76,11 +72,11 @@ class TestPythonMode(unittest.TestCase):
             del inputs['x']['filename']
 
             out = romanesco.run(task, inputs=inputs, cleanup=False,
-                                    validate=False, auto_convert=False)
+                                validate=False, auto_convert=False)
             self.assertTrue(out['y']['data'].endswith('file.txt_suffix'))
 
             # Download to memory instead of a file
             inputs['x']['target'] = 'memory'
             out = romanesco.run(task, inputs=inputs, cleanup=False,
-                                    validate=False, auto_convert=False)
+                                validate=False, auto_convert=False)
             self.assertEqual(out['y']['data'], 'dummy file contents_suffix')

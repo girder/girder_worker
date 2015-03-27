@@ -22,8 +22,6 @@ def fetch(spec, **kwargs):
     """
     Downloads an input file via HTTP using requests.
     """
-    tmpDir = kwargs['_tmp_dir']  # TODO create if not set?
-
     if 'url' not in spec:
         raise Exception('No URL specified for HTTP input.')
 
@@ -39,6 +37,8 @@ def fetch(spec, **kwargs):
         raise
 
     if target == 'file':
+        tmpDir = kwargs['_tmp_dir']  # TODO create if not set?
+
         if 'filename' in spec:
             filename = spec['filename']
         else:

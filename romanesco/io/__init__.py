@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from . import http, mongodb
+from . import http, local, mongodb
 
 
 def fetch(spec, **kwargs):
@@ -16,16 +16,32 @@ def fetch(spec, **kwargs):
     """
     if 'mode' not in spec:
         raise Exception('Missing input mode.')
-    mode = spec['mode']
+    mode = spec.get('mode', 'auto')
+
+    if mode == 'auto':
+        # We guess the mode based on the "url" value
+        if not 'url' in spec:
+            raise Exception('Fetch mode "auto" requires a "url" field.')
+        scheme = spec['url'].split(':', 1)[0]
+
+        if scheme == 'https':
+            mode = 'http'
+        elif scheme == 'file':
+            mode = 'local'
+            spec['path'] = spec['url'][7:]  # Truncate "file://"
+        else:
+            mode = scheme
 
     if mode == 'http':
         return http.fetch(spec, **kwargs)
     elif mode == 'mongodb':
         return mongodb.fetch(spec, **kwargs)
+    elif mode == 'local':
+        return local.fetch(spec, **kwargs)
     elif mode == 'inline':
         return spec['data']
     else:
-        raise Exception('Unknown input fetch mode: ' + mode)
+        raise Exception('Unknown input fetch mode (%s) ' + mode)
 
 
 def put_uri(data, uri):
