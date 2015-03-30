@@ -88,15 +88,24 @@ class TestTable(unittest.TestCase):
             inputs={
                 "a": {
                     "format": "objectlist.bson",
-                    "uri": "mongodb://localhost/test/a"},
+                    "mode": "mongodb",
+                    "db": "test",
+                    "collection": "a"
+                },
                 "b": {
                     "format": "objectlist.bson",
-                    "uri": "mongodb://localhost/test/b"}
+                    "mode": "mongodb",
+                    "db": "test",
+                    "collection": "b"
+                }
             },
             outputs={
                 "c": {
                     "format": "objectlist.bson",
-                    "uri": "mongodb://localhost/test/temp"}
+                    "mode": "mongodb",
+                    "db": "test",
+                    "collection": "temp"
+                }
             })
         self.assertEqual(outputs["c"]["format"], "objectlist.bson")
         coll = pymongo.MongoClient("mongodb://localhost")["test"]["temp"]
@@ -108,7 +117,7 @@ class TestTable(unittest.TestCase):
             self.analysis,
             inputs=self.test_input,
             outputs={
-                "c": {"format": "csv", "uri": "file://" + tmp}
+                "c": {"format": "csv", "path": tmp, "mode": "local"}
             }
         )
         with open(tmp, 'r') as fp:
@@ -181,11 +190,15 @@ class TestTable(unittest.TestCase):
             inputs={
                 "a": {
                     "format": "objectlist.bson",
-                    "uri": "mongodb://localhost/test/a"
+                    "mode": "mongodb",
+                    "db": "test",
+                    "collection": "a"
                 },
                 "b": {
                     "format": "objectlist.bson",
-                    "uri": "mongodb://localhost/test/b"
+                    "mode": "mongodb",
+                    "db": "test",
+                    "collection": "b"
                 }
             },
             outputs={
@@ -302,7 +315,7 @@ class TestTable(unittest.TestCase):
             "table",
             {
                 "format": "csv",
-                "uri": "file://" + os.path.join("data", "flu.csv")
+                "url": "file://" + os.path.join("data", "flu.csv")
             },
             {"format": "column.names"}
         )
@@ -338,7 +351,7 @@ class TestTable(unittest.TestCase):
             "table",
             {
                 "format": "csv",
-                "uri": "file://" + os.path.join("data", "test.csv")
+                "url": "file://" + os.path.join("data", "test.csv")
             },
             {"format": "rows"}
         )
@@ -365,7 +378,7 @@ class TestTable(unittest.TestCase):
             "table",
             {
                 "format": "csv",
-                "uri": "file://" + os.path.join("data", "RadiomicsData.csv")
+                "url": "file://" + os.path.join("data", "RadiomicsData.csv")
             },
             {"format": "rows"}
         )
@@ -380,7 +393,7 @@ class TestTable(unittest.TestCase):
             "table",
             {
                 "format": "csv",
-                "uri": "file://" + os.path.join("data", "RadiomicsData.csv")
+                "url": "file://" + os.path.join("data", "RadiomicsData.csv")
             },
             {"format": "rows.json"}
         )

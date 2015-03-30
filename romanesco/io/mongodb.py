@@ -3,19 +3,23 @@ def fetch(spec, **kwargs):
     import bson
     db = spec['db']
     collection = spec['collection']
+    host = spec.get('host', 'localhost')
     data = ''.join([bson.BSON.encode(d) for d in
-                    pymongo.MongoClient(spec['host'])[db][collection].find()])
+                    pymongo.MongoClient(host)[db][collection].find()])
     return data
 
 
-def push(spec, **kwargs):
+def push(data, spec, **kwargs):
     import pymongo
     import bson
     db = spec['db']
     collection = spec['collection']
+    host = spec.get('host', 'localhost')
     bson_data = bson.decode_all(data)
+
+    c = pymongo.MongoClient(host)[db][collection]
     # TODO is this really what we want? Dropping the whole collection?
     # Seems dangerous, might be unexpected.
-    pymongo.MongoClient(spec['host'])[db][collection].drop()
+    c.drop()
     if len(bson_data) > 0:
-        pymongo.MongoClient(spec['host'])[db][collection].insert(bson_data)
+        c.insert(bson_data)

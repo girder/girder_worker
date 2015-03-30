@@ -9,7 +9,7 @@ def _detectMode(spec):
     if mode == 'auto':
         # We guess the mode based on the "url" value
         if 'url' not in spec:
-            raise Exception('Fetch mode "auto" requires a "url" field.')
+            raise Exception('IO mode "auto" requires a "url" field.')
         scheme = spec['url'].split(':', 1)[0]
 
         if scheme == 'https':
