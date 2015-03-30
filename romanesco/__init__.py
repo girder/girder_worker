@@ -210,7 +210,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
 
     # Actually run the task for the given mode
     _taskMap[mode](task=task, inputs=inputs, outputs=outputs,
-                   task_inputs=task_inputs, task_outputs=task_outputs)
+                   task_inputs=task_inputs, task_outputs=task_outputs,
+                   auto_convert=auto_convert, validate=validate, **kwargs)
 
     for name, task_output in task_outputs.iteritems():
         d = outputs[name]

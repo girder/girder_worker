@@ -3,16 +3,16 @@ import romanesco
 from romanesco.utils import toposort
 
 
-def run(task, inputs, outputs, task_inputs, task_outputs):
-    """ TODO this doesn't work at all yet, just copypasted in."""
+def run(task, inputs, outputs, task_inputs, task_outputs, validate,
+        auto_convert, **kwargs):
     # Make map of steps
-    steps = {step["id"]: step for step in task["steps"]}
+    steps = {step["name"]: step for step in task["steps"]}
 
     # Make map of input bindings
-    bindings = {step["id"]: {} for step in task["steps"]}
+    bindings = {step["name"]: {} for step in task["steps"]}
 
     # Create dependency graph and downstream pointers
-    dependencies = {step["id"]: set() for step in task["steps"]}
+    dependencies = {step["name"]: set() for step in task["steps"]}
     downstream = {}
     for conn in task["connections"]:
         # Add dependency graph link for internal links
@@ -43,7 +43,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs):
 
             # Run step
             print "--- beginning: %s ---" % steps[step]["name"]
-            out = romanesco.run(steps[step]["analysis"], bindings[step])
+            out = romanesco.run(steps[step]["task"], bindings[step])
             print "--- finished: %s ---" % steps[step]["name"]
 
             # Update bindings of downstream analyses
@@ -65,11 +65,10 @@ def run(task, inputs, outputs, task_inputs, task_outputs):
         if "visualization" not in step or not step["visualization"]:
             continue
         vis_bindings = {}
-        for b, value in bindings[step["id"]].iteritems():
+        for b, value in bindings[step["name"]].iteritems():
             script_output = value
-            print step
             vis_input = None
-            for step_input in step["analysis"]["inputs"]:
+            for step_input in step["task"]["inputs"]:
                 if step_input["name"] == b:
                     vis_input = step_input
 
@@ -82,11 +81,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs):
             if (validate and not
                     romanesco.isvalid(vis_input["type"], script_output)):
                 raise Exception(
-                    "Output " + name + " (" +
-                    str(type(script_output["data"])) +
-                    ") is not in the expected type (" + vis_input["type"] +
-                    ") and format (" + d["format"] + ")."
-                )
+                    "Output %s (%s) is not in the expected type (%s) and "
+                    "format (%s)." % (name, type(script_output["data"]),
+                                      vis_input["type"], d["format"]))
 
             if auto_convert:
                 vis_bindings[b] = romanesco.convert(

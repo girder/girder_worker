@@ -3,7 +3,7 @@ import json
 import sys
 
 
-def run(task, inputs, outputs, task_inputs, task_outputs):
+def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     custom = imp.new_module("custom")
 
     for name in inputs:

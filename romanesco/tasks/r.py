@@ -1,4 +1,4 @@
-def run(task, inputs, outputs, task_inputs, task_outputs):
+def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     import rpy2.robjects
 
     env = rpy2.robjects.globalenv
