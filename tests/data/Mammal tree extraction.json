@@ -66,8 +66,8 @@
         {
             "x": 294,
             "y": 139,
-            "id": "TableSelectRandomRows",
-            "analysis": {
+            "name": "TableSelectRandomRows",
+            "task": {
                 "inputs": [
                     {
                         "type": "table",
@@ -98,8 +98,8 @@
         {
             "x": 531,
             "y": 140,
-            "id": "TableUnderscoreToSpace",
-            "analysis": {
+            "name": "TableUnderscoreToSpace",
+            "task": {
                 "inputs": [
                     {
                         "type": "table",
@@ -126,8 +126,8 @@
         {
             "x": 774,
             "y": 144,
-            "id": "LookupOpenTreeNames",
-            "analysis": {
+            "name": "LookupOpenTreeNames",
+            "task": {
                 "inputs": [
                     {
                         "format": "rows",
@@ -154,8 +154,8 @@
         {
             "x": 1015,
             "y": 137,
-            "id": "GetOTLtreeFromTableWithIDs",
-            "analysis": {
+            "name": "GetOTLtreeFromTableWithIDs",
+            "task": {
                 "inputs": [
                     {
                         "format": "rows",
