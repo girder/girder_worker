@@ -1,5 +1,5 @@
 # Set this variable to the minimum coverage percentage to be considered passing
-set(COVERAGE_MINIMUM_PASS 75)
+set(COVERAGE_MINIMUM_PASS 70)
 
 if(PYTHON_COVERAGE)
   add_test(
