@@ -159,9 +159,12 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         was provided. Instead, those outputs will be saved to that URI and
         the output binding will contain the location in the ``"uri"`` field.
     """
-    task_inputs = {d["name"]: d for d in task.get("inputs", ())}
-    task_outputs = {d["name"]: d for d in task.get("outputs", ())}
-    mode = task.get("mode") or "python"
+    def extractId(spec):
+        return spec["id"] if "id" in spec else spec["name"]
+
+    task_inputs = {extractId(d): d for d in task.get("inputs", ())}
+    task_outputs = {extractId(d): d for d in task.get("outputs", ())}
+    mode = task.get("mode", "python")
 
     if mode not in _taskMap:
         raise Exception("Invalid mode: %s" % mode)

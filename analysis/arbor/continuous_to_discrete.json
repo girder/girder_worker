@@ -2,6 +2,7 @@
     "inputs": [
         {
             "type": "table",
+            "id": "table",
             "name": "table",
             "format": "r.dataframe"
         },
@@ -11,11 +12,13 @@
                 "format": "column.names"
             },
             "type": "string",
+            "id": "column",
             "name": "column",
             "format": "text"
         },
         {
             "type": "number",
+            "id": "thresh",
             "name": "thresh",
             "format": "number"
         }
@@ -23,6 +26,7 @@
     "outputs": [
         {
             "type": "table",
+            "id": "newtable",
             "name": "newtable",
             "format": "r.dataframe"
         }
