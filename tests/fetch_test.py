@@ -1,3 +1,4 @@
+import copy
 import httmock
 import os
 import romanesco
@@ -27,7 +28,9 @@ class TestPythonMode(unittest.TestCase):
                 'id': 'x',
                 'name': 'x',
                 'format': 'string',
-                'type': 'string'
+                'type': 'string',
+                'target': 'filepath',
+                'filename': 'override.txt'
             }],
             'outputs': [{
                 'id': 'y',
@@ -40,9 +43,7 @@ class TestPythonMode(unittest.TestCase):
         inputs = {
             'x': {
                 'mode': 'http',
-                'url': 'https://foo.com/file.txt',
-                'target': 'file',
-                'filename': 'override.txt'
+                'url': 'https://foo.com/file.txt'
             }
         }
 
@@ -55,8 +56,9 @@ class TestPythonMode(unittest.TestCase):
 
         with httmock.HTTMock(fetchMock):
             # Use user-specified filename
-            out = romanesco.run(task, inputs=inputs, cleanup=False,
-                                validate=False, auto_convert=False)
+            out = romanesco.run(
+                task, inputs=copy.deepcopy(inputs),  cleanup=False,
+                validate=False, auto_convert=False)
 
             val = out['y']['data']
             self.assertTrue(val.endswith('override.txt_suffix'))
@@ -69,26 +71,16 @@ class TestPythonMode(unittest.TestCase):
             self.assertEqual(contents, 'dummy file contents')
 
             # Use automatically detected filename
-            inputs = {
-                'x': {
-                    'mode': 'http',
-                    'url': 'https://foo.com/file.txt',
-                    'target': 'file'
-                }
-            }
+            del task['inputs'][0]['filename']
 
-            out = romanesco.run(task, inputs=inputs, cleanup=False,
-                                validate=False, auto_convert=False)
+            out = romanesco.run(
+                task, inputs=copy.deepcopy(inputs), cleanup=False,
+                validate=False, auto_convert=False)
             self.assertTrue(out['y']['data'].endswith('file.txt_suffix'))
 
-            # Download to memory instead of a file
-            inputs = {
-                'x': {
-                    'mode': 'http',
-                    'url': 'https://foo.com/file.txt',
-                    'target': 'memory'
-                }
-            }
-            out = romanesco.run(task, inputs=inputs, cleanup=False,
-                                validate=False, auto_convert=False)
+            # Download to memory instead of a file (the default target value)
+            del task['inputs'][0]['target']
+            out = romanesco.run(
+                task, inputs=copy.deepcopy(inputs), cleanup=False,
+                validate=False, auto_convert=False)
             self.assertEqual(out['y']['data'], 'dummy file contents_suffix')

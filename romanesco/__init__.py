@@ -42,8 +42,7 @@ def load(task_file):
         if parent != "":
             os.chdir(os.path.dirname(task_file))
         task["script"] = romanesco.io.fetch({
-            "url": task["script_uri"],
-            "target": "memory"
+            "url": task["script_uri"]
         })
         os.chdir(prevdir)
 
@@ -196,7 +195,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         elif (d.get("format", task_input.get("format")) ==
               task_input.get("format")):
             if "data" not in d:
-                d["data"] = romanesco.io.fetch(d, **kwargs)
+                d["data"] = romanesco.io.fetch(
+                    d, task_input=task_input, **kwargs)
             d["script_data"] = d["data"]
         else:
             raise Exception("Expected exact format match but '%s != %s'." % (

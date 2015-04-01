@@ -154,8 +154,7 @@ def import_converters(search_paths):
             if "script" not in analysis:
                 analysis["script"] = romanesco.io.fetch({
                     "mode": analysis.get("script_fetch_mode", "auto"),
-                    "url": analysis["script_uri"],
-                    "target": "memory"
+                    "url": analysis["script_uri"]
                 })
 
             if os.path.basename(filename).startswith("validate_"):

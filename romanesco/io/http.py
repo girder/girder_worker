@@ -24,9 +24,9 @@ def fetch(spec, **kwargs):
     """
     if 'url' not in spec:
         raise Exception('No URL specified for HTTP input.')
-
+    taskInput = kwargs.get('task_input', {})
+    target = taskInput.get('target', 'memory')
     url = spec['url']
-    target = spec.get('target', 'file')
     method = getattr(requests, spec.get('method', 'get').lower())
     request = method(url, headers=spec.get('headers', {}), stream=True)
 
@@ -36,11 +36,11 @@ def fetch(spec, **kwargs):
         print 'HTTP fetch failed (%s). Response: %s' % (url, request.text)
         raise
 
-    if target == 'file':
+    if target == 'filepath':
         tmpDir = kwargs['_tmp_dir']  # TODO create if not set?
 
-        if 'filename' in spec:
-            filename = spec['filename']
+        if 'filename' in taskInput:
+            filename = taskInput['filename']
         else:
             filename = _readFilenameFromResponse(request, url)
 
