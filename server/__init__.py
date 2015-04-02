@@ -300,8 +300,12 @@ def load(info):
 
         # These parameters are used to get stdout/stderr back from Celery
         # to Girder.
-        params['url'] = url
-        params['headers'] = {'Girder-Token': jobToken['_id']}
+        kwargs['jobInfo'] = {
+            'url': url,
+            'method': 'PUT',
+            'headers': {'Girder-Token': jobToken['_id']},
+            'logPrint': True
+        }
 
         job['kwargs'] = kwargs
         job['args'] = [analysis]
