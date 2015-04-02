@@ -94,8 +94,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,
 
             elif script_output["format"] == vis_input["format"]:
                 data = script_output["data"]
-                if "uri" in script_output:
-                    romanesco.uri.put_uri(data, script_output["uri"])
+                if "mode" in script_output:
+                    romanesco.io.push(data, script_output)
                 else:
                     vis_bindings[b] = {
                         "type": vis_input["type"],
