@@ -1,0 +1,16 @@
+.g-config-breadcrumb-container
+
+p.
+  Configure how Girder should connect to the celery client.
+
+form#g-romanesco-settings-form(role="form")
+  .form-group
+    label.control-label(for="g-romanesco-broker") Celery broker URL
+    input.input-sm.form-control#g-romanesco-broker(
+      type="text", placeholder="Broker (default: mongodb://localhost/romanesco)")
+  .form-group
+    label.control-label(for="g-romanesco-backend") Celery backend URL
+    input.input-sm.form-control#g-romanesco-backend(
+      type="text", placeholder="Backend (default: mongodb://localhost/romanesco)")
+  p#g-romanesco-settings-error-message.g-validation-failed-message
+  input.btn.btn-sm.btn-primary(type="submit", value="Save")

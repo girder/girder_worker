@@ -36,6 +36,48 @@ from girder.plugins.jobs.constants import JobStatus
 # # safe_folders: [bson.objectid.ObjectId("5314be7cea33db24b6aa490c")]
 
 
+_celeryapp = None
+
+
+class PluginSettings():
+    BROKER = 'romanesco.broker'
+    BACKEND = 'romanesco.backend'
+
+
+def getCeleryApp():
+    """
+    Lazy loader for the celery app. Reloads anytime the settings are updated.
+    """
+    global _celeryapp
+
+    if _celeryapp is None:
+        settings = ModelImporter.model('setting')
+        backend = settings.get(PluginSettings.BACKEND) or \
+            'mongodb://localhost/romanesco'
+        broker = settings.get(PluginSettings.BROKER) or \
+            'mongodb://localhost/romanesco'
+        _celeryapp = celery.Celery('romanesco', backend=backend, broker=broker)
+    return _celeryapp
+
+
+def validateSettings(event):
+    """
+    Handle plugin-specific system settings. Right now we don't do any
+    validation for the broker or backend URL settings, but we do reinitialize
+    the celery app object with the new values.
+    """
+    global _celeryapp
+    key = event.info['key']
+    val = event.info['value']
+
+    if key == PluginSettings.BROKER:
+        _celeryapp = None
+        event.preventDefault()
+    elif key == PluginSettings.BACKEND:
+        _celeryapp = None
+        event.preventDefault()
+
+
 def getItemContent(itemId, itemApi):
     item = itemApi.getItem(id=itemId, params={})
 
@@ -52,10 +94,6 @@ def getItemContent(itemId, itemApi):
 
 
 def load(info):
-    celeryapp = celery.Celery(
-        'romanesco',
-        backend='mongodb://localhost/romanesco',
-        broker='mongodb://localhost/romanesco')
 
     @access.public
     def schedule(event):
@@ -70,7 +108,7 @@ def load(info):
             event.stopPropagation()
 
             # Send the task to celery
-            asyncResult = celeryapp.send_task(
+            asyncResult = getCeleryApp().send_task(
                 'romanesco.run', job['args'], job['kwargs'])
 
             # Set the job status to queued and record the task ID from celery.
@@ -102,7 +140,7 @@ def load(info):
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
-        asyncResult = celeryapp.send_task('romanesco.convert', [
+        asyncResult = getCeleryApp().send_task('romanesco.convert', [
             inputType,
             {"data": content, "format": inputFormat},
             {"format": outputFormat}
@@ -116,7 +154,7 @@ def load(info):
 
         content = getItemContent(itemId, itemApi)
 
-        asyncResult = celeryapp.send_task('romanesco.convert', [
+        asyncResult = getCeleryApp().send_task('romanesco.convert', [
             inputType,
             {"data": content, "format": inputFormat},
             {"format": outputFormat}
@@ -137,7 +175,7 @@ def load(info):
         taskId = getTaskId(jobId)
 
         # Get the celery result for the corresponding task ID.
-        result = AsyncResult(taskId, backend=celeryapp.backend)
+        result = AsyncResult(taskId, backend=getCeleryApp().backend)
         try:
             response = {'status': result.state}
             if result.state == celery.states.FAILURE:
@@ -155,7 +193,7 @@ def load(info):
     @access.public
     def romanescoRunResult(itemId, jobId, params):
         taskId = getTaskId(jobId)
-        job = AsyncResult(taskId, backend=celeryapp.backend)
+        job = AsyncResult(taskId, backend=getCeleryApp().backend)
         return {'result': job.result}
 
     @access.public
@@ -193,7 +231,8 @@ def load(info):
                     for line in logDiff.rstrip().split('\n'):
                         yield sseMessage(line)
                 if endtime is None:
-                    result = AsyncResult(taskId, backend=celeryapp.backend)
+                    result = AsyncResult(taskId,
+                                         backend=getCeleryApp().backend)
                     if (result.state == celery.states.FAILURE or
                             result.state == celery.states.SUCCESS or
                             result.state == celery.states.REVOKED):
@@ -280,8 +319,8 @@ def load(info):
 
     @access.public
     def romanescoStopRun(jobId, params):
-        task = AsyncResult(jobId, backend=celeryapp.backend)
-        task.revoke(celeryapp.broker_connection(), terminate=True)
+        task = AsyncResult(jobId, backend=getCeleryApp().backend)
+        task.revoke(getCeleryApp().broker_connection(), terminate=True)
         return {'status': task.state}
 
 
@@ -327,3 +366,4 @@ def load(info):
         romanescoStopRun)
 
     events.bind('jobs.schedule', 'romanesco', schedule)
+    events.bind('model.setting.validate', 'romanesco', validateSettings)
