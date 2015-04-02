@@ -15,7 +15,7 @@ if __name__ == '__main__':
         retval = 0
 
         with JobManager(logPrint=jobInfo.get('logPrint', True),
-                        url=jobInfo.get('url'),
+                        url=jobInfo.get('url'), method=jobInfo.get('method'),
                         headers=jobInfo.get('headers')):
             retval = romanesco.run(*pargs, **kwargs)
         return retval

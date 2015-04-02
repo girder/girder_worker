@@ -29,7 +29,7 @@ class JobManager(object):
     It also exposes utilities for updating other job fields such as progress
     and status.
     """
-    def __init__(self, logPrint, url, method, headers=None, interval=0.5):
+    def __init__(self, logPrint, url, method=None, headers=None, interval=0.5):
         """
         :param on: Whether print messages should be logged to the job log.
         :type on: bool
@@ -40,13 +40,10 @@ class JobManager(object):
         back to Girder over HTTP (seconds).
         :type interval: int or float
         """
-        if headers is None:
-            headers = {}
-
         self.logPrint = logPrint
-        self.method = method
+        self.method = method or 'PUT'
         self.url = url
-        self.headers = headers
+        self.headers = headers or {}
         self.interval = interval
 
         self._last = time.time()
@@ -78,6 +75,9 @@ class JobManager(object):
         If there are contents in the buffer, send them up to the server. If the
         buffer is empty, this is a no-op.
         """
+        if not self.url:
+            return
+
         if len(self._buf) or self._progressTotal or self._progressMessage or \
                 self._progressCurrent is not None:
             httpMethod = getattr(requests, self.method.lower())
