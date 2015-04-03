@@ -2,12 +2,14 @@
     "inputs": [
         {
             "type": "tree",
-            "name": "tree",
+            "id": "tree",
+            "name": "The tree",
             "format": "r.apetree"
         },
         {
             "type": "table",
-            "name": "table",
+            "id": "table",
+            "name": "The table",
             "format": "r.dataframe"
         },
         {
@@ -18,7 +20,8 @@
                 "ACDC"
             ],
             "type": "string",
-            "name": "correlation",
+            "id": "correlation",
+            "name": "Correlation information",
             "format": "text"
         },
         {
@@ -27,7 +30,8 @@
                 "format": "column.names"
             },
             "type": "string",
-            "name": "ind_variable",
+            "id": "ind_variable",
+            "name": "Independent variable",
             "format": "text"
         },
         {
@@ -36,7 +40,8 @@
                 "format": "column.names"
             },
             "type": "string",
-            "name": "dep_variable",
+            "id": "dep_variable",
+            "name": "Dependent variable",
             "format": "text"
         }
     ],
@@ -46,16 +51,19 @@
     "outputs": [
         {
             "type": "table",
-            "name": "coefficients",
+            "id": "coefficients",
+            "name": "The coefficients",
             "format": "r.dataframe"
         },
         {
             "type": "table",
-            "name": "modelfit_summary",
+            "id": "modelfit_summary",
+            "name": "Model fit summary",
             "format": "r.dataframe"
         },
         {
             "type": "image",
+            "id": "pglsPlot",
             "name": "pglsPlot",
             "format": "png.base64"
         }

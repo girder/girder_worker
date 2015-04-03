@@ -2,8 +2,8 @@ import csv
 import json
 import glob
 import os
-import romanesco.uri
 import math
+import romanesco.io
 from StringIO import StringIO
 
 
@@ -144,7 +144,6 @@ def import_converters(search_paths):
     :param search_paths: A list of search paths relative to the current
         working directory.
     """
-
     prevdir = os.getcwd()
     for path in search_paths:
         os.chdir(path)
@@ -153,8 +152,10 @@ def import_converters(search_paths):
                 analysis = json.load(f)
 
             if "script" not in analysis:
-                analysis["script"] = romanesco.uri.get_uri(
-                    analysis["script_uri"])
+                analysis["script"] = romanesco.io.fetch({
+                    "mode": analysis.get("script_fetch_mode", "auto"),
+                    "url": analysis["script_uri"]
+                })
 
             if os.path.basename(filename).startswith("validate_"):
 

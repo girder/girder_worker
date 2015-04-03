@@ -1,5 +1,5 @@
 # Set this variable to the minimum coverage percentage to be considered passing
-set(COVERAGE_MINIMUM_PASS 75)
+set(COVERAGE_MINIMUM_PASS 70)
 
 if(PYTHON_COVERAGE)
   add_test(
@@ -39,6 +39,7 @@ if(PYTHON_STYLE_TESTS)
 endif()
 
 add_python_test(arbor)
+add_python_test(fetch)
 add_python_test(geometry)
 add_python_test(image)
 add_python_test(number)

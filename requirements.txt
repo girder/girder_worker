@@ -6,6 +6,6 @@ celery==3.1.11
 kombu==3.0.15
 pymongo==2.7
 pytz==2014.2
-requests==2.2.1
+requests==2.6.0
 rpy2==2.3.10
 wsgiref==0.1.2
