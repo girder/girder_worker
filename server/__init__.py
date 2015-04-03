@@ -9,10 +9,12 @@ import time
 from celery.result import AsyncResult
 from StringIO import StringIO
 from girder.constants import AccessType
-from girder.api import access
 import sys
 
 from girder import events
+from girder.api import access, rest
+from girder.api.describe import Description
+from girder.models.model_base import AccessException
 from girder.utility.model_importer import ModelImporter
 from girder.plugins.jobs.constants import JobStatus
 
@@ -32,18 +34,6 @@ from girder.plugins.jobs.constants import JobStatus
 # # Whitelisted folders where any user (including those not logged in)
 # # can run analyses defined in these folders.
 # # safe_folders: [bson.objectid.ObjectId("5314be7cea33db24b6aa490c")]
-
-
-def getItemMetadata(itemId, itemApi):
-    user = itemApi.getCurrentUser()
-    item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
-    return item['meta']
-
-
-def getParentFolder(itemId, itemApi):
-    user = itemApi.getCurrentUser()
-    item = itemApi.model('item').load(itemId, level=AccessType.READ, user=user)
-    return item['folderId']
 
 
 def getItemContent(itemId, itemApi):
@@ -88,42 +78,25 @@ def load(info):
             job['taskId'] = asyncResult.task_id
             ModelImporter.model('job', 'jobs').save(job)
 
-    @access.public
-    def romanescoCreateModule(params):
+    @access.user
+    @rest.boundHandler()
+    def romanescoCreateModule(self, params):
         """Create a new romanesco module."""
+        self.requireParams('name', params)
 
-        collectionApi = info['apiRoot'].collection
+        user = self.getCurrentUser()
+        public = self.boolParam('public', params, default=False)
 
-        collectionApi.requireParams(['name'], params)
-
-        user = collectionApi.getCurrentUser()
-        public = collectionApi.boolParam('public', params, default=False)
-
-        collection = collectionApi.model('collection').createCollection(
+        collection = self.model('collection').createCollection(
             name=params['name'], description=params.get('description'),
             public=public, creator=user)
 
-        folderApi = info['apiRoot'].folder
+        for name in ('Data', 'Analyses', 'Visualizations'):
+            self.model('folder').createFolder(
+                name=name, public=public, parentType='collection',
+                parent=collection)
 
-        folderApi.createFolder({
-            'name': 'Data',
-            'public': public,
-            'parentType': 'collection',
-            'parentId': collection['_id']})
-
-        folderApi.createFolder({
-            'name': 'Analyses',
-            'public': public,
-            'parentType': 'collection',
-            'parentId': collection['_id']})
-
-        folderApi.createFolder({
-            'name': 'Visualizations',
-            'public': public,
-            'parentType': 'collection',
-            'parentId': collection['_id']})
-
-        return collectionApi.model('collection').filter(collection)
+        return self.model('collection').filter(collection, user=user)
 
     @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
@@ -237,69 +210,73 @@ def load(info):
         return streamGen
 
     @access.public
-    def romanescoRun(itemId, params):
+    @rest.boundHandler(info['apiRoot'].item)
+    @rest.loadmodel(map={'itemId': 'item'}, model='item',
+                    level=AccessType.READ)
+    def romanescoRun(self, item, params):
+        # Make sure that we have permission to perform this analysis.
+        user = self.getCurrentUser()
+
+        conf = info['config'].get('romanesco', {})
+        requireAuth = conf.get('require_auth', False)
+        fullAccessUsers = conf.get('full_access_users', [])
+        safeFolders = conf.get('safe_folders', [])
+
+        if (requireAuth and (not user or user['login'] not in fullAccessUsers)
+                and item['folderId'] not in safeFolders):
+            raise AccessException('Unauthorized user.')
+
+        analysis = item.get('meta', {}).get('analysis')
+
+        if type(analysis) is not dict:
+            raise rest.RestException(
+                'Must specify a valid JSON object as the "analysis" metadata '
+                'field on the input item.')
+
+        # Create the job record.
+        jobModel = self.model('job', 'jobs')
+        public = False
+        if user is None:
+            public = True
+        job = jobModel.createJob(
+            title=analysis['name'], type='romanesco_task',
+            handler='romanesco_handler', user=user, public=public)
+
+        # Create a token that is scoped for updating the job.
+        jobToken = jobModel.createJobToken(job)
+
+        # Get the analysis parameters (includes inputs & outputs).
         try:
-            # Make sure that we have permission to perform this analysis.
-            itemApi = info['apiRoot'].item
-            user = itemApi.getCurrentUser()
+            kwargs = json.load(cherrypy.request.body)
+        except ValueError:
+            raise rest.RestException(
+                'You must pass a valid JSON object in the request body.')
 
-            conf = info['config'].get('romanesco', {})
-            requireAuth = conf.get('require_auth', False)
-            fullAccessUsers = conf.get('full_access_users', [])
-            safeFolders = conf.get('safe_folders', [])
-            if (
-                requireAuth
-                and (not user or user['login'] not in fullAccessUsers)
-                and getParentFolder(itemId, itemApi) not in safeFolders
-            ):
-                return {'error': 'Unauthorized'}
+        # We need to pass the URL to the job API down to the Celery job.
+        # The URL returned from cherrypy includes /item/<itemId>,
+        # which we trim off here.
+        apiUrl = os.path.dirname(cherrypy.url())
+        apiUrl = apiUrl[0:apiUrl.rfind("/", 0, apiUrl.rfind("/"))]
+        url = '{}/job/{}'.format(apiUrl, job['_id'])
 
-            # Get the analysis to run.
-            metadata = getItemMetadata(itemId, itemApi)
-            analysis = metadata["analysis"]
+        # These parameters are used to get stdout/stderr back from Celery
+        # to Girder.
+        params['url'] = url
+        params['headers'] = {'Girder-Token': jobToken['_id']}
 
-            # Create the job record.
-            jobModel = itemApi.model('job', 'jobs')
-            public = False
-            if user is None:
-                public = True
-            job = jobModel.createJob(
-                title=analysis['name'], type='romanesco_task',
-                handler='romanesco_handler', user=user, public=public)
+        job['kwargs'] = kwargs
+        job['args'] = [analysis]
+        job = jobModel.save(job)
 
-            # Create a token that is scoped for updating the job.
-            jobToken = jobModel.createJobToken(job)
-
-            # Get the analysis parameters (includes inputs & outputs).
-            params = json.load(cherrypy.request.body)
-
-            # We need to pass the URL to the job API down to the Celery job.
-            # The URL returned from cherrypy includes /item/<itemId>,
-            # which we trim off here.
-            apiUrl = os.path.dirname(cherrypy.url())
-            apiUrl = apiUrl[0:apiUrl.rfind("/", 0, apiUrl.rfind("/"))]
-            url = '{}/job/{}'.format(apiUrl, job['_id'])
-
-            # These parameters are used to get stdout/stderr back from Celery
-            # to Girder.
-            params['url'] = url
-            params['headers'] = {'Girder-Token': jobToken['_id']}
-
-            job['kwargs'] = params
-            job['args'] = [analysis]
-            job = jobModel.save(job)
-
-            # Schedule the job (triggers the schedule method above)
-            jobModel.scheduleJob(job)
-            return {'id': job["_id"]}
-        except:
-            import traceback
-            return {
-                'status': 'FAILURE',
-                'message': sys.exc_info(),
-                'trace': traceback.format_exc(sys.exc_info()[2])
-            }
-
+        # Schedule the job (triggers the schedule method above)
+        jobModel.scheduleJob(job)
+        return jobModel.filter(job, user)
+    romanescoRun.description = (
+        Description('Run a task specified by item metadata.')
+        .param('itemId', 'The item containing the analysis as metadata.',
+               paramType='path')
+        .param('kwargs', 'Additional kwargs for the worker task.',
+               paramType='body'))
 
     @access.public
     def romanescoStopRun(jobId, params):
