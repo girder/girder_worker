@@ -2,12 +2,12 @@
     "inputs": [
         {
             "type": "table",
-            "name": "table",
+            "id": "table",
             "format": "r.dataframe"
         },
         {
             "type": "tree",
-            "name": "tree",
+            "id": "tree",
             "format": "r.apetree"
         },
         {
@@ -16,7 +16,7 @@
                 "format": "column.names"
             },
             "type": "string",
-            "name": "column",
+            "id": "column",
             "format": "text"
         },
         {
@@ -30,6 +30,7 @@
                 "EB"
             ],
             "type": "string",
+            "id": "model",
             "name": "model",
             "format": "text"
         }
@@ -37,17 +38,18 @@
     "outputs": [
         {
             "type": "image",
+            "id": "treePlot",
             "name": "treePlot",
             "format": "png.base64"
         },
         {
             "type": "tree",
-            "name": "result",
+            "id": "result",
             "format": "r.apetree"
         },
         {
             "type": "table",
-            "name": "fit",
+            "id": "fit",
             "format": "r.dataframe"
         }
     ],

@@ -24,14 +24,13 @@ install:
   - Rscript -e 'install.packages(c("ape","geiger","nlme","devtools"), repos=c("http://cran.cnr.Berkeley.edu"))'
   - R -e 'options(repos="http://cran.cnr.Berkeley.edu");library(devtools);install_github("cardoonTools", "hafen");install_github("aRbor", "arborworkflows")'
   # install Python packages
-  - pip install --allow-external PIL --allow-unverified PIL -r requirements.txt
-  - pip install pep8 coverage
+  - pip install --allow-external PIL --allow-unverified PIL -r requirements.txt -r requirements-dev.txt
 
 # run tests
 script:
   - mkdir _build
   - cd _build
   - cmake -D PYTHON_COVERAGE:BOOL=ON ..
-  - ctest -V -S ../cmake/travis_build.cmake
+  - ctest -VV -S ../cmake/travis_build.cmake
   - ctest -V -S ../cmake/travis_submit.cmake
   - cd ..

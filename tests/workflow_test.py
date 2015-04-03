@@ -117,16 +117,16 @@ class TestWorkflow(unittest.TestCase):
             ],
             "steps": [
                 {
-                    "id": "af352b243109c4235d2549",
-                    "analysis": self.add_three,
+                    "name": "af352b243109c4235d2549",
+                    "task": self.add_three,
                 },
                 {
-                    "id": "af352b243109c4235d25fb",
-                    "analysis": self.add_two,
+                    "name": "af352b243109c4235d25fb",
+                    "task": self.add_two,
                 },
                 {
-                    "id": "af352b243109c4235d25ec",
-                    "analysis": self.multiply,
+                    "name": "af352b243109c4235d25ec",
+                    "task": self.multiply,
                 }
             ],
             "connections": [
@@ -183,16 +183,16 @@ class TestWorkflow(unittest.TestCase):
             ],
             "steps": [
                 {
-                    "id": 1,
-                    "analysis": self.add,
+                    "name": 1,
+                    "task": self.add,
                 },
                 {
-                    "id": 2,
-                    "analysis": self.multiply,
+                    "name": 2,
+                    "task": self.multiply,
                 },
                 {
-                    "id": 3,
-                    "analysis": self.multiply,
+                    "name": 3,
+                    "task": self.multiply,
                 }
             ],
             "connections": [
@@ -259,21 +259,21 @@ class TestWorkflow(unittest.TestCase):
             ],
             "steps": [
                 {
-                    "id": 1,
-                    "analysis": self.add,
+                    "name": 1,
+                    "task": self.add,
                 },
                 {
-                    "id": 2,
-                    "analysis": self.multiply,
+                    "name": 2,
+                    "task": self.multiply,
                 },
                 {
-                    "id": 3,
-                    "analysis": self.multiply,
+                    "name": 3,
+                    "task": self.multiply,
                 },
                 {
-                    "id": 4,
+                    "name": 4,
                     "visualization": True,
-                    "analysis": {
+                    "task": {
                         "inputs": [
                             {
                                 "name": "x",
@@ -281,8 +281,7 @@ class TestWorkflow(unittest.TestCase):
                                 "format": "number"
                             }
                         ]
-                    },
-                    "name": "numbervis"
+                    }
                 }
             ],
             "connections": [
@@ -372,7 +371,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs["result"]["data"], (2*2)+(3*3))
         self.assertEqual(outputs["_visualizations"], [{
             "mode": "preset",
-            "type": "numbervis",
+            "type": 4,
             "inputs": {
                 "x": {
                     "format": "number",

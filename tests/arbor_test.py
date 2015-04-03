@@ -19,8 +19,8 @@ class TestArbor(unittest.TestCase):
         outputs = romanesco.run(
             pgls,
             {
-                "tree": {"format": "newick", "uri": "file://" + tree_file},
-                "table": {"format": "csv", "uri": "file://" + table_file},
+                "tree": {"format": "newick", "url": "file://" + tree_file},
+                "table": {"format": "csv", "url": "file://" + table_file},
                 "correlation": {"format": "text", "data": "BM"},
                 "ind_variable": {"format": "text", "data": "SVL"},
                 "dep_variable": {"format": "text", "data": "PCI_limbs"}
@@ -36,8 +36,8 @@ class TestArbor(unittest.TestCase):
     #     outputs = romanesco.run(
     #         fit_continuous,
     #         {
-    #             "tree": {"format": "newick", "uri": "file://" + tree_file},
-    #             "table": {"format": "csv", "uri": "file://" + table_file},
+    #             "tree": {"format": "newick", "url": "file://" + tree_file},
+    #             "table": {"format": "csv", "url": "file://" + table_file},
     #             "column": {"format": "text", "data": "SVL"},
     #             "model": {"format": "text", "data": "BM"}
     #         }
@@ -51,7 +51,7 @@ class TestArbor(unittest.TestCase):
         outputs = romanesco.run(
             cont2disc,
             {
-                "table": {"format": "csv", "uri": "file://" + table_file},
+                "table": {"format": "csv", "url": "file://" + table_file},
                 "column": {"format": "text", "data": "SVL"},
                 "thresh": {"format": "number", "data": 3.5}
             },
@@ -69,7 +69,7 @@ class TestArbor(unittest.TestCase):
             {
                 "table": {
                     "format": "csv",
-                    "uri": "file://" +
+                    "url": "file://" +
                            os.path.join("data", "mammal_lnMass_tiny.csv")
                 },
                 "outRowCount": {"format": "number", "data": 19}

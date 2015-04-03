@@ -1,19 +1,22 @@
 import romanesco
-from celery import Celery
-from .logger import StdoutLogger
 
-if __name__ == "__main__":
+from .utils import JobManager
+from celery import Celery
+
+if __name__ == '__main__':
     app = Celery(
-        main='romanesco',
-        backend='mongodb://localhost/romanesco',
-        broker='mongodb://localhost/romanesco')
+        main=romanesco.config.get('celery', 'app_main'),
+        backend=romanesco.config.get('celery', 'broker'),
+        broker=romanesco.config.get('celery', 'broker'))
 
     @app.task
     def run(*pargs, **kwargs):
-        url = kwargs.pop('url')
-        headers = kwargs.pop('headers')
+        jobInfo = kwargs.pop('jobInfo', {})
         retval = 0
-        with StdoutLogger(url, 'PUT', headers):
+
+        with JobManager(logPrint=jobInfo.get('logPrint', True),
+                        url=jobInfo.get('url'), method=jobInfo.get('method'),
+                        headers=jobInfo.get('headers')):
             retval = romanesco.run(*pargs, **kwargs)
         return retval
 

@@ -1,38 +1,52 @@
-import imp
 import json
 import StringIO
-import csv
-import functools
 import tempfile
 import os
-import sys
-import urllib2
 import romanesco.format
-import romanesco.uri
+import romanesco.io
+
+from ConfigParser import ConfigParser
+from . import tasks, utils
 
 
-def load(analysis_file):
+# Read the configuration files
+_cfgs = ('worker.dist.cfg', 'worker.local.cfg')
+config = ConfigParser()
+config.read([os.path.join(os.path.dirname(__file__), f) for f in _cfgs])
+
+# Maps task modes to their implementation
+_taskMap = {
+    'python': tasks.python.run,
+    'r': tasks.r.run,
+    'workflow': tasks.workflow.run
+}
+
+
+def load(task_file):
     """
-    Load an analysis JSON into memory, resolving any ``"script_uri"`` fields
+    Load a task JSON into memory, resolving any ``"script_uri"`` fields
     by replacing it with a ``"script"`` field containing the contents pointed
-    to by ``"script_uri"`` (see :py:mod:`romanesco.uri` for URI formats).
+    to by ``"script_uri"`` (see :py:mod:`romanesco.uri` for URI formats). A
+    ``script_fetch_mode`` field may also be set
 
     :param analysis_file: The path to the JSON file to load.
     :returns: The analysis as a dictionary.
     """
 
-    with open(analysis_file) as f:
-        analysis = json.load(f)
+    with open(task_file) as f:
+        task = json.load(f)
 
-    if "script" not in analysis and analysis.get("mode") != "workflow":
+    if "script" not in task and task.get("mode") != "workflow":
         prevdir = os.getcwd()
-        parent = os.path.dirname(analysis_file)
+        parent = os.path.dirname(task_file)
         if parent != "":
-            os.chdir(os.path.dirname(analysis_file))
-        analysis["script"] = romanesco.uri.get_uri(analysis["script_uri"])
+            os.chdir(os.path.dirname(task_file))
+        task["script"] = romanesco.io.fetch({
+            "url": task["script_uri"]
+        })
         os.chdir(prevdir)
 
-    return analysis
+    return task
 
 
 def isvalid(type, binding):
@@ -49,9 +63,8 @@ def isvalid(type, binding):
     :returns: ``True`` if the binding matches the type and format,
         ``False`` otherwise.
     """
-
     if "data" not in binding:
-        binding["data"] = romanesco.uri.get_uri(binding["uri"])
+        binding["data"] = romanesco.io.fetch(binding)
     validator = romanesco.format.validators[type][binding["format"]]
     outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
                             validate=False)
@@ -83,7 +96,7 @@ def convert(type, input, output):
     """
 
     if "data" not in input:
-        input["data"] = romanesco.uri.get_uri(input["uri"])
+        input["data"] = romanesco.io.fetch(input)
 
     if input["format"] == output["format"]:
         data = input["data"]
@@ -97,94 +110,34 @@ def convert(type, input, output):
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
-    if "uri" in output:
-        romanesco.uri.put_uri(data, output["uri"])
+    if "mode" in output:
+        romanesco.io.push(data, output)
     else:
         output["data"] = data
     return output
 
 
-def toposort(data):
+@utils.with_tmpdir
+def run(task, inputs, outputs=None, auto_convert=True, validate=True,
+        **kwargs):
     """
-    General-purpose topological sort function. Dependencies are expressed as a
-    dictionary whose keys are items and whose values are a set of dependent
-    items. Output is a list of sets in topological order. This is a generator
-    function that returns a sequence of sets in topological order.
+    Run a Romanesco task with the specified I/O bindings.
 
-    :param data: The dependency information.
-    :type data: dict
-    :returns: Yields a list of sorted sets representing the sorted order.
-    """
-    if not data:
-        return
-
-    # Ignore self dependencies.
-    for k, v in data.items():
-        v.discard(k)
-
-    # Find all items that don't depend on anything.
-    extra = functools.reduce(
-        set.union, data.itervalues()) - set(data.iterkeys())
-    # Add empty dependences where needed
-    data.update({item: set() for item in extra})
-
-    # Perform the toposort.
-    while True:
-        ordered = set(item for item, dep in data.iteritems() if not dep)
-        if not ordered:
-            break
-        yield ordered
-        data = {item: (dep - ordered)
-                for item, dep in data.iteritems() if item not in ordered}
-    # Detect any cycles in the dependency graph.
-    if data:
-        raise Exception('Cyclic dependencies detected:\n%s' % '\n'.join(
-                        repr(x) for x in data.iteritems()))
-
-
-def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
-    """
-    Run a Romanesco analysis with the specified input bindings and returns
-    the outputs.
-
-    :param analysis: A dictionary specifying the analysis to run. An analysis
-        consists of the fields:
-
-        :inputs: A list of input dicts of the form
-            ``{"name": name, "type": type, "format": format}``
-            where ``name`` is the variable name used in the script,
-            ``type`` is the type specifier string for the input,
-            and ``format`` is the format specifier string for the input.
-        :outputs: A list of output specifier dicts of the form
-            ``{"name": name, "type": type, "format": format}``
-            where ``name`` is the variable name used in the script,
-            ``type`` is the type specifier string for the output,
-            and ``format`` is the format specifier string for the output.
-        :mode: The mode of the analysis, currently ``"r"`` or ``"python"``.
-        :script: The script to execute. The script should assume variables
-            with names matching the inputs are already set with the provided
-            types and formats. After performing the desired computation,
-            the analysis should set
-            variables with names matching the outputs, ensuring these are
-            in the provided output types and formats.
-    :param inputs: A dictionary specifying input bindings.
-        It should be of the form ``name: binding`` where ``name``
-        is the name of the input and ``binding`` is a data binding of the form
-        ``{"format": format, "data", data}``. ``format`` is the format
-        specifier string, and ``data`` is the raw data.
-        The binding may also be of the form
-        ``{"format": format, "uri", uri}``, where ``uri`` is the location of
-        the data (see :py:mod:`romanesco.uri` for URI formats).
-    :param outputs: An optional dictionary specifying output formats and
-        locations. It should be of the form ``name: binding``
-        where ``name``
-        is the name of the output and ``binding`` is a data binding of the form
-        ``{"format": format}``.
-        The binding may also be of the form
-        ``{"format": format, "uri", uri}``, where ``uri`` is the location where
-        to put the data. If this argument is omitted, output bindings matching
-        the analysis format speficiers are returned with inline ``"data"``
-        fields.
+    :param task: Specification of the task to run. The format of this
+        specification is best described by the subclasses of
+        :py:class:`romanesco.specs.TaskSpecification` class, which can be used
+        to serialized this parameter.
+    :type task: dict
+    :param inputs: Specification of how input objects should be fetched
+        into the runtime environment of this task. The format of this dict
+        is best described by the
+        :py:class:`romanesco.specs.InputBindingsSpecification` class, which can
+        be used to serialize this parameter.
+    :param outputs: Speficiation of what should be done with outputs
+        of this task. The format of this dictionary is best defined in the
+        :py:class:`romanesco.specs.OutputBindingsSpecification` class, which
+        can be used to build and serialize this parameter.
+    :type outputs: dict
     :param auto_convert: If ``True`` (the default), perform format conversions
         on inputs and outputs with :py:func:`convert` if they do not
         match the formats specified in the input and output bindings.
@@ -199,258 +152,97 @@ def run(analysis, inputs, outputs=None, auto_convert=True, validate=True):
         no validation.
     :returns: A dictionary of the form ``name: binding`` where ``name`` is
         the name of the output and ``binding`` is an output binding of the form
-        ``{"format": format, "data": data}``. If the `outputs` parameter
+        ``{"format": format, "data": data}``. If the `outputs` param
         is specified, the formats of these bindings will match those given in
         `outputs`. Additionally, ``"data"`` may be absent if an output URI
         was provided. Instead, those outputs will be saved to that URI and
         the output binding will contain the location in the ``"uri"`` field.
     """
+    def extractId(spec):
+        return spec["id"] if "id" in spec else spec["name"]
 
-    analysis_inputs = {d["name"]: d for d in analysis["inputs"]}
-    analysis_outputs = {d["name"]: d for d in analysis["outputs"]}
+    task_inputs = {extractId(d): d for d in task.get("inputs", ())}
+    task_outputs = {extractId(d): d for d in task.get("outputs", ())}
+    mode = task.get("mode", "python")
 
-    mode = analysis["mode"] if "mode" in analysis else "python"
+    if mode not in _taskMap:
+        raise Exception("Invalid mode: %s" % mode)
 
     # If some inputs are not there, fill in with defaults
-    for name, analysis_input in analysis_inputs.iteritems():
+    for name, task_input in task_inputs.iteritems():
         if name not in inputs:
-            if "default" in analysis_input:
-                inputs[name] = analysis_input["default"]
+            if "default" in task_input:
+                inputs[name] = task_input["default"]
             else:
-                raise Exception("Required input '" + name + "' not provided.")
+                raise Exception("Required input '%s' not provided." % name)
 
-    for name in inputs:
-        d = inputs[name]
-        analysis_input = analysis_inputs[name]
+    for name, d in inputs.iteritems():
+        task_input = task_inputs[name]
 
         # Validate the input
-        if validate and not romanesco.isvalid(analysis_input["type"], d):
-            raise Exception("Input " + name + " (Python type "
-                            + str(type(d["data"]))
-                            + ") is not in the expected type ("
-                            + analysis_input["type"]
-                            + ") and format (" + d["format"] + ").")
+        if validate and not romanesco.isvalid(task_input["type"], d):
+            raise Exception(
+                "Input %s (Python type %s) is not in the expected type (%s) "
+                "and format (%s)." % (
+                    name, type(d["data"]), task_input["type"], d["format"])
+                )
 
+        # Convert data
         if auto_convert:
-            converted = romanesco.convert(analysis_input["type"], d,
-                                          {"format": analysis_input["format"]})
+            converted = romanesco.convert(task_input["type"], d,
+                                          {"format": task_input["format"]})
             d["script_data"] = converted["data"]
-        elif d["format"] == analysis_input["format"]:
+        elif (d.get("format", task_input.get("format")) ==
+              task_input.get("format")):
             if "data" not in d:
-                d["data"] = romanesco.uri.get_uri(d["uri"])
+                d["data"] = romanesco.io.fetch(
+                    d, task_input=task_input, **kwargs)
             d["script_data"] = d["data"]
         else:
-            raise Exception("Expected exact format match but '" + d["format"]
-                            + "' != '" + analysis_input["format"] + "'.")
+            raise Exception("Expected exact format match but '%s != %s'." % (
+                d["format"], task_input["format"])
+            )
 
     # Make sure all outputs are there
-    outputs = {} if outputs is None else outputs
-    for name, analysis_output in analysis_outputs.iteritems():
+    if outputs is None:
+        outputs = {}
+
+    for name, task_output in task_outputs.iteritems():
         if name not in outputs:
-            outputs[name] = {"format": analysis_output["format"]}
+            outputs[name] = {"format": task_output["format"]}
 
-    if mode == "python":
-        custom = imp.new_module("custom")
+    # Actually run the task for the given mode
+    _taskMap[mode](task=task, inputs=inputs, outputs=outputs,
+                   task_inputs=task_inputs, task_outputs=task_outputs,
+                   auto_convert=auto_convert, validate=validate, **kwargs)
 
-        for name in inputs:
-            custom.__dict__[name] = inputs[name]["script_data"]
-
-        try:
-            exec analysis["script"] in custom.__dict__
-        except Exception, e:
-            trace = sys.exc_info()[2]
-            lines = analysis["script"].split("\n")
-            lines = [(str(i+1) + ": " + lines[i]) for i in xrange(len(lines))]
-            error = (
-                str(e) + "\nScript:\n" + "\n".join(lines)
-                + "\nAnalysis:\n" + json.dumps(analysis, indent=4)
-            )
-            raise Exception(error), None, trace
-
-        for name, analysis_output in analysis_outputs.iteritems():
-            d = outputs[name]
-            d["script_data"] = custom.__dict__[name]
-
-    elif mode == "r":
-        import rpy2.robjects
-
-        env = rpy2.robjects.globalenv
-
-        # Clear out workspace variables and packages
-        rpy2.robjects.reval("""
-            rm(list = ls())
-            pkgs <- names(sessionInfo()$otherPkgs)
-            if (!is.null(pkgs)) {
-                pkgs <- paste('package:', pkgs, sep = "")
-                lapply(pkgs, detach, character.only = TRUE, unload = TRUE)
-            }
-            """, env)
-
-        for name in inputs:
-            env[str(name)] = inputs[name]["script_data"]
-
-        rpy2.robjects.reval(analysis["script"], env)
-
-        for name, analysis_output in analysis_outputs.iteritems():
-            d = outputs[name]
-            d["script_data"] = env[str(name)]
-
-            # Hack to detect scalar values from R.
-            # The R value might not have a len() so wrap in a try/except.
-            try:
-                if len(d["script_data"]) == 1:
-                    d["script_data"] = d["script_data"][0]
-            except TypeError:
-                pass
-
-    elif mode == "workflow":
-        # Make map of steps
-        steps = {step["id"]: step for step in analysis["steps"]}
-
-        # Make map of input bindings
-        bindings = {step["id"]: {} for step in analysis["steps"]}
-
-        # Create dependency graph and downstream pointers
-        dependencies = {step["id"]: set() for step in analysis["steps"]}
-        downstream = {}
-        for conn in analysis["connections"]:
-
-            # Add dependency graph link for internal links
-            if "input_step" in conn and "output_step" in conn:
-                dependencies[conn["input_step"]].add(conn["output_step"])
-
-            # Add downstream links for links with output
-            if "output_step" in conn:
-                ds = downstream.setdefault(conn["output_step"], {})
-                ds_list = ds.setdefault(conn["output"], [])
-                ds_list.append(conn)
-
-            # Set initial bindings for inputs
-            if "input_step" in conn and "output_step" not in conn:
-                name = conn["name"]
-                bindings[conn["input_step"]][conn["input"]] = {
-                    "format": analysis_inputs[name]["format"],
-                    "data": inputs[name]["script_data"]
-                }
-
-        # Traverse analyses in topological order
-        for step_set in toposort(dependencies):
-            for step in step_set:
-                # Visualizations cannot be executed
-                if ("visualization" in steps[step]
-                        and steps[step]["visualization"]):
-                    continue
-
-                # Run step
-                print "--- beginning: %s ---" % steps[step]["name"]
-                out = run(steps[step]["analysis"], bindings[step])
-                print "--- finished: %s ---" % steps[step]["name"]
-
-                # Update bindings of downstream analyses
-                if step in downstream:
-                    for name, conn_list in downstream[step].iteritems():
-                        for conn in conn_list:
-                            if "input_step" in conn:
-                                # This is a connection to a downstream step
-                                b = bindings[conn["input_step"]]
-                                b[conn["input"]] = out[name]
-                            else:
-                                # This is a connection to a final output
-                                o = outputs[conn["name"]]
-                                o["script_data"] = out[name]["data"]
-
-        # Output visualization paramaters
-        outputs["_visualizations"] = []
-        for step in analysis["steps"]:
-            if "visualization" not in step or not step["visualization"]:
-                continue
-            vis_bindings = {}
-            for b, value in bindings[step["id"]].iteritems():
-                script_output = value
-                print step
-                vis_input = None
-                for step_input in step["analysis"]["inputs"]:
-                    if step_input["name"] == b:
-                        vis_input = step_input
-
-                if not vis_input:
-                    raise Exception(
-                        "Could not find visualization input named " + b + "."
-                    )
-
-                # Validate the output
-                if (validate and not
-                        romanesco.isvalid(vis_input["type"], script_output)):
-                    raise Exception(
-                        "Output " + name + " ("
-                        + str(type(script_output["data"]))
-                        + ") is not in the expected type ("
-                        + vis_input["type"] + ") and format ("
-                        + d["format"] + ")."
-                    )
-
-                if auto_convert:
-                    vis_bindings[b] = romanesco.convert(
-                        vis_input["type"],
-                        script_output,
-                        {"format": vis_input["format"]}
-                    )
-
-                elif script_output["format"] == vis_input["format"]:
-                    data = script_output["data"]
-                    if "uri" in script_output:
-                        romanesco.uri.put_uri(data, script_output["uri"])
-                    else:
-                        vis_bindings[b] = {
-                            "type": vis_input["type"],
-                            "format": vis_input["format"],
-                            "data": data
-                        }
-                else:
-                    raise Exception(
-                        "Expected exact format match but '"
-                        + script_output["format"]
-                        + "' != '" + vis_input["format"] + "'."
-                    )
-
-                if "script_data" in vis_bindings[b]:
-                    del vis_bindings[b]["script_data"]
-
-            outputs["_visualizations"].append({
-                "mode": "preset",
-                "type": step["name"],
-                "inputs": vis_bindings
-            })
-
-    else:
-        raise Exception("Unsupported analysis mode")
-
-    for name, analysis_output in analysis_outputs.iteritems():
+    for name, task_output in task_outputs.iteritems():
         d = outputs[name]
         script_output = {"data": d["script_data"],
-                         "format": analysis_output["format"]}
+                         "format": task_output["format"]}
 
         # Validate the output
-        if validate and not romanesco.isvalid(analysis_output["type"],
+        if validate and not romanesco.isvalid(task_output["type"],
                                               script_output):
-            raise Exception("Output " + name + " ("
-                            + str(type(script_output["data"]))
-                            + ") is not in the expected type ("
-                            + analysis_output["type"] + ") and format ("
-                            + d["format"] + ").")
+            raise Exception(
+                "Output %s (%s) is not in the expected type (%s) and format "
+                " (%s)." % (
+                    name, type(script_output["data"]), task_output["type"],
+                    d["format"])
+                )
 
         if auto_convert:
-            outputs[name] = romanesco.convert(analysis_output["type"],
-                                              script_output, d)
-        elif d["format"] == analysis_output["format"]:
+            outputs[name] = romanesco.convert(
+                task_output["type"], script_output, d)
+        elif d["format"] == task_output["format"]:
             data = d["script_data"]
-            if "uri" in d:
-                romanesco.uri.put_uri(data, d["uri"])
+            if d.get("mode"):
+                romanesco.io.push(data, d)
             else:
                 d["data"] = data
         else:
-            raise Exception("Expected exact format match but '" + d["format"]
-                            + "' != '" + analysis_output["format"] + "'.")
+            raise Exception("Expected exact format match but %s != %s.'" % (
+                d["format"], task_output["format"]))
 
         if "script_data" in outputs[name]:
             del outputs[name]["script_data"]

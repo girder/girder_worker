@@ -159,7 +159,7 @@ END;"""
             "tree",
             {
                 "format": "newick",
-                "uri": "file://" +
+                "url": "file://" +
                        os.path.join("data", "geospiza_from_otl.phy")
             },
             {"format": "nested"})
