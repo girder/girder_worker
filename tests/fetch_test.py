@@ -10,7 +10,8 @@ _tmp = None
 
 def setUpModule():
     global _tmp
-    _tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tmp')
+    _tmp = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'tmp', 'fetch')
     romanesco.config.set('romanesco', 'tmp_root', _tmp)
 
 
