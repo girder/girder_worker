@@ -2,11 +2,32 @@ import httmock
 import mock
 import os
 import romanesco
+import select
 import shutil
-import subprocess
+import StringIO
+import sys
 import unittest
 
 _tmp = None
+OUT_FD, ERR_FD = 100, 200
+_out = StringIO.StringIO('output message')
+_err = StringIO.StringIO('error message')
+
+
+# Monkey patch select.select in the docker task module
+def _mockSelect(r, w, x, *args, **kwargs):
+    return r, w, x
+romanesco.tasks.docker.select.select = _mockSelect
+
+
+# Monkey patch os.read to simulate subprocess stdout and stderr
+def _mockOsRead(fd, *args, **kwargs):
+    global _out, _err
+    if fd == OUT_FD:
+        return _out.read()
+    elif fd == ERR_FD:
+        return _err.read()
+romanesco.tasks.docker.os.read = _mockOsRead
 
 
 def setUpModule():
@@ -26,7 +47,10 @@ class TestDockerMode(unittest.TestCase):
     def testDockerMode(self, mockPopen):
         processMock = mock.Mock()
         processMock.configure_mock(**{
-            'communicate.return_value': ('ouput', 'error'),
+            'communicate.return_value': ('', ''),
+            'poll.return_value': 0,
+            'stdout.fileno.return_value': OUT_FD,
+            'stderr.fileno.return_value': ERR_FD,
             'returncode': 0
         })
         mockPopen.return_value = processMock
@@ -41,6 +65,11 @@ class TestDockerMode(unittest.TestCase):
                 'format': 'string',
                 'type': 'string',
                 'target': 'filepath'
+            }],
+            'outputs': [{
+                'id': '_stderr',
+                'format': 'string',
+                'type': 'string'
             }]
         }
 
@@ -60,17 +89,25 @@ class TestDockerMode(unittest.TestCase):
 
         with httmock.HTTMock(fetchMock):
             # Use user-specified filename
+            _old = sys.stdout
+            mockedStdOut = StringIO.StringIO()
+            sys.stdout = mockedStdOut
             out = romanesco.run(
                 task, inputs=inputs, cleanup=False, validate=False,
                 auto_convert=False)
+            sys.stdout = _old
 
+            # We didn't specify _stdout as an output, so it should just get
+            # printed to sys.stdout (which we mocked)
+            lines = mockedStdOut.getvalue().splitlines()
+            self.assertEqual(lines[0],
+                             'Pulling docker image: test/test:latest')
+            self.assertEqual(lines[-1], 'output message')
+
+            # We bound _stderr as a task output, so it should be in the output
             self.assertEqual(out, {
                 '_stderr': {
-                    'script_data': 'error',
-                    'format': 'string'
-                },
-                '_stdout': {
-                    'script_data': 'ouput',
+                    'data': 'error message',
                     'format': 'string'
                 }
             })
