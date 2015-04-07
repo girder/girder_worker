@@ -1,6 +1,8 @@
 import os
 import re
+import select
 import subprocess
+import sys
 
 
 def _pullImage(image):
@@ -71,6 +73,15 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     tmpDir = kwargs.get('_tmp_dir')
     args = _expandArgs(task['container_args'], inputs, task_inputs, tmpDir)
 
+    printStdErr, printStdOut = True, True
+    for id, to in task_outputs.iteritems():
+        if id == '_stderr':
+            outputs['_stderr']['script_data'] = ''
+            printStdErr = False
+        elif id == '_stdout':
+            outputs['_stdout']['script_data'] = ''
+            printStdOut = False
+
     print('Running container with args: ' + ' '.join(args))
 
     command = ['docker', 'run']
@@ -79,21 +90,39 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         command += ['-v', tmpDir + ':/data']
 
     command += [image] + args
-    volumeMap = '%s:%s' % (os.path.abspath(tmpDir), '/data')
 
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
+    fds = [p.stdout, p.stderr]
+    while True:
+        ready = select.select(fds, (), fds, 1)[0]
 
-    outputs['_stdout'] = {
-        'format': 'string',
-        'script_data': stdout
-    }
+        if p.stdout in ready:
+            buf = os.read(p.stdout.fileno(), 1024)
+            if buf:
+                if printStdOut:
+                    sys.stdout.write(buf)
+                else:
+                    outputs['_stdout']['script_data'] += buf
+            else:
+                fds.remove(p.stdout)
+        if p.stderr in ready:
+            buf = os.read(p.stderr.fileno(), 1024)
+            if buf:
+                if printStdErr:
+                    sys.stderr.write(buf)
+                else:
+                    outputs['_stderr']['script_data'] += buf
+            else:
+                fds.remove(p.stderr)
+        if (not fds or not ready) and p.poll() is not None:
+            break
+        elif not fds and p.poll() is None:
+            p.wait()
 
-    outputs['_stderr'] = {
-        'format': 'string',
-        'script_data': stderr
-    }
+    if p.returncode != 0:
+        raise Exception('Error: docker run returned code {}.'.format(
+                        p.returncode))
 
     for name, task_output in task_outputs.iteritems():
         # TODO grab files written inside the container somehow?
