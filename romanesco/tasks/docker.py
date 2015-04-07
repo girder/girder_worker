@@ -62,6 +62,7 @@ def _expandArgs(args, inputs, taskInputs, tmpDir):
 
     return newArgs
 
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
     print('Pulling docker image: ' + image)
@@ -81,7 +82,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     volumeMap = '%s:%s' % (os.path.abspath(tmpDir), '/data')
 
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
+                         stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
 
     outputs['_stdout'] = {
@@ -93,8 +94,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         'format': 'string',
         'script_data': stderr
     }
-
-    print outputs
 
     for name, task_output in task_outputs.iteritems():
         # TODO grab files written inside the container somehow?

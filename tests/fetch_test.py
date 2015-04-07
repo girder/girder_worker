@@ -19,7 +19,7 @@ def tearDownModule():
         shutil.rmtree(_tmp)
 
 
-class TestPythonMode(unittest.TestCase):
+class TestFetch(unittest.TestCase):
     def testHttpFetch(self):
         task = {
             'mode': 'python',
