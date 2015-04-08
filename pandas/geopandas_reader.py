@@ -23,10 +23,9 @@ class GeopandasReader(Task):
 
     def run(self, *args, **kw):
         """Read and cache file data using geopandas."""
-
         super(GeopandasReader, self).run(*args, **kw)
-        if self._output_data.get('') is None:
-            self._output_data[''] = read_file(self.file_name)
+        self._output_data[''] = read_file(self.file_name)
+        self.dirty = False
 
 
 GeopandasReader.add_property(

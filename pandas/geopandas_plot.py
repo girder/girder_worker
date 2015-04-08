@@ -12,10 +12,6 @@ class GeopandasPlot(Task):
         GeopandasDataFrame.make_input_port()
     ]
 
-    def _reset(self, *args):
-        """Remove data cache."""
-        self.dirty = True
-
     def run(self, *args, **kw):
         """Plot data using geopandas."""
 

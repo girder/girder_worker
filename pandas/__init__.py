@@ -26,11 +26,13 @@ except ImportError:
 if geopandas is not None:
     from gaia.pandas.geopandas_data import GeopandasDataFrame
     from gaia.pandas.geopandas_reader import GeopandasReader
+    from gaia.pandas.geopandas_writer import GeopandasWriter
     from gaia.pandas.geopandas_plot import GeopandasPlot
 
     __all__ += (
         'GeopandasDataFrame',
         'GeopandasReader',
+        'GeopandasWriter',
         'GeopandasPlot'
     )
 

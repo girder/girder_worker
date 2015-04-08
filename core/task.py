@@ -128,6 +128,10 @@ class Task(GaiaObject):
                 raise Exception("Input port '{0}' not connected.".format(port.name))
             self._input_data[port.name] = itask.get_output_data(iport.name)
 
+    def _reset(self, *args):
+        """Set dirty state for the task."""
+        self.dirty = True
+
 
 Task.add_property(
     'dirty',
