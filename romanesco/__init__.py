@@ -16,6 +16,7 @@ config.read([os.path.join(os.path.dirname(__file__), f) for f in _cfgs])
 
 # Maps task modes to their implementation
 _taskMap = {
+    'docker': tasks.docker.run,
     'python': tasks.python.run,
     'r': tasks.r.run,
     'workflow': tasks.workflow.run

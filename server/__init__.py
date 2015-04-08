@@ -2,7 +2,6 @@ import bson
 import celery
 import cherrypy
 import json
-import os
 import sys
 import time
 
@@ -195,6 +194,10 @@ def load(info):
         taskId = getTaskId(jobId)
         job = AsyncResult(taskId, backend=getCeleryApp().backend)
         return {'result': job.result}
+    romanescoRunResult.description = (
+        Description('Show the final output of a romanesco task.')
+        .param('jobId', 'The job ID for this task.', paramType='path')
+        .param('itemId', 'Not used.', paramType='path'))
 
     @access.public
     def romanescoRunOutput(itemId, jobId, params):
@@ -247,6 +250,10 @@ def load(info):
             yield 'event: past-end\ndata: null\n\n'
 
         return streamGen
+    romanescoRunOutput.description = (
+        Description('Show the output for a romanesco task.')
+        .param('jobId', 'The job ID for this task.', paramType='path')
+        .param('itemId', 'Not used.', paramType='path'))
 
     @access.public
     @rest.boundHandler(info['apiRoot'].item)
@@ -291,17 +298,12 @@ def load(info):
             raise rest.RestException(
                 'You must pass a valid JSON object in the request body.')
 
-        # We need to pass the URL to the job API down to the Celery job.
-        # The URL returned from cherrypy includes /item/<itemId>,
-        # which we trim off here.
-        apiUrl = os.path.dirname(cherrypy.url())
-        apiUrl = apiUrl[0:apiUrl.rfind("/", 0, apiUrl.rfind("/"))]
-        url = '{}/job/{}'.format(apiUrl, job['_id'])
+        apiUrl = cherrypy.url().rsplit('/', 3)[0]
 
         # These parameters are used to get stdout/stderr back from Celery
         # to Girder.
         kwargs['jobInfo'] = {
-            'url': url,
+            'url': '{}/job/{}'.format(apiUrl, job['_id']),
             'method': 'PUT',
             'headers': {'Girder-Token': jobToken['_id']},
             'logPrint': True
