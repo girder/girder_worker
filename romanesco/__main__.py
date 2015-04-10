@@ -3,7 +3,11 @@ import romanesco
 from .utils import JobManager
 from celery import Celery
 
-if __name__ == '__main__':
+app = None
+
+
+def main():
+    global app
     app = Celery(
         main=romanesco.config.get('celery', 'app_main'),
         backend=romanesco.config.get('celery', 'broker'),
@@ -25,3 +29,7 @@ if __name__ == '__main__':
         return romanesco.convert(*pargs, **kwargs)
 
     app.worker_main()
+
+
+if __name__ == '__main__':
+    main()

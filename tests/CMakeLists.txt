@@ -21,7 +21,7 @@ if(PYTHON_COVERAGE)
     NAME py_coverage_html
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" html -d "${coverage_html_dir}"
-            "--title=Girder Coverage Report"
+            "--title=Romanesco Coverage Report"
   )
   add_test(
     NAME py_coverage_xml

@@ -1,7 +1,9 @@
 *.pyc
 .coverage*
 .DS_Store
-venv
+venv/
 _build
 build
 tmp/
+/romanesco-*.tar.gz
+/romanesco.egg-info/
