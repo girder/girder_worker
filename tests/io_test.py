@@ -95,6 +95,9 @@ class TestIo(unittest.TestCase):
             self.assertEqual(len(received), 1)
             self.assertEqual(received[0], 'bar')
 
+            # Make sure the bound output didn't get returned
+            self.assertFalse('data' in out['foo'])
+
             # Use automatically detected filename
             del task['inputs'][0]['filename']
 
