@@ -48,7 +48,7 @@ def fetch(spec, **kwargs):
         raise Exception('Unknown input fetch mode: ' + mode)
 
 
-def push(data, spec):
+def push(data, spec, **kwargs):
     """
     The opposite of fetch, this is responsible for writing data to some
     destination in a specified mode defined by ``spec``.
@@ -61,10 +61,10 @@ def push(data, spec):
     mode = _detectMode(spec)
 
     if mode == 'http':
-        return http.push(data, spec)
+        return http.push(data, spec, **kwargs)
     elif mode == 'mongodb':
-        return mongodb.push(data, spec)
+        return mongodb.push(data, spec, **kwargs)
     elif mode == 'local':
-        return local.push(data, spec)
+        return local.push(data, spec, **kwargs)
     else:
         raise Exception('Unknown output push mode: ' + mode)

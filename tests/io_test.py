@@ -20,11 +20,11 @@ def tearDownModule():
         shutil.rmtree(_tmp)
 
 
-class TestFetch(unittest.TestCase):
-    def testHttpFetch(self):
+class TestIo(unittest.TestCase):
+    def testHttpIo(self):
         task = {
             'mode': 'python',
-            'script': 'y = x + "_suffix"',
+            'script': 'y = x + "_suffix"\nfoo="bar"',
             'inputs': [{
                 'id': 'x',
                 'name': 'x',
@@ -38,6 +38,10 @@ class TestFetch(unittest.TestCase):
                 'name': 'y',
                 'format': 'string',
                 'type': 'string'
+            }, {
+                'id': 'foo',
+                'format': 'string',
+                'type': 'string'
             }]
         }
 
@@ -48,18 +52,34 @@ class TestFetch(unittest.TestCase):
             }
         }
 
+        outputs = {
+            'foo': {
+                'mode': 'http',
+                'format': 'string',
+                'url': 'https://output.com/location.out',
+                'headers': {'foo': 'bar'},
+                'method': 'PUT'
+            }
+        }
+
+        received = []
+
         @httmock.all_requests
         def fetchMock(url, request):
             if url.netloc == 'foo.com' and url.scheme == 'https':
+                # The input fetch request
                 return 'dummy file contents'
+            elif url.netloc == 'output.com' and url.path == '/location.out':
+                received.append(request.body)
+                return ''
             else:
                 raise Exception('Unexpected url ' + repr(url))
 
         with httmock.HTTMock(fetchMock):
             # Use user-specified filename
             out = romanesco.run(
-                task, inputs=copy.deepcopy(inputs),  cleanup=False,
-                validate=False, auto_convert=False)
+                task, inputs=copy.deepcopy(inputs), outputs=outputs,
+                cleanup=False, validate=False, auto_convert=False)
 
             val = out['y']['data']
             self.assertTrue(val.endswith('override.txt_suffix'))
@@ -70,6 +90,10 @@ class TestFetch(unittest.TestCase):
                 contents = f.read()
 
             self.assertEqual(contents, 'dummy file contents')
+
+            # Make sure our output endpoint was pushed to exactly once
+            self.assertEqual(len(received), 1)
+            self.assertEqual(received[0], 'bar')
 
             # Use automatically detected filename
             del task['inputs'][0]['filename']

@@ -51,16 +51,13 @@ def _expandArgs(args, inputs, taskInputs, tmpDir):
     regex = re.compile(r'\$input\{([^}]+)\}')
 
     for arg in args:
-        match = re.search(regex, arg)
-        if match is None:
-            newArgs.append(arg)
-        else:
-            inputId = match.groups()[0]
+        for inputId in re.findall(regex, arg):
             if inputId in inputs:
-                newArgs.append(_transformPath(inputs, taskInputs, inputId,
-                                              tmpDir))
-            else:
-                newArgs.append(arg)
+                transformed = _transformPath(inputs, taskInputs, inputId,
+                                             tmpDir)
+                arg = arg.replace('$input{%s}' % inputId, transformed)
+
+        newArgs.append(arg)
 
     return newArgs
 

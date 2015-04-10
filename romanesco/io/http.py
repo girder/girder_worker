@@ -63,3 +63,25 @@ def fetch(spec, **kwargs):
         return ''.join(request.iter_content(65536))
     else:
         raise Exception('Invalid HTTP fetch target: ' + target)
+
+
+def push(data, spec, **kwargs):
+    taskOutput = kwargs.get('task_output', {})
+    target = taskOutput.get('target', 'memory')
+
+    url = spec['url']
+    method = getattr(requests, spec.get('method', 'post').lower())
+
+    if target == 'filepath':
+        with open(data, 'rb') as fd:
+            request = method(url, headers=spec.get('headers', {}), data=fd)
+    elif target == 'memory':
+        request = method(url, headers=spec.get('headers', {}), data=data)
+    else:
+        raise Exception('Invalid HTTP fetch target: ' + target)
+
+    try:
+        request.raise_for_status()
+    except:
+        print 'HTTP push failed (%s). Response: %s' % (url, request.text)
+        raise
