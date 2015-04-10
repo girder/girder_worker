@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import time
+import traceback
 import zipfile
 
 
@@ -59,12 +60,22 @@ class JobManager(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, excType, excValue, traceback):
+    def __exit__(self, excType, excValue, tb):
         """
         When the context is exited, if we have a non-empty buffer, we flush
         the remaining contents and restore sys.stdout and sys.stderr to their
-        previous values.
+        previous values. We also set the job status to ERROR if we exited the
+        context with an exception, or SUCCESS otherwise.
         """
+        if excType:
+            msg = '%s: %s\n%s' % (
+                excType, excValue, ''.join(traceback.format_tb(tb)))
+
+            self.write(msg)
+            self.updateStatus(JobStatus.ERROR)
+        else:
+            self.updateStatus(JobStatus.SUCCESS)
+
         self._flush()
 
         if self.logPrint:
