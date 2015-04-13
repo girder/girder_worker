@@ -128,9 +128,18 @@ class Task(GaiaObject):
         """Set dirty state for the task."""
         self.dirty = True
 
+    def _reset_downstream(self, _, isdirty, *args):
+        """Set dirty state on all downstream tasks."""
+        if isdirty:
+            for name in self.outputs:
+                task = self.get_output_task(name=name)
+                if task:
+                    task.dirty = True
+
 
 Task.add_property(
     'dirty',
     doc='Stores the current cache state of the Task',
-    default=True
+    default=True,
+    on_change=Task._reset_downstream
 )
