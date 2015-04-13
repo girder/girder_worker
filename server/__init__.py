@@ -59,6 +59,27 @@ def getCeleryApp():
     return _celeryapp
 
 
+def schedule(event):
+    """
+    This is bound to the "jobs.schedule" event, and will be triggered any time
+    a job is scheduled. This handler will process any job that has the
+    handler field set to "romanesco_handler".
+    """
+    job = event.info
+    if job['handler'] == 'romanesco_handler':
+        # Stop event propagation since we have taken care of scheduling.
+        event.stopPropagation()
+
+        # Send the task to celery
+        asyncResult = getCeleryApp().send_task(
+            'romanesco.run', job['args'], job['kwargs'])
+
+        # Set the job status to queued and record the task ID from celery.
+        job['status'] = JobStatus.QUEUED
+        job['taskId'] = asyncResult.task_id
+        ModelImporter.model('job', 'jobs').save(job)
+
+
 def validateSettings(event):
     """
     Handle plugin-specific system settings. Right now we don't do any
@@ -93,28 +114,6 @@ def getItemContent(itemId, itemApi):
 
 
 def load(info):
-
-    @access.public
-    def schedule(event):
-        """
-        This is bound to the "jobs.schedule" event, and will be triggered any time
-        a job is scheduled. This handler will process any job that has the
-        handler field set to "romanesco_handler".
-        """
-        job = event.info
-        if job['handler'] == 'romanesco_handler':
-            # Stop event propagation since we have taken care of scheduling.
-            event.stopPropagation()
-
-            # Send the task to celery
-            asyncResult = getCeleryApp().send_task(
-                'romanesco.run', job['args'], job['kwargs'])
-
-            # Set the job status to queued and record the task ID from celery.
-            job['status'] = JobStatus.QUEUED
-            job['taskId'] = asyncResult.task_id
-            ModelImporter.model('job', 'jobs').save(job)
-
     @access.user
     @rest.boundHandler()
     def romanescoCreateModule(self, params):
