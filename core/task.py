@@ -1,6 +1,7 @@
 """This module defines tasks executed in the pipeline."""
 
 from gaia.core.base import GaiaObject
+from gaia.core.port import OutputPort
 
 
 class Task(GaiaObject):
@@ -135,6 +136,46 @@ class Task(GaiaObject):
                 task = self.get_output_task(name=name)
                 if task:
                     task.dirty = True
+
+    @classmethod
+    def create_source(cls, data):
+        """Generate a task that supplies the given data as output.
+
+        This class method is useful to generate source tasks quickly
+        from arbitrary python objects.  For example:
+
+        >>> data = "some arbitrary data"
+        >>> source = Task.create_source(data)
+        >>> source.get_output_data()
+        'some arbitrary data'
+        """
+        class SourceOutput(OutputPort):
+
+            """A port attached to a source task."""
+
+            name = ''
+            description = str(data)
+
+            def emits(self):
+                """Return the type of the provided datum."""
+                return type(data)
+
+        class Source(Task):
+
+            """Generated source task."""
+
+            output_ports = [SourceOutput]
+
+            def __init__(self, *arg, **kw):
+                """Initialize a source task."""
+                super(Source, self).__init__(*arg, **kw)
+                self._output_data[''] = data
+
+            def run(self, *arg, **kw):
+                """Do nothing."""
+                self.dirty = False
+
+        return Source()
 
 
 Task.add_property(
