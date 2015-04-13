@@ -18,7 +18,6 @@ class Task(GaiaObject):
 
     def __init__(self, *arg, **kw):
         """Initialize an abstract task."""
-
         #: Input connection mapping
         self._inputs = {}
         for p in self.input_ports:
@@ -49,7 +48,6 @@ class Task(GaiaObject):
         :param str name: An input port name
         :param :py:class:OutputPort port: The output port on the other task to use
         """
-
         if name not in self._inputs:
             raise ValueError("Invalid port name '{0}'".format(name))
 
@@ -105,7 +103,6 @@ class Task(GaiaObject):
 
     def get_output_data(self, name=''):
         """Return the data for the given port."""
-
         if self.dirty:
             self.run()
 
@@ -120,7 +117,6 @@ class Task(GaiaObject):
         the input ports are all connected and raises an error if they
         aren't.
         """
-
         for port in self.input_ports:
             itask = self.get_input_task(port.name)
             iport = self.get_input(port.name)

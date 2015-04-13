@@ -52,7 +52,7 @@ class Port(GaiaObject):
         """
         # We can relax this if support for cyclic graphs is added
         if self.task is other.task:
-            raise ValueError('Cannot connect a task to itself.')
+            raise TypeError('Cannot connect a task to itself.')
 
         self._connect(other)
         other._connect(self)
@@ -87,17 +87,24 @@ class InputPort(Port):
         return ()
 
     def connect(self, other):
-        """Negotiate a common format and connect two tasks together.
+        """Check for a common format and connect two tasks together.
 
         Calls connect on the output port.
         """
         if not isinstance(other, OutputPort):
             raise TypeError("Invalid connection with {0}".format(other))
-        return super(InputPort, self).connect(other)
+        other.connect(self)
+        return self
 
     def describe(self, tab=''):
         """Return a string describing the port."""
         return self._describe('input', tab)
+
+    def compat(self, output_port):
+        """Check compatibility with the given output port."""
+        if not issubclass(output_port, OutputPort):
+            return False
+        return output_port.compat(self)
 
 
 class OutputPort(Port):
