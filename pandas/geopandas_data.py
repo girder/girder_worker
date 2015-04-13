@@ -2,10 +2,10 @@
 
 from geopandas import GeoDataFrame as _DataFrame
 
-from gaia.core.data import registry as data_registry
+from gaia.core.data import GeospatialData
 
 
-class GeopandasDataFrame(data_registry['GeospatialData'], _DataFrame):
+class GeopandasDataFrame(GeospatialData, _DataFrame):
 
     """A Gaia data type based on a pandas DataFrame."""
 

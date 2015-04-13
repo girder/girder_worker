@@ -2,10 +2,10 @@
 
 from pandas import DataFrame as _DataFrame
 
-from gaia.core.data import registry as data_registry
+from gaia.core.data import Data
 
 
-class PandasDataFrame(data_registry['Data'], _DataFrame):
+class PandasDataFrame(Data, _DataFrame):
 
     """A Gaia data type based on a pandas DataFrame."""
 

@@ -35,7 +35,6 @@ class Data(GaiaObject):
     @classmethod
     def make_input_port(cls, name='', description='input', type_name=None):
         """Generate an input port that accepts this data type."""
-
         if type_name is None:
             type_name = cls.__name__ + 'InputPort'
 
@@ -47,7 +46,6 @@ class Data(GaiaObject):
     @classmethod
     def make_output_port(cls, name='', description='output', type_name=None):
         """Generate an output port that emits this data type."""
-
         if type_name is None:
             type_name = cls.__name__ + 'OutputPort'
 

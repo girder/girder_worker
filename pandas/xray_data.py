@@ -2,10 +2,10 @@
 
 from xray import Dataset as _Dataset
 
-# from ..core.data import registry as data_registry
+from gaia.core.data import GeospatialData
 
 
-class XrayDataset(_Dataset):
+class XrayDataset(GeospatialData, _Dataset):
 
     """A Gaia data type based on an xray Dataset."""
 
