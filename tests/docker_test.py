@@ -116,7 +116,8 @@ class TestDockerMode(unittest.TestCase):
             cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
 
             self.assertEqual(cmd1, ('docker', 'pull', 'test/test:latest'))
-            self.assertEqual(cmd2[:3], ['docker', 'run', '-v'])
-            self.assertRegexpMatches(cmd2[3], _tmp + '/.*:/data')
-            self.assertEqual(cmd2[4:],
+            self.assertEqual(cmd2[:5],
+                             ['docker', 'run', '-u', str(os.getuid()), '-v'])
+            self.assertRegexpMatches(cmd2[5], _tmp + '/.*:/data')
+            self.assertEqual(cmd2[6:],
                              ['test/test:latest', '-f', '/data/file.txt'])
