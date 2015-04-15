@@ -208,11 +208,12 @@ def tmpdir(cleanup=True):
             raise
     path = tempfile.mkdtemp(dir=root)
 
-    yield path
-
-    # Cleanup the temp dir
-    if cleanup and os.path.isdir(path):
-        shutil.rmtree(path)
+    try:
+        yield path
+    finally:
+        # Cleanup the temp dir
+        if cleanup and os.path.isdir(path):
+            shutil.rmtree(path)
 
 
 def with_tmpdir(fn):
@@ -229,29 +230,3 @@ def with_tmpdir(fn):
             kwargs['_tmp_dir'] = tmp_dir
             return fn(*args, **kwargs)
     return wrapped
-
-
-def extractZip(path, dest, flatten=False):
-    """
-    Extract a zip file, optionally flattening it into a single directory.
-    """
-    try:
-        os.makedirs(dest)
-    except OSError:
-        if not os.path.exists(dest):
-            raise
-
-    with zipfile.ZipFile(path) as zf:
-        if flatten:
-            for name in zf.namelist():
-                out = os.path.join(dest, os.path.basename(name))
-                with open(out, 'wb') as ofh:
-                    with zf.open(name) as ifh:
-                        while True:
-                            buf = ifh.read(65536)
-                            if buf:
-                                ofh.write(buf)
-                            else:
-                                break
-        else:
-            zf.extractall(output)
