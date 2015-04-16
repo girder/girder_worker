@@ -81,7 +81,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     print('Running container with args: ' + ' '.join(args))
 
-    command = ['docker', 'run', '-u', str(os.getuid())]
+    command = ['docker', 'run', '--rm', '-u', str(os.getuid())]
 
     if tmpDir:
         command += ['-v', tmpDir + ':/data']
