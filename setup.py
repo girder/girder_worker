@@ -24,7 +24,7 @@ from setuptools import setup, find_packages
 from pkg_resources import parse_requirements
 
 
-with open('README.md') as f:
+with open('README.rst') as f:
     readme = f.read()
 
 with open('plugin.json') as f:
