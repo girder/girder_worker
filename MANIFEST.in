@@ -1,0 +1,11 @@
+prune analysis
+prune clients
+prune tests
+include LICENSE
+include setup.py
+include requirements.txt
+include plugin.json
+include README.rst
+include romanesco/worker.dist.cfg
+recursive-include romanesco/format *
+global-exclude *.pyc *.pyo *.cmake

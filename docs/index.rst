@@ -12,6 +12,7 @@ Romanesco: A simple, flexible execution engine
    installation
    types-and-formats
    api-docs
+   developer-docs
 
 Romanesco is a simple, flexible execution engine
 that features cross-language scripting support (currently Python and R),
