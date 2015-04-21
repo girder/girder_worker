@@ -58,6 +58,7 @@ class JobManager(object):
             sys.stdout, sys.stderr = self, self
 
     def __enter__(self):
+        self.updateStatus(JobStatus.RUNNING)
         return self
 
     def __exit__(self, excType, excValue, tb):
@@ -129,6 +130,9 @@ class JobManager(object):
         :param status: The status to set on the job.
         :type status: JobStatus
         """
+        if not self.url:
+            return
+
         httpMethod = getattr(requests, self.method.lower())
         httpMethod(self.url, headers=self.headers, data={'status': status})
 
