@@ -15,7 +15,7 @@ def csv_to_rows(input):
     # Special case: detect single-column files.
     # This check assumes that our only valid delimiters are commas and tabs.
     firstLine = input.split('\n')[0]
-    if not ('\t' in firstLine or ',' in firstLine):
+    if not ('\t' in firstLine or ',' in firstLine) or len(input.splitlines()) == 1:
         dialect = 'excel'
 
     else:
