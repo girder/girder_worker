@@ -154,6 +154,21 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"].splitlines(),
                          ["A", "one", "two", "three", "four"])
 
+    def test_singlerow(self):
+        outputs = romanesco.run(
+            self.analysis,
+            inputs={
+                "a": {"format": "csv", "data": 'A,one,two'},
+                "b": {"format": "csv", "data": 'A,three,four'}
+            },
+            outputs={
+                "c": {"format": "csv"}
+            })
+        self.assertEqual(outputs["c"]["format"], "csv")
+        # Only the "header" of the first input is preserved.
+        self.assertEqual(outputs["c"]["data"].splitlines(),
+                         ["A,one,two"])
+
     def test_tsv(self):
         outputs = romanesco.run(
             self.analysis,
