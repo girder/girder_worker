@@ -6,7 +6,6 @@ try:
 except ImportError:  # pragma: nocover
     supported_drivers = []
 
-from gaia.pandas.geopandas_data import GeopandasDataFrame
 from gaia.core import Task
 
 
@@ -33,7 +32,7 @@ class GeopandasWriter(Task):
     """
 
     input_ports = [
-        GeopandasDataFrame.make_input_port()
+        Task.make_input_port()
     ]
 
     formats = [f for f in supported_drivers if 'w' in supported_drivers[f]]

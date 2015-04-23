@@ -4,7 +4,6 @@ import os
 
 from geopandas import read_file
 
-from gaia.pandas.geopandas_data import GeopandasDataFrame
 from gaia.core import Task
 
 
@@ -13,7 +12,7 @@ class GeopandasReader(Task):
     """A task that reads geospatial files using geopandas."""
 
     output_ports = [
-        GeopandasDataFrame.make_output_port()
+        Task.make_output_port()
     ]
 
     def _reset(self, *args):

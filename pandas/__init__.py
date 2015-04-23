@@ -14,9 +14,7 @@ except ImportError:
 __all__ = ()
 
 if pandas is not None:
-    from gaia.pandas.pandas_data import PandasDataFrame
-
-    __all__ += ('PandasDataFrame',)
+    pass  # add pandas imports here
 
 try:
     import geopandas
@@ -24,13 +22,11 @@ except ImportError:
     geopandas = None
 
 if geopandas is not None:
-    from gaia.pandas.geopandas_data import GeopandasDataFrame
     from gaia.pandas.geopandas_reader import GeopandasReader
     from gaia.pandas.geopandas_writer import GeopandasWriter
     from gaia.pandas.geopandas_plot import GeopandasPlot
 
     __all__ += (
-        'GeopandasDataFrame',
         'GeopandasReader',
         'GeopandasWriter',
         'GeopandasPlot'
@@ -42,6 +38,4 @@ except ImportError:
     xray = None
 
 if xray is not None:
-    from gaia.pandas.xray_data import XrayDataset
-
-    __all__ += ('XrayDataset',)
+    pass  # add xray imports here

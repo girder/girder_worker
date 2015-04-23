@@ -133,7 +133,7 @@ class OutputPort(Port):
         """Return the type that this port can emit.
 
         :returns: a data type subclass
-        :rtype: gaia.core.data.Data
+        :rtype: type
         """
         return type
 
