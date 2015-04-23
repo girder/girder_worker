@@ -14,19 +14,17 @@ class Port(GaiaObject):
     also provide documentation for the task by describing its inputs and outputs.
     """
 
-    #: The port name
-    name = ''
-
     #: The port description
     description = ''
 
-    def __init__(self, task):
+    def __init__(self, task, name=''):
         """Initialize the port on a given task.
 
         :param :py:class:task.Task task: The associated task.
         """
         self._task = task
         self._other = None
+        self.name = name
 
     @property
     def task(self):
@@ -67,7 +65,7 @@ class Port(GaiaObject):
     @classmethod
     def type_string(cls):
         """Return a string description of the port."""
-        return '{0} {1}: {2}'.format(cls.__name__, cls.name, cls.description)
+        return '{0}: {1}'.format(cls.__name__, cls.description)
 
 
 class InputPort(Port):
