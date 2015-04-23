@@ -1,7 +1,9 @@
 """This module defines tasks executed in the pipeline."""
 
+import six
+
 from gaia.core.base import GaiaObject
-from gaia.core.port import OutputPort
+from gaia.core.port import InputPort, OutputPort
 
 
 class Task(GaiaObject):
@@ -13,21 +15,22 @@ class Task(GaiaObject):
     next task or tasks.
     """
 
-    #: Static lists of I/O ports
-    input_ports = []
-    output_ports = []
+    #: Static dictonaries of I/O ports
+    #:   port name -> port class
+    input_ports = {}
+    output_ports = {}
 
     def __init__(self, *arg, **kw):
         """Initialize an abstract task."""
         #: Input connection mapping
         self._inputs = {}
-        for p in self.input_ports:
-            self._inputs[p.name] = p(self)
+        for name, port in six.iteritems(self.input_ports):
+            self._inputs[name] = port(self, name=name)
 
         #: Output connection mapping
         self._outputs = {}
-        for p in self.output_ports:
-            self._outputs[p.name] = p(self)
+        for name, port in six.iteritems(self.output_ports):
+            self._outputs[name] = port(self, name)
 
         #: data cache
         self._input_data = {}
@@ -118,12 +121,11 @@ class Task(GaiaObject):
         the input ports are all connected and raises an error if they
         aren't.
         """
-        for port in self.input_ports:
-            itask = self.get_input_task(port.name)
-            iport = self.get_input(port.name)
+        for name in self.input_ports:
+            itask = self.get_input_task(name)
             if itask is None:
-                raise Exception("Input port '{0}' not connected.".format(port.name))
-            self._input_data[port.name] = itask.get_output_data(iport.name)
+                raise Exception("Input port '{0}' not connected.".format(name))
+            self._input_data[name] = itask.get_output_data(name)
 
     def _reset(self, *args):
         """Set dirty state for the task."""
@@ -164,7 +166,7 @@ class Task(GaiaObject):
 
             """Generated source task."""
 
-            output_ports = [SourceOutput]
+            output_ports = {'': SourceOutput}
 
             def __init__(self, *arg, **kw):
                 """Initialize a source task."""
@@ -177,6 +179,54 @@ class Task(GaiaObject):
 
         return Source()
 
+    @classmethod
+    def create_input_port(cls, data_class=None, data_classes=()):
+        """Create an input port that accepts the given data type.
+
+        An input port can accept one or more data types, but for compatibility
+        with the ``create_output_port`` method, the default 2 argument call
+        signature will generate an input port that accepts only the given
+        data class.  The keyword argument ``data_classes`` can be used
+        to generate a port that accepts multiple types.
+
+        >>> Port = Task.create_input_port(int)
+        >>> int in Port({}).accepts()
+        True
+
+        >>> Port = Task.create_input_port(data_classes=(int, float))
+        >>> int in Port({}).accepts()
+        True
+        """
+        if data_class is not None:
+            data_classes += (data_class,)
+
+        class ReturnedInputPort(InputPort):
+
+            """A subclass of InputPort accepting provided types."""
+
+            def accepts(self):
+                """Return the classes accepted by the port."""
+                return data_classes
+
+        return ReturnedInputPort
+
+    @classmethod
+    def create_output_port(cls, data_class=None):
+        """Create an output port that emits the given data type.
+
+        >>> Port = Task.create_output_port(int)
+        >>> int is Port({}).emits()
+        True
+        """
+        class ReturnedOutputPort(OutputPort):
+
+            """A subclass of InputPort accepting provided types."""
+
+            def emits(self):
+                """Return the class emitted by the port."""
+                return data_class
+
+        return ReturnedOutputPort
 
 Task.add_property(
     'dirty',
