@@ -5,6 +5,7 @@ try:
     from fiona import supported_drivers
 except ImportError:  # pragma: nocover
     supported_drivers = []
+from geopandas import GeoDataFrame
 
 from gaia.core import Task
 
@@ -31,9 +32,9 @@ class GeopandasWriter(Task):
     >>> writer.run()                                # doctest: +SKIP
     """
 
-    input_ports = [
-        Task.make_input_port()
-    ]
+    input_ports = {
+        '': Task.make_input_port(GeoDataFrame)
+    }
 
     formats = [f for f in supported_drivers if 'w' in supported_drivers[f]]
 

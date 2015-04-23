@@ -1,5 +1,7 @@
 """This module defines a reader based on the geopandas."""
 
+from geopandas import GeoDataFrame
+
 from gaia.core import Task
 
 
@@ -7,9 +9,9 @@ class GeopandasPlot(Task):
 
     """A task that generates images from geopandas data."""
 
-    input_ports = [
-        Task.make_input_port()
-    ]
+    input_ports = {
+        '': Task.make_input_port(GeoDataFrame)
+    }
 
     def run(self, *args, **kw):
         """Plot data using geopandas."""

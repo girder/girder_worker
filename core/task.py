@@ -180,7 +180,7 @@ class Task(GaiaObject):
         return Source()
 
     @classmethod
-    def create_input_port(cls, data_class=None, data_classes=()):
+    def make_input_port(cls, data_class=None, data_classes=()):
         """Create an input port that accepts the given data type.
 
         An input port can accept one or more data types, but for compatibility
@@ -189,11 +189,11 @@ class Task(GaiaObject):
         data class.  The keyword argument ``data_classes`` can be used
         to generate a port that accepts multiple types.
 
-        >>> Port = Task.create_input_port(int)
+        >>> Port = Task.make_input_port(int)
         >>> int in Port({}).accepts()
         True
 
-        >>> Port = Task.create_input_port(data_classes=(int, float))
+        >>> Port = Task.make_input_port(data_classes=(int, float))
         >>> int in Port({}).accepts()
         True
         """
@@ -211,10 +211,10 @@ class Task(GaiaObject):
         return ReturnedInputPort
 
     @classmethod
-    def create_output_port(cls, data_class=None):
+    def make_output_port(cls, data_class=None):
         """Create an output port that emits the given data type.
 
-        >>> Port = Task.create_output_port(int)
+        >>> Port = Task.make_output_port(int)
         >>> int is Port({}).emits()
         True
         """

@@ -2,7 +2,7 @@
 
 import os
 
-from geopandas import read_file
+from geopandas import read_file, GeoDataFrame
 
 from gaia.core import Task
 
@@ -11,9 +11,9 @@ class GeopandasReader(Task):
 
     """A task that reads geospatial files using geopandas."""
 
-    output_ports = [
-        Task.make_output_port()
-    ]
+    output_ports = {
+        '': Task.make_output_port(GeoDataFrame)
+    }
 
     def _reset(self, *args):
         """Remove data cache."""
