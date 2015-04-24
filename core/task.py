@@ -30,7 +30,7 @@ class Task(GaiaObject):
         #: Output connection mapping
         self._outputs = {}
         for name, port in six.iteritems(self.output_ports):
-            self._outputs[name] = port(self, name)
+            self._outputs[name] = port(self, name=name)
 
         #: data cache
         self._input_data = {}
@@ -56,6 +56,8 @@ class Task(GaiaObject):
             raise ValueError("Invalid port name '{0}'".format(name))
 
         port.connect(self._inputs[name])
+        self._dirty = True
+        return self
 
     def get_input(self, name=''):
         """Return the given input port.
@@ -122,10 +124,11 @@ class Task(GaiaObject):
         aren't.
         """
         for name in self.input_ports:
+            iport_name = self.get_input(name).other.name
             itask = self.get_input_task(name)
             if itask is None:
                 raise Exception("Input port '{0}' not connected.".format(name))
-            self._input_data[name] = itask.get_output_data(name)
+            self._input_data[name] = itask.get_output_data(iport_name)
 
     def _reset(self, *args):
         """Set dirty state for the task."""
@@ -168,13 +171,9 @@ class Task(GaiaObject):
 
             output_ports = {'': SourceOutput}
 
-            def __init__(self, *arg, **kw):
-                """Initialize a source task."""
-                super(Source, self).__init__(*arg, **kw)
-                self._output_data[''] = data
-
             def run(self, *arg, **kw):
                 """Do nothing."""
+                self._output_data[''] = data
                 self.dirty = False
 
         return Source()
