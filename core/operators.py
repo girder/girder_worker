@@ -129,6 +129,35 @@ class Divide(Binary):
     operation = '__div__'
 
 
+class Fork(Task):
+
+    """Copy the input into one or more outputs.
+
+    >>> msg = Task.create_source("This is a message").get_output()
+    >>> fork = Fork().set_input(port=msg)
+    >>> fork.get_output_data(name='0')
+    'This is a message'
+    >>> fork.get_output_data(name='1')
+    'This is a message'
+    """
+
+    input_ports = {
+        '': Task.make_input_port(object)
+    }
+    output_ports = {
+        '0': Task.make_output_port(object),
+        '1': Task.make_output_port(object)
+    }
+
+    def run(self, *args, **kw):
+        """Copy inputs to outputs."""
+        super(Fork, self).run(*args, **kw)
+
+        for i in self.output_ports:
+            self._output_data[i] = self._input_data['']
+
+        self.dirty = False
+
 # Too low level, probably.
 #  class GetAttr(Unary):
 #
