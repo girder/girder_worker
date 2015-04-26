@@ -49,6 +49,8 @@ class Operator(Task):
 
         # execute the operator method and store in the output cache
         if not args or not hasattr(args[0], self.operation):
+            print args[0]
+            print self.operation
             raise Exception('Invalid operation for input type')
 
         func = getattr(args[0], self.operation)
@@ -88,8 +90,69 @@ class Add(Binary):
     operation = '__add__'
 
 
+class Subtract(Binary):
+
+    """Subtract two objects.
+
+    >>> two = Task.create_source(2).get_output()
+    >>> three = Task.create_source(3).get_output()
+    >>> Subtract().set_input('0', two).set_input('1', three).get_output_data()
+    -1
+    """
+
+    operation = '__sub__'
+
+
 class Multiply(Binary):
 
-    """Multiply two objects together."""
+    """Multiply two objects together.
 
-    operation = '__add__'
+    >>> two = Task.create_source(2).get_output()
+    >>> three = Task.create_source(3).get_output()
+    >>> Multiply().set_input('0', two).set_input('1', three).get_output_data()
+    6
+    """
+
+    operation = '__mul__'
+
+
+class Divide(Binary):
+
+    """Divide two objects.
+
+    >>> six = Task.create_source(6).get_output()
+    >>> three = Task.create_source(3).get_output()
+    >>> Divide().set_input('0', six).set_input('1', three).get_output_data()
+    2
+    """
+
+    operation = '__div__'
+
+
+# Too low level, probably.
+#  class GetAttr(Unary):
+#
+#      """Get an attribute from an object.
+#
+#      >>> cmplx = Task.create_source(1 - 1j).get_output()
+#      >>> GetAttribute(attr='imag').set_input(port=cmplx).get_output_data()
+#      -1.0
+#      """
+#
+#      operation = '__getattribute__'
+#
+#  GetAttribute.add_property('attr')
+#
+#
+#  class GetItem(Unary):
+#
+#      """Get an attribute from an object.
+#
+#      >>> a_dict = Task.create_source({'a': 'b'}).get_output()
+#      >>> GetItem(item='a').set_input('0', a_dict).get_output_data()
+#      'b'
+#      """
+#
+#      operation = '__getitem__'
+#
+#  GetItem.add_property('item')
