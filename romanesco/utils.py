@@ -78,9 +78,14 @@ class JobManager(object):
             self.updateStatus(JobStatus.SUCCESS)
 
         self._flush()
+        self._redirectPipes(False)
 
+    def _redirectPipes(self, redirect):
         if self.logPrint:
-            sys.stdout, sys.stderr = self._pipes
+            if redirect:
+                sys.stdout, sys.stderr = self, self
+            else:
+                sys.stdout, sys.stderr = self._pipes
 
     def _flush(self):
         """
@@ -92,6 +97,8 @@ class JobManager(object):
 
         if len(self._buf) or self._progressTotal or self._progressMessage or \
                 self._progressCurrent is not None:
+            self._redirectPipes(False)
+
             requests.request(
                 self.method.upper(), self.url, allow_redirects=True,
                 headers=self.headers, data={
@@ -101,6 +108,9 @@ class JobManager(object):
                     'progressMessage': self._progressMessage
                 })
             self._buf = ''
+
+            self._redirectPipes(True)
+
 
     def write(self, message, forceFlush=False):
         """
@@ -133,8 +143,10 @@ class JobManager(object):
         if not self.url:
             return
 
+        self._redirectPipes(False)
         requests.request(self.method.upper(), self.url, headers=self.headers,
                          data={'status': status}, allow_redirects=True)
+        self._redirectPipes(True)
 
     def updateProgress(self, total=None, current=None, message=None,
                        forceFlush=False):
