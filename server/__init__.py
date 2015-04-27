@@ -128,9 +128,11 @@ def load(info):
             public=public, creator=user)
 
         for name in ('Data', 'Analyses', 'Visualizations'):
-            self.model('folder').createFolder(
+            folder = self.model('folder').createFolder(
                 name=name, public=public, parentType='collection',
                 parent=collection)
+            self.model('folder').setUserAccess(
+                folder, user=user, level=AccessType.ADMIN, save=True)
 
         return self.model('collection').filter(collection, user=user)
 
