@@ -49,8 +49,6 @@ class Operator(Task):
 
         # execute the operator method and store in the output cache
         if not args or not hasattr(args[0], self.operation):
-            print args[0]
-            print self.operation
             raise Exception('Invalid operation for input type')
 
         func = getattr(args[0], self.operation)
@@ -123,10 +121,10 @@ class Divide(Binary):
     >>> six = Task.create_source(6).get_output()
     >>> three = Task.create_source(3).get_output()
     >>> Divide().set_input('0', six).set_input('1', three).get_output_data()
-    2
+    2.0
     """
 
-    operation = '__div__'
+    operation = '__truediv__'
 
 
 class Fork(Task):
