@@ -92,14 +92,14 @@ class JobManager(object):
 
         if len(self._buf) or self._progressTotal or self._progressMessage or \
                 self._progressCurrent is not None:
-            httpMethod = getattr(requests, self.method.lower())
-
-            httpMethod(self.url, headers=self.headers, data={
-                'log': self._buf,
-                'progressTotal': self._progressTotal,
-                'progressCurrent': self._progressCurrent,
-                'progressMessage': self._progressMessage
-            })
+            requests.request(
+                self.method.upper(), self.url, allow_redirects=True,
+                headers=self.headers, data={
+                    'log': self._buf,
+                    'progressTotal': self._progressTotal,
+                    'progressCurrent': self._progressCurrent,
+                    'progressMessage': self._progressMessage
+                })
             self._buf = ''
 
     def write(self, message, forceFlush=False):
@@ -133,8 +133,8 @@ class JobManager(object):
         if not self.url:
             return
 
-        httpMethod = getattr(requests, self.method.lower())
-        httpMethod(self.url, headers=self.headers, data={'status': status})
+        requests.request(self.method.upper(), self.url, headers=self.headers,
+                         data={'status': status}, allow_redirects=True)
 
     def updateProgress(self, total=None, current=None, message=None,
                        forceFlush=False):

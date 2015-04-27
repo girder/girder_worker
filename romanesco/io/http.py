@@ -27,8 +27,9 @@ def fetch(spec, **kwargs):
     taskInput = kwargs.get('task_input', {})
     target = taskInput.get('target', 'memory')
     url = spec['url']
-    method = getattr(requests, spec.get('method', 'get').lower())
-    request = method(url, headers=spec.get('headers', {}), stream=True)
+    method = spec.get('method', 'GET').upper()
+    request = requests.request(method, url, headers=spec.get('headers', {}),
+                               stream=True, allow_redirects=True)
 
     try:
         request.raise_for_status()
@@ -70,13 +71,17 @@ def push(data, spec, **kwargs):
     target = taskOutput.get('target', 'memory')
 
     url = spec['url']
-    method = getattr(requests, spec.get('method', 'post').lower())
+    method = spec.get('method', 'POST').upper()
 
     if target == 'filepath':
         with open(data, 'rb') as fd:
-            request = method(url, headers=spec.get('headers', {}), data=fd)
+            request = requests.request(
+                method, url, headers=spec.get('headers', {}), data=fd,
+                allow_redirects=True)
     elif target == 'memory':
-        request = method(url, headers=spec.get('headers', {}), data=data)
+        request = requests.request(
+            method, url, headers=spec.get('headers', {}), data=data,
+            allow_redirects=True)
     else:
         raise Exception('Invalid HTTP fetch target: ' + target)
 
