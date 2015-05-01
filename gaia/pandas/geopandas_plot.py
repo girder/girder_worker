@@ -10,13 +10,13 @@ class GeopandasPlot(Task):
     """A task that generates images from geopandas data."""
 
     input_ports = {
-        '': Task.make_input_port(GeoDataFrame)
+        '0': Task.make_input_port(GeoDataFrame)
     }
 
     def run(self, *args, **kw):
         """Plot data using geopandas."""
         super(GeopandasPlot, self).run(*args, **kw)
-        data = self._input_data['']
+        data = self._input_data['0']
         if data is not None:
             plt = data.plot()
             plt.figure.savefig(self.file_name)

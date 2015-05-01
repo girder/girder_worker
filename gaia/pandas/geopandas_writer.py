@@ -28,12 +28,12 @@ class GeopandasWriter(Task):
     >>> writer.format = 'GeoJSON'
 
     Connect to a pipeline to execute:
-    >>> writer.set_input(port=reader.get_output())  # doctest: +SKIP
+    >>> writer.set_input(reader.get_output())  # doctest: +SKIP
     >>> writer.run()                                # doctest: +SKIP
     """
 
     input_ports = {
-        '': Task.make_input_port(GeoDataFrame)
+        '0': Task.make_input_port(GeoDataFrame)
     }
 
     formats = [f for f in supported_drivers if 'w' in supported_drivers[f]]
@@ -41,7 +41,7 @@ class GeopandasWriter(Task):
     def run(self, *args, **kw):
         """Write file data using geopandas."""
         super(GeopandasWriter, self).run(*args, **kw)
-        data = self._input_data['']
+        data = self._input_data['0']
         data.to_file(self.file_name, self.format)
         self.dirty = False
 

@@ -20,7 +20,7 @@ class Task1(Task):
     """A task with an output port."""
 
     output_ports = {
-        'output port': Task.make_output_port(ZeroStream)
+        'output': Task.make_output_port(ZeroStream)
     }
 
 
@@ -29,7 +29,7 @@ class Task2(Task):
     """A task with an input port."""
 
     input_ports = {
-        'input port': Task.make_input_port(ZeroStream)
+        'input': Task.make_input_port(ZeroStream)
     }
 
 
@@ -47,13 +47,12 @@ class TestStream(Stream):
         self.obj['nflush'] = 0
 
         super(TestStream, self).__init__(
-            task1.outputs['output port'],
-            task2.inputs['input port']
+            task1.outputs['output'],
+            task2.inputs['input']
         )
 
         task2.set_input(
-            name='input port',
-            port=task1.get_output('output port')
+            input=task1.get_output('output')
         )
 
     def flush(self):

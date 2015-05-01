@@ -24,15 +24,13 @@ class Operator(Task):
     ...         '1': Task.make_input_port(object)
     ...     }
     ...     operation = '__eq__'
-    >>> onef = Task.create_source(1.0).get_output()
-    >>> onei = Task.create_source(1).get_output()
-    >>> equal = Equal().set_input('0', onef).set_input('1', onei)
+    >>> equal = Equal().set_input(1.0, 1)
     >>> equal.get_output_data()
     True
     """
 
     output_ports = {
-        '': Task.make_output_port(object)
+        '0': Task.make_output_port(object)
     }
     operation = None  #: The operator method to call inside run.
 
@@ -52,7 +50,7 @@ class Operator(Task):
             raise Exception('Invalid operation for input type')
 
         func = getattr(args[0], self.operation)
-        self._output_data[''] = func(*args[1:])
+        self._output_data['0'] = func(*args[1:])
         self.dirty = False
 
 
@@ -79,9 +77,7 @@ class Add(Binary):
 
     """Add two objects together.
 
-    >>> two = Task.create_source(2).get_output()
-    >>> three = Task.create_source(3).get_output()
-    >>> Add().set_input('0', two).set_input('1', three).get_output_data()
+    >>> Add().set_input(2, 3).get_output_data()
     5
     """
 
@@ -92,9 +88,7 @@ class Subtract(Binary):
 
     """Subtract two objects.
 
-    >>> two = Task.create_source(2).get_output()
-    >>> three = Task.create_source(3).get_output()
-    >>> Subtract().set_input('0', two).set_input('1', three).get_output_data()
+    >>> Subtract().set_input(2, 3).get_output_data()
     -1
     """
 
@@ -105,9 +99,7 @@ class Multiply(Binary):
 
     """Multiply two objects together.
 
-    >>> two = Task.create_source(2).get_output()
-    >>> three = Task.create_source(3).get_output()
-    >>> Multiply().set_input('0', two).set_input('1', three).get_output_data()
+    >>> Multiply().set_input(2, 3).get_output_data()
     6
     """
 
@@ -118,9 +110,7 @@ class Divide(Binary):
 
     """Divide two objects.
 
-    >>> six = Task.create_source(6).get_output()
-    >>> three = Task.create_source(3).get_output()
-    >>> Divide().set_input('0', six).set_input('1', three).get_output_data()
+    >>> Divide().set_input(6, 3).get_output_data()
     2.0
     """
 
@@ -131,16 +121,15 @@ class Fork(Task):
 
     """Copy the input into one or more outputs.
 
-    >>> msg = Task.create_source("This is a message").get_output()
-    >>> fork = Fork().set_input(port=msg)
-    >>> fork.get_output_data(name='0')
+    >>> fork = Fork().set_input("This is a message")
+    >>> fork.get_output_data('0')
     'This is a message'
-    >>> fork.get_output_data(name='1')
+    >>> fork.get_output_data('1')
     'This is a message'
     """
 
     input_ports = {
-        '': Task.make_input_port(object)
+        '0': Task.make_input_port(object)
     }
     output_ports = {
         '0': Task.make_output_port(object),
@@ -152,7 +141,7 @@ class Fork(Task):
         super(Fork, self).run(*args, **kw)
 
         for i in self.output_ports:
-            self._output_data[i] = self._input_data['']
+            self._output_data[i] = self._input_data['0']
 
         self.dirty = False
 

@@ -32,7 +32,7 @@ class GeopandasIOTest(TestCase):
         writer = GeopandasWriter()
         writer.file_name = fname
         writer.format = format
-        writer.set_input(port=reader.get_output())
+        writer.set_input(reader.get_output())
         return writer
 
     def test_read_geojson_write_shp(self):
@@ -104,7 +104,7 @@ class GeopandasPlotTest(TestCase):
         """Read a small geojson file and save a plot."""
 
         plotter = GeopandasPlot()
-        plotter.set_input(port=self.reader.get_output())
+        plotter.set_input(self.reader.get_output())
         plotter.file_name = self.output_path('geopoints.' + ext)
 
         plotter.run()
