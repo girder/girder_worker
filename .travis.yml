@@ -42,3 +42,6 @@ script:
   - ctest -VV -S ../cmake/travis_build.cmake
   - ctest -V -S ../cmake/travis_submit.cmake
   - cd ..
+
+after_success:
+  - coveralls
