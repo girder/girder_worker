@@ -34,9 +34,9 @@ if(PYTHON_COVERAGE)
 endif()
 
 if(PYTHON_STYLE_TESTS)
-  add_python_style_test(pep8_style_core "${PROJECT_SOURCE_DIR}/romanesco")
-  add_python_style_test(pep8_style_gaia "${PROJECT_SOURCE_DIR}/gaia")
-  add_python_style_test(pep8_style_core_tests "${PROJECT_SOURCE_DIR}/tests")
+  add_python_pep8_test(pep8_style_core "${PROJECT_SOURCE_DIR}/romanesco")
+  add_python_flake8_test(flake8_style_gaia "${PROJECT_SOURCE_DIR}/gaia")
+  add_python_pep8_test(pep8_style_core_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
 add_python_test(arbor)

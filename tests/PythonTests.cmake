@@ -17,11 +17,19 @@ configure_file(
   @ONLY
 )
 
-function(add_python_style_test name input)
+function(add_python_pep8_test name input)
   add_test(
     NAME ${name}
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PEP8_EXECUTABLE}" "--config=${pep8_config}" "${input}"
+    COMMAND "${PEP8_EXECUTABLE}" "${input}"
+  )
+endfunction()
+
+function(add_python_flake8_test name input)
+  add_test(
+    NAME ${name}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    COMMAND "${FLAKE8_EXECUTABLE}" "${input}"
   )
 endfunction()
 
