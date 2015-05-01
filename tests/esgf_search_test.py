@@ -28,9 +28,13 @@ def esgf_mock(url, request):
         content = '{}'
     elif last_query.get('fields') is not None:
         if last_query['fields'][0] == 'variable':
-            content = open(TestCase.data_path('esgf_search_variables.json')).read()
+            content = open(
+                TestCase.data_path('esgf_search_variables.json')
+            ).read()
         else:
-            content = open(TestCase.data_path('esgf_search_fields.json')).read()
+            content = open(
+                TestCase.data_path('esgf_search_fields.json')
+            ).read()
 
     if six.PY3 and content is not None:
         content = bytes(content, 'utf-8')
@@ -66,7 +70,10 @@ class SearchESGF(TestCase):
     def test_fields(self):
         """Test restricting fields."""
         with HTTMock(esgf_mock):
-            r = esgf.search.files('esgf-server.com', {'fields': 'id,timestamp'})
+            r = esgf.search.files(
+                'esgf-server.com',
+                {'fields': 'id,timestamp'}
+            )
 
             for result in r:
                 self.assertTrue('id' in result)
