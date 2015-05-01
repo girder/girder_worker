@@ -3,6 +3,7 @@ include(CMakeParseArguments)
 set(py_coverage_rc "${PROJECT_BINARY_DIR}/tests/romanesco.coveragerc")
 set(pep8_config "${PROJECT_SOURCE_DIR}/tests/pep8.cfg")
 set(coverage_html_dir "${PROJECT_SOURCE_DIR}/docs/_build/html/py_coverage")
+set(py_testdir "${PROJECT_SOURCE_DIR}/tests")
 
 if(PYTHON_BRANCH_COVERAGE)
   set(_py_branch_cov True)
@@ -47,6 +48,28 @@ function(add_python_test case)
     )
   endif()
 
+  if(PYTHON_COVERAGE)
+    set_property(TEST ${name} APPEND PROPERTY DEPENDS py_coverage_reset)
+    set_property(TEST py_coverage_combine APPEND PROPERTY DEPENDS ${name})
+  endif()
+endfunction()
+
+function(add_docstring_test module)
+  set(name doctest:${module})
+  if(PYTHON_COVERAGE)
+    add_test(
+      NAME ${name}
+      WORKING_DIRECTORY "${py_testdir}"
+      COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run -p --append
+              docstring_test.py -v ${module}
+    )
+  else()
+    add_test(
+      NAME ${name}
+      WORKING_DIRECTORY "${py_testdir}"
+      COMMAND "${PYTHON_EXECUTABLE}" docstring_test.py -v ${module}
+    )
+  endif()
   if(PYTHON_COVERAGE)
     set_property(TEST ${name} APPEND PROPERTY DEPENDS py_coverage_reset)
     set_property(TEST py_coverage_combine APPEND PROPERTY DEPENDS ${name})

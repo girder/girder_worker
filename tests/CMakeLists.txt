@@ -35,6 +35,7 @@ endif()
 
 if(PYTHON_STYLE_TESTS)
   add_python_style_test(pep8_style_core "${PROJECT_SOURCE_DIR}/romanesco")
+  add_python_style_test(pep8_style_gaia "${PROJECT_SOURCE_DIR}/gaia")
   add_python_style_test(pep8_style_core_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
@@ -49,3 +50,20 @@ add_python_test(string)
 add_python_test(table)
 add_python_test(tree)
 add_python_test(workflow)
+
+# imported from gaia
+add_docstring_test(gaia.core.base)
+add_docstring_test(gaia.core.task)
+add_docstring_test(gaia.core.port)
+add_docstring_test(gaia.esgf.search)
+add_docstring_test(gaia.pandas.geopandas_writer)
+
+add_python_test(version)
+add_python_test(factory)
+add_python_test(gaiaObject)
+add_python_test(message)
+add_python_test(stream)
+add_python_test(port)
+add_python_test(task)
+add_python_test(geopandas)
+add_python_test(esgf_search)
