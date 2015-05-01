@@ -24,7 +24,8 @@ install:
   - Rscript -e 'install.packages(c("ape","geiger","nlme","devtools"), repos=c("http://cran.cnr.Berkeley.edu"))'
   - R -e 'options(repos="http://cran.cnr.Berkeley.edu");library(devtools);install_github("cardoonTools", "hafen");install_github("aRbor", "arborworkflows")'
   # install Python packages
-  - pip install --allow-external PIL --allow-unverified PIL -r requirements.txt -r requirements-dev.txt
+  - pip install -U -e .[pandas]             # This installs all standard deps + pandas extras
+  - pip install -U -r requirements-dev.txt  # This installs development packages
 
 # run tests
 script:
