@@ -13,9 +13,6 @@ before_install:
   - cd cmake-*/bin && export PATH="${PWD}:${PATH}"
   - popd
   - cmake --version
-
-# install dependencies
-install:
   # download VTK
   - wget http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz -O vtk-precise64.tar.gz
   - tar xzvf vtk-precise64.tar.gz -C ~
@@ -27,7 +24,11 @@ install:
   - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
+
+# install dependencies
+install:
   # install R packages
+  # Travis doesn't like all of the output on the next lines remove `&> /dev/null` to debug
   - Rscript -e 'install.packages(c("ape","geiger","nlme","devtools"), repos=c("http://cran.cnr.Berkeley.edu"))'
   - R -e 'options(repos="http://cran.cnr.Berkeley.edu");library(devtools);install_github("cardoonTools", "hafen");install_github("aRbor", "arborworkflows")'
   # install Python packages
@@ -39,8 +40,8 @@ script:
   - mkdir _build
   - cd _build
   - cmake -D PYTHON_COVERAGE:BOOL=ON ..
-  - ctest -VV -S ../cmake/travis_build.cmake
-  - ctest -V -S ../cmake/travis_submit.cmake
+  - ctest -VV -S ../cmake/travis_continuous.cmake || true
+  - if [ -f test_failed ] ; then false ; fi
   - cd ..
 
 after_success:
