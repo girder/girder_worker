@@ -13,7 +13,7 @@ class Operator(Task):
     left up to either subclasses or the user.
 
     The inputs are named '0', '1', '2', etc.
-    The output is pushed to the default unnamed port, ''.
+    The output is pushed to the default port, '0'.
 
     The task will execute the method ``operation`` on the first
     argument with positional arguments 1:.
