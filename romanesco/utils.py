@@ -127,6 +127,9 @@ class JobManager(object):
         if self.logPrint:
             self._pipes[0].write(message)
 
+        if type(message) == unicode:
+            message = message.encode('utf8')
+
         self._buf += message
         if forceFlush or time.time() - self._last > self.interval:
             self._flush()
