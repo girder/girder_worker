@@ -16,11 +16,10 @@ class GeopandasPlot(Task):
     def run(self, *args, **kw):
         """Plot data using geopandas."""
         super(GeopandasPlot, self).run(*args, **kw)
-        data = self._input_data['0']
+        data = self.get_input_data()
         if data is not None:
             plt = data.plot()
             plt.figure.savefig(self.file_name)
-        self.dirty = False
 
 
 GeopandasPlot.add_property(

@@ -55,7 +55,6 @@ class SimpleTask(Task):
         """Increment the run counter."""
         super(SimpleTask, self).run()
         self.count += 1
-        self.dirty = False
 
 
 def make_task(input_types, output_types):

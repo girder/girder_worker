@@ -33,7 +33,6 @@ class Task(GaiaObject):
             self._outputs[name] = port(self, name=name)
 
         #: data cache
-        self._input_data = {}
         self._output_data = {}
 
     @property
@@ -66,8 +65,8 @@ class Task(GaiaObject):
         ...     }
         ...     def run(self, *a, **k):
         ...         super(T, self).run(*a, **k)
-        ...         self._output_data['0'] = self._input_data['0'] + ':' + str(
-        ...             self._input_data['a'] + self._input_data['b']
+        ...         self._output_data['0'] = self.get_input_data() + ':' + str(
+        ...             self.get_input_data('a') + self.get_input_data('b')
         ...         )
         ...         self._dirty = False
         >>> t1 = T()
@@ -119,13 +118,19 @@ class Task(GaiaObject):
             return None
         return port.task
 
-    def _set_input_data(self, name='0'):
-        """Set the data for the given input port."""
+    def get_input_data(self, name='0'):
+        """Return the data from the named port.
+
+        :param str name: An input port name
+        :raises Exception: if the input port is not connected
+        """
+        # get the task connected to the given port
         task = self.get_input_task(name)
         if task is None:
-            return None
-        port = self.get_input(name)
-        return port.get_output()
+            raise Exception("Port {} is not connected".format(name))
+        # get the name of the output port on the connected task
+        port_name = self.get_input(name).other.name
+        return task.get_output_data(name=port_name)
 
     def get_output(self, name='0'):
         """Return the given output port.
@@ -164,12 +169,9 @@ class Task(GaiaObject):
         the input ports are all connected and raises an error if they
         aren't.
         """
-        for name in self.input_ports:
-            iport_name = self.get_input(name).other.name
-            itask = self.get_input_task(name)
-            if itask is None:
-                raise Exception("Input port '{0}' not connected.".format(name))
-            self._input_data[name] = itask.get_output_data(iport_name)
+        self.dirty = False
+        for port in self.inputs:
+            self.get_input_data(port)
 
     def _reset(self, *args):
         """Set dirty state for the task."""
@@ -212,10 +214,14 @@ class Task(GaiaObject):
 
             output_ports = {'0': SourceOutput}
 
+            def get_input_data(self, name='0'):
+                """Return the datum associated with this source."""
+                return data
+
             def run(self, *arg, **kw):
                 """Do nothing."""
+                super(Source, self).run(*arg, **kw)
                 self._output_data['0'] = data
-                self.dirty = False
 
         return Source()
 

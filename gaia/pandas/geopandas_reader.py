@@ -17,14 +17,13 @@ class GeopandasReader(Task):
 
     def _reset(self, *args):
         """Remove data cache."""
-        self.dirty = True
+        super(GeopandasReader, self)._reset(*args)
         self._output_data['0'] = None
 
     def run(self, *args, **kw):
         """Read and cache file data using geopandas."""
         super(GeopandasReader, self).run(*args, **kw)
         self._output_data['0'] = read_file(self.file_name)
-        self.dirty = False
 
 
 GeopandasReader.add_property(

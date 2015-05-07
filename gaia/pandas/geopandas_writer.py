@@ -41,9 +41,8 @@ class GeopandasWriter(Task):
     def run(self, *args, **kw):
         """Write file data using geopandas."""
         super(GeopandasWriter, self).run(*args, **kw)
-        data = self._input_data['0']
+        data = self.get_input_data()
         data.to_file(self.file_name, self.format)
-        self.dirty = False
 
 
 def _validate_format(format_type):

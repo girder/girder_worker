@@ -41,8 +41,8 @@ class Operator(Task):
         # get the input data in a list
         i = 0
         args = []
-        while str(i) in self._input_data:
-            args.append(self._input_data[str(i)])
+        while str(i) in self.input_ports:
+            args.append(self.get_input_data(str(i)))
             i += 1
 
         # execute the operator method and store in the output cache
@@ -51,7 +51,6 @@ class Operator(Task):
 
         func = getattr(args[0], self.operation)
         self._output_data['0'] = func(*args[1:])
-        self.dirty = False
 
 
 class Unary(Operator):
@@ -141,9 +140,7 @@ class Fork(Task):
         super(Fork, self).run(*args, **kw)
 
         for i in self.output_ports:
-            self._output_data[i] = self._input_data['0']
-
-        self.dirty = False
+            self._output_data[i] = self.get_input_data()
 
 # Too low level, probably.
 #  class GetAttr(Unary):
