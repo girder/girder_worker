@@ -209,6 +209,8 @@ def load(info):
         cherrypy.response.headers['Cache-Control'] = 'no-cache'
 
         def sseMessage(output):
+            if type(output) == unicode:
+                output = output.encode('utf8')
             return 'event: log\ndata: {}\n\n'.format(output)
 
         def streamGen():
