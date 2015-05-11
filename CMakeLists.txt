@@ -7,7 +7,7 @@ enable_testing()
 
 find_program(PYTHON_EXECUTABLE python)
 
-option(PYTHON_STYLE_TESTS "Run Python style tests with pep8" ON)
+option(PYTHON_STYLE_TESTS "Run Python style tests with flake8" ON)
 option(PYTHON_COVERAGE "Run tests with coverage.py" OFF)
 option(PYTHON_BRANCH_COVERAGE "Use branch-level coverage instead of line-level" OFF)
 
@@ -16,6 +16,7 @@ if(PYTHON_COVERAGE)
 endif()
 
 if(PYTHON_STYLE_TESTS)
+  find_program(FLAKE8_EXECUTABLE flake8)
   find_program(PEP8_EXECUTABLE pep8)
 endif()
 

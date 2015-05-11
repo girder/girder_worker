@@ -18,7 +18,6 @@
 ###############################################################################
 
 import json
-import sys
 
 from setuptools import setup, find_packages
 from pkg_resources import parse_requirements
@@ -39,6 +38,16 @@ except Exception:
 
 # reqs is a list of requirement
 reqs = [str(req) for req in install_reqs]
+
+# optionals for pandas support
+extras = {
+    'pandas': [
+        'geopandas==0.1.1',
+        'matplotlib==1.4.3',
+        'xray==0.4.0'
+    ]
+}
+
 
 # perform the install
 setup(
@@ -70,5 +79,6 @@ setup(
         'console_scripts': [
             'romanesco-worker = romanesco.__main__:main'
         ]
-    }
+    },
+    extras_require=extras
 )
