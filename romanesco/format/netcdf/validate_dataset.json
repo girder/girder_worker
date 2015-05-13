@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "netcdf", "format": "dataset"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "import netCDF4\noutput = isinstance(input, netCDF4.Dataset)",
+    "mode": "python"
+}
