@@ -1,0 +1,7 @@
+{
+    "name": "Binary to Dataset",
+    "inputs": [{"name": "input", "type": "netcdf", "format": "binary"}],
+    "outputs": [{"name": "output", "type": "netcdf", "format": "dataset"}],
+    "script_uri": "file://binary_to_dataset.py",
+    "mode": "python"
+}
