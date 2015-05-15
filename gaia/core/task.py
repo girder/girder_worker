@@ -1,9 +1,11 @@
 """This module defines tasks executed in the pipeline."""
 
+import json
+from collections import OrderedDict
 import six
 
 from gaia.core.base import GaiaObject
-from gaia.core.port import InputPort, OutputPort, Port
+from gaia.core.port import Port
 
 
 class Task(GaiaObject):
@@ -15,25 +17,41 @@ class Task(GaiaObject):
     next task or tasks.
     """
 
-    #: Static dictonaries of I/O ports
-    #:   port name -> port class
-    input_ports = {}
-    output_ports = {}
-
-    def __init__(self, *arg, **kw):
+    def __init__(self, spec={}, **kw):
         """Initialize an abstract task."""
+        spec = spec.copy()
+        spec['inputs'] = spec.get('inputs', [])[:]
+        spec['outputs'] = spec.get('outputs', [])[:]
+
+        self._spec = spec
+
         #: Input connection mapping
-        self._inputs = {}
-        for name, port in six.iteritems(self.input_ports):
-            self._inputs[name] = port(self, name=name)
+        self._inputs = self._port_dict(spec['inputs'])
 
         #: Output connection mapping
-        self._outputs = {}
-        for name, port in six.iteritems(self.output_ports):
-            self._outputs[name] = port(self, name=name)
+        self._outputs = self._port_dict(spec['outputs'])
 
         #: data cache
+        self._input_data = {}
         self._output_data = {}
+
+    @property
+    def spec(self):
+        """Return the spec object for the task."""
+        return self._spec
+
+    def __str__(self):
+        """Serialize the task as a json object."""
+        return json.dumps(self.spec)
+
+    @staticmethod
+    def _port_dict(ports):
+        """Generate an ordered dict from a list of port specs."""
+        o = OrderedDict()
+        for port_spec in ports:
+            port = Port(port_spec)
+            o[port.name] = port
+        return o
 
     @property
     def inputs(self):
@@ -46,40 +64,34 @@ class Task(GaiaObject):
         return self._outputs
 
     def set_input(self, *arg, **kw):
-        """Bind input ports to external output ports or source data.
+        """Bind (and cache) data to input ports.
 
         Positional arguments map to input ports numbered as '0', '1', etc.
-        Keyword arguments set inputs by name.  Argument values can either
-        be :py:gaia.core.Port: objects to connect to other tasks
-        or any other python object to set the data directly.
+        Keyword arguments set inputs by name.
 
         Example task:
-        >>> class T(Task):
-        ...     input_ports = {
-        ...         '0': Task.make_input_port(str),
-        ...         'a': Task.make_input_port(int),
-        ...         'b': Task.make_input_port(int)
-        ...     }
-        ...     output_ports = {
-        ...         '0': Task.make_output_port(str)
-        ...     }
-        ...     def run(self, *a, **k):
-        ...         super(T, self).run(*a, **k)
-        ...         self._output_data['0'] = self.get_input_data() + ':' + str(
-        ...             self.get_input_data('a') + self.get_input_data('b')
-        ...         )
-        ...         self._dirty = False
-        >>> t1 = T()
-        >>> t2 = T()
+        >>> def run(s, a=a, b=b):
+        ...     return s + ':' + str(a + b)
+        >>> spec = {
+        ...     'input_ports': [
+        ...         {'name': '0', 'type': 'string', 'format': 'text'},
+        ...         {'name': 'a', 'type': 'number', 'format': 'number'},
+        ...         {'name': 'b', 'type': 'number', 'format': 'number'},
+        ...     ]
+        ...     'output_ports': [
+        ...         {'name': '0', 'type': 'string', 'format': 'text'}
+        ...     ],
+        ...     'function': run
+        ... }
+        >>> t1 = Task(spec)
+        >>> t2 = Task(spec)
 
         # Input set from data sources
-        >>> t1.set_input('The sum', a=2, b=3).get_output_data('0')
+        >>> t1.set_input('The sum', a=2, b=3).get_output()
         'The sum:5'
 
         # Input set from port objects
-        >>> four = Task.create_source(4).get_output()
-        >>> five = Task.create_source(5).get_output()
-        >>> t2.set_input(t1.get_output('0'), a=four, b=five).get_output_data('0')
+        >>> t2.set_input(t1.get_output(), a=4, b=5).get_output()
         'The sum:5:9'
         """
         # Convert arguments into keyword arguments
@@ -90,74 +102,37 @@ class Task(GaiaObject):
             if name not in self._inputs:
                 raise ValueError("Invalid port name '{0}'".format(name))
 
-            if isinstance(value, Port):
-                port = value
-            else:
-                port = Task.create_source(value).get_output()
-            port.connect(self._inputs[name])
+            data = None
+            if isinstance(value, dict):
+                try:
+                    data = self.inputs[name].fetch(value)
+                except:
+                    pass
+
+            if data is None:
+                data = value
 
             self._dirty = True
         return self
 
     def get_input(self, name='0'):
-        """Return the given input port.
+        """Return the data bound to the given input port.
 
         :param str name: An input port name
-        :rtype: :py:class:OutputPort or None
+        :rtype: object or None
         """
-        return self._inputs[name]
-
-    def get_input_task(self, name='0'):
-        """Return the task attached to the given input port.
-
-        :param str name: An input port name
-        :rtype: :py:class:Task or None
-        """
-        port = self.get_input(name).other
-        if port is None:
-            return None
-        return port.task
-
-    def get_input_data(self, name='0'):
-        """Return the data from the named port.
-
-        :param str name: An input port name
-        :raises Exception: if the input port is not connected
-        """
-        # get the task connected to the given port
-        task = self.get_input_task(name)
-        if task is None:
-            raise Exception("Port {} is not connected".format(name))
-        # get the name of the output port on the connected task
-        port_name = self.get_input(name).other.name
-        return task.get_output_data(name=port_name)
+        return self._input_data.get(name)
 
     def get_output(self, name='0'):
-        """Return the given output port.
+        """Return the data bound to the given output port.
 
         :param str name: An input port name
-        :rtype: :py:class:OutputPort or None
+        :rtype: object or None
         """
         if name not in self._outputs:
             raise ValueError("Invalid port name '{0}'".format(name))
-        return self._outputs[name]
-
-    def get_output_task(self, name='0'):
-        """Return the task attached to the given output port.
-
-        :param str name: An output port name
-        :rtype: :py:class:Task or None
-        """
-        port = self.get_output(name).other
-        if port is None:
-            return None
-        return port.task
-
-    def get_output_data(self, name='0'):
-        """Return the data for the given port."""
         if self.dirty:
             self.run()
-
         return self._output_data.get(name)
 
     def run(self, *arg, **kw):
@@ -170,8 +145,6 @@ class Task(GaiaObject):
         aren't.
         """
         self.dirty = False
-        for port in self.inputs:
-            self.get_input_data(port)
 
     def _reset(self, *args):
         """Set dirty state for the task."""
@@ -179,100 +152,9 @@ class Task(GaiaObject):
 
     def _reset_downstream(self, _, isdirty, *args):
         """Set dirty state on all downstream tasks."""
-        if isdirty:
-            for name in self.outputs:
-                task = self.get_output_task(name=name)
-                if task:
-                    task.dirty = True
+        if isdirty and not self.dirty:
+            self._reset()
 
-    @classmethod
-    def create_source(cls, data):
-        """Generate a task that supplies the given data as output.
-
-        This class method is useful to generate source tasks quickly
-        from arbitrary python objects.  For example:
-
-        >>> data = "some arbitrary data"
-        >>> source = Task.create_source(data)
-        >>> source.get_output_data()
-        'some arbitrary data'
-        """
-        class SourceOutput(OutputPort):
-
-            """A port attached to a source task."""
-
-            name = '0'
-            description = str(data)
-
-            def emits(self):
-                """Return the type of the provided datum."""
-                return type(data)
-
-        class Source(Task):
-
-            """Generated source task."""
-
-            output_ports = {'0': SourceOutput}
-
-            def get_input_data(self, name='0'):
-                """Return the datum associated with this source."""
-                return data
-
-            def run(self, *arg, **kw):
-                """Do nothing."""
-                super(Source, self).run(*arg, **kw)
-                self._output_data['0'] = data
-
-        return Source()
-
-    @classmethod
-    def make_input_port(cls, data_class=None, data_classes=()):
-        """Create an input port that accepts the given data type.
-
-        An input port can accept one or more data types, but for compatibility
-        with the ``create_output_port`` method, the default 2 argument call
-        signature will generate an input port that accepts only the given
-        data class.  The keyword argument ``data_classes`` can be used
-        to generate a port that accepts multiple types.
-
-        >>> Port = Task.make_input_port(int)
-        >>> int in Port({}).accepts()
-        True
-
-        >>> Port = Task.make_input_port(data_classes=(int, float))
-        >>> int in Port({}).accepts()
-        True
-        """
-        if data_class is not None:
-            data_classes += (data_class,)
-
-        class ReturnedInputPort(InputPort):
-
-            """A subclass of InputPort accepting provided types."""
-
-            def accepts(self):
-                """Return the classes accepted by the port."""
-                return data_classes
-
-        return ReturnedInputPort
-
-    @classmethod
-    def make_output_port(cls, data_class=None):
-        """Create an output port that emits the given data type.
-
-        >>> Port = Task.make_output_port(int)
-        >>> int is Port({}).emits()
-        True
-        """
-        class ReturnedOutputPort(OutputPort):
-
-            """A subclass of InputPort accepting provided types."""
-
-            def emits(self):
-                """Return the class emitted by the port."""
-                return data_class
-
-        return ReturnedOutputPort
 
 Task.add_property(
     'dirty',

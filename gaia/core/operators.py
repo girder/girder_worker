@@ -18,21 +18,21 @@ class Operator(Task):
     The task will execute the method ``operation`` on the first
     argument with positional arguments 1:.
 
-    >>> class Equal(Operator):
-    ...     input_ports = {
-    ...         '0': Task.make_input_port(object),
-    ...         '1': Task.make_input_port(object)
-    ...     }
+    >>> equal = Operator({
+    ...     'input_ports': [
+    ...         {'name': '0', 'type': 'string', 'format': 'text'},
+    ...         {'name': '1', 'type': 'string', 'format': 'text'}
+    ...     ],
     ...     operation = '__eq__'
-    >>> equal = Equal().set_input(1.0, 1)
-    >>> equal.get_output_data()
+    ... })
+    >>> equal = equal.set_input("a", u"a")
+    >>> equal.get_output()
     True
     """
 
-    output_ports = {
-        '0': Task.make_output_port(object)
-    }
-    operation = None  #: The operator method to call inside run.
+    output_ports = [
+        {'name': '0', 'type': 'pickle', 'format': 'object'}
+    ]
 
     def run(self, *args, **kw):
         """Execute the operator and populate the output."""
@@ -57,19 +57,19 @@ class Unary(Operator):
 
     """Skeleton class for a unary operator."""
 
-    input_ports = {
-        '0': Task.make_input_port(object)
-    }
+    input_ports = [
+        {'name': '0', 'type': 'pickle', 'format': 'object'}
+    ]
 
 
 class Binary(Operator):
 
     """Skeleton class for a binary operator."""
 
-    input_ports = {
-        '0': Task.make_input_port(object),
-        '1': Task.make_input_port(object)
-    }
+    input_ports = [
+        {'name': '0', 'type': 'pickle', 'format': 'object'},
+        {'name': '1', 'type': 'pickle', 'format': 'object'}
+    ]
 
 
 class Add(Binary):
@@ -127,13 +127,14 @@ class Fork(Task):
     'This is a message'
     """
 
-    input_ports = {
-        '0': Task.make_input_port(object)
-    }
-    output_ports = {
-        '0': Task.make_output_port(object),
-        '1': Task.make_output_port(object)
-    }
+    input_ports = [
+        {'name': '0', 'type': 'pickle', 'format': 'object'}
+    ]
+
+    output_ports = [
+        {'name': '0', 'type': 'pickle', 'format': 'object'},
+        {'name': '1', 'type': 'pickle', 'format': 'object'}
+    ]
 
     def run(self, *args, **kw):
         """Copy inputs to outputs."""
@@ -141,31 +142,3 @@ class Fork(Task):
 
         for i in self.output_ports:
             self._output_data[i] = self.get_input_data()
-
-# Too low level, probably.
-#  class GetAttr(Unary):
-#
-#      """Get an attribute from an object.
-#
-#      >>> cmplx = Task.create_source(1 - 1j).get_output()
-#      >>> GetAttribute(attr='imag').set_input(port=cmplx).get_output_data()
-#      -1.0
-#      """
-#
-#      operation = '__getattribute__'
-#
-#  GetAttribute.add_property('attr')
-#
-#
-#  class GetItem(Unary):
-#
-#      """Get an attribute from an object.
-#
-#      >>> a_dict = Task.create_source({'a': 'b'}).get_output()
-#      >>> GetItem(item='a').set_input('0', a_dict).get_output_data()
-#      'b'
-#      """
-#
-#      operation = '__getitem__'
-#
-#  GetItem.add_property('item')

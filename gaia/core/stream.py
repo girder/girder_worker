@@ -29,8 +29,8 @@ class Stream(GaiaObject):
     def __init__(self, source_port, sink_port):
         """Create the stream between to ports.
 
-        :param .port.OutputPort source_port: The data source
-        :param .port.InputPort sink_port: THe data sink
+        :param :py:class:gaia.Port source_port: The data source
+        :param :py:class:gaia.Port sink_port: THe data sink
         """
         self._output_port = sink_port
         self._input_port = source_port
