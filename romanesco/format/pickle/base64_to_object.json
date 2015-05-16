@@ -1,0 +1,7 @@
+{
+    "name": "Pickle to Object",
+    "inputs": [{"name": "input", "type": "pickle", "format": "base64"}],
+    "outputs": [{"name": "output", "type": "pickle", "format": "object"}],
+    "script_uri": "file://base64_to_object.py",
+    "mode": "python"
+}
