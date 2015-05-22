@@ -1,7 +1,0 @@
-{
-    "name": "Object to Pickle",
-    "inputs": [{"name": "input", "type": "pickle", "format": "object"}],
-    "outputs": [{"name": "output", "type": "pickle", "format": "base64"}],
-    "script_uri": "file://object_to_base64.py",
-    "mode": "python"
-}

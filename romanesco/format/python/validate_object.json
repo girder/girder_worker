@@ -1,5 +1,5 @@
 {
-    "inputs": [{"name": "input", "type": "pickle", "format": "object"}],
+    "inputs": [{"name": "input", "type": "python", "format": "object"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
     "script": "output = True",
     "mode": "python"

@@ -248,6 +248,6 @@ def import_default_converters():
     import_converters([os.path.join(cur_path, t) for t in [
         "r", "table", "tree",
         "string", "number", "image",
-        "boolean", "geometry", "netcdf", "pickle"]])
+        "boolean", "geometry", "netcdf", "python"]])
 
 import_default_converters()

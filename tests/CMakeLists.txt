@@ -50,6 +50,7 @@ add_python_test(string)
 add_python_test(table)
 add_python_test(tree)
 add_python_test(workflow)
+add_python_test(pickle)
 
 # imported from gaia
 add_docstring_test(gaia.core.base)

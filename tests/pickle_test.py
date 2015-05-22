@@ -13,13 +13,13 @@ class TestPickle(unittest.TestCase):
     def round_trip(self, obj):
         """Convert an object to base64 and back returning the new object."""
         b64 = convert(
-            'pickle',
+            'python',
             {'format': 'object', 'data': obj},
-            {'format': 'base64'}
+            {'format': 'pickle.base64'}
         )['data']
         newobj = convert(
-            'pickle',
-            {'format': 'base64', 'data': b64},
+            'python',
+            {'format': 'pickle.base64', 'data': b64},
             {'format': 'object'}
         )
         return newobj['data']
@@ -59,12 +59,12 @@ d = b + b
 '''
         task = {
             'inputs': [
-                {'name': 'a', 'type': 'pickle', 'format': 'object'},
-                {'name': 'b', 'type': 'pickle', 'format': 'object'}
+                {'name': 'a', 'type': 'python', 'format': 'object'},
+                {'name': 'b', 'type': 'python', 'format': 'object'}
             ],
             'outputs': [
-                {'name': 'c', 'type': 'pickle', 'format': 'object'},
-                {'name': 'd', 'type': 'pickle', 'format': 'object'}
+                {'name': 'c', 'type': 'python', 'format': 'object'},
+                {'name': 'd', 'type': 'python', 'format': 'object'}
             ],
             'script': script,
             'mode': 'python'
@@ -99,20 +99,20 @@ d = b + b
         b = tempfile.NamedTemporaryFile()
 
         convert(
-            'pickle',
+            'python',
             {'format': 'object', 'data': (0, 1)},
-            {'format': 'base64', 'mode': 'local', 'path': a.name}
+            {'format': 'pickle.base64', 'mode': 'local', 'path': a.name}
         )
 
         convert(
-            'pickle',
+            'python',
             {'format': 'object', 'data': 2},
-            {'format': 'base64', 'mode': 'local', 'path': b.name}
+            {'format': 'pickle.base64', 'mode': 'local', 'path': b.name}
         )
 
         outputs = self.run_basic_task({
-            'a': {'format': 'base64', 'mode': 'local', 'path': a.name},
-            'b': {'format': 'base64', 'mode': 'local', 'path': b.name}
+            'a': {'format': 'pickle.base64', 'mode': 'local', 'path': a.name},
+            'b': {'format': 'pickle.base64', 'mode': 'local', 'path': b.name}
         })
 
         self.assertEqual(outputs.get('c'), (0, 1, 0, 1))
