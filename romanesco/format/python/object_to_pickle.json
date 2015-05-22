@@ -1,0 +1,7 @@
+{
+    "name": "Object to Pickle",
+    "inputs": [{"name": "input", "type": "python", "format": "object"}],
+    "outputs": [{"name": "output", "type": "python", "format": "pickle"}],
+    "script": "from six.moves import cPickle; output = cPickle.dumps(input)",
+    "mode": "python"
+}

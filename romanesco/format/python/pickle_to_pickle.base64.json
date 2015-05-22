@@ -1,0 +1,7 @@
+{
+    "name": "Pickle to Pickle.base64",
+    "inputs": [{"name": "input", "type": "python", "format": "pickle"}],
+    "outputs": [{"name": "output", "type": "python", "format": "pickle.base64"}],
+    "script": "import base64; output = base64.b64encode(input)",
+    "mode": "python"
+}
