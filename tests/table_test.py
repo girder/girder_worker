@@ -285,6 +285,14 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["format"], "column.names")
         self.assertEqual(output["data"], ["a", "b"])
 
+    def test_column_names_csv(self):
+        output = romanesco.convert("table", {
+            "format": "csv",
+            "data": ",a,b,longer name\n1,1,1,1\n2,2,2,2\n3,3,3,3\n"
+        }, {"format": "column.names"})
+        self.assertEqual(output["format"], "column.names")
+        self.assertEqual(output["data"], ["", "a", "b", "longer name"])
+
     def test_column_names_discrete(self):
         output = romanesco.convert("table", {
             "format": "rows",
