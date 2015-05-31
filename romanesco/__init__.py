@@ -6,7 +6,7 @@ import romanesco.format
 import romanesco.io
 
 from ConfigParser import ConfigParser
-from . import tasks, utils
+from . import executors, utils
 
 
 # Read the configuration files
@@ -16,10 +16,10 @@ config.read([os.path.join(os.path.dirname(__file__), f) for f in _cfgs])
 
 # Maps task modes to their implementation
 _taskMap = {
-    'docker': tasks.docker.run,
-    'python': tasks.python.run,
-    'r': tasks.r.run,
-    'workflow': tasks.workflow.run
+    'docker': executors.docker.run,
+    'python': executors.python.run,
+    'r': executors.r.run,
+    'workflow': executors.workflow.run
 }
 
 
