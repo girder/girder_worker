@@ -1,10 +1,9 @@
 """This module defines I/O ports that serve as interfaces between tasks."""
 
-from __future__ import absolute_import
-import json
+import six
 
 from romanesco import io, convert, isvalid
-from gaia.core.base import GaiaObject
+from spec import Spec
 
 
 class ValidationError(Exception):
@@ -36,7 +35,7 @@ class ValidationError(Exception):
         )
 
 
-class Port(GaiaObject):
+class Port(Spec):
 
     """A port defines a communication channel between tasks.
 
@@ -51,12 +50,11 @@ class Port(GaiaObject):
     >>> port = Port(spec)
 
     The port object is serialized as a json object
+    >>> import json
     >>> json.loads(str(port)) == spec
     True
 
     It has several properties derived from the spec
-    >>> port.spec == spec
-    True
     >>> port.name == spec['name']
     True
     >>> port.type == spec['type']
@@ -71,44 +69,29 @@ class Port(GaiaObject):
     True
     """
 
-    def __init__(self, spec):
+    def __init__(self, *arg, **kw):
         """Initialize the port on a given task.
 
-        :param dict spec: The port data specification
+        Extends the spec initialization by appending defaults and adding basic
+        validation.  By default, port specs take "python.object" data.
         """
-        self._spec = spec.copy()
+        self.__initialized = False
+        super(Port, self).__init__(*arg, **kw)
+        self.__initialized = True
+        self.check()
 
-    @property
-    def spec(self):
-        """Get the port specification."""
-        return self._spec.copy()
+    def _check_property(self, prop):
+        """Check that a property exists and has a string type."""
+        if prop not in self or not isinstance(self[prop], six.string_types):
+            raise ValueError('Ports must contain a valid "%s".' % prop)
 
-    @property
-    def name(self):
-        """Get the port's name."""
-        if 'id' in self.spec:
-            return self.spec['id']
-        return self.spec.get('name')
-
-    @property
-    def type(self):
-        """Return the data type."""
-        return self.spec.get('type')
-
-    @property
-    def format(self):
-        """Get the data storage format."""
-        return self.spec.get('format')
-
-    @property
-    def auto_convert(self):
-        """Return whether the port automatically converts between formats."""
-        return self.spec.get('auto_convert', True)
-
-    @property
-    def auto_validate(self):
-        """Return whether the port validates data when fetching and pushing."""
-        return self.spec.get('auto_validate', True)
+    def check(self):
+        """Raise a ValueError if the Port is not valid."""
+        super(Port, self).check()
+        if not self.__initialized:
+            return
+        for prop in ['name', 'format', 'type']:
+            self._check_property(prop)
 
     def validate(self, data_spec):
         """Ensure the given data spec is compatible with this port.
@@ -151,10 +134,6 @@ class Port(GaiaObject):
         """
         return convert(self.type, data_spec, {'format': format})
 
-    def __str__(self):
-        """Serialize the port specification."""
-        return json.dumps(self.spec)
-
     def fetch(self, data_spec):
         """Return the data described by the given specification.
 
@@ -172,11 +151,12 @@ class Port(GaiaObject):
         if self.auto_convert:
             _data = self.convert(data_spec, self.format)
             data = _data.get('data')
-        elif self.format is None or self.format == data_spec.get('format'):
-            if 'data' in self.spec and self.spec['data'] is not None:
-                data = self.spec['data']
+        elif self.format == data_spec.get('format'):
+            # TODO: This doesn't look right...
+            if 'data' in self and self['data'] is not None:
+                data = self['data']
             else:
-                data = io.fetch(data_spec, task_input=self.spec).get('data')
+                data = io.fetch(data_spec, task_input=self).get('data')
         else:
             raise Exception('Expected matching data formats ({} != {})' % (
                 str(data_spec['format']), str(self.format)
@@ -214,6 +194,12 @@ class Port(GaiaObject):
                 str(_spec['format']), str(self.format)
             ))
         return _spec
+
+Port.make_property('name', 'The name of the port')
+Port.make_property('type', 'The data type of the port', 'python')
+Port.make_property('format', 'The data format of the port', 'object')
+Port.make_property('auto_convert', 'If the data format is automatically', True)
+Port.make_property('auto_validate', 'If the data is validated by default', True)
 
 __all__ = (
     'Port',

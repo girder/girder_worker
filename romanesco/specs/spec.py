@@ -60,6 +60,8 @@ class Spec(dict):
     {"a": 0}
     """
 
+    __defaults = {}
+
     def __init__(self, *args, **kw):
         """Initialize a new spec object.
 
@@ -164,24 +166,32 @@ class Spec(dict):
                 super(Spec, self).__setitem__(key, old)
             raise
 
+    def __missing__(self, key):
+        """Return default for missing keys."""
+        return self.__defaults.get(key, None)
+
     @classmethod
-    def make_property(cls, name, doc=None):
+    def make_property(cls, name, doc=None, default=None):
         """Expose a spec item as a class attribute.
 
         >>> class MySpec(Spec): pass
-        >>> MySpec.make_property('name', doc='This is the name')
+        >>> MySpec.make_property('name', 'This is the name', 'Bob')
         >>> s = MySpec(name="Roger")
         >>> s.name == s['name']
         True
         >>> del s.name
         >>> 'name' in s
         False
+        >>> s['name']
+        'Bob'
         >>> s.name = 'Alice'
         >>> s.name == s['name']
         True
         >>> del s['name']
-        >>> hasattr(s, 'name')
-        False
+        >>> s.name
+        'Bob'
+        >>> MySpec.name.__doc__
+        'This is the name'
         """
         prop = property(
             lambda self: self.__getitem__(name),
@@ -189,6 +199,7 @@ class Spec(dict):
             lambda self: self.__delitem__(name),
             doc
         )
+        cls.__defaults[name] = default
         setattr(cls, name, prop)
 
 
