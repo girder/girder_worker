@@ -1,14 +1,11 @@
 """This module defines tasks executed in the pipeline."""
 
-import json
-from collections import OrderedDict
 import six
 
-from gaia.core.base import GaiaObject
-from gaia.core.port import Port
+from .spec import Spec
 
 
-class Task(GaiaObject):
+class Task(Spec):
 
     """Defines a pipeline element.
 
@@ -17,41 +14,17 @@ class Task(GaiaObject):
     next task or tasks.
     """
 
-    def __init__(self, spec={}, **kw):
+    def __init__(self, *args, **kw):
         """Initialize an abstract task."""
-        spec = spec.copy()
-        spec['inputs'] = spec.get('inputs', [])[:]
-        spec['outputs'] = spec.get('outputs', [])[:]
-
-        self._spec = spec
-
-        #: Input connection mapping
-        self._inputs = self._port_dict(spec['inputs'])
-
-        #: Output connection mapping
-        self._outputs = self._port_dict(spec['outputs'])
+        self.__initialized = False
 
         #: data cache
-        self._input_data = {}
-        self._output_data = {}
+        self.__input_data = {}
+        self.__output_data = {}
 
-    @property
-    def spec(self):
-        """Return the spec object for the task."""
-        return self._spec
-
-    def __str__(self):
-        """Serialize the task as a json object."""
-        return json.dumps(self.spec)
-
-    @staticmethod
-    def _port_dict(ports):
-        """Generate an ordered dict from a list of port specs."""
-        o = OrderedDict()
-        for port_spec in ports:
-            port = Port(port_spec)
-            o[port.name] = port
-        return o
+        super(Task, self).__init__(*args, **kw)
+        self.__initialized = True
+        self.check()
 
     @property
     def inputs(self):
@@ -155,10 +128,4 @@ class Task(GaiaObject):
         if isdirty and not self.dirty:
             self._reset()
 
-
-Task.add_property(
-    'dirty',
-    doc='Stores the current cache state of the Task',
-    default=True,
-    on_change=Task._reset_downstream
-)
+__all__ = ('Task',)

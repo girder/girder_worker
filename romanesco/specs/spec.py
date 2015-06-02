@@ -85,10 +85,13 @@ class Spec(dict):
         >>> Spec({'a': 0}, '{"b": 1}', a=2, c=3)
         {"a": 2, "b": 1, "c": 3}
         """
-        self.__initialized = False
-
         # empty dict initialization
         super(Spec, self).__init__()
+
+        # add internal validation store
+        self.__checks = {}
+
+        self.add_validation_check('Spec.json', Spec.__ensure_json)
 
         # process positional arguments
         for arg in args:
@@ -100,8 +103,26 @@ class Spec(dict):
         # process keyword arguments
         self.update(kw)
 
-        self.__initialized = True
-        self.check()
+    def __check(self, key=None, oldvalue=None, newvalue=None, **kw):
+        """Call all registered validation methods on this spec."""
+        for func in six.itervalues(self.__checks):
+            func(self, key, oldvalue, newvalue)
+
+    def __ensure_json(self, key=None, oldvalue=None, newvalue=None, **kw):
+        """Raise a ValueError if the spec is not valid JSON."""
+        if key is None:
+            for key, value in six.iteritems(self):
+                self.__ensure_json(key, newvalue=value)
+        elif not isinstance(key, six.string_types):
+            raise TypeError("Spec keys must be string typed.")
+
+        if newvalue is not None:
+            try:
+                json.dumps(newvalue)
+            except Exception:
+                raise ValueError(
+                    '"%s" is not valid json.' % repr(newvalue)
+                )
 
     def update(self, other=None, **kw):
         """A recursive version of ``dict.update``."""
@@ -124,32 +145,47 @@ class Spec(dict):
         """Serialize the object as json using repr."""
         return self.json(default=repr, skipkeys=True, sort_keys=True)
 
-    def check(self):
-        """Do internal checks ensuring the spec is valid.
+    def add_validation_check(self, name, func):
+        """Add a method used to validate spec objects on mutation.
 
-        :raises ValueError: if the spec is invalid
+        :param str name: A name given to the check
+        :param function func: The function to call
+
+        Validation functions should have the following signature:
+
+        func(self, key=None, oldvalue=None, newvalue=None, **kw)
+
+        * self: the spec object itself
+        * key: the key that changed
+        * oldvalue: the old value of the key
+        * newvalue: the new value of the key
+
+        When a key is given the function can assume that all other keys in the
+        spec are valid.  Old and new values of the key are given when applicable.
+        The validation function will be called whenever the spec is changed or
+        on demand via the public interface :py:method:`check`.
         """
-        if not self.__initialized:
-            return
+        self.__checks[name] = func
 
-        try:  # let json parse it to check for errors
-            self.json()
-        except Exception as e:
-            # reraise as a ValueError
-            raise ValueError(e.message)
+    def remove_validation_check(self, name):
+        """Remove a previously added validation method."""
+        self.__checks.pop(name)
 
     def __setitem__(self, key, value):
         """Call ``dict.__setitem__`` and restore if the result is invalid."""
         restore = False
+        old = None
         if key in self:
             restore = True
             old = super(Spec, self).__getitem__(key)
         try:
             super(Spec, self).__setitem__(key, value)
-            self.check()
+            self.__check(key=key, oldvalue=old, newvalue=value)
         except Exception:
             if restore:
                 super(Spec, self).__setitem__(key, old)
+            else:
+                super(Spec, self).__delitem__(key)
             raise
 
     def __delitem__(self, key):
@@ -160,7 +196,7 @@ class Spec(dict):
             old = super(Spec, self).__getitem__(key)
         try:
             super(Spec, self).__delitem__(key)
-            self.check()
+            self.__check(key=key, oldvalue=old)
         except Exception:
             if restore:
                 super(Spec, self).__setitem__(key, old)

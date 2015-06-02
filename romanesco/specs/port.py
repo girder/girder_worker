@@ -2,7 +2,7 @@
 
 import six
 
-from romanesco import io, convert, isvalid
+from romanesco import io, convert, isvalid, format
 from spec import Spec
 
 
@@ -75,23 +75,33 @@ class Port(Spec):
         Extends the spec initialization by appending defaults and adding basic
         validation.  By default, port specs take "python.object" data.
         """
-        self.__initialized = False
         super(Port, self).__init__(*arg, **kw)
-        self.__initialized = True
-        self.check()
+        self.add_validation_check('Port.name', self.__check_name)
+        self.add_validation_check('Port.type', self.__check_types)
 
-    def _check_property(self, prop):
-        """Check that a property exists and has a string type."""
-        if prop not in self or not isinstance(self[prop], six.string_types):
-            raise ValueError('Ports must contain a valid "%s".' % prop)
+    def __check_name(self, **kw):
+        """Ensure that the spec has necessary keys."""
+        if 'name' not in self:
+            raise ValueError('Port specs require a valid name.')
+        self.__check_string('name')
 
-    def check(self):
-        """Raise a ValueError if the Port is not valid."""
-        super(Port, self).check()
-        if not self.__initialized:
-            return
-        for prop in ['name', 'format', 'type']:
-            self._check_property(prop)
+    def __check_types(self, key=None, oldvalue=None, newvalue=None, **kw):
+        """Ensure the data format given is known."""
+        if key == 'type' or key == 'format':
+            if self['type'] not in format.converters \
+                    or self['format'] not in format.converters[self['type']]:
+                raise ValueError(
+                    'Unknown type "%s.%s"' % (self['type'], newvalue)
+                )
+
+    def __check_string(self, key):
+        """Ensure the given value is ``None`` or a string."""
+        if self.get(key) is not None \
+                or isinstance(self['key'], six.string_types):
+            raise ValueError(
+                '"%s" must be a string type' % key
+            )
+        return True
 
     def validate(self, data_spec):
         """Ensure the given data spec is compatible with this port.
