@@ -67,6 +67,23 @@ class Port(Spec):
     True
     >>> port.auto_validate
     True
+
+    Spec properties are automatically validated when setting them
+    >>> port = Port()
+    Traceback (most recent call last):
+        ...
+    ValueError: Port specs require a valid name.
+
+    >>> port = Port(name="my port", type='python', format='object')
+    >>> port.type = 'invalid'
+    Traceback (most recent call last):
+        ...
+    ValueError: Unknown type "invalid.object"
+
+    >>> port['format'] = 'invalid'
+    Traceback (most recent call last):
+        ...
+    ValueError: Unknown type "python.invalid"
     """
 
     def __init__(self, *arg, **kw):
@@ -76,14 +93,14 @@ class Port(Spec):
         validation.  By default, port specs take "python.object" data.
         """
         super(Port, self).__init__(*arg, **kw)
-        self.add_validation_check('Port.name', self.__check_name)
-        self.add_validation_check('Port.type', self.__check_types)
+        self.add_validation_check('Port.name', Port.__check_name)
+        self.add_validation_check('Port.type', Port.__check_types)
+        self._check()
 
-    def __check_name(self, **kw):
+    def __check_name(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Ensure that the spec has necessary keys."""
-        if 'name' not in self:
+        if 'name' not in self or not isinstance(self['name'], six.string_types):
             raise ValueError('Port specs require a valid name.')
-        self.__check_string('name')
 
     def __check_types(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Ensure the data format given is known."""
@@ -91,17 +108,8 @@ class Port(Spec):
             if self['type'] not in format.converters \
                     or self['format'] not in format.converters[self['type']]:
                 raise ValueError(
-                    'Unknown type "%s.%s"' % (self['type'], newvalue)
+                    'Unknown type "%s.%s"' % (self['type'], self['format'])
                 )
-
-    def __check_string(self, key):
-        """Ensure the given value is ``None`` or a string."""
-        if self.get(key) is not None \
-                or isinstance(self['key'], six.string_types):
-            raise ValueError(
-                '"%s" must be a string type' % key
-            )
-        return True
 
     def validate(self, data_spec):
         """Ensure the given data spec is compatible with this port.

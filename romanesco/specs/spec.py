@@ -108,6 +108,10 @@ class Spec(dict):
         for func in six.itervalues(self.__checks):
             func(self, key, oldvalue, newvalue)
 
+    def _check(self):
+        """Call the private check method to manually assert checks."""
+        self.__check()
+
     def __ensure_json(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Raise a ValueError if the spec is not valid JSON."""
         if key is None:
