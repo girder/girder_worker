@@ -74,16 +74,22 @@ class Port(Spec):
         ...
     ValueError: Port specs require a valid name.
 
-    >>> port = Port(name="my port", type='python', format='object')
-    >>> port.type = 'invalid'
+    >>> port = Port(name="my port", type="python", format="object")
+    >>> port.format = 'invalid'
     Traceback (most recent call last):
         ...
-    ValueError: Unknown type "invalid.object"
+    ValueError: Unknown format "python.invalid"
 
-    >>> port['format'] = 'invalid'
+    Checking the ``type`` is deferred to allow incremental updating
+    >>> port['type'] = 'image'
+    >>> port.json()
     Traceback (most recent call last):
         ...
-    ValueError: Unknown type "python.invalid"
+    ValueError: Unknown format "image.object"
+
+    >>> port.format = 'png'
+    >>> port.json()
+    '{"type": "image", "name": "my port", "format": "png"}'
     """
 
     def __init__(self, *arg, **kw):
@@ -95,7 +101,7 @@ class Port(Spec):
         super(Port, self).__init__(*arg, **kw)
         self.add_validation_check('Port.name', Port.__check_name)
         self.add_validation_check('Port.type', Port.__check_types)
-        self._check()
+        self.check()
 
     def __check_name(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Ensure that the spec has necessary keys."""
@@ -104,12 +110,15 @@ class Port(Spec):
 
     def __check_types(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Ensure the data format given is known."""
-        if key == 'type' or key == 'format':
-            if self['type'] not in format.converters \
-                    or self['format'] not in format.converters[self['type']]:
-                raise ValueError(
-                    'Unknown type "%s.%s"' % (self['type'], self['format'])
-                )
+        if key in ('type', None) and self['type'] not in format.converters:
+            raise ValueError(
+                'Unknown type "%s"' % (self['type'],)
+            )
+        elif key in ('format', None) and \
+                self['format'] not in format.converters[self['type']]:
+            raise ValueError(
+                'Unknown format "%s.%s"' % (self['type'], self['format'])
+            )
 
     def validate(self, data_spec):
         """Ensure the given data spec is compatible with this port.

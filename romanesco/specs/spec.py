@@ -108,10 +108,6 @@ class Spec(dict):
         for func in six.itervalues(self.__checks):
             func(self, key, oldvalue, newvalue)
 
-    def _check(self):
-        """Call the private check method to manually assert checks."""
-        self.__check()
-
     def __ensure_json(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Raise a ValueError if the spec is not valid JSON."""
         if key is None:
@@ -134,11 +130,20 @@ class Spec(dict):
             _update(self, dict(other))
         _update(self, kw)
 
+    def check(self):
+        """Public validation of the specification.
+
+        This works like the object mutation validation, but the call
+        to the handers is made with no key.
+        """
+        self.__check()
+
     def json(self, **kw):
         """Return the spec as a json blob.
 
         Keyword arguments are passed to :py:func:`json.dumps`.
         """
+        self.check()
         return json.dumps(self, **kw)
 
     def __str__(self):
