@@ -52,8 +52,8 @@ add_python_test(tree)
 add_python_test(workflow)
 add_python_test(pickle)
 
-# imported from gaia
 add_docstring_test(romanesco.specs.spec)
-# add_docstring_test(gaia.core.task)
-# add_docstring_test(gaia.core.port)
-# add_docstring_test(gaia.core.operators)
+# add_docstring_test(romanesco.specs.task)
+add_docstring_test(romanesco.specs.port)
+add_docstring_test(romanesco.specs.port_list)
+# add_docstring_test(romanesco.specs.operators)
