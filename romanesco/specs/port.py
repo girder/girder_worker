@@ -43,8 +43,9 @@ class Port(Spec):
     for ensuring that the connections are compatible.  The primary purpose of
     ports is to specify what types of data tasks can read and write.  This
     information is used by tasks to determine if they can be connected.  Ports
-    also provide documentation for the task by describing its inputs and outputs.
-    Ports also handle fetching data from and pushing data to remote data stores.
+    also provide documentation for the task by describing its inputs and
+    outputs. Ports also handle fetching data from and pushing data to remote
+    data stores.
 
     >>> spec = {'name': 'a', 'type': 'number', 'format': 'number'}
     >>> port = Port(spec)
@@ -212,7 +213,7 @@ class Port(Spec):
             raise ValidationError(self, _spec)
 
         if self.auto_convert:
-            _spec = self.convert(_spec, self.format)  # Does this still need to push?
+            _spec = self.convert(_spec, self.format)
         elif _spec['format'] == self.format:
 
             data = data_spec.get('script_data')  # Is this always a task output?

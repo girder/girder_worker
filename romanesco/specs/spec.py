@@ -116,9 +116,9 @@ class SpecMixin(object):
         * newvalue: the new value of the key
 
         When a key is given the function can assume that all other keys in the
-        spec are valid.  Old and new values of the key are given when applicable.
-        The validation function will be called whenever the spec is changed or
-        on demand via the public interface :py:method:`check`.
+        spec are valid.  Old and new values of the key are given when
+        applicable.  The validation function will be called whenever the spec
+        is changed or on demand via the public interface :py:method:`check`.
         """
         self.__checks[name] = func
 
@@ -205,8 +205,8 @@ class Spec(SpecMixin, dict):
     >>> str(Spec({u"for\u00eat": u"\ud83c\udf33 \ud83c\udf32 \ud83c\udf34"}))
     '{"for\\u00eat": "\\ud83c\\udf33 \\ud83c\\udf32 \\ud83c\\udf34"}'
 
-    Methods that mutate the state of the Spec will test if the new state is valid,
-    restoring the original state before raising an exception.
+    Methods that mutate the state of the Spec will test if the new state is
+    valid, restoring the original state before raising an exception.
     >>> s = Spec({'a': 0})
     >>> try:
     ...     s['a'] = object
