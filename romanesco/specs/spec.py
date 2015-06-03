@@ -49,6 +49,11 @@ class SpecMixin(object):
         # process keyword arguments
         self.update(kw)
 
+    @staticmethod
+    def _serializer(value):
+        """Serialize the value or raise a TypeError."""
+        return value
+
     def __check(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Call all registered validation methods on this spec."""
         for func in six.itervalues(self.__checks):
@@ -58,13 +63,15 @@ class SpecMixin(object):
         """Raise a ValueError if the spec is not valid JSON."""
         if key is None:
             for key, value in six.iteritems(self):
-                self.__ensure_json(key, newvalue=value)
+                self.__ensure_json(key,
+                                   newvalue=value,
+                                   default=self._serializer)
         elif not isinstance(key, six.string_types):
             raise TypeError("Spec keys must be string typed.")
 
         if newvalue is not None:
             try:
-                json.dumps(newvalue)
+                json.dumps(newvalue, default=self._serializer)
             except Exception:
                 raise ValueError(
                     '"%s" is not valid json.' % repr(newvalue)
@@ -89,6 +96,7 @@ class SpecMixin(object):
 
         Keyword arguments are passed to :py:func:`json.dumps`.
         """
+        kw.setdefault('default', self._serializer)
         self.check()
         return json.dumps(self, **kw)
 
@@ -127,25 +135,40 @@ class SpecMixin(object):
         self.__checks.pop(name)
 
     @classmethod
-    def make_property(cls, name, doc=None, default=None):
+    def make_property(cls, name,
+                      doc=None, default=None):
         """Expose a spec item as a class attribute.
 
+        :param str name: The property name
+        :param str doc: The docstring to add
+        :param object default: The default value of the property
+        :param function init: A constructor called on all new values
+
+        A sample property definition
         >>> class MySpec(Spec): pass
         >>> MySpec.make_property('name', 'This is the name', 'Bob')
+
+        Properties can be set via the Spec constructor, as an item,
+        or as an attribute.  Standard attribute methods are supported.
         >>> s = MySpec(name="Roger")
-        >>> s.name == s['name']
-        True
-        >>> del s.name
-        >>> 'name' in s
-        False
-        >>> s['name']
-        'Bob'
         >>> s.name = 'Alice'
         >>> s.name == s['name']
         True
         >>> del s['name']
         >>> s.name
         'Bob'
+        >>> s.name == s['name']
+        True
+
+        Default values are returned for unset properties
+        >>> 'name' in s
+        False
+        >>> s['name']
+        'Bob'
+
+        Properties can be used as normal attributess
+
+        Optionally properties can have docstrings
         >>> MySpec.name.__doc__
         'This is the name'
         """

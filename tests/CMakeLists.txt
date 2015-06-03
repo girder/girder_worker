@@ -53,7 +53,7 @@ add_python_test(workflow)
 add_python_test(pickle)
 
 add_docstring_test(romanesco.specs.spec)
-# add_docstring_test(romanesco.specs.task)
+add_docstring_test(romanesco.specs.task)
 add_docstring_test(romanesco.specs.port)
 add_docstring_test(romanesco.specs.port_list)
 # add_docstring_test(romanesco.specs.operators)

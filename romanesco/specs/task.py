@@ -3,6 +3,7 @@
 import six
 
 from .spec import Spec
+from .port_list import PortList
 
 
 class Task(Spec):
@@ -15,28 +16,25 @@ class Task(Spec):
     """
 
     def __init__(self, *args, **kw):
-        """Initialize an abstract task."""
-        self.__initialized = False
-
-        #: data cache
-        self.__input_data = {}
-        self.__output_data = {}
-        self.__input_ports = []
-        self.__output_ports = []
-
+        """Initialize the spec and add private attributes."""
         super(Task, self).__init__(*args, **kw)
-        self.__initialized = True
-        self.check()
+        self._input_data = {}
+        self._output_data = {}
+        self._dirty = True
 
-    @property
-    def inputs(self):
-        """Return the dictionary of input ports."""
-        return self._inputs
+    def __setitem__(self, key, value):
+        """Extend spec setitem to call PortList for input/output properties."""
+        if key in ('inputs', 'outputs'):
+            value = PortList(value)
+        super(Task, self).__setitem__(key, value)
 
-    @property
-    def outputs(self):
-        """Return the dictionary of output ports."""
-        return self._outputs
+    def update(self, other, **kw):
+        """Extend update to call PortList for input/output properties."""
+        if 'inputs' in other:
+            other['inputs'] = PortList(other['inputs'])
+        if 'outputs' in other:
+            other['outputs'] = PortList(other['outputs'])
+        super(Task, self).update(other, **kw)
 
     def set_input(self, *arg, **kw):
         """Bind (and cache) data to input ports.
@@ -45,28 +43,28 @@ class Task(Spec):
         Keyword arguments set inputs by name.
 
         Example task:
-        >>> def run(s, a=a, b=b):
-        ...     return s + ':' + str(a + b)
+        >>> def func(a='value', b=0, c=0):
+        ...     return {'d': a + ':' + str(b + c)}
         >>> spec = {
-        ...     'input_ports': [
-        ...         {'name': '0', 'type': 'string', 'format': 'text'},
-        ...         {'name': 'a', 'type': 'number', 'format': 'number'},
+        ...     'inputs': [
+        ...         {'name': 'a', 'type': 'string', 'format': 'text'},
         ...         {'name': 'b', 'type': 'number', 'format': 'number'},
-        ...     ]
-        ...     'output_ports': [
-        ...         {'name': '0', 'type': 'string', 'format': 'text'}
+        ...         {'name': 'c', 'type': 'number', 'format': 'number'},
         ...     ],
-        ...     'function': run
+        ...     'outputs': [
+        ...         {'name': 'd', 'type': 'string', 'format': 'text'}
+        ...     ],
+        ...     'script': func
         ... }
         >>> t1 = Task(spec)
         >>> t2 = Task(spec)
 
         # Input set from data sources
-        >>> t1.set_input('The sum', a=2, b=3).get_output()
+        >>> t1.set_input(a='The sum', b=2, c=3).get_output('d')
         'The sum:5'
 
         # Input set from port objects
-        >>> t2.set_input(t1.get_output(), a=4, b=5).get_output()
+        >>> t2.set_input(a=t1.get_output('d'), b=4, c=5).get_output('d')
         'The sum:5:9'
         """
         # Convert arguments into keyword arguments
@@ -74,18 +72,20 @@ class Task(Spec):
             kw[str(i)] = a
 
         for name, value in six.iteritems(kw):
-            if name not in self._inputs:
+            if name not in self.inputs:
                 raise ValueError("Invalid port name '{0}'".format(name))
 
             data = None
             if isinstance(value, dict):
                 try:
                     data = self.inputs[name].fetch(value)
-                except:
+                except Exception:
                     pass
 
             if data is None:
                 data = value
+
+            self._input_data[name] = value
 
             self._dirty = True
         return self
@@ -98,13 +98,20 @@ class Task(Spec):
         """
         return self._input_data.get(name)
 
+    def _set_output(self, val):
+        """Set the output data cache.
+
+        :param dict val: Output port -> data mapping
+        """
+        self._output_data = val
+
     def get_output(self, name='0'):
         """Return the data bound to the given output port.
 
         :param str name: An input port name
         :rtype: object or None
         """
-        if name not in self._outputs:
+        if name not in self.outputs:
             raise ValueError("Invalid port name '{0}'".format(name))
         if self.dirty:
             self.run()
@@ -119,15 +126,42 @@ class Task(Spec):
         the input ports are all connected and raises an error if they
         aren't.
         """
-        self.dirty = False
+        if self.mode == 'python' and callable(self.script):
+            all_inputs = {}
+            for port in self.inputs.keys():
+                all_inputs[port] = self.get_input(name=port)
+            self._set_output(self.script(**all_inputs))
+        self._dirty = False
 
     def _reset(self, *args):
         """Set dirty state for the task."""
-        self.dirty = True
+        self._dirty = True
 
     def _reset_downstream(self, _, isdirty, *args):
         """Set dirty state on all downstream tasks."""
         if isdirty and not self.dirty:
             self._reset()
+
+    @property
+    def dirty(self):
+        """Return the dirty state of the task."""
+        return self._dirty
+
+    _serializer = str
+
+# add base spec properties
+Task.make_property('mode', 'The execution mode of the task', 'python')
+Task.make_property('script', 'A script or function to execute', '')
+Task.make_property(
+    'inputs',
+    'A list of inputs accepted by the task',
+    PortList()
+)
+Task.make_property(
+    'outputs',
+    'A list of outputs returned by the task',
+    PortList()
+)
+
 
 __all__ = ('Task',)
