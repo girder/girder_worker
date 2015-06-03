@@ -5,7 +5,165 @@ import json
 from collections import Mapping
 
 
-class Spec(dict):
+class SpecMixin(object):
+
+    """An abstract mixin class implementing the Spec methods."""
+
+    __defaults = {}
+
+    def __init__(self, *args, **kw):
+        """Initialize a new spec object.
+
+        When called with no arguments, constructs an empty mapping.
+        >>> Spec()
+        {}
+
+        Positional arguments can be mappings
+        >>> Spec({})
+        {}
+
+        or JSON formatted strings.
+        >>> Spec('{}')
+        {}
+
+        Multiple positional arguments are applied in order.
+        >>> Spec({'a': 0}, '{"b": 1}', {'a': 2})
+        {"a": 2, "b": 1}
+
+        Items given as keyword argument will be insert last.
+        >>> Spec({'a': 0}, '{"b": 1}', a=2, c=3)
+        {"a": 2, "b": 1, "c": 3}
+        """
+        # add internal validation store
+        self.__checks = {}
+
+        self.add_validation_check('Spec.json', Spec.__ensure_json)
+
+        # process positional arguments
+        for arg in args:
+            if isinstance(arg, six.string_types):
+                arg = json.loads(arg)
+            d = dict(arg)
+            self.update(d)
+
+        # process keyword arguments
+        self.update(kw)
+
+    def __check(self, key=None, oldvalue=None, newvalue=None, **kw):
+        """Call all registered validation methods on this spec."""
+        for func in six.itervalues(self.__checks):
+            func(self, key, oldvalue, newvalue)
+
+    def __ensure_json(self, key=None, oldvalue=None, newvalue=None, **kw):
+        """Raise a ValueError if the spec is not valid JSON."""
+        if key is None:
+            for key, value in six.iteritems(self):
+                self.__ensure_json(key, newvalue=value)
+        elif not isinstance(key, six.string_types):
+            raise TypeError("Spec keys must be string typed.")
+
+        if newvalue is not None:
+            try:
+                json.dumps(newvalue)
+            except Exception:
+                raise ValueError(
+                    '"%s" is not valid json.' % repr(newvalue)
+                )
+
+    def update(self, other=None, **kw):
+        """A recursive version of ``dict.update``."""
+        if other is not None:
+            _update(self, dict(other))
+        _update(self, kw)
+
+    def check(self, *args, **kw):
+        """Public validation of the specification.
+
+        This works like the object mutation validation, but the call
+        to the handers is made with no key.
+        """
+        self.__check(*args, **kw)
+
+    def json(self, **kw):
+        """Return the spec as a json blob.
+
+        Keyword arguments are passed to :py:func:`json.dumps`.
+        """
+        self.check()
+        return json.dumps(self, **kw)
+
+    def __str__(self):
+        """Serialize the object as json."""
+        return self.json(default=str, skipkeys=True, sort_keys=True)
+
+    def __repr__(self):
+        """Serialize the object as json using repr."""
+        return self.json(default=repr, skipkeys=True, sort_keys=True)
+
+    def add_validation_check(self, name, func):
+        """Add a method used to validate spec objects on mutation.
+
+        :param str name: A name given to the check
+        :param function func: The function to call
+
+        Validation functions should have the following signature:
+
+        func(self, key=None, oldvalue=None, newvalue=None, **kw)
+
+        * self: the spec object itself
+        * key: the key that changed
+        * oldvalue: the old value of the key
+        * newvalue: the new value of the key
+
+        When a key is given the function can assume that all other keys in the
+        spec are valid.  Old and new values of the key are given when applicable.
+        The validation function will be called whenever the spec is changed or
+        on demand via the public interface :py:method:`check`.
+        """
+        self.__checks[name] = func
+
+    def remove_validation_check(self, name):
+        """Remove a previously added validation method."""
+        self.__checks.pop(name)
+
+    @classmethod
+    def make_property(cls, name, doc=None, default=None):
+        """Expose a spec item as a class attribute.
+
+        >>> class MySpec(Spec): pass
+        >>> MySpec.make_property('name', 'This is the name', 'Bob')
+        >>> s = MySpec(name="Roger")
+        >>> s.name == s['name']
+        True
+        >>> del s.name
+        >>> 'name' in s
+        False
+        >>> s['name']
+        'Bob'
+        >>> s.name = 'Alice'
+        >>> s.name == s['name']
+        True
+        >>> del s['name']
+        >>> s.name
+        'Bob'
+        >>> MySpec.name.__doc__
+        'This is the name'
+        """
+        prop = property(
+            lambda self: self.__getitem__(name),
+            lambda self, value: self.__setitem__(name, value),
+            lambda self: self.__delitem__(name),
+            doc
+        )
+        cls.__defaults[name] = default
+        setattr(cls, name, prop)
+
+    def __missing__(self, key):
+        """Return default for missing keys."""
+        return self.__defaults.get(key, None)
+
+
+class Spec(SpecMixin, dict):
 
     r"""
     Defines core utility methods that all spec objects have in common.
@@ -58,127 +216,11 @@ class Spec(dict):
     ...     assert False
     >>> s
     {"a": 0}
+
+    Spec constructors are idempotent
+    >>> Spec(a='a') == Spec(Spec(a='a'))
+    True
     """
-
-    __defaults = {}
-
-    def __init__(self, *args, **kw):
-        """Initialize a new spec object.
-
-        When called with no arguments, constructs an empty mapping.
-        >>> Spec()
-        {}
-
-        Positional arguments can be mappings
-        >>> Spec({})
-        {}
-
-        or JSON formatted strings.
-        >>> Spec('{}')
-        {}
-
-        Multiple positional arguments are applied in order.
-        >>> Spec({'a': 0}, '{"b": 1}', {'a': 2})
-        {"a": 2, "b": 1}
-
-        Items given as keyword argument will be insert last.
-        >>> Spec({'a': 0}, '{"b": 1}', a=2, c=3)
-        {"a": 2, "b": 1, "c": 3}
-        """
-        # empty dict initialization
-        super(Spec, self).__init__()
-
-        # add internal validation store
-        self.__checks = {}
-
-        self.add_validation_check('Spec.json', Spec.__ensure_json)
-
-        # process positional arguments
-        for arg in args:
-            if isinstance(arg, six.string_types):
-                arg = json.loads(arg)
-            d = dict(arg)
-            self.update(d)
-
-        # process keyword arguments
-        self.update(kw)
-
-    def __check(self, key=None, oldvalue=None, newvalue=None, **kw):
-        """Call all registered validation methods on this spec."""
-        for func in six.itervalues(self.__checks):
-            func(self, key, oldvalue, newvalue)
-
-    def __ensure_json(self, key=None, oldvalue=None, newvalue=None, **kw):
-        """Raise a ValueError if the spec is not valid JSON."""
-        if key is None:
-            for key, value in six.iteritems(self):
-                self.__ensure_json(key, newvalue=value)
-        elif not isinstance(key, six.string_types):
-            raise TypeError("Spec keys must be string typed.")
-
-        if newvalue is not None:
-            try:
-                json.dumps(newvalue)
-            except Exception:
-                raise ValueError(
-                    '"%s" is not valid json.' % repr(newvalue)
-                )
-
-    def update(self, other=None, **kw):
-        """A recursive version of ``dict.update``."""
-        if other is not None:
-            _update(self, dict(other))
-        _update(self, kw)
-
-    def check(self):
-        """Public validation of the specification.
-
-        This works like the object mutation validation, but the call
-        to the handers is made with no key.
-        """
-        self.__check()
-
-    def json(self, **kw):
-        """Return the spec as a json blob.
-
-        Keyword arguments are passed to :py:func:`json.dumps`.
-        """
-        self.check()
-        return json.dumps(self, **kw)
-
-    def __str__(self):
-        """Serialize the object as json."""
-        return self.json(default=str, skipkeys=True, sort_keys=True)
-
-    def __repr__(self):
-        """Serialize the object as json using repr."""
-        return self.json(default=repr, skipkeys=True, sort_keys=True)
-
-    def add_validation_check(self, name, func):
-        """Add a method used to validate spec objects on mutation.
-
-        :param str name: A name given to the check
-        :param function func: The function to call
-
-        Validation functions should have the following signature:
-
-        func(self, key=None, oldvalue=None, newvalue=None, **kw)
-
-        * self: the spec object itself
-        * key: the key that changed
-        * oldvalue: the old value of the key
-        * newvalue: the new value of the key
-
-        When a key is given the function can assume that all other keys in the
-        spec are valid.  Old and new values of the key are given when applicable.
-        The validation function will be called whenever the spec is changed or
-        on demand via the public interface :py:method:`check`.
-        """
-        self.__checks[name] = func
-
-    def remove_validation_check(self, name):
-        """Remove a previously added validation method."""
-        self.__checks.pop(name)
 
     def __setitem__(self, key, value):
         """Call ``dict.__setitem__`` and restore if the result is invalid."""
@@ -189,7 +231,7 @@ class Spec(dict):
             old = super(Spec, self).__getitem__(key)
         try:
             super(Spec, self).__setitem__(key, value)
-            self.__check(key=key, oldvalue=old, newvalue=value)
+            self.check(key=key, oldvalue=old, newvalue=value)
         except Exception:
             if restore:
                 super(Spec, self).__setitem__(key, old)
@@ -205,47 +247,11 @@ class Spec(dict):
             old = super(Spec, self).__getitem__(key)
         try:
             super(Spec, self).__delitem__(key)
-            self.__check(key=key, oldvalue=old)
+            self.check(key=key, oldvalue=old)
         except Exception:
             if restore:
                 super(Spec, self).__setitem__(key, old)
             raise
-
-    def __missing__(self, key):
-        """Return default for missing keys."""
-        return self.__defaults.get(key, None)
-
-    @classmethod
-    def make_property(cls, name, doc=None, default=None):
-        """Expose a spec item as a class attribute.
-
-        >>> class MySpec(Spec): pass
-        >>> MySpec.make_property('name', 'This is the name', 'Bob')
-        >>> s = MySpec(name="Roger")
-        >>> s.name == s['name']
-        True
-        >>> del s.name
-        >>> 'name' in s
-        False
-        >>> s['name']
-        'Bob'
-        >>> s.name = 'Alice'
-        >>> s.name == s['name']
-        True
-        >>> del s['name']
-        >>> s.name
-        'Bob'
-        >>> MySpec.name.__doc__
-        'This is the name'
-        """
-        prop = property(
-            lambda self: self.__getitem__(name),
-            lambda self, value: self.__setitem__(name, value),
-            lambda self: self.__delitem__(name),
-            doc
-        )
-        cls.__defaults[name] = default
-        setattr(cls, name, prop)
 
 
 def _update(d, u):

@@ -3,7 +3,7 @@
 import six
 
 from romanesco import io, convert, isvalid, format
-from spec import Spec
+from .spec import Spec
 
 
 class ValidationError(Exception):
@@ -90,6 +90,8 @@ class Port(Spec):
     >>> port.format = 'png'
     >>> port.json()
     '{"type": "image", "name": "my port", "format": "png"}'
+    >>> port == Port(port)
+    True
     """
 
     def __init__(self, *arg, **kw):

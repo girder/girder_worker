@@ -21,6 +21,8 @@ class Task(Spec):
         #: data cache
         self.__input_data = {}
         self.__output_data = {}
+        self.__input_ports = []
+        self.__output_ports = []
 
         super(Task, self).__init__(*args, **kw)
         self.__initialized = True
