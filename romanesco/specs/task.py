@@ -2,6 +2,8 @@
 
 import six
 
+import romanesco
+
 from .spec import Spec
 from .port_list import PortList
 
@@ -58,14 +60,17 @@ class Task(Spec):
         ... }
         >>> t1 = Task(spec)
         >>> t2 = Task(spec)
+        >>> t2.script = "d = a + ';' + str(b - c)"
 
         # Input set from data sources
         >>> t1.set_input(a='The sum', b=2, c=3).get_output('d')
         'The sum:5'
 
-        # Input set from port objects
-        >>> t2.set_input(a=t1.get_output('d'), b=4, c=5).get_output('d')
-        'The sum:5:9'
+        # Input set from data bindings (required for non-callable ``script``)
+        >>> t2.set_input(a={'data': t1.get_output('d'), 'format': 'text'},
+        ...              b={'data': 4, 'format': 'number'},
+        ...              c={'data': 5, 'format': 'number'}).get_output('d')
+        'The sum:5;-1'
         """
         # Convert arguments into keyword arguments
         for i, a in enumerate(arg):
@@ -74,16 +79,6 @@ class Task(Spec):
         for name, value in six.iteritems(kw):
             if name not in self.inputs:
                 raise ValueError("Invalid port name '{0}'".format(name))
-
-            data = None
-            if isinstance(value, dict):
-                try:
-                    data = self.inputs[name].fetch(value)
-                except Exception:
-                    pass
-
-            if data is None:
-                data = value
 
             self._input_data[name] = value
 
@@ -126,11 +121,18 @@ class Task(Spec):
         the input ports are all connected and raises an error if they
         aren't.
         """
+        all_inputs = {}
+        for port in self.inputs.keys():
+            all_inputs[port] = self.get_input(name=port)
         if self.mode == 'python' and callable(self.script):
-            all_inputs = {}
-            for port in self.inputs.keys():
-                all_inputs[port] = self.get_input(name=port)
             self._set_output(self.script(**all_inputs))
+        else:
+            all_outputs = {}
+            romanesco.run(self, all_inputs, all_outputs)
+            for key in self.outputs.keys():
+                all_outputs[key] = self.outputs[key].fetch(all_outputs[key])
+            self._set_output(all_outputs)
+
         self._dirty = False
 
     def _reset(self, *args):

@@ -51,6 +51,7 @@ add_python_test(table)
 add_python_test(tree)
 add_python_test(workflow)
 add_python_test(pickle)
+add_python_test(spec)
 
 add_docstring_test(romanesco.specs.spec)
 add_docstring_test(romanesco.specs.task)
