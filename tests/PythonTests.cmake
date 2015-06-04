@@ -46,7 +46,7 @@ function(add_python_test case)
       NAME ${name}
       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
       COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run -p --append "--rcfile=${py_coverage_rc}"
-              "--source=romanesco,gaia" -m unittest -v ${module}
+              "--source=romanesco" -m unittest -v ${module}
     )
   else()
     add_test(
@@ -69,7 +69,7 @@ function(add_docstring_test module)
       NAME ${name}
       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
       COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run -p --append "--rcfile=${py_coverage_rc}"
-              "--source=romanesco,gaia" "${py_testdir}/docstring_test.py" -v ${module}
+              "--source=romanesco" "${py_testdir}/docstring_test.py" -v ${module}
     )
   else()
     add_test(
