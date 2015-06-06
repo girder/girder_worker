@@ -1,13 +1,26 @@
 # it is not really python, but there is no R support on Travis CI yet
 language: python
 
-services: mongodb
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - python-virtualenv
+      - gfortran
 
 # environment variables
 env:
   - R_LIBS_USER=~/R PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib
 
 before_install:
+  - pushd "${HOME}"
+  - curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGO_VERSION}.tgz" | gunzip -c | tar x
+  - cd mongodb-*/bin && export PATH="${PWD}:${PATH}"
+  - popd
+  - mkdir /tmp/db
+  - mongod --dbpath=/tmp/db >/dev/null 2>/dev/null &
+  - mongod --version
   - pushd "${HOME}"
   - curl "http://www.cmake.org/files/v3.2/cmake-3.2.2-Linux-x86_64.tar.gz" | gunzip -c | tar x
   - cd cmake-*/bin && export PATH="${PWD}:${PATH}"
@@ -17,13 +30,13 @@ before_install:
   - wget http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz -O vtk-precise64.tar.gz
   - tar xzvf vtk-precise64.tar.gz -C ~
   # install R
-  - sudo apt-add-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu `lsb_release -cs`/"
-  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-  - sudo apt-get update
-  - sudo apt-get install -y r-base-dev zlib1g-dev libgsl0-dev libgdal-dev
+  - eval "$(curl https://data.kitware.com/api/v1/file/55735da88d777f649a9ba181/download | /bin/bash)"
+  - eval "$(travis-install 556bd0c08d777f649a9ba139)"
   - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
+  - virtualenv "$HOME/test-env"
+  - source "$HOME/test-env/bin/activate"
 
 # install dependencies
 install:
