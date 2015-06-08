@@ -35,8 +35,6 @@ before_install:
   - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
-  - virtualenv "$HOME/test-env"
-  - source "$HOME/test-env/bin/activate"
 
 # install dependencies
 install:
