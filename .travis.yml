@@ -11,7 +11,7 @@ addons:
 
 # environment variables
 env:
-  - R_LIBS_USER=~/R PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib
+  - PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib
 
 before_install:
   - pushd "${HOME}"
@@ -31,17 +31,12 @@ before_install:
   - tar xzvf vtk-precise64.tar.gz -C ~
   # install R
   - eval "$(curl https://data.kitware.com/api/v1/file/55735da88d777f649a9ba181/download | /bin/bash)"
-  - eval "$(travis-install 556bd0c08d777f649a9ba139)"
-  - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
+  - eval "$(travis-install 5575e0d88d777f649a9ba197)"
   - R --version
   - R -e '.libPaths(); sessionInfo()'
 
 # install dependencies
 install:
-  # install R packages
-  # Travis doesn't like all of the output on the next lines remove `&> /dev/null` to debug
-  - Rscript -e 'install.packages(c("ape","geiger","nlme","devtools"), repos=c("http://cran.cnr.Berkeley.edu"))'
-  - R -e 'options(repos="http://cran.cnr.Berkeley.edu");library(devtools);install_github("cardoonTools", "hafen");install_github("aRbor", "arborworkflows")'
   # install Python packages
   - pip install -U -e .                     # This installs all standard deps
   - pip install -U -r requirements-dev.txt  # This installs development packages
