@@ -27,6 +27,7 @@ _taskMap = {
 if config.has_section('spark') or 'SPARK_HOME' in os.environ:
     spark.setup_spark_env()
 
+
 def load(task_file):
     """
     Load a task JSON into memory, resolving any ``"script_uri"`` fields

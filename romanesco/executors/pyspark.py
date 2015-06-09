@@ -3,6 +3,7 @@ import json
 import sys
 from romanesco import spark
 
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     custom = imp.new_module("custom")
 

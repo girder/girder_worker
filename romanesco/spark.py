@@ -5,6 +5,7 @@ import sys
 
 from ConfigParser import ConfigParser, NoOptionError
 
+
 def setup_spark_env():
     # Setup pyspark
     try:
@@ -15,7 +16,8 @@ def setup_spark_env():
             spark_home = os.environ.get('SPARK_HOME')
 
         if not spark_home:
-            raise Exception('spark_home must be set or SPARK_HOME must be set in the environment')
+            raise Exception('spark_home must be set or SPARK_HOME must be set in '
+                            'the environment')
 
         # Need to set SPARK_HOME
         os.environ['SPARK_HOME'] = spark_home
@@ -32,13 +34,14 @@ def setup_spark_env():
     try:
         from pyspark import SparkConf, SparkContext
     except Exception as ex:
-        six.raise_from(Exception('Unable to create SparkContext, check Spark installation'), ex)
+        six.raise_from(Exception('Unable to create SparkContext, check Spark '
+                                 'installation'), ex)
 
 
 def create_spark_context(task_spark_conf):
     from pyspark import SparkConf, SparkContext
     # Set can spark configuration parameter user has specified
-    spark_conf = SparkConf();
+    spark_conf = SparkConf()
     for (name, value) in romanesco.config.items('spark'):
         spark_conf.set(name, value)
 
