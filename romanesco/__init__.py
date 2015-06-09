@@ -6,7 +6,7 @@ import romanesco.format
 import romanesco.io
 
 from ConfigParser import ConfigParser
-from . import executors, utils
+from . import executors, utils, spark
 
 
 # Read the configuration files
@@ -19,9 +19,13 @@ _taskMap = {
     'docker': executors.docker.run,
     'python': executors.python.run,
     'r': executors.r.run,
-    'workflow': executors.workflow.run
+    'workflow': executors.workflow.run,
+    'pyspark': executors.pyspark.run
 }
 
+# If we have a spark config section then try to setup spark environment
+if config.has_section('spark'):
+    spark.setup_spark_env()
 
 def load(task_file):
     """
