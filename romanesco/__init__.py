@@ -24,7 +24,7 @@ _taskMap = {
 }
 
 # If we have a spark config section then try to setup spark environment
-if config.has_section('spark'):
+if config.has_section('spark') or 'SPARK_HOME' in os.environ:
     spark.setup_spark_env()
 
 def load(task_file):
