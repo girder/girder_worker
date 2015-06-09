@@ -166,6 +166,13 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     if mode not in _taskMap:
         raise Exception("Invalid mode: %s" % mode)
 
+    # If we are in spark mode then create a spark context. We need to create
+    # it here so we have access to it to do any input conversion.
+    if mode == 'spark.python':
+        spark_conf = task.get('spark_conf', {})
+        sc = spark.create_spark_context(spark_conf)
+        kwargs['_romanesco_spark_context'] = sc
+
     # If some inputs are not there, fill in with defaults
     for name, task_input in task_inputs.iteritems():
         if name not in inputs:

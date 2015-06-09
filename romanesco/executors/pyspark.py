@@ -13,8 +13,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     # Take any inputs and convert them to RDDS?
     print 'Running pyspark'
 
-    spark_conf = task.get('spark_conf', {})
-    sc = spark.create_spark_context(spark_conf)
+    sc = kwargs['_romanesco_spark_context']
     custom.__dict__['sc'] = sc
     custom.__dict__['spark_context'] = sc
 
