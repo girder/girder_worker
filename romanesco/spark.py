@@ -35,14 +35,18 @@ def setup_spark_env():
         six.raise_from(Exception('Unable to create SparkContext, check Spark installation'), ex)
 
 
-def create_spark_context():
+def create_spark_context(task_spark_conf):
     from pyspark import SparkConf, SparkContext
     # Set can spark configuration parameter user has specified
-    spark_config = SparkConf();
+    spark_conf = SparkConf();
     for (name, value) in romanesco.config.items('spark'):
-        spark_config.set(name, value)
+        spark_conf.set(name, value)
+
+    # Override with any task specific configuration
+    for (name, value) in task_spark_conf.items():
+        spark_conf.set(name, value)
 
     # Build up the context, using the master URL
-    sc = SparkContext(conf=spark_config)
+    sc = SparkContext(conf=spark_conf)
 
     return sc
