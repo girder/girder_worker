@@ -66,5 +66,8 @@ def push(data, spec, **kwargs):
         return mongodb.push(data, spec, **kwargs)
     elif mode == 'local':
         return local.push(data, spec, **kwargs)
+    elif mode == 'inline':
+        spec['data'] = data
+        return spec
     else:
         raise Exception('Unknown output push mode: ' + mode)

@@ -7,10 +7,10 @@ import tempfile
 from unittest import TestCase as _TestCase
 
 try:
-    import gaia as _gaia
+    import romanesco as _romanesco
 except Exception:
     sys.path.append(os.path.abspath(os.path.join('..', '..')))
-    import gaia as _gaia
+    import romanesco as _romanesco
 
 _modpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -19,8 +19,7 @@ class TestCase(_TestCase):
 
     """Base testing class extending unittest.TestCase."""
 
-    # provide gaia import as a class variable to take care of import issues
-    gaia = _gaia
+    romanesco = _romanesco
     outpath = os.environ.get('CTEST_BINARY_DIRECTORY')
     modpath = _modpath
 
