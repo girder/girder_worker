@@ -20,7 +20,7 @@ _taskMap = {
     'python': executors.python.run,
     'r': executors.r.run,
     'workflow': executors.workflow.run,
-    'pyspark': executors.pyspark.run
+    'spark.python': executors.pyspark.run
 }
 
 # If we have a spark config section then try to setup spark environment
