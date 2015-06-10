@@ -17,9 +17,9 @@ The task specification
 **********************
 
 The first argument to :py:func:`romanesco.run` describes the task to execute,
-independently of the actual data that will it will be executed against. The most
+independently of the actual data that it will be executed upon. The most
 important field of the task is the ``mode``, which describes what type of task
-this is. The structure for the task dictionary is described below. Uppercase names
+it is. The structure for the task dictionary is described below. Uppercase names
 within angle braces represent symbols defined in the specification. Optional parts
 of the specification are surrounded by parenthesis to avoid ambiguity with the
 square braces, which represent lists in python or Arrays in JSON.
@@ -79,6 +79,7 @@ specified to :py:func:`romanesco.run`.
         "id": <string, the variable name>,
         "type": <data type>,
         "format": <data format>
+        (, "default": <default value if none is bound at runtime>)
         (, "target": <INPUT_TARGET_TYPE>)   ; default is "memory"
         (, "filename": <name of file if target="filepath">)
     }
@@ -118,6 +119,7 @@ each task input) to its data binding for this execution.
 
     <INPUT_BINDING_HTTP> ::= {
         "mode": "http",
+        "format": <data format>,
         "url": <url of data to download>
         (, "headers": <dict of HTTP headers to send when fetching>)
         (, "method": <http method to use, default is "GET">)
@@ -133,6 +135,7 @@ variable will be set to the path of that file.
 
     <INPUT_BINDING_LOCAL> ::= {
         "mode": "local",
+        "format": <data format>,
         "path": <path on local filesystem to the file>
     }
 
@@ -143,6 +146,7 @@ contents will be read into memory and the variable will point to those contents.
 
     <INPUT_BINDING_MONGODB> ::= {
         "mode": "mongodb",
+        "format": <data format>,
         "db": <the database to use>,
         "collection": <the collection to fetch from>
         (, "host": <mongodb host, default is "localhost">)
@@ -156,6 +160,7 @@ variable.
 
     <INPUT_BINDING_INLINE> ::= {
         "mode": "inline",
+        "format": <data format>,
         "data": <data to bind to the variable>
     }
 
