@@ -31,14 +31,14 @@ square braces, which represent lists in python or Arrays in JSON.
     <PYTHON_TASK> ::= {
         "mode": "python",
         "script": <python code to run as a string>
-        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT, ...)])
+        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
     }
 
     <R_TASK> ::= {
         "mode": "r",
         "script": <r code to run (as a string)>
-        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT, ...)])
+        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
     }
 
@@ -46,7 +46,7 @@ square braces, which represent lists in python or Arrays in JSON.
         "mode": "docker",
         "docker_image": <docker image name to run>
         (, "container_args": [<container arguments>])
-        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT, ...)])
+        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
     }
 
@@ -54,7 +54,7 @@ square braces, which represent lists in python or Arrays in JSON.
         "mode": "workflow",
         "steps": [<WORKFLOW_STEP> (, <WORKFLOW_STEP>, ...)],
         "connections": [<WORKFLOW_CONNECTION> (, <WORKFLOW_CONNECTION>, ...)]
-        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT, ...)])
+        (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
     }
 
