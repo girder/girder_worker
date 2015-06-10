@@ -2,6 +2,7 @@ import romanesco
 import unittest
 import os
 
+
 class TestSpark(unittest.TestCase):
 
     def setUp(self):
@@ -60,7 +61,6 @@ class TestSpark(unittest.TestCase):
 
         expected = {'b': {'data': '[1, 4, 9, 16, 25, 36, 49, 64, 81]', 'format': 'json'}}
         self.assertEqual(outputs, expected)
-
 
     def tearDown(self):
         os.chdir(self.prevdir)

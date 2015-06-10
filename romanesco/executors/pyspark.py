@@ -7,12 +7,6 @@ from romanesco import spark
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     custom = imp.new_module("custom")
 
-    # TODO
-    # Ensure that the spark modules have been added to our path
-    # Create SparkContext - Should we share one across a workflow?
-    # Take any inputs and convert them to RDDS?
-    print 'Running pyspark'
-
     sc = kwargs['_romanesco_spark_context']
     custom.__dict__['sc'] = sc
     custom.__dict__['spark_context'] = sc
