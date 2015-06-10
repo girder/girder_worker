@@ -124,20 +124,12 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     """
     Run a Romanesco task with the specified I/O bindings.
 
-    :param task: Specification of the task to run. The format of this
-        specification is best described by the subclasses of
-        :py:class:`romanesco.specs.TaskSpecification` class, which can be used
-        to serialized this parameter.
+    :param task: Specification of the task to run.
     :type task: dict
     :param inputs: Specification of how input objects should be fetched
-        into the runtime environment of this task. The format of this dict
-        is best described by the
-        :py:class:`romanesco.specs.InputBindingsSpecification` class, which can
-        be used to serialize this parameter.
+        into the runtime environment of this task.
     :param outputs: Speficiation of what should be done with outputs
-        of this task. The format of this dictionary is best defined in the
-        :py:class:`romanesco.specs.OutputBindingsSpecification` class, which
-        can be used to build and serialize this parameter.
+        of this task.
     :type outputs: dict
     :param auto_convert: If ``True`` (the default), perform format conversions
         on inputs and outputs with :py:func:`convert` if they do not
