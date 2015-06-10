@@ -53,6 +53,12 @@ add_python_test(workflow)
 add_python_test(pickle)
 add_python_test(spec)
 
+set(SPARK_TEST_MASTER_URL  "" CACHE STRING "Spark master URL")
+if (SPARK_TEST_MASTER_URL)
+  add_python_test(spark)
+  set_tests_properties(spark PROPERTIES ENVIRONMENT "SPARK_TEST_MASTER_URL=${SPARK_TEST_MASTER_URL}")
+endif()
+
 add_docstring_test(romanesco.specs.spec)
 add_docstring_test(romanesco.specs.task)
 add_docstring_test(romanesco.specs.port)
