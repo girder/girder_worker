@@ -31,8 +31,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             "\nTask:\n" + json.dumps(task, indent=4)
         )
         raise Exception(error), None, trace
-    finally:
-        sc.stop()
 
     for name, task_output in task_outputs.iteritems():
         outputs[name]["script_data"] = custom.__dict__[name]

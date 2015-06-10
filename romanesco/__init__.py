@@ -55,7 +55,7 @@ def load(task_file):
     return task
 
 
-def isvalid(type, binding):
+def isvalid(type, binding, **kwargs):
     """
     Determine whether a data binding is of the appropriate type and format.
 
@@ -73,11 +73,11 @@ def isvalid(type, binding):
         binding["data"] = romanesco.io.fetch(binding)
     validator = romanesco.format.validators[type][binding["format"]]
     outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
-                            validate=False)
+                            validate=False, **kwargs)
     return outputs["output"]["data"]
 
 
-def convert(type, input, output):
+def convert(type, input, output, **kwargs):
     """
     Convert data from one format to another.
 
@@ -112,7 +112,7 @@ def convert(type, input, output):
         data_descriptor = input
         for c in converter_path:
             result = romanesco.run(c, {"input": data_descriptor},
-                                   auto_convert=False)
+                                   auto_convert=False, **kwargs)
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
@@ -168,88 +168,93 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
 
     # If we are in spark mode then create a spark context. We need to create
     # it here so we have access to it to do any input conversion.
-    if mode == 'spark.python':
+    sc = None
+    if mode == 'spark.python' and '_romanesco_spark_context' not in kwargs:
         spark_conf = task.get('spark_conf', {})
         sc = spark.create_spark_context(spark_conf)
         kwargs['_romanesco_spark_context'] = sc
 
-    # If some inputs are not there, fill in with defaults
-    for name, task_input in task_inputs.iteritems():
-        if name not in inputs:
-            if "default" in task_input:
-                inputs[name] = task_input["default"]
+    try:
+        # If some inputs are not there, fill in with defaults
+        for name, task_input in task_inputs.iteritems():
+            if name not in inputs:
+                if "default" in task_input:
+                    inputs[name] = task_input["default"]
+                else:
+                    raise Exception("Required input '%s' not provided." % name)
+
+        for name, d in inputs.iteritems():
+            task_input = task_inputs[name]
+
+            # Validate the input
+            if validate and not romanesco.isvalid(task_input["type"], d, **kwargs):
+                raise Exception(
+                    "Input %s (Python type %s) is not in the expected type (%s) "
+                    "and format (%s)." % (
+                        name, type(d["data"]), task_input["type"], d["format"])
+                    )
+
+            # Convert data
+            if auto_convert:
+                converted = romanesco.convert(task_input["type"], d,
+                                              {"format": task_input["format"]}, **kwargs)
+                d["script_data"] = converted["data"]
+            elif (d.get("format", task_input.get("format")) ==
+                  task_input.get("format")):
+                if "data" not in d:
+                    d["data"] = romanesco.io.fetch(
+                        d, task_input=task_input, **kwargs)
+                d["script_data"] = d["data"]
             else:
-                raise Exception("Required input '%s' not provided." % name)
-
-    for name, d in inputs.iteritems():
-        task_input = task_inputs[name]
-
-        # Validate the input
-        if validate and not romanesco.isvalid(task_input["type"], d):
-            raise Exception(
-                "Input %s (Python type %s) is not in the expected type (%s) "
-                "and format (%s)." % (
-                    name, type(d["data"]), task_input["type"], d["format"])
+                raise Exception("Expected exact format match but '%s != %s'." % (
+                    d["format"], task_input["format"])
                 )
 
-        # Convert data
-        if auto_convert:
-            converted = romanesco.convert(task_input["type"], d,
-                                          {"format": task_input["format"]})
-            d["script_data"] = converted["data"]
-        elif (d.get("format", task_input.get("format")) ==
-              task_input.get("format")):
-            if "data" not in d:
-                d["data"] = romanesco.io.fetch(
-                    d, task_input=task_input, **kwargs)
-            d["script_data"] = d["data"]
-        else:
-            raise Exception("Expected exact format match but '%s != %s'." % (
-                d["format"], task_input["format"])
-            )
+        # Make sure all outputs are there
+        if outputs is None:
+            outputs = {}
 
-    # Make sure all outputs are there
-    if outputs is None:
-        outputs = {}
+        for name, task_output in task_outputs.iteritems():
+            if name not in outputs:
+                outputs[name] = {"format": task_output["format"]}
 
-    for name, task_output in task_outputs.iteritems():
-        if name not in outputs:
-            outputs[name] = {"format": task_output["format"]}
+        # Actually run the task for the given mode
+        _taskMap[mode](task=task, inputs=inputs, outputs=outputs,
+                       task_inputs=task_inputs, task_outputs=task_outputs,
+                       auto_convert=auto_convert, validate=validate, **kwargs)
 
-    # Actually run the task for the given mode
-    _taskMap[mode](task=task, inputs=inputs, outputs=outputs,
-                   task_inputs=task_inputs, task_outputs=task_outputs,
-                   auto_convert=auto_convert, validate=validate, **kwargs)
+        for name, task_output in task_outputs.iteritems():
+            d = outputs[name]
+            script_output = {"data": d["script_data"],
+                             "format": task_output["format"]}
 
-    for name, task_output in task_outputs.iteritems():
-        d = outputs[name]
-        script_output = {"data": d["script_data"],
-                         "format": task_output["format"]}
+            # Validate the output
+            if validate and not romanesco.isvalid(task_output["type"],
+                                                  script_output, **kwargs):
+                raise Exception(
+                    "Output %s (%s) is not in the expected type (%s) and format "
+                    " (%s)." % (
+                        name, type(script_output["data"]), task_output["type"],
+                        d["format"])
+                    )
 
-        # Validate the output
-        if validate and not romanesco.isvalid(task_output["type"],
-                                              script_output):
-            raise Exception(
-                "Output %s (%s) is not in the expected type (%s) and format "
-                " (%s)." % (
-                    name, type(script_output["data"]), task_output["type"],
-                    d["format"])
-                )
-
-        if auto_convert:
-            outputs[name] = romanesco.convert(
-                task_output["type"], script_output, d)
-        elif d["format"] == task_output["format"]:
-            data = d["script_data"]
-            if d.get("mode"):
-                romanesco.io.push(data, d, task_output=task_output, **kwargs)
+            if auto_convert:
+                outputs[name] = romanesco.convert(
+                    task_output["type"], script_output, d, **kwargs)
+            elif d["format"] == task_output["format"]:
+                data = d["script_data"]
+                if d.get("mode"):
+                    romanesco.io.push(data, d, task_output=task_output, **kwargs)
+                else:
+                    d["data"] = data
             else:
-                d["data"] = data
-        else:
-            raise Exception("Expected exact format match but %s != %s.'" % (
-                d["format"], task_output["format"]))
+                raise Exception("Expected exact format match but %s != %s.'" % (
+                    d["format"], task_output["format"]))
 
-        if "script_data" in outputs[name]:
-            del outputs[name]["script_data"]
+            if "script_data" in outputs[name]:
+                del outputs[name]["script_data"]
 
-    return outputs
+        return outputs
+    finally:
+        if sc:
+            sc.stop()
