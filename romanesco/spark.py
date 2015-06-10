@@ -31,11 +31,7 @@ def setup_spark_env():
     sys.path.append(os.path.join(spark_home, 'bin'))
 
     # Check that we can import SparkContext
-    try:
-        from pyspark import SparkConf, SparkContext
-    except Exception as ex:
-        six.raise_from(Exception('Unable to create SparkContext, check Spark '
-                                 'installation'), ex)
+    from pyspark import SparkConf, SparkContext
 
 
 def create_spark_context(task_spark_conf):
