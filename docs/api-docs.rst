@@ -104,6 +104,8 @@ be placed into the task input ports.
 
     <INPUTS> ::= {
         <id> : <INPUT_BINDING>
+        (, <id> : <INPUT_BINDING>)
+        (, ...)
     }
 
 The input spec is a dictionary mapping each ``id`` (corresponding to the ``id`` key of
@@ -170,6 +172,8 @@ variables of the task that should be handled in some way.
 
     <OUTPUTS> ::= {
         <id> : <OUTPUT_BINDING>
+        (, <id> : <OUTPUT_BINDING>)
+        (, ...)
     }
 
 The output spec is a dictionary mapping each ``id`` (corresponding to the ``id`` key of
