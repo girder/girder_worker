@@ -7,3 +7,5 @@ build
 tmp/
 /romanesco-*.tar.gz
 /romanesco.egg-info/
+.project
+.pydevproject

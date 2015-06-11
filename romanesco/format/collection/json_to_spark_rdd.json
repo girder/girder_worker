@@ -1,0 +1,7 @@
+{
+    "name": "JSON to Spark RDD",
+    "inputs": [{"name": "input", "type": "collection", "format": "json"}],
+    "outputs": [{"name": "output", "type": "collection", "format": "spark.rdd"}],
+    "script_uri": "file://json_to_spark_rdd.py",
+    "mode": "spark.python"
+}

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.6)
 
+message("out: ${SPARK}")
+
 project(Romanesco)
 
 include(CTest)

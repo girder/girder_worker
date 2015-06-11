@@ -8,7 +8,6 @@ import sys
 import tempfile
 import time
 import traceback
-import zipfile
 
 
 class JobStatus(object):
