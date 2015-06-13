@@ -201,7 +201,7 @@ return value of :py:func:`romanesco.run`.
 
     <OUTPUT_BINDING_LOCAL> ::= {
         "mode": "local",
-        "format": <data format>
+        "format": <data format>,
         "path": <path to write data on the local filesystem>
     }
 
@@ -212,7 +212,7 @@ The local output mode writes the data to the specified path on the local filesys
     <OUTPUT_BINDING_MONGODB> ::= {
         "mode": "mongodb",
         "db": <mongo database to write to>,
-        "format": <data format>
+        "format": <data format>,
         "collection": <mongo collection to write to>
         (, "host": <mongo host to connect to>)
     }
