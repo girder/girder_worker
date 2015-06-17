@@ -79,14 +79,17 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             outputs['_stdout']['script_data'] = ''
             printStdOut = False
 
-    print('Running container with args: ' + ' '.join(args))
-
     command = ['docker', 'run', '--rm', '-u', str(os.getuid())]
 
     if tmpDir:
         command += ['-v', tmpDir + ':/data']
 
+    if 'entrypoint' in task:
+        command += ['--entrypoint', task['entrypoint']]
+
     command += [image] + args
+
+    print('Running container: "%s"' % ' '.join(command))
 
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)

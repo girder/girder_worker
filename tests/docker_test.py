@@ -122,3 +122,16 @@ class TestDockerMode(unittest.TestCase):
             self.assertRegexpMatches(cmd2[6], _tmp + '/.*:/data')
             self.assertEqual(cmd2[7:],
                              ['test/test:latest', '-f', '/data/file.txt'])
+
+            # Make sure we can specify a custom entrypoint to the container
+            mockPopen.reset_mock()
+            task['entrypoint'] = '/bin/bash'
+            out = romanesco.run(task, inputs=inputs, validate=False,
+                                auto_convert=False)
+            self.assertEqual(mockPopen.call_count, 2)
+            cmd2 = mockPopen.call_args_list[1][1]['args']
+            self.assertEqual(cmd2[:6],
+                             ['docker', 'run', '--rm', '-u',
+                              str(os.getuid()), '-v'])
+            self.assertRegexpMatches(cmd2[6], _tmp + '/.*:/data')
+            self.assertEqual(cmd2[7:9], ['--entrypoint', '/bin/bash'])
