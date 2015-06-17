@@ -46,6 +46,7 @@ square braces, which represent lists in python or Arrays in JSON.
         "mode": "docker",
         "docker_image": <docker image name to run>
         (, "container_args": [<container arguments>])
+        (, "entrypoint": <custom override for container entry point>)
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
     }
