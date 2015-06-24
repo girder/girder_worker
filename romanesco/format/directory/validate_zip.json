@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "directory", "format": "zip"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "import os\noutput = os.path.isfile(input)",
+    "mode": "python"
+}

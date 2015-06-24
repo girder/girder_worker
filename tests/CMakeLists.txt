@@ -52,6 +52,7 @@ add_python_test(tree)
 add_python_test(workflow)
 add_python_test(pickle)
 add_python_test(spec)
+add_python_test(directory)
 
 set(SPARK_TEST_MASTER_URL  "" CACHE STRING "Spark master URL")
 if (SPARK_TEST_MASTER_URL)

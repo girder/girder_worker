@@ -53,8 +53,8 @@ def recursive_clade(obj, data_coll, tree_coll=None):
                     # if it's a complex phyloxml TreeElement attribute, parse
                     # it using recurisve_attr
                     else:
-                        print ("  elem3, attr = %s, type = %s"
-                               % (attr, type(elem)))
+                        print("  elem3, attr = %s, type = %s"
+                              % (attr, type(elem)))
                         tempDictList.append(recursive_attr(elem))
                 tempDict[key] = tempDictList
             else:  # isinstance(attr, BaseTree.TreeElement):
