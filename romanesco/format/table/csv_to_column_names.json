@@ -1,0 +1,7 @@
+{
+    "name": "CSV to Column Names",
+    "inputs": [{"name": "input", "type": "table", "format": "csv"}],
+    "outputs": [{"name": "output", "type": "table", "format": "column.names"}],
+    "script_uri": "file://csv_to_column_names.py",
+    "mode": "python"
+}
