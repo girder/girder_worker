@@ -14,20 +14,42 @@ girder.views.romanesco_ConfigView = girder.View.extend({
             }, {
                 key: 'romanesco.backend',
                 value: this.$('#g-romanesco-backend').val().trim()
+            }, {
+                key: 'romanesco.full_access_users',
+                value: this.$('#g-romanesco-full-access-users').val().trim()
+            }, {
+                key: 'romanesco.safe_folders',
+                value: this.$('#g-romanesco-safe-folders').val().trim()
+            }, {
+                key: 'romanesco.require_auth',
+                value: this.$('#g-romanesco-require-auth').is(':checked')
             }]);
         }
     },
+
     initialize: function () {
         girder.restRequest({
             type: 'GET',
             path: 'system/setting',
             data: {
-              list: JSON.stringify(['romanesco.broker', 'romanesco.backend'])
+              list: JSON.stringify([
+                  'romanesco.broker',
+                  'romanesco.backend',
+                  'romanesco.full_access_users',
+                  'romanesco.safe_folders',
+                  'romanesco.require_auth'
+              ])
             }
         }).done(_.bind(function (resp) {
             this.render();
             this.$('#g-romanesco-broker').val(resp['romanesco.broker']);
             this.$('#g-romanesco-backend').val(resp['romanesco.backend']);
+            this.$('#g-romanesco-full-access-users').val(JSON.stringify(
+                resp['romanesco.full_access_users'] || []));
+            this.$('#g-romanesco-safe-folders').val(JSON.stringify(
+                resp['romanesco.safe_folders'] || []));
+            this.$('#g-romanesco-require-auth').attr('checked',
+                resp['romanesco.require_auth'] ? 'checked' : null);
         }, this));
     },
 
