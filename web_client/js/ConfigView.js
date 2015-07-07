@@ -49,7 +49,7 @@ girder.views.romanesco_ConfigView = girder.View.extend({
             this.$('#g-romanesco-safe-folders').val(JSON.stringify(
                 resp['romanesco.safe_folders'] || []));
             this.$('#g-romanesco-require-auth').attr('checked',
-                resp['romanesco.require_auth'] ? 'checked' : null);
+                resp['romanesco.require_auth'] === false ? null : 'checked');
         }, this));
     },
 

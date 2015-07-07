@@ -132,9 +132,7 @@ def load(info):
         for name in ('Data', 'Analyses', 'Visualizations'):
             folder = self.model('folder').createFolder(
                 name=name, public=public, parentType='collection',
-                parent=collection)
-            self.model('folder').setUserAccess(
-                folder, user=user, level=AccessType.ADMIN, save=True)
+                parent=collection, creator=user)
 
         return self.model('collection').filter(collection, user=user)
 
@@ -269,7 +267,7 @@ def load(info):
         user = self.getCurrentUser()
 
         settings = ModelImporter.model('setting')
-        requireAuth = settings.get(PluginSettings.REQUIRE_AUTH, False)
+        requireAuth = settings.get(PluginSettings.REQUIRE_AUTH, True)
 
         if requireAuth:
             fullAccessUsers = settings.get(PluginSettings.FULL_ACCESS_USERS, ())
