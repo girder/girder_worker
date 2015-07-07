@@ -1,0 +1,6 @@
+{
+    "inputs": [{"id": "input", "type": "directory", "format": "path"}],
+    "outputs": [{"id": "output", "type": "directory", "format": "zip"}],
+    "script_uri": "file://path_to_zip.py",
+    "mode": "python"
+}
