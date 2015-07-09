@@ -13,27 +13,13 @@ import sys
 from girder import events
 from girder.api import access, rest
 from girder.api.describe import Description
-from girder.models.model_base import AccessException
+from girder.models.model_base import AccessException, ValidationException
 from girder.utility.model_importer import ModelImporter
 from girder.plugins.jobs.constants import JobStatus
 
-
-# If you desire authentication to run analyses (strongly encouraged),
-# Add the following to the girder config file:
-#
-# [romanesco]
-#
-# # Default is false, set to True to disallow free-for-all analysis execution
-# # and limit execution to the user and folder white lists below.
-# # require_auth: True
-#
-# # Whitelisted users who can run any analysis.
-# # full_access_users: ["user1", "user2"]
-#
-# # Whitelisted folders where any user (including those not logged in)
-# # can run analyses defined in these folders.
-# # safe_folders: [bson.objectid.ObjectId("5314be7cea33db24b6aa490c")]
-
+# If you desire authorization to run analyses (strongly encouraged), make sure
+# to specify so in the plugin settings page. By default, authorization control
+# is disabled.
 
 _celeryapp = None
 
@@ -41,6 +27,9 @@ _celeryapp = None
 class PluginSettings():
     BROKER = 'romanesco.broker'
     BACKEND = 'romanesco.backend'
+    FULL_ACCESS_USERS = 'romanesco.full_access_users'
+    REQUIRE_AUTH = 'romanesco.require_auth'
+    SAFE_FOLDERS = 'romanesco.safe_folders'
 
 
 def getCeleryApp():
@@ -96,6 +85,19 @@ def validateSettings(event):
     elif key == PluginSettings.BACKEND:
         _celeryapp = None
         event.preventDefault()
+    elif key == PluginSettings.FULL_ACCESS_USERS:
+        if not isinstance(val, (list, tuple)):
+            raise ValidationException('Full access users must be a JSON list.')
+        event.preventDefault()
+    elif key == PluginSettings.REQUIRE_AUTH:
+        if not isinstance(val, bool):
+            raise ValidationException(
+                'Require auth setting must be true or false.')
+        event.preventDefault()
+    elif key == PluginSettings.SAFE_FOLDERS:
+        if not isinstance(val, (list, tuple)):
+            raise ValidationException('Safe folders must be a JSON list.')
+        event.preventDefault()
 
 
 def getItemContent(itemId, itemApi):
@@ -130,9 +132,7 @@ def load(info):
         for name in ('Data', 'Analyses', 'Visualizations'):
             folder = self.model('folder').createFolder(
                 name=name, public=public, parentType='collection',
-                parent=collection)
-            self.model('folder').setUserAccess(
-                folder, user=user, level=AccessType.ADMIN, save=True)
+                parent=collection, creator=user)
 
         return self.model('collection').filter(collection, user=user)
 
@@ -266,14 +266,16 @@ def load(info):
         # Make sure that we have permission to perform this analysis.
         user = self.getCurrentUser()
 
-        conf = info['config'].get('romanesco', {})
-        requireAuth = conf.get('require_auth', False)
-        fullAccessUsers = conf.get('full_access_users', [])
-        safeFolders = conf.get('safe_folders', [])
+        settings = ModelImporter.model('setting')
+        requireAuth = settings.get(PluginSettings.REQUIRE_AUTH, True)
 
-        if (requireAuth and (not user or user['login'] not in fullAccessUsers)
-                and item['folderId'] not in safeFolders):
-            raise AccessException('Unauthorized user.')
+        if requireAuth:
+            fullAccessUsers = settings.get(PluginSettings.FULL_ACCESS_USERS, ())
+            safeFolders = settings.get(PluginSettings.SAFE_FOLDERS, ())
+
+            if (str(item['folderId']) not in safeFolders and (
+                    not user or user['login'] not in fullAccessUsers)):
+                raise AccessException('Unauthorized user.')
 
         analysis = item.get('meta', {}).get('analysis')
 
