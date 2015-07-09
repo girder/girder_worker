@@ -1,4 +1,3 @@
-import contextlib
 import os
 import tarfile
 
@@ -11,5 +10,5 @@ except OSError:
     if not os.path.exists(output):
         raise
 
-with contextlib.closing(tarfile.open(input, 'r')) as tf:
+with tarfile.open(input, 'r') as tf:
     tf.extractall(output)

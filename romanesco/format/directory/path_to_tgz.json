@@ -1,0 +1,6 @@
+{
+    "inputs": [{"id": "input", "type": "directory", "format": "path"}],
+    "outputs": [{"id": "output", "type": "directory", "format": "tgz"}],
+    "script_uri": "file://path_to_tgz.py",
+    "mode": "python"
+}
