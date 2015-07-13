@@ -116,26 +116,6 @@ def getItemContent(itemId, itemApi):
 
 
 def load(info):
-    @access.user
-    @rest.boundHandler()
-    def romanescoCreateModule(self, params):
-        """Create a new romanesco module."""
-        self.requireParams('name', params)
-
-        user = self.getCurrentUser()
-        public = self.boolParam('public', params, default=False)
-
-        collection = self.model('collection').createCollection(
-            name=params['name'], description=params.get('description'),
-            public=public, creator=user)
-
-        for name in ('Data', 'Analyses', 'Visualizations'):
-            folder = self.model('folder').createFolder(
-                name=name, public=public, parentType='collection',
-                parent=collection, creator=user)
-
-        return self.model('collection').filter(collection, user=user)
-
     @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
@@ -333,12 +313,6 @@ def load(info):
         task = AsyncResult(jobId, backend=getCeleryApp().backend)
         task.revoke(getCeleryApp().broker_connection(), terminate=True)
         return {'status': task.state}
-
-
-    info['apiRoot'].collection.route(
-        'POST',
-        ('romanesco', 'module'),
-        romanescoCreateModule)
 
     info['apiRoot'].item.route(
         'POST',
