@@ -28,6 +28,7 @@ class PluginSettings():
     BROKER = 'romanesco.broker'
     BACKEND = 'romanesco.backend'
     FULL_ACCESS_USERS = 'romanesco.full_access_users'
+    FULL_ACCESS_GROUPS = 'romanesco.full_access_groups'
     REQUIRE_AUTH = 'romanesco.require_auth'
     SAFE_FOLDERS = 'romanesco.safe_folders'
 
@@ -88,6 +89,10 @@ def validateSettings(event):
     elif key == PluginSettings.FULL_ACCESS_USERS:
         if not isinstance(val, (list, tuple)):
             raise ValidationException('Full access users must be a JSON list.')
+        event.preventDefault()
+    elif key == PluginSettings.FULL_ACCESS_GROUPS:
+        if not isinstance(val, (list, tuple)):
+            raise ValidationException('Full access groups must be a JSON list.')
         event.preventDefault()
     elif key == PluginSettings.REQUIRE_AUTH:
         if not isinstance(val, bool):
@@ -250,11 +255,14 @@ def load(info):
         requireAuth = settings.get(PluginSettings.REQUIRE_AUTH, True)
 
         if requireAuth:
-            fullAccessUsers = settings.get(PluginSettings.FULL_ACCESS_USERS, ())
             safeFolders = settings.get(PluginSettings.SAFE_FOLDERS, ())
+            fullAccessUsers = settings.get(PluginSettings.FULL_ACCESS_USERS, ())
+            fullAccessGrps = settings.get(PluginSettings.FULL_ACCESS_GROUPS, ())
+            userGrps = {str(id) for id in user.get('groups', ())}
 
             if (str(item['folderId']) not in safeFolders and (
-                    not user or user['login'] not in fullAccessUsers)):
+                    not user or user['login'] not in fullAccessUsers) and
+                    not userGrps & set(fullAccessGrps)):
                 raise AccessException('Unauthorized user.')
 
         analysis = item.get('meta', {}).get('analysis')
