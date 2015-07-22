@@ -114,6 +114,36 @@ def getItemContent(itemId, itemApi):
         io.write(chunk)
     return io.getvalue()
 
+def runAnalysis(user, analysis, kwargs):
+    # Create the job record.
+    jobModel = ModelImporter.model('job', 'jobs')
+    public = False
+    if user is None:
+        public = True
+    job = jobModel.createJob(
+        title=analysis['name'], type='romanesco_task',
+        handler='romanesco_handler', user=user, public=public)
+
+    # Create a token that is scoped for updating the job.
+    jobToken = jobModel.createJobToken(job)
+    apiUrl = cherrypy.url().rsplit('/', 3)[0]
+
+    # These parameters are used to get stdout/stderr back from Celery
+    # to Girder.
+    kwargs['jobInfo'] = {
+        'url': '{}/job/{}'.format(apiUrl, job['_id']),
+        'method': 'PUT',
+        'headers': {'Girder-Token': jobToken['_id']},
+        'logPrint': True
+    }
+
+    job['kwargs'] = kwargs
+    job['args'] = [analysis]
+    job = jobModel.save(job)
+
+    # Schedule the job (triggers the schedule method above)
+    jobModel.scheduleJob(job)
+    return jobModel.filter(job, user)
 
 def load(info):
     @access.user
@@ -283,19 +313,6 @@ def load(info):
             raise rest.RestException(
                 'Must specify a valid JSON object as the "analysis" metadata '
                 'field on the input item.')
-
-        # Create the job record.
-        jobModel = self.model('job', 'jobs')
-        public = False
-        if user is None:
-            public = True
-        job = jobModel.createJob(
-            title=analysis['name'], type='romanesco_task',
-            handler='romanesco_handler', user=user, public=public)
-
-        # Create a token that is scoped for updating the job.
-        jobToken = jobModel.createJobToken(job)
-
         # Get the analysis parameters (includes inputs & outputs).
         try:
             kwargs = json.load(cherrypy.request.body)
@@ -303,24 +320,7 @@ def load(info):
             raise rest.RestException(
                 'You must pass a valid JSON object in the request body.')
 
-        apiUrl = cherrypy.url().rsplit('/', 3)[0]
-
-        # These parameters are used to get stdout/stderr back from Celery
-        # to Girder.
-        kwargs['jobInfo'] = {
-            'url': '{}/job/{}'.format(apiUrl, job['_id']),
-            'method': 'PUT',
-            'headers': {'Girder-Token': jobToken['_id']},
-            'logPrint': True
-        }
-
-        job['kwargs'] = kwargs
-        job['args'] = [analysis]
-        job = jobModel.save(job)
-
-        # Schedule the job (triggers the schedule method above)
-        jobModel.scheduleJob(job)
-        return jobModel.filter(job, user)
+        return runAnalysis(user, analysis, kwargs)
     romanescoRun.description = (
         Description('Run a task specified by item metadata.')
         .param('itemId', 'The item containing the analysis as metadata.',
