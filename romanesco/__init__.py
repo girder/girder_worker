@@ -6,22 +6,56 @@ import romanesco.format
 import romanesco.io
 
 from ConfigParser import ConfigParser
-from . import executors, utils, spark
+from . import executors, utils
 
+
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(PACKAGE_DIR)
 
 # Read the configuration files
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
 config = ConfigParser()
-config.read([os.path.join(os.path.dirname(__file__), f) for f in _cfgs])
+config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Maps task modes to their implementation
-_taskMap = {
-    'docker': executors.docker.run,
-    'python': executors.python.run,
-    'r': executors.r.run,
-    'workflow': executors.workflow.run,
-    'spark.python': executors.pyspark.run
-}
+_task_map = {}
+
+
+def register_executor(name, fn):
+    """
+    Register a new executor in the romanesco runtime. This is used to map the
+    "mode" field of a task to a function that will execute the task.
+
+    :param name: The value of the mode field that maps to the given function.
+    :type name: str
+    :param fn: The implementing function.
+    :type fn: function
+    """
+    _task_map[name] = fn
+
+
+def unregister_executor(name):
+    """
+    Unregister an executor from the map.
+
+    :param name: The name of the executor to unregister.
+    :type name: str
+    """
+    del _task_map[name]
+
+
+# Register the core executors that are always enabled.
+register_executor('python', executors.python.run)
+register_executor('workflow', executors.workflow.run)
+
+# Load plugins that are enabled in the config file
+_plugin_dir = os.path.join(ROOT_DIR, 'plugins')
+_plugins = (config.get('romanesco', 'plugins') or '').split(',')
+_plugins = [p for p in _plugins if p.strip()]
+_paths = (config.get('romanesco', 'plugin_load_path') or '').split(':')
+_paths = [p for p in _paths if p.strip()]
+_paths.append(_plugin_dir)
+utils.load_plugins(_plugins, _paths)
 
 # If we have a spark config section then try to setup spark environment
 if config.has_section('spark') or 'SPARK_HOME' in os.environ:
@@ -163,7 +197,7 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     task_outputs = {extractId(d): d for d in task.get("outputs", ())}
     mode = task.get("mode", "python")
 
-    if mode not in _taskMap:
+    if mode not in _task_map:
         raise Exception("Invalid mode: %s" % mode)
 
     # If we are in spark mode then create a spark context. We need to create
@@ -219,7 +253,7 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
                 outputs[name] = {"format": task_output["format"]}
 
         # Actually run the task for the given mode
-        _taskMap[mode](task=task, inputs=inputs, outputs=outputs,
+        _task_map[mode](task=task, inputs=inputs, outputs=outputs,
                        task_inputs=task_inputs, task_outputs=task_outputs,
                        auto_convert=auto_convert, validate=validate, **kwargs)
 

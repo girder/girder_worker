@@ -9,3 +9,4 @@ tmp/
 /romanesco.egg-info/
 .project
 .pydevproject
+__pycache__
