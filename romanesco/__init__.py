@@ -49,12 +49,13 @@ register_executor('python', executors.python.run)
 register_executor('workflow', executors.workflow.run)
 
 # Load plugins that are enabled in the config file
-_plugin_dir = os.path.join(ROOT_DIR, 'plugins')
-_plugins = (config.get('romanesco', 'plugins') or '').split(',')
-_plugins = [p for p in _plugins if p.strip()]
-_paths = (config.get('romanesco', 'plugin_load_path') or '').split(':')
+_plugins = os.environ.get('ROMANESCO_PLUGINS_ENABLED',
+                          config.get('romanesco', 'plugins_enabled'))
+_plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
+_paths = os.environ.get('ROMANESCO_PLUGIN_LOAD_PATH',
+                        config.get('romanesco', 'plugin_load_path')).split(':')
 _paths = [p for p in _paths if p.strip()]
-_paths.append(_plugin_dir)
+_paths.append(os.path.join(ROOT_DIR, 'plugins'))
 utils.load_plugins(_plugins, _paths)
 
 # If we have a spark config section then try to setup spark environment
@@ -254,8 +255,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
 
         # Actually run the task for the given mode
         _task_map[mode](task=task, inputs=inputs, outputs=outputs,
-                       task_inputs=task_inputs, task_outputs=task_outputs,
-                       auto_convert=auto_convert, validate=validate, **kwargs)
+                        task_inputs=task_inputs, task_outputs=task_outputs,
+                        auto_convert=auto_convert, validate=validate, **kwargs)
 
         for name, task_output in task_outputs.iteritems():
             d = outputs[name]
