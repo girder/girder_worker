@@ -14,10 +14,11 @@ def setup_pyspark_task(event):
     if info['mode'] == 'spark.python' and SC_KEY not in info['kwargs']:
         spark_conf = info['task'].get('spark_conf', {})
         info['kwargs'][SC_KEY] = spark.create_spark_context(spark_conf)
+        info['cleanup_spark'] = True
 
 
 def pyspark_run_cleanup(event):
-    if SC_KEY in event.info['kwargs']:
+    if event.info.get('cleanup_spark'):
         event.info['kwargs'][SC_KEY].stop()
 
 
