@@ -18,6 +18,9 @@ girder.views.romanesco_ConfigView = girder.View.extend({
                 key: 'romanesco.full_access_users',
                 value: this.$('#g-romanesco-full-access-users').val().trim()
             }, {
+                key: 'romanesco.full_access_groups',
+                value: this.$('#g-romanesco-full-access-groups').val().trim()
+            }, {
                 key: 'romanesco.safe_folders',
                 value: this.$('#g-romanesco-safe-folders').val().trim()
             }, {
@@ -36,6 +39,7 @@ girder.views.romanesco_ConfigView = girder.View.extend({
                   'romanesco.broker',
                   'romanesco.backend',
                   'romanesco.full_access_users',
+                  'romanesco.full_access_groups',
                   'romanesco.safe_folders',
                   'romanesco.require_auth'
               ])
@@ -46,6 +50,8 @@ girder.views.romanesco_ConfigView = girder.View.extend({
             this.$('#g-romanesco-backend').val(resp['romanesco.backend']);
             this.$('#g-romanesco-full-access-users').val(JSON.stringify(
                 resp['romanesco.full_access_users'] || []));
+            this.$('#g-romanesco-full-access-groups').val(JSON.stringify(
+                resp['romanesco.full_access_groups'] || []));
             this.$('#g-romanesco-safe-folders').val(JSON.stringify(
                 resp['romanesco.safe_folders'] || []));
             this.$('#g-romanesco-require-auth').attr('checked',
