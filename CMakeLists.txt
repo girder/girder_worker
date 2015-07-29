@@ -24,13 +24,3 @@ if(BUILD_TESTING)
   include(tests/PythonTests.cmake)
   add_subdirectory(tests)
 endif()
-
-# Look for plugin.cmake in plugin dirs, include if they exist
-file(GLOB pluginDirs "${PROJECT_SOURCE_DIR}/plugins/*")
-foreach(pluginDir ${pluginDirs})
-  if(EXISTS "${pluginDir}/plugin.cmake")
-    get_filename_component(pluginName "${pluginDir}" NAME)
-    message(STATUS "Including plugin.cmake from \"${pluginName}\"")
-    include("${pluginDir}/plugin.cmake")
-  endif()
-endforeach()

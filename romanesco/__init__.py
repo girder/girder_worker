@@ -2,6 +2,7 @@ import json
 import StringIO
 import tempfile
 import os
+import romanesco.events
 import romanesco.format
 import romanesco.io
 
@@ -57,10 +58,6 @@ _paths = os.environ.get('ROMANESCO_PLUGIN_LOAD_PATH',
 _paths = [p for p in _paths if p.strip()]
 _paths.append(os.path.join(ROOT_DIR, 'plugins'))
 utils.load_plugins(_plugins, _paths)
-
-# If we have a spark config section then try to setup spark environment
-if config.has_section('spark') or 'SPARK_HOME' in os.environ:
-    spark.setup_spark_env()
 
 
 def load(task_file):
@@ -201,13 +198,18 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     if mode not in _task_map:
         raise Exception("Invalid mode: %s" % mode)
 
-    # If we are in spark mode then create a spark context. We need to create
-    # it here so we have access to it to do any input conversion.
-    sc = None
-    if mode == 'spark.python' and '_romanesco_spark_context' not in kwargs:
-        spark_conf = task.get('spark_conf', {})
-        sc = spark.create_spark_context(spark_conf)
-        kwargs['_romanesco_spark_context'] = sc
+    info = {
+        'task': task,
+        'task_inputs': task_inputs,
+        'task_outputs': task_outputs,
+        'mode': mode,
+        'inputs': inputs,
+        'outputs': outputs,
+        'auto_convert': auto_convert,
+        'validate': validate,
+        'kwargs': kwargs
+    }
+    romanesco.events.trigger('run.before', info)
 
     try:
         # If some inputs are not there, fill in with defaults
@@ -289,7 +291,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
             if "script_data" in outputs[name]:
                 del outputs[name]["script_data"]
 
+        romanesco.events.trigger('run.after', info)
+
         return outputs
     finally:
-        if sc:
-            sc.stop()
+        romanesco.events.trigger('run.finally', info)

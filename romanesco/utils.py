@@ -329,6 +329,11 @@ def load_plugin(name, paths):
     :param paths: Plugin search paths.
     :type paths: list or tuple of str
     """
+    if 'romanesco.plugins' not in sys.modules:
+        module = imp.new_module('romanesco.plugins')
+        romanesco.plugins = module
+        sys.modules['romanesco.plugins'] = module
+
     for path in paths:
         if os.path.isdir(os.path.join(path, name)):
             moduleName = 'romanesco.plugins.' + name
@@ -336,6 +341,7 @@ def load_plugin(name, paths):
             if moduleName not in sys.modules:
                 fp, pathname, description = imp.find_module(name, [path])
                 module = imp.load_module(moduleName, fp, pathname, description)
+                setattr(romanesco.plugins, name, module)
 
                 if hasattr(module, 'load'):
                     module.load({})

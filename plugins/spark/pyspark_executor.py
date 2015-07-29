@@ -1,13 +1,14 @@
 import imp
 import json
 import sys
-from romanesco import spark
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
+    from . import SC_KEY
+
     custom = imp.new_module("custom")
 
-    sc = kwargs['_romanesco_spark_context']
+    sc = kwargs[SC_KEY]
     custom.__dict__['sc'] = sc
     custom.__dict__['spark_context'] = sc
 
