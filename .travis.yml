@@ -50,9 +50,8 @@ before_install:
 
 # install dependencies
 install:
-  # install Python packages
-  - pip install -U -e .                     # This installs all standard deps
-  - pip install -U -r requirements-dev.txt  # This installs development packages
+  # install Python packages for core and all plugins
+  - python scripts/install_requirements.py --mode=dev --all
 
 # run tests
 script:
