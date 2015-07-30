@@ -10,6 +10,7 @@ try:
     import romanesco as _romanesco
 except Exception:
     sys.path.append(os.path.abspath(os.path.join('..', '..')))
+    sys.path.append(os.getcwd())
     import romanesco as _romanesco
 
 _modpath = os.path.dirname(os.path.abspath(__file__))
