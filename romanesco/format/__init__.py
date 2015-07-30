@@ -143,8 +143,12 @@ def import_converters(search_paths):
     type but should be of different formats.
 
     :param search_paths: A list of search paths relative to the current
-        working directory.
+        working directory. Passing a single path as a string also works.
+    :type search_paths: str or list of str
     """
+    if not isinstance(search_paths, (list, tuple)):
+        search_paths = [search_paths]
+
     prevdir = os.getcwd()
     for path in search_paths:
         os.chdir(path)
@@ -246,8 +250,7 @@ def import_default_converters():
 
     cur_path = os.path.dirname(os.path.realpath(__file__))
     import_converters([os.path.join(cur_path, t) for t in [
-        "r", "table", "tree",
-        "string", "number", "image", "directory",
-        "boolean", "geometry", "netcdf", "python", "collection"]])
+        "table", "tree", "string", "number", "image", "directory",
+        "boolean", "geometry", "netcdf", "python"]])
 
 import_default_converters()

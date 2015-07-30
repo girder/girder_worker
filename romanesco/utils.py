@@ -335,7 +335,8 @@ def load_plugin(name, paths):
         sys.modules['romanesco.plugins'] = module
 
     for path in paths:
-        if os.path.isdir(os.path.join(path, name)):
+        plugin_dir = os.path.join(path, name)
+        if os.path.isdir(plugin_dir):
             moduleName = 'romanesco.plugins.' + name
 
             if moduleName not in sys.modules:
@@ -344,7 +345,9 @@ def load_plugin(name, paths):
                 setattr(romanesco.plugins, name, module)
 
                 if hasattr(module, 'load'):
-                    module.load({})
+                    module.load({
+                        'plugin_dir': plugin_dir
+                    })
             break
     else:
         raise PluginNotFoundException(

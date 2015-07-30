@@ -1,6 +1,6 @@
-def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
-    import rpy2.robjects
+import rpy2.robjects
 
+def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     env = rpy2.robjects.globalenv
 
     # Clear out workspace variables and packages

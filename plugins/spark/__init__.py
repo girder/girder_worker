@@ -31,3 +31,7 @@ def load(params):
 
     romanesco.events.bind('run.before', 'spark', setup_pyspark_task)
     romanesco.events.bind('run.finally', 'spark', pyspark_run_cleanup)
+
+
+    romanesco.format.import_converters(
+        os.path.join(params['plugin_dir'], 'converters'))
