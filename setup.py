@@ -18,8 +18,9 @@
 ###############################################################################
 
 import json
+import os
+import setuptools
 
-from setuptools import setup, find_packages
 from pkg_resources import parse_requirements
 
 
@@ -32,15 +33,26 @@ with open('plugin.json') as f:
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 install_reqs = []
 try:
-    install_reqs = parse_requirements(open('requirements.txt').read())
+    with open('requirements.txt') as f:
+        install_reqs = parse_requirements(f.read())
 except Exception:
     pass
-
-# reqs is a list of requirement
 reqs = [str(req) for req in install_reqs]
 
+# Build up extras_require for plugin requirements
+extras_require = {}
+plugins_dir = os.path.join('romanesco', 'plugins')
+for name in os.listdir(plugins_dir):
+    reqs_file = os.path.join(plugins_dir, name, 'requirements.txt')
+    if os.path.isfile(reqs_file):
+        with open(reqs_file) as f:
+            plugin_reqs = parse_requirements(f.read())
+        extras_require[name] = [str(r) for r in plugin_reqs]
+    else:
+        extras_require[name] = []
+
 # perform the install
-setup(
+setuptools.setup(
     name='romanesco',
     version=version,
     description='Batch execution engine built on celery.',
@@ -56,11 +68,15 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2'
     ],
-    packages=find_packages(exclude=('tests.*', 'tests', 'server.*', 'server')),
+    extras_require=extras_require,
+    packages=setuptools.find_packages(
+        exclude=('tests.*', 'tests', 'server.*', 'server')
+    ),
     package_data={
         'romanesco': [
             'worker.dist.cfg',
-            'format/**/*'
+            'format/**/*',
+            'plugins/**/*'
         ]
     },
     install_requires=reqs,

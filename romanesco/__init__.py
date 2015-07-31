@@ -11,7 +11,6 @@ from . import executors, utils
 
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(PACKAGE_DIR)
 
 # Read the configuration files
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
@@ -56,7 +55,7 @@ _plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
 _paths = os.environ.get('ROMANESCO_PLUGIN_LOAD_PATH',
                         config.get('romanesco', 'plugin_load_path')).split(':')
 _paths = [p for p in _paths if p.strip()]
-_paths.append(os.path.join(ROOT_DIR, 'plugins'))
+_paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
 utils.load_plugins(_plugins, _paths)
 
 

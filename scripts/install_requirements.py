@@ -42,7 +42,7 @@ def main(args):
     installFromDir(basePath, isDevMode, args.pip)
 
     # Install plugins requirements files
-    pluginsDir = os.path.join(basePath, 'plugins')
+    pluginsDir = os.path.join(basePath, 'romanesco', 'plugins')
     for path in os.listdir(pluginsDir):
         if args.all or path in plugins:
             pluginPath = os.path.join(pluginsDir, path)

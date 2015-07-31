@@ -54,7 +54,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
         for inputId in re.findall(regex, arg):
             if inputId in inputs:
                 transformed = _transform_path(inputs, taskInputs, inputId,
-                                             tmpDir)
+                                              tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, transformed)
 
         newArgs.append(arg)
