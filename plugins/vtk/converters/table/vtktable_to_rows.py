@@ -1,4 +1,4 @@
-from romanesco.format import vtkrow_to_dict
+from romanesco.plugins.vtk import vtkrow_to_dict
 
 output = {"fields": [], "rows": []}
 for c in range(input.GetNumberOfColumns()):

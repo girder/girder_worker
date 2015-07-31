@@ -140,6 +140,12 @@ def convert(type, input, output, **kwargs):
         data = input["data"]
     else:
         converter_type = romanesco.format.converters[type]
+        if not input['format'] in converter_type:
+            raise Exception('Invalid conversion source format "%s/%s".' % (
+                            type, input['format']))
+        if not output['format'] in converter_type[input['format']]:
+            raise Exception('Invalid conversion: "%s/%s -> %s".' % (
+                            type, input['format'], output['format']))
         converter_path = converter_type[input["format"]][output["format"]]
         data_descriptor = input
         for c in converter_path:
