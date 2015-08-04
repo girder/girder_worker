@@ -20,8 +20,25 @@
 import json
 import os
 import setuptools
+import shutil
 
 from pkg_resources import parse_requirements
+from setuptools.command.install import install
+
+
+class CustomInstall(install):
+    """
+    Override the default install to add some custom install-time behavior.
+    Namely, we create the local config file.
+    """
+    def run(self, *args, **kwargs):
+        install.run(self, *args, **kwargs)
+
+        distcfg = os.path.join('romanesco', 'worker.dist.cfg')
+        localcfg = os.path.join('romanesco', 'worker.local.cfg')
+        if not os.path.isfile(localcfg):
+            print('Creating worker.local.cfg')
+            shutil.copyfile(distcfg, localcfg)
 
 
 with open('README.rst') as f:
@@ -29,6 +46,14 @@ with open('README.rst') as f:
 
 with open('plugin.json') as f:
     version = json.load(f)['version']
+
+plugin_data = []
+# We must manually glob for plugin data since setuptools package_data
+# errors out when trying to include directories recursively
+os.chdir('romanesco')
+for root, dirnames, filenames in os.walk('plugins'):
+    plugin_data.extend([os.path.join(root, fn) for fn in filenames])
+os.chdir('..')
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 install_reqs = []
@@ -75,9 +100,12 @@ setuptools.setup(
     package_data={
         'romanesco': [
             'worker.dist.cfg',
-            'format/**/*',
-            'plugins/**/*'
-        ]
+            'worker.local.cfg',
+            'format/**/*'
+        ] + plugin_data
+    },
+    cmdclass={
+        'install': CustomInstall
     },
     install_requires=reqs,
     zip_safe=False,

@@ -97,9 +97,6 @@ Spark
     * ``collection/json``
     * ``collection/spark.rdd``
 
-.. |ra| unicode:: 8594 .. right arrow
-.. |ba| unicode:: 8596 .. bidirectional arrow
-
 VTK
 ---
 
@@ -122,3 +119,7 @@ VTK
     * ``table/vtktable.serialized``
     * ``tree/vtktree``
     * ``tree/vtktree.serialized``
+
+
+    .. |ra| unicode:: 8594 .. right arrow
+    .. |ba| unicode:: 8596 .. bidirectional arrow
