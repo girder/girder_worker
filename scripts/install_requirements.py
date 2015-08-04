@@ -3,26 +3,27 @@ from ConfigParser import ConfigParser
 
 import argparse
 import os
+import pip
 import subprocess
 import sys
 
 
-def installReqs(file, pip):
+def installReqs(file):
     if not os.path.exists(file):
         return
 
     print('\033[32m*** Installing: %s\033[0m' % file)
-    if subprocess.call([pip, 'install', '-U', '-r', file]) != 0:
+    if pip.main(['install', '-U', '-r', file]) != 0:
         print('\033[1;91m*** Error installing %s, stopping.\033[0m' % file,
               file=sys.stderr)
         sys.exit(1)
 
 
-def installFromDir(path, dev, pip):
-    installReqs(os.path.join(path, 'requirements.txt'), pip)
+def installFromDir(path, dev):
+    installReqs(os.path.join(path, 'requirements.txt'))
 
     if dev:
-        installReqs(os.path.join(path, 'requirements-dev.txt'), pip)
+        installReqs(os.path.join(path, 'requirements-dev.txt'))
 
 
 def main(args):
@@ -39,7 +40,7 @@ def main(args):
     plugins = [p.strip() for p in plugins.split(',') if p.strip()]
 
     # Install core requirements files
-    installFromDir(basePath, isDevMode, args.pip)
+    installFromDir(basePath, isDevMode)
 
     # Install plugins requirements files
     pluginsDir = os.path.join(basePath, 'romanesco', 'plugins')
@@ -47,7 +48,7 @@ def main(args):
         if args.all or path in plugins:
             pluginPath = os.path.join(pluginsDir, path)
             if os.path.isdir(pluginPath):
-                installFromDir(pluginPath, isDevMode, args.pip)
+                installFromDir(pluginPath, isDevMode)
 
 
 if __name__ == '__main__':
@@ -55,8 +56,6 @@ if __name__ == '__main__':
         description='Install required pip packages.')
     parser.add_argument('-m', '--mode', default='prod',
                         help='install for "dev" or "prod" (the default)')
-    parser.add_argument('-p', '--pip', default='pip',
-                        help='alternate path to pip executable')
     parser.add_argument('-a', '--all', help='install requirements of all '
                         'plugins rather than just enabled ones',
                         action='store_true')
