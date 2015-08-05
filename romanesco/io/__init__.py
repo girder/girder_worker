@@ -2,6 +2,44 @@ from __future__ import absolute_import
 
 from . import http, local, mongodb
 
+_fetch_map = {}
+_push_map = {}
+
+
+def _inline_fetch(spec, **kwargs):
+    return spec['data']
+
+
+def _inline_push(data, spec, **kwargs):
+    spec['data'] = data
+    return spec
+
+
+def register_fetch_handler(mode, handler):
+    """
+    Register a new handler function for fetching data for a given mode. This
+    will override any existing handler mapped to the given mode.
+
+    :param mode: The name of the mode this handler corresponds to.
+    :type mode: str
+    :param handler: The handler function that performs the fetch.
+    :type handler: function
+    """
+    _fetch_map[mode] = handler
+
+
+def register_push_handler(mode, handler):
+    """
+    Register a new handler function for pushing data for a given mode. This
+    will override any existing handler mapped to the given mode.
+
+    :param mode: The name of the mode this handler corresponds to.
+    :type mode: str
+    :param handler: The handler function that performs the data push.
+    :type handler: function
+    """
+    _push_map[mode] = handler
+
 
 def _detectMode(spec):
     mode = spec.get('mode', 'auto')
@@ -36,16 +74,10 @@ def fetch(spec, **kwargs):
     """
     mode = _detectMode(spec)
 
-    if mode == 'http':
-        return http.fetch(spec, **kwargs)
-    elif mode == 'mongodb':
-        return mongodb.fetch(spec, **kwargs)
-    elif mode == 'local':
-        return local.fetch(spec, **kwargs)
-    elif mode == 'inline':
-        return spec['data']
-    else:
+    if mode not in _fetch_map:
         raise Exception('Unknown input fetch mode: ' + mode)
+
+    return _fetch_map[mode](spec, **kwargs)
 
 
 def push(data, spec, **kwargs):
@@ -60,14 +92,19 @@ def push(data, spec, **kwargs):
     """
     mode = _detectMode(spec)
 
-    if mode == 'http':
-        return http.push(data, spec, **kwargs)
-    elif mode == 'mongodb':
-        return mongodb.push(data, spec, **kwargs)
-    elif mode == 'local':
-        return local.push(data, spec, **kwargs)
-    elif mode == 'inline':
-        spec['data'] = data
-        return spec
-    else:
+    if mode not in _push_map:
         raise Exception('Unknown output push mode: ' + mode)
+
+    return _push_map[mode](data, spec, **kwargs)
+
+
+register_fetch_handler('http', http.fetch)
+register_fetch_handler('mongodb', mongodb.fetch)
+register_fetch_handler('local', local.fetch)
+register_fetch_handler('inline', _inline_fetch)
+
+
+register_push_handler('http', http.push)
+register_push_handler('mongodb', mongodb.push)
+register_push_handler('local', local.push)
+register_push_handler('inline', _inline_push)

@@ -6,7 +6,7 @@ def fetch(spec, **kwargs):
         return f.read()
 
 
-def push(data, spec):
+def push(data, spec, **kwargs):
     """
     Write a blob of data in memory to a file specified in ``spec['path']``.
     """

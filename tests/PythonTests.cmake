@@ -37,10 +37,11 @@ function(add_python_test case)
   set(name "${case}")
 
   set(_multival_args "")
+  set(_args PLUGINS_ENABLED)
   cmake_parse_arguments(fn "${_options}" "${_args}" "${_multival_args}" ${ARGN})
 
   set(module tests.${case}_test)
-  
+
   if(PYTHON_COVERAGE)
     add_test(
       NAME ${name}
@@ -59,6 +60,12 @@ function(add_python_test case)
   if(PYTHON_COVERAGE)
     set_property(TEST ${name} APPEND PROPERTY DEPENDS py_coverage_reset)
     set_property(TEST py_coverage_combine APPEND PROPERTY DEPENDS ${name})
+  endif()
+
+  if(fn_PLUGINS_ENABLED)
+    set_property(TEST ${name} PROPERTY ENVIRONMENT
+      "ROMANESCO_PLUGINS_ENABLED=${fn_PLUGINS_ENABLED}"
+    )
   endif()
 endfunction()
 

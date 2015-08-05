@@ -1,5 +1,6 @@
 import contextlib
 import functools
+import imp
 import os
 import requests
 import romanesco
@@ -17,6 +18,37 @@ class JobStatus(object):
     SUCCESS = 3
     ERROR = 4
     CANCELED = 5
+
+
+class TerminalColor(object):
+    """
+    Provides a set of values that can be used to color text in the terminal.
+    """
+    ERROR = '\033[1;91m'
+    SUCCESS = '\033[32m'
+    WARNING = '\033[1;33m'
+    INFO = '\033[35m'
+    ENDC = '\033[0m'
+
+    @staticmethod
+    def _color(tag, text):
+        return ''.join([tag, text, TerminalColor.ENDC])
+
+    @staticmethod
+    def error(text):
+        return TerminalColor._color(TerminalColor.ERROR, text)
+
+    @staticmethod
+    def success(text):
+        return TerminalColor._color(TerminalColor.SUCCESS, text)
+
+    @staticmethod
+    def warning(text):
+        return TerminalColor._color(TerminalColor.WARNING, text)
+
+    @staticmethod
+    def info(text):
+        return TerminalColor._color(TerminalColor.INFO, text)
 
 
 class JobManager(object):
@@ -247,3 +279,77 @@ def with_tmpdir(fn):
             kwargs['_tmp_dir'] = tmp_dir
             return fn(*args, **kwargs)
     return wrapped
+
+
+class PluginNotFoundException(Exception):
+    pass
+
+
+def load_plugins(plugins, paths, ignore_errors=False, quiet=False):
+    """
+    Enable a list of plugins.
+
+    :param plugins: The plugins to enable.
+    :type plugins: list or tuple of str
+    :param paths: Plugin search paths.
+    :type paths: list or tuple of str
+    :param ignore_errors: If a plugin fails to load, this determines whether to
+        raise the exception or simply print an error and keep going.
+    :type ignore_errors: bool
+    :param quiet: Optionally suppress printing status messages.
+    :type quiet: bool
+    :return: Set of plugins that were loaded successfully.
+    :rtype: set
+    """
+    loaded = set()
+    for plugin in plugins:
+        try:
+            load_plugin(plugin, paths)
+            loaded.add(plugin)
+            if not quiet:
+                print(TerminalColor.success('Loaded plugin "%s"' % plugin))
+        except Exception:
+            print(TerminalColor.error(
+                    'ERROR: Failed to load plugin "%s":' % plugin))
+            if ignore_errors:
+                traceback.print_exc()
+            else:
+                raise
+
+    return loaded
+
+
+def load_plugin(name, paths):
+    """
+    Enable a plugin for the romanesco runtime.
+
+    :param name: The name of the plugin to load, which is also the name of its
+        containing directory.
+    :type name: str
+    :param paths: Plugin search paths.
+    :type paths: list or tuple of str
+    """
+    if 'romanesco.plugins' not in sys.modules:
+        module = imp.new_module('romanesco.plugins')
+        romanesco.plugins = module
+        sys.modules['romanesco.plugins'] = module
+
+    for path in paths:
+        plugin_dir = os.path.join(path, name)
+        if os.path.isdir(plugin_dir):
+            moduleName = 'romanesco.plugins.' + name
+
+            if moduleName not in sys.modules:
+                fp, pathname, description = imp.find_module(name, [path])
+                module = imp.load_module(moduleName, fp, pathname, description)
+                setattr(romanesco.plugins, name, module)
+
+                if hasattr(module, 'load'):
+                    module.load({
+                        'plugin_dir': plugin_dir
+                    })
+            break
+    else:
+        raise PluginNotFoundException(
+            'Plugin "%s" not found. Looked in: \n   %s\n' % (
+                name, '\n   '.join(paths)))

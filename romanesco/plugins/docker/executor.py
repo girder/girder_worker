@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 
-def _pullImage(image):
+def _pull_image(image):
     """
     Pulls the specified docker image onto this worker.
     """
@@ -22,7 +22,7 @@ def _pullImage(image):
         raise Exception('Docker pull returned code {}.'.format(p.returncode))
 
 
-def _transformPath(inputs, taskInputs, inputId, tmpDir):
+def _transform_path(inputs, taskInputs, inputId, tmpDir):
     """
     If the input specified by inputId is a filepath target, we transform it to
     its absolute path within the docker container (underneath /data).
@@ -39,7 +39,7 @@ def _transformPath(inputs, taskInputs, inputId, tmpDir):
     raise Exception('No task input found with id = ' + inputId)
 
 
-def _expandArgs(args, inputs, taskInputs, tmpDir):
+def _expand_args(args, inputs, taskInputs, tmpDir):
     """
     Expands arguments to the container execution if they reference input
     data. For example, if an input has id=foo, then a container arg of the form
@@ -53,8 +53,8 @@ def _expandArgs(args, inputs, taskInputs, tmpDir):
     for arg in args:
         for inputId in re.findall(regex, arg):
             if inputId in inputs:
-                transformed = _transformPath(inputs, taskInputs, inputId,
-                                             tmpDir)
+                transformed = _transform_path(inputs, taskInputs, inputId,
+                                              tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, transformed)
 
         newArgs.append(arg)
@@ -65,19 +65,19 @@ def _expandArgs(args, inputs, taskInputs, tmpDir):
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
     print('Pulling docker image: ' + image)
-    _pullImage(image)
+    _pull_image(image)
 
     tmpDir = kwargs.get('_tmp_dir')
-    args = _expandArgs(task['container_args'], inputs, task_inputs, tmpDir)
+    args = _expand_args(task['container_args'], inputs, task_inputs, tmpDir)
 
-    printStdErr, printStdOut = True, True
+    print_stderr, print_stdout = True, True
     for id, to in task_outputs.iteritems():
         if id == '_stderr':
             outputs['_stderr']['script_data'] = ''
-            printStdErr = False
+            print_stderr = False
         elif id == '_stdout':
             outputs['_stdout']['script_data'] = ''
-            printStdOut = False
+            print_stdout = False
 
     command = ['docker', 'run', '--rm', '-u', str(os.getuid())]
 
@@ -100,7 +100,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         if p.stdout in ready:
             buf = os.read(p.stdout.fileno(), 1024)
             if buf:
-                if printStdOut:
+                if print_stdout:
                     sys.stdout.write(buf)
                 else:
                     outputs['_stdout']['script_data'] += buf
@@ -109,7 +109,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         if p.stderr in ready:
             buf = os.read(p.stderr.fileno(), 1024)
             if buf:
-                if printStdErr:
+                if print_stderr:
                     sys.stderr.write(buf)
                 else:
                     outputs['_stderr']['script_data'] += buf

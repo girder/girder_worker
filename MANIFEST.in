@@ -8,4 +8,5 @@ include plugin.json
 include README.rst
 include romanesco/worker.dist.cfg
 recursive-include romanesco/format *
+recursive-include romanesco/plugins *
 global-exclude *.pyc *.pyo *.cmake

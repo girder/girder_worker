@@ -2,30 +2,61 @@ import json
 import StringIO
 import tempfile
 import os
+import romanesco.events
 import romanesco.format
 import romanesco.io
 
 from ConfigParser import ConfigParser
-from . import executors, utils, spark
+from . import executors, utils
 
+
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Read the configuration files
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
 config = ConfigParser()
-config.read([os.path.join(os.path.dirname(__file__), f) for f in _cfgs])
+config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Maps task modes to their implementation
-_taskMap = {
-    'docker': executors.docker.run,
-    'python': executors.python.run,
-    'r': executors.r.run,
-    'workflow': executors.workflow.run,
-    'spark.python': executors.pyspark.run
-}
+_task_map = {}
 
-# If we have a spark config section then try to setup spark environment
-if config.has_section('spark') or 'SPARK_HOME' in os.environ:
-    spark.setup_spark_env()
+
+def register_executor(name, fn):
+    """
+    Register a new executor in the romanesco runtime. This is used to map the
+    "mode" field of a task to a function that will execute the task.
+
+    :param name: The value of the mode field that maps to the given function.
+    :type name: str
+    :param fn: The implementing function.
+    :type fn: function
+    """
+    _task_map[name] = fn
+
+
+def unregister_executor(name):
+    """
+    Unregister an executor from the map.
+
+    :param name: The name of the executor to unregister.
+    :type name: str
+    """
+    del _task_map[name]
+
+
+# Register the core executors that are always enabled.
+register_executor('python', executors.python.run)
+register_executor('workflow', executors.workflow.run)
+
+# Load plugins that are enabled in the config file
+_plugins = os.environ.get('ROMANESCO_PLUGINS_ENABLED',
+                          config.get('romanesco', 'plugins_enabled'))
+_plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
+_paths = os.environ.get('ROMANESCO_PLUGIN_LOAD_PATH',
+                        config.get('romanesco', 'plugin_load_path')).split(':')
+_paths = [p for p in _paths if p.strip()]
+_paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
+utils.load_plugins(_plugins, _paths)
 
 
 def load(task_file):
@@ -108,6 +139,12 @@ def convert(type, input, output, **kwargs):
         data = input["data"]
     else:
         converter_type = romanesco.format.converters[type]
+        if not input['format'] in converter_type:
+            raise Exception('Invalid conversion source format "%s/%s".' % (
+                            type, input['format']))
+        if not output['format'] in converter_type[input['format']]:
+            raise Exception('Invalid conversion: "%s/%s -> %s".' % (
+                            type, input['format'], output['format']))
         converter_path = converter_type[input["format"]][output["format"]]
         data_descriptor = input
         for c in converter_path:
@@ -163,16 +200,21 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     task_outputs = {extractId(d): d for d in task.get("outputs", ())}
     mode = task.get("mode", "python")
 
-    if mode not in _taskMap:
+    if mode not in _task_map:
         raise Exception("Invalid mode: %s" % mode)
 
-    # If we are in spark mode then create a spark context. We need to create
-    # it here so we have access to it to do any input conversion.
-    sc = None
-    if mode == 'spark.python' and '_romanesco_spark_context' not in kwargs:
-        spark_conf = task.get('spark_conf', {})
-        sc = spark.create_spark_context(spark_conf)
-        kwargs['_romanesco_spark_context'] = sc
+    info = {
+        'task': task,
+        'task_inputs': task_inputs,
+        'task_outputs': task_outputs,
+        'mode': mode,
+        'inputs': inputs,
+        'outputs': outputs,
+        'auto_convert': auto_convert,
+        'validate': validate,
+        'kwargs': kwargs
+    }
+    romanesco.events.trigger('run.before', info)
 
     try:
         # If some inputs are not there, fill in with defaults
@@ -219,9 +261,9 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
                 outputs[name] = {"format": task_output["format"]}
 
         # Actually run the task for the given mode
-        _taskMap[mode](task=task, inputs=inputs, outputs=outputs,
-                       task_inputs=task_inputs, task_outputs=task_outputs,
-                       auto_convert=auto_convert, validate=validate, **kwargs)
+        _task_map[mode](task=task, inputs=inputs, outputs=outputs,
+                        task_inputs=task_inputs, task_outputs=task_outputs,
+                        auto_convert=auto_convert, validate=validate, **kwargs)
 
         for name, task_output in task_outputs.iteritems():
             d = outputs[name]
@@ -254,7 +296,8 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
             if "script_data" in outputs[name]:
                 del outputs[name]["script_data"]
 
+        romanesco.events.trigger('run.after', info)
+
         return outputs
     finally:
-        if sc:
-            sc.stop()
+        romanesco.events.trigger('run.finally', info)

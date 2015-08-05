@@ -17,7 +17,7 @@ _err = StringIO.StringIO('error message')
 # Monkey patch select.select in the docker task module
 def _mockSelect(r, w, x, *args, **kwargs):
     return r, w, x
-romanesco.executors.docker.select.select = _mockSelect
+romanesco.plugins.docker.executor.select.select = _mockSelect
 
 
 # Monkey patch os.read to simulate subprocess stdout and stderr
@@ -27,7 +27,7 @@ def _mockOsRead(fd, *args, **kwargs):
         return _out.read()
     elif fd == ERR_FD:
         return _err.read()
-romanesco.executors.docker.os.read = _mockOsRead
+romanesco.plugins.docker.executor.os.read = _mockOsRead
 
 
 def setUpModule():
