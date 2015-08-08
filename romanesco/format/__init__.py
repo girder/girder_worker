@@ -189,6 +189,6 @@ def import_default_converters():
     cur_path = os.path.dirname(os.path.realpath(__file__))
     import_converters([os.path.join(cur_path, t) for t in [
         "table", "tree", "string", "number", "image", "directory", "boolean",
-        "netcdf", "python"]])
+        "netcdf", "python", "graph"]])
 
 import_default_converters()
