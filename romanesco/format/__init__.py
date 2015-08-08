@@ -75,7 +75,7 @@ def import_converters(search_paths):
     The output must have type and format ``"boolean"``. The script performs
     the validation and sets the output variable to either true or false.
 
-    Any other ``.json`` files are imported as convertes.
+    Any other ``.json`` files are imported as converters.
     A converter is simply an analysis with one input named ``"input"`` and one
     output named ``"output"``. The input and output should have matching
     type but should be of different formats.

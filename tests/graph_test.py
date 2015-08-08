@@ -21,6 +21,40 @@ class TestGraph(unittest.TestCase):
         }
 
 
+    def test_adjacencylist(self):
+        output = romanesco.convert('graph',
+                                   self.test_input['distances'],
+                                   {'format': 'adjacencylist'})
+
+        expected_edges = set(self.test_input['distances']['data'].edges())
+        actual_edges = set()
+
+        for line in output['data'].splitlines():
+            parts = line.split(' ', 1)
+
+            if len(parts) > 1:
+                source, targets = parts
+
+                for target in targets.split(' '):
+                    edge = (source, target)
+                    self.assertNotIn(edge, actual_edges)
+                    actual_edges.add(edge)
+
+        # @todo handle graceful notification that this is a LOSSY conversion
+        self.assertEqual(expected_edges, actual_edges)
+
+        output = romanesco.convert('graph',
+                                   output,
+                                   {'format': 'graph'})
+
+        # Don't take edges into consideration, because they were lost in the
+        # original conversion
+        self.assertTrue(
+            is_isomorphic(output['data'],
+                          self.test_input['distances']['data'],
+                          edge_match=None))
+
+
     def test_graphml(self):
         # @todo i notice tests asserting output format,
         # is this covered somewhere else?
