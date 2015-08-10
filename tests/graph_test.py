@@ -20,7 +20,6 @@ class TestGraph(unittest.TestCase):
             }
         }
 
-
     def test_adjacencylist(self):
         output = romanesco.convert('graph',
                                    self.test_input['distances'],
@@ -53,7 +52,6 @@ class TestGraph(unittest.TestCase):
             is_isomorphic(output['data'],
                           self.test_input['distances']['data'],
                           edge_match=None))
-
 
     def test_graphml(self):
         # @todo i notice tests asserting output format,
@@ -90,7 +88,6 @@ class TestGraph(unittest.TestCase):
             is_isomorphic(output['data'],
                           self.test_input['distances']['data'],
                           edge_match=numerical_edge_match('distance', 1)))
-
 
 if __name__ == '__main__':
     unittest.main()
