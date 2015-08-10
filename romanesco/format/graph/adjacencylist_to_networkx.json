@@ -1,0 +1,7 @@
+{
+    "name": "Adjacency List to NetworkX",
+    "inputs": [{"name": "input", "type": "graph", "format": "adjacencylist"}],
+    "outputs": [{"name": "output", "type": "graph", "format": "networkx"}],
+    "script_uri": "file://adjacencylist_to_networkx.py",
+    "mode": "python"
+}

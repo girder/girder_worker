@@ -1,0 +1,7 @@
+{
+    "name": "GraphML to NetworkX",
+    "inputs": [{"name": "input", "type": "graph", "format": "graphml"}],
+    "outputs": [{"name": "output", "type": "graph", "format": "networkx"}],
+    "script_uri": "file://graphml_to_networkx.py",
+    "mode": "python"
+}

@@ -1,7 +1,0 @@
-{
-    "name": "Graph to GraphML",
-    "inputs": [{"name": "input", "type": "graph", "format": "graph"}],
-    "outputs": [{"name": "output", "type": "graph", "format": "graphml"}],
-    "script_uri": "file://graph_to_graphml.py",
-    "mode": "python"
-}

@@ -10,7 +10,7 @@ class TestGraph(unittest.TestCase):
         self.GRAPHML_NS = '{http://graphml.graphdrawing.org/xmlns}'
         self.test_input = {
             'distances': {
-                'format': 'graph',
+                'format': 'networkx',
                 'data': nx.Graph([
                     ('US', 'UK', {'distance': 4242}),
                     ('US', 'Australia', {'distance': 9429}),
@@ -44,7 +44,7 @@ class TestGraph(unittest.TestCase):
 
         output = romanesco.convert('graph',
                                    output,
-                                   {'format': 'graph'})
+                                   {'format': 'networkx'})
 
         # Don't take edges into consideration, because they were lost in the
         # original conversion
@@ -82,7 +82,7 @@ class TestGraph(unittest.TestCase):
 
         output = romanesco.convert('graph',
                                    output,
-                                   {'format': 'graph'})
+                                   {'format': 'networkx'})
 
         self.assertTrue(
             is_isomorphic(output['data'],

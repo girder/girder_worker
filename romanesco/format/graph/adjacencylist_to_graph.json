@@ -1,7 +1,0 @@
-{
-    "name": "Adjacency List to Graph",
-    "inputs": [{"name": "input", "type": "graph", "format": "adjacencylist"}],
-    "outputs": [{"name": "output", "type": "graph", "format": "graph"}],
-    "script_uri": "file://adjacencylist_to_graph.py",
-    "mode": "python"
-}
