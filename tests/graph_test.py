@@ -6,6 +6,7 @@ from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
 import unittest
 from lxml import etree
 
+
 def simpleVtkDiGraph():
     g = vtk.vtkMutableDirectedGraph()
 
