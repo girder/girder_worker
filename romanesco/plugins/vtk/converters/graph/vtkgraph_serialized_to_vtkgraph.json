@@ -1,0 +1,7 @@
+{
+    "name": "vtkGraph Serialized to vtkGraph",
+    "inputs": [{"name": "input", "type": "graph", "format": "vtkgraph.serialized"}],
+    "outputs": [{"name": "output", "type": "graph", "format": "vtkgraph"}],
+    "script_uri": "file://vtkgraph_serialized_to_vtkgraph.py",
+    "mode": "python"
+}

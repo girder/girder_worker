@@ -1,8 +1,38 @@
+import os
 import romanesco
+import vtk
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
 import unittest
 from lxml import etree
+
+def simpleVtkDiGraph():
+    g = vtk.vtkMutableDirectedGraph()
+
+    # Create 3 vertices
+    v1 = g.AddVertex()
+    v2 = g.AddVertex()
+    v3 = g.AddVertex()
+
+    # Create a fully connected graph
+    g.AddGraphEdge(v1, v2)
+    g.AddGraphEdge(v2, v3)
+    g.AddGraphEdge(v1, v3)
+
+    # Create the edge weight array
+    weights = vtk.vtkDoubleArray()
+    weights.SetNumberOfComponents(1)
+    weights.SetName("Weights")
+
+    # Set the edge weights
+    weights.InsertNextValue(1.0)
+    weights.InsertNextValue(1.0)
+    weights.InsertNextValue(2.0)
+
+    # Add the edge weight array to the graph
+    g.GetEdgeData().AddArray(weights)
+
+    return g
 
 
 class TestGraph(unittest.TestCase):
@@ -17,8 +47,31 @@ class TestGraph(unittest.TestCase):
                     ('UK', 'Australia', {'distance': 9443}),
                     ('US', 'Japan', {'distance': 6303})
                 ])
+            },
+            'simpleVtkDiGraph': {
+                'format': 'vtkgraph',
+                'data': simpleVtkDiGraph()
             }
         }
+
+    def test_vtkgraph(self):
+        # Test vtkgraph -> vtkgraph.serialized on a simple digraph
+        output = romanesco.convert('graph',
+                                   self.test_input['simpleVtkDiGraph'],
+                                   {'format': 'vtkgraph.serialized'})
+
+        with open(os.path.join('tests', 'data', 'vtkDiGraph.txt'), 'rb') as fixture:
+            self.assertEqual(output['data'], fixture.read())
+
+        # Test networkx -> vtkgraph.serialized on an undirected
+        # graph w/ edge data
+        output = romanesco.convert('graph',
+                                   self.test_input['distances'],
+                                   {'format': 'vtkgraph.serialized'})
+
+        with open(os.path.join('tests', 'data', 'vtkDistancesUndirectedGraph.txt'),
+                  'rb') as fixture:
+            self.assertEqual(output['data'], fixture.read())
 
     def test_adjacencylist(self):
         output = romanesco.convert('graph',
