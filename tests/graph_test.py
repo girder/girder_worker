@@ -72,7 +72,8 @@ class TestGraph(unittest.TestCase):
                                    {'format': 'vtkgraph.serialized'})
 
         with open(os.path.join('tests', 'data', 'vtkDiGraph.txt'), 'rb') as fixture:
-            self.assertEqual(output['data'], fixture.read())
+            self.assertEqual(output['data'].splitlines()[1:],
+                             fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph.serialized on an undirected
         # graph w/ edge data
@@ -82,7 +83,8 @@ class TestGraph(unittest.TestCase):
 
         with open(os.path.join('tests', 'data', 'vtkDistancesUndirectedGraph.txt'),
                   'rb') as fixture:
-            self.assertEqual(output['data'], fixture.read())
+            self.assertEqual(output['data'].splitlines()[1:],
+                             fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph with missing edge attributes
         output = romanesco.convert('graph',
@@ -91,7 +93,8 @@ class TestGraph(unittest.TestCase):
 
         with open(os.path.join('tests', 'data', 'vtkGrantsDirectedGraph.txt'),
                   'rb') as fixture:
-            self.assertEqual(output['data'], fixture.read())
+            self.assertEqual(output['data'].splitlines()[1:],
+                             fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph throws errors for different types of metadata
         with self.assertRaises(Exception):
