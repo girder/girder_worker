@@ -117,7 +117,6 @@ class TestGraph(unittest.TestCase):
                           (0, 2, {'Weights': 2.0}),
                           (1, 2, {'Weights': 1.0})])
 
-
     def test_adjacencylist(self):
         output = romanesco.convert('graph',
                                    self.test_input['distances'],
