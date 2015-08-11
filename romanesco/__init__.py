@@ -1,5 +1,4 @@
 import json
-import StringIO
 import tempfile
 import os
 import romanesco.events

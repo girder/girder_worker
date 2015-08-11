@@ -4,14 +4,14 @@ import os
 import romanesco
 import select
 import shutil
-import StringIO
+import six
 import sys
 import unittest
 
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
-_out = StringIO.StringIO('output message')
-_err = StringIO.StringIO('error message')
+_out = six.StringIO('output message')
+_err = six.StringIO('error message')
 
 
 # Monkey patch select.select in the docker task module
@@ -90,7 +90,7 @@ class TestDockerMode(unittest.TestCase):
         with httmock.HTTMock(fetchMock):
             # Use user-specified filename
             _old = sys.stdout
-            mockedStdOut = StringIO.StringIO()
+            mockedStdOut = six.StringIO()
             sys.stdout = mockedStdOut
             out = romanesco.run(
                 task, inputs=inputs, cleanup=False, validate=False,

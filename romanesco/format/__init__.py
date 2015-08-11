@@ -4,7 +4,6 @@ import glob
 import os
 import math
 import romanesco.io
-from StringIO import StringIO
 
 
 def csv_to_rows(input):

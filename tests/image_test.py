@@ -6,7 +6,7 @@ import os
 import tempfile
 import unittest
 from PIL import Image
-from StringIO import StringIO
+from six import StringIO
 
 
 def compareImages(im1, im2):

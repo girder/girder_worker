@@ -1,7 +1,7 @@
 import csv
-import StringIO
+import six
 
-output = StringIO.StringIO()
+output = six.StringIO()
 writer = csv.DictWriter(output, input["fields"], delimiter='\t')
 writer.writerow({d: d for d in input["fields"]})
 for d in input["rows"]:
