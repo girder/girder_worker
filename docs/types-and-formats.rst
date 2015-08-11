@@ -164,6 +164,28 @@ A hierarchy of nodes with node and/or link attributes. Formats:
 .. _vtkTree: http://www.vtk.org/doc/nightly/html/classvtkTree.html
 .. _vtkTreeWriter: http://www.vtk.org/doc/nightly/html/classvtkTreeWriter.html
 
+``"graph"`` type
+-----------------------
+A collection of nodes and edges with optional attributes. Formats:
+
+:``"networkx"``: A representation of a graph using an object of type nx.Graph_ (or any of its subclasses).
+
+:``"networkx.json"``: A JSON representation of a NetworkX graph.
+
+:``"graphml"``: An XML String representing a valid GraphML_ representation.
+
+:``"adjacencylist"``: A string representing a very simple `adjacency list`_ which does not preserve node or edge attributes.
+
+:``"vtkgraph"``: A vtkGraph_.
+
+:``"vtkgraph.serialized"``: A vtkGraph serialized with vtkGraphWriter_.
+
+.. _nx.Graph: https://networkx.github.io/documentation/latest/reference/classes.graph.html
+.. _GraphML: https://networkx.github.io/documentation/latest/reference/readwrite.graphml.html
+.. _`adjacency list`: https://networkx.github.io/documentation/latest/reference/readwrite.adjlist.html#format
+.. _vtkGraph: http://www.vtk.org/doc/nightly/html/classvtkGraph.html
+.. _vtkGraphWriter: http://www.vtk.org/doc/nightly/html/classvtkGraphWriter.html
+
 ``"image"`` type
 -----------------------
 A 2D matrix of uniformly-typed numbers. Formats:
