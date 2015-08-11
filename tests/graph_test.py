@@ -65,6 +65,7 @@ class TestGraph(unittest.TestCase):
         }
 
     def test_vtkgraph(self):
+        # todo test empty graphs, graphs with no edges, etc
         # Test vtkgraph -> vtkgraph.serialized on a simple digraph
         output = romanesco.convert('graph',
                                    self.test_input['simpleVtkDiGraph'],
@@ -101,6 +102,20 @@ class TestGraph(unittest.TestCase):
                                             ('B', 'C', {'value': '10'})
                                         ])},
                                        {'format': 'vtkgraph'})
+
+        # Test vtkgraph -> networkx
+        output = romanesco.convert('graph',
+                                   self.test_input['simpleVtkDiGraph'],
+                                   {'format': 'networkx'})
+
+        self.assertIsInstance(output['data'], nx.DiGraph)
+
+        self.assertEqual(len(output['data'].nodes()), 3)
+        self.assertEqual(len(output['data'].edges()), 3)
+        self.assertEqual(sorted(output['data'].edges(data=True)),
+                         [(0, 1, {'Weights': 1.0}),
+                          (0, 2, {'Weights': 2.0}),
+                          (1, 2, {'Weights': 1.0})])
 
 
     def test_adjacencylist(self):
