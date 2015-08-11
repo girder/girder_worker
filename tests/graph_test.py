@@ -49,6 +49,15 @@ class TestGraph(unittest.TestCase):
                     ('US', 'Japan', {'distance': 6303})
                 ])
             },
+            'grants': {
+                'format': 'networkx',
+                'data': nx.DiGraph([
+                    ('US', 'Foundations', {'amount': 3.4,
+                                           'year': 2004}),
+                    ('US', 'NGOs', {'amount': 9.7}),
+                    ('US', 'Corporations', {'amount': 4.9})
+                ])
+            },
             'simpleVtkDiGraph': {
                 'format': 'vtkgraph',
                 'data': simpleVtkDiGraph()
@@ -73,6 +82,26 @@ class TestGraph(unittest.TestCase):
         with open(os.path.join('tests', 'data', 'vtkDistancesUndirectedGraph.txt'),
                   'rb') as fixture:
             self.assertEqual(output['data'], fixture.read())
+
+        # Test networkx -> vtkgraph with missing edge attributes
+        output = romanesco.convert('graph',
+                                   self.test_input['grants'],
+                                   {'format': 'vtkgraph.serialized'})
+
+        with open(os.path.join('tests', 'data', 'vtkGrantsDirectedGraph.txt'),
+                  'rb') as fixture:
+            self.assertEqual(output['data'], fixture.read())
+
+        # Test networkx -> vtkgraph throws errors for different types of metadata
+        with self.assertRaises(Exception):
+            output = romanesco.convert('graph',
+                                       {'format': 'networkx',
+                                        'data': nx.Graph([
+                                            ('A', 'B', {'value': 10}),
+                                            ('B', 'C', {'value': '10'})
+                                        ])},
+                                       {'format': 'vtkgraph'})
+
 
     def test_adjacencylist(self):
         output = romanesco.convert('graph',
