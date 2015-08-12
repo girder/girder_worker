@@ -1,3 +1,4 @@
+import json
 import os
 import romanesco
 import vtk
@@ -63,8 +64,32 @@ class TestGraph(unittest.TestCase):
             'simpleVtkDiGraph': {
                 'format': 'vtkgraph',
                 'data': simpleVtkDiGraph()
+            },
+            'alphabetGraph': {
+                'format': 'clique.json'
             }
         }
+
+        with open(os.path.join('tests', 'data', 'clique.json'), 'rb') as fixture:
+            self.test_input['alphabetGraph']['data'] = fixture.read()
+
+    def test_clique(self):
+        output = romanesco.convert('graph',
+                                   self.test_input['alphabetGraph'],
+                                   {'format': 'networkx'})
+
+        self.assertEqual(set([n[1]['name'] for n in output['data'].nodes(data=True)]),
+                         set(['a', 'b', 'c', 'd']))
+        self.assertEqual(len(output['data'].edges()), 3)
+        self.assertEqual(output['data'].degree('55ba5019f8883b5bf35f3e30'), 0)
+
+        output = romanesco.convert('graph',
+                                   output,
+                                   {'format': 'clique.json'})
+
+        with open(os.path.join('tests', 'data', 'clique.json'), 'rb') as fixture:
+            self.assertEqual(sorted(json.loads(fixture.read())),
+                             sorted(json.loads(output['data'])))
 
     def test_vtkgraph(self):
         # todo test empty graphs, graphs with no edges, etc

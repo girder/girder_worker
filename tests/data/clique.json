@@ -1,0 +1,77 @@
+[
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e2d"
+        },
+        "data": {
+            "name": "a"
+        },
+        "type": "node"
+    },
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e2e"
+        },
+        "data": {
+            "name": "b"
+        },
+        "type": "node"
+    },
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e2f"
+        },
+        "data": {
+            "name": "c"
+        },
+        "type": "node"
+    },
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e30"
+        },
+        "data": {
+            "name": "d"
+        },
+        "type": "node"
+    },
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e47"
+        },
+        "source": {
+            "$oid": "55ba5019f8883b5bf35f3e2d"
+        },
+        "target": {
+            "$oid": "55ba5019f8883b5bf35f3e2e"
+        },
+        "data": {
+            "name": "a -> b"
+        },
+        "type": "link"
+    },
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e48"
+        },
+        "source": {
+            "$oid": "55ba5019f8883b5bf35f3e2d"
+        },
+        "target": {
+            "$oid": "55ba5019f8883b5bf35f3e2f"
+        },
+        "type": "link"
+    },
+    {
+        "_id": {
+            "$oid": "55ba5019f8883b5bf35f3e49"
+        },
+        "source": {
+            "$oid": "55ba5019f8883b5bf35f3e2e"
+        },
+        "target": {
+            "$oid": "55ba5019f8883b5bf35f3e2f"
+        },
+        "type": "link"
+    }
+]
