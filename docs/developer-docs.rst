@@ -142,4 +142,4 @@ release is described here.
         python setup.py sdist upload
 
 .. note :: The first time you create a release, you will need to register to PyPI
-    before you can run the upload step. To do so, simply run ``python setup.py sdist regsiter``.
+    before you can run the upload step. To do so, simply run ``python setup.py sdist register``.
