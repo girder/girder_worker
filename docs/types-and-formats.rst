@@ -172,6 +172,8 @@ A collection of nodes and edges with optional attributes. Formats:
 
 :``"networkx.json"``: A JSON representation of a NetworkX graph.
 
+:``"clique.json"``: A JSON representation of a Clique_ graph.
+
 :``"graphml"``: An XML String representing a valid GraphML_ representation.
 
 :``"adjacencylist"``: A string representing a very simple `adjacency list`_ which does not preserve node or edge attributes.
@@ -184,6 +186,7 @@ A collection of nodes and edges with optional attributes. Formats:
 :``"vtkgraph.serialized"``: A vtkGraph serialized with vtkGraphWriter_.
 
 .. _nx.Graph: https://networkx.github.io/documentation/latest/reference/classes.graph.html
+.. _Clique: https://github.com/Kitware/clique
 .. _GraphML: https://networkx.github.io/documentation/latest/reference/readwrite.graphml.html
 .. _`adjacency list`: https://networkx.github.io/documentation/latest/reference/readwrite.adjlist.html#format
 .. _vtkGraph: http://www.vtk.org/doc/nightly/html/classvtkGraph.html
