@@ -178,6 +178,9 @@ A collection of nodes and edges with optional attributes. Formats:
 
 :``"vtkgraph"``: A vtkGraph_.
 
+.. note :: vtkGraphs lose their actual node values as they are represented by their index. In addition, nodes and edges are given all metadata attributes with defaults if they do not specify the metadatum themselves.
+  This is noted further in :py:mod:`romanesco.plugins.vtk.converters.graph.networkx_to_vtkgraph`
+
 :``"vtkgraph.serialized"``: A vtkGraph serialized with vtkGraphWriter_.
 
 .. _nx.Graph: https://networkx.github.io/documentation/latest/reference/classes.graph.html
