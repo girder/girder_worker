@@ -92,7 +92,6 @@ class TestGraph(unittest.TestCase):
                              sorted(json.loads(output['data'])))
 
     def test_vtkgraph(self):
-        # todo test empty graphs, graphs with no edges, etc
         # Test vtkgraph -> vtkgraph.serialized on a simple digraph
         output = romanesco.convert('graph',
                                    self.test_input['simpleVtkDiGraph'],
@@ -166,7 +165,6 @@ class TestGraph(unittest.TestCase):
                     self.assertNotIn(edge, actual_edges)
                     actual_edges.add(edge)
 
-        # @todo handle graceful notification that this is a LOSSY conversion
         self.assertEqual(expected_edges, actual_edges)
 
         output = romanesco.convert('graph',
@@ -181,8 +179,6 @@ class TestGraph(unittest.TestCase):
                           edge_match=None))
 
     def test_graphml(self):
-        # @todo i notice tests asserting output format,
-        # is this covered somewhere else?
         output = romanesco.convert('graph',
                                    self.test_input['distances'],
                                    {'format': 'graphml'})
@@ -190,7 +186,6 @@ class TestGraph(unittest.TestCase):
             data='distance'))
         actual_edges = set()
 
-        # @todo covered by validator?
         self.assertIsInstance(output['data'], (str, unicode))
         tree = etree.fromstring(output['data'])
         self.assertEqual(len(tree), 2)
