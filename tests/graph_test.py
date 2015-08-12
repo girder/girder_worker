@@ -51,9 +51,11 @@ class TestGraph(unittest.TestCase):
             },
             'grants': {
                 'format': 'networkx',
-                'data': nx.DiGraph([
+                'data': nx.MultiDiGraph([
                     ('US', 'Foundations', {'amount': 3.4,
                                            'year': 2004}),
+                    ('US', 'Foundations', {'amount': 3.3,
+                                           'year': 2005}),
                     ('US', 'NGOs', {'amount': 9.7}),
                     ('US', 'Corporations', {'amount': 4.9})
                 ])

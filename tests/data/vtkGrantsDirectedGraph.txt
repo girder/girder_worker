@@ -6,13 +6,14 @@ POINTS 4 float
 0 0 0 0 0 0 0 0 0 
 0 0 0 
 VERTICES 4
-EDGES 3
+EDGES 4
+2 1
 2 1
 2 0
 2 3
-EDGE_DATA 3
+EDGE_DATA 4
 FIELD FieldData 2
-amount 1 3 double
-3.4 4.9 9.7 
-year 1 3 double
-2004 0 0 
+amount 1 4 double
+3.4 3.3 4.9 9.7 
+year 1 4 double
+2004 2005 0 0 
