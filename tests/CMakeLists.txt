@@ -39,6 +39,7 @@ if(PYTHON_STYLE_TESTS)
   add_python_pep8_test(pep8_style_core_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
+add_python_test(format)
 add_python_test(graph)
 add_python_test(image)
 add_python_test(io)
@@ -55,6 +56,7 @@ add_docstring_test(romanesco.specs.spec)
 add_docstring_test(romanesco.specs.task)
 add_docstring_test(romanesco.specs.port)
 add_docstring_test(romanesco.specs.port_list)
+add_docstring_test(romanesco.format)
 
 # Look for plugin.cmake in plugin dirs, include if they exist
 file(GLOB pluginDirs "${PROJECT_SOURCE_DIR}/romanesco/plugins/*")

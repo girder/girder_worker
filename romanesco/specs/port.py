@@ -113,12 +113,12 @@ class Port(Spec):
 
     def __check_types(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Ensure the data format given is known."""
-        if key in ('type', None) and self['type'] not in format.converters:
+        if key in ('type', None) and not format.has_converter(self['type']):
             raise ValueError(
                 'Unknown type "%s"' % (self['type'],)
             )
-        elif key in ('format', None) and \
-                self['format'] not in format.converters[self['type']]:
+        elif key in ('format', None) and not format.has_converter(self['type'],
+                                                                  self['format']):
             raise ValueError(
                 'Unknown format "%s.%s"' % (self['type'], self['format'])
             )

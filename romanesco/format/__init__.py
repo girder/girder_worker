@@ -4,6 +4,11 @@ import glob
 import os
 import math
 import romanesco.io
+import networkx as nx
+from networkx.algorithms.shortest_paths.generic import shortest_path
+from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
+
+conv_graph = nx.DiGraph()
 
 
 def csv_to_rows(input):
@@ -54,17 +59,97 @@ def csv_to_rows(input):
 
     return output
 
-converters = {}
-validators = {}
+
+def converter_path(source, target):
+    """Gives the shortest path that should be taken to go from a source
+    type/format to a target type/format.
+
+    Throws a NetworkXNoPath exception if it can not find a path.
+
+    Returns a list of edges in the order they should be traversed.
+    """
+    # These are to ensure an exception gets thrown if source/target don't exist
+    get_validator(*source)
+    get_validator(*target)
+
+    path = shortest_path(conv_graph, source, target)
+    path = zip(path[:-1], path[1:])
+
+    return [get_edge(u, v)[2] for (u, v) in path]
+
+
+def has_converter(type, format=None, out_type=None, out_format=None):
+    """Determines if any converters exist from a given type, and possibly format.
+
+    Further specificity can determine if a converter exists from a given type/format, to
+    any other type/format.
+
+    Underneath, this just traverses the edges until it finds one which matches the
+    arguments.
+    """
+    for ((u_type, u_format), (v_type, v_format)) in conv_graph.edges():
+        if u_type != type:
+            continue
+
+        if format and u_format != format:
+            continue
+
+        if out_type and v_type != out_type:
+            continue
+
+        if out_format and v_format != out_format:
+            continue
+
+        return True
+
+    return False
+
+
+def get_edge(u, v):
+    for edge in conv_graph.edges([u], data=True):
+        if edge[1] == v:
+            return edge
+
+    return None
+
+
+def get_validator(type, format):
+    """Gets a validator node from the conversion graph by its type and format.
+
+    >>> validator = get_validator('string', 'text')
+
+    Returns a tuple containing 2 elements
+    >>> len(validator)
+    2
+
+    First is the type/format
+    >>> validator[0]
+    (u'string', u'text')
+
+    and second is the validator itself
+    >>> validator[1].keys()
+    ['validator', 'type', 'format']
+
+    If the validator doesn't exist, an exception will be raised
+    >>> get_validator('foo', 'bar')
+    Traceback (most recent call last):
+       ...
+    Exception: No such validator foo/bar
+    """
+    for (node, data) in conv_graph.nodes(data=True):
+        if 'type' in data and data['type'] == type and \
+           'format' in data and data['format'] == format:
+            return (node, data)
+
+    raise Exception('No such validator %s/%s' % (type, format))
 
 
 def import_converters(search_paths):
     """
     Import converters and validators from the specified search paths.
-    These functions are loaded into the dictionaries
-    ``romanesco.format.converters`` and ``romanesco.format.validators``
-    and are made available to :py:func:`romanesco.convert`
-    and :py:func:`romanesco.isvalid`.
+    These functions are loaded into ``romanesco.format.conv_graph`` with
+    validators representing nodes, and converters representing directed
+    edges.
 
     Any files in a search path matching ``validate_*.json`` are loaded
     as validators. Validators should be fast (ideally O(1)) algorithms
@@ -86,12 +171,9 @@ def import_converters(search_paths):
     if not isinstance(search_paths, (list, tuple)):
         search_paths = [search_paths]
 
-    prevdir = os.getcwd()
-    for path in search_paths:
-        os.chdir(path)
-        for filename in glob.glob(os.path.join(path, "*.json")):
-            with open(filename) as f:
-                analysis = json.load(f)
+    def get_analysis(filename):
+        with open(filename) as f:
+            analysis = json.load(f)
 
             if "script" not in analysis:
                 analysis["script"] = romanesco.io.fetch({
@@ -99,53 +181,38 @@ def import_converters(search_paths):
                     "url": analysis["script_uri"]
                 })
 
-            if os.path.basename(filename).startswith("validate_"):
+        return analysis
 
-                # This is a validator
-                in_type = analysis["inputs"][0]["type"]
-                in_format = analysis["inputs"][0]["format"]
-                if in_type not in validators:
-                    validators[in_type] = {}
-                validators[in_type][in_format] = analysis
+    prevdir = os.getcwd()
+    for path in search_paths:
+        os.chdir(path)
+        validator_files = set(glob.glob(os.path.join(path, "validate_*.json")))
+        converter_files = set(glob.glob(os.path.join(path, "*.json"))) - validator_files
 
-            else:
+        for filename in validator_files:
+            analysis = get_analysis(filename)
 
-                # This is a converter
-                in_type = analysis["inputs"][0]["type"]
-                in_format = analysis["inputs"][0]["format"]
-                out_format = analysis["outputs"][0]["format"]
-                if in_type not in converters:
-                    converters[in_type] = {}
-                analysis_type = converters[in_type]
-                if in_format not in analysis_type:
-                    analysis_type[in_format] = {}
-                input_format = analysis_type[in_format]
-                if out_format not in input_format:
-                    input_format[out_format] = {}
-                input_format[out_format] = [analysis]
+            in_type = analysis["inputs"][0]["type"]
+            in_format = analysis["inputs"][0]["format"]
+
+            conv_graph.add_node((in_type, in_format), {
+                "type": analysis["inputs"][0]["type"],
+                "format": analysis["inputs"][0]["format"],
+                "validator": analysis
+            })
+
+        for filename in converter_files:
+            analysis = get_analysis(filename)
+
+            in_type = analysis["inputs"][0]["type"]
+            in_format = analysis["inputs"][0]["format"]
+            out_format = analysis["outputs"][0]["format"]
+
+            conv_graph.add_edge(get_validator(in_type, in_format)[0],
+                                get_validator(in_type, out_format)[0],
+                                analysis)
 
     os.chdir(prevdir)
-
-    max_steps = 3
-    for i in range(max_steps):
-        to_add = []
-        for analysis_type, analysis_type_values in converters.iteritems():
-            for input_format, input_format_values in \
-                    analysis_type_values.iteritems():
-                for output_format, converter in \
-                        input_format_values.iteritems():
-                    if output_format in analysis_type_values:
-                        output_formats = analysis_type_values[output_format]
-                        for next_output_format, next_converter in \
-                                output_formats.iteritems():
-                            if input_format != next_output_format and \
-                                    next_output_format not in \
-                                    input_format_values:
-                                to_add.append((analysis_type, input_format,
-                                               next_output_format,
-                                               converter + next_converter))
-        for c in to_add:
-            converters[c[0]][c[1]][c[2]] = c[3]
 
 
 def print_conversion_graph():
@@ -155,12 +222,14 @@ def print_conversion_graph():
     """
 
     print "digraph g {"
-    for analysis_type, analysis_type_values in converters.iteritems():
-        for input_format, input_format_values in \
-                analysis_type_values.iteritems():
-            for output_format in input_format_values:
-                print '"' + analysis_type + ":" + input_format + '" -> "' \
-                    + analysis_type + ":" + output_format + '"'
+
+    for node in conv_graph.nodes():
+        paths = single_source_shortest_path(conv_graph, node)
+        reachable_conversions = [p for p in paths.keys() if p != node]
+
+        for dest in reachable_conversions:
+            print '"%s:%s" -> "%s:%s"' % (node[0], node[1], dest[0], dest[1])
+
     print "}"
 
 
@@ -171,12 +240,13 @@ def print_conversion_table():
     """
 
     print "from,to"
-    for analysis_type, analysis_type_values in converters.iteritems():
-        for input_format, input_format_values in \
-                analysis_type_values.iteritems():
-            for output_format in input_format_values:
-                print analysis_type + ":" + input_format + "," \
-                    + analysis_type + ":" + output_format
+
+    for node in conv_graph.nodes():
+        paths = single_source_shortest_path(conv_graph, node)
+        reachable_conversions = [p for p in paths.keys() if p != node]
+
+        for dest in reachable_conversions:
+            print '%s:%s,%s:%s' % (node[0], node[1], dest[0], dest[1])
 
 
 def import_default_converters():
