@@ -204,6 +204,11 @@ def load(info):
                 'message': sys.exc_info(),
                 'trace': sys.exc_info()[2]
             }
+    romanescoRunStatus.description = (
+        Description('Show the status of a romanesco task')
+        .param('jobId', 'The job ID for this task.', paramType='path')
+        .param('itemId', 'Not used.', paramType='path'))
+
 
     @access.public
     def romanescoRunResult(itemId, jobId, params):
