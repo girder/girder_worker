@@ -111,6 +111,8 @@ VTK
     * ``tree/nested`` |ba| ``tree/vtktree``
     * ``tree/vtktree`` |ra| ``tree/newick``
     * ``tree/vtktree`` |ba| ``tree/vtktree.serialized``
+    * ``graph/networkx`` |ba| ``graph/vtkgraph``
+    * ``graph/vtkgraph`` |ba| ``graph/vtkgraph.serialized``
 
 * **Validators added:**
     * ``geometry/vtkpolydata``
@@ -119,6 +121,8 @@ VTK
     * ``table/vtktable.serialized``
     * ``tree/vtktree``
     * ``tree/vtktree.serialized``
+    * ``graph/vtkgraph``
+    * ``graph/vtkgraph.serialized``
 
 
     .. |ra| unicode:: 8594 .. right arrow

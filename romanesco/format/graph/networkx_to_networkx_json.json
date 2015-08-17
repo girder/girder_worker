@@ -1,0 +1,7 @@
+{
+    "name": "NetworkX to NetworkX JSON",
+    "inputs": [{"name": "input", "type": "graph", "format": "networkx"}],
+    "outputs": [{"name": "output", "type": "graph", "format": "networkx.json"}],
+    "script_uri": "file://networkx_to_networkx_json.py",
+    "mode": "python"
+}

@@ -1,0 +1,7 @@
+{
+    "name": "Clique JSON to NetworkX",
+    "inputs": [{"name": "input", "type": "graph", "format": "clique.json"}],
+    "outputs": [{"name": "output", "type": "graph", "format": "networkx"}],
+    "script_uri": "file://clique_json_to_networkx.py",
+    "mode": "python"
+}

@@ -68,6 +68,7 @@ def load(params):
     converters_dir = os.path.join(params['plugin_dir'], 'converters')
     romanesco.format.import_converters([
         os.path.join(converters_dir, 'geometry'),
+        os.path.join(converters_dir, 'graph'),
         os.path.join(converters_dir, 'table'),
         os.path.join(converters_dir, 'tree')
     ])

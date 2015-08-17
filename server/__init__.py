@@ -6,7 +6,7 @@ import sys
 import time
 
 from celery.result import AsyncResult
-from StringIO import StringIO
+from six import StringIO
 from girder.constants import AccessType
 import sys
 

@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "graph", "format": "networkx"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "import networkx\noutput = isinstance(input, networkx.Graph)",
+    "mode": "python"
+}

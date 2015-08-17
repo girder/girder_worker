@@ -4,7 +4,6 @@ import glob
 import os
 import math
 import romanesco.io
-from StringIO import StringIO
 
 
 def csv_to_rows(input):
@@ -75,7 +74,7 @@ def import_converters(search_paths):
     The output must have type and format ``"boolean"``. The script performs
     the validation and sets the output variable to either true or false.
 
-    Any other ``.json`` files are imported as convertes.
+    Any other ``.json`` files are imported as converters.
     A converter is simply an analysis with one input named ``"input"`` and one
     output named ``"output"``. The input and output should have matching
     type but should be of different formats.
@@ -189,6 +188,6 @@ def import_default_converters():
     cur_path = os.path.dirname(os.path.realpath(__file__))
     import_converters([os.path.join(cur_path, t) for t in [
         "table", "tree", "string", "number", "image", "directory", "boolean",
-        "netcdf", "python"]])
+        "netcdf", "python", "graph"]])
 
 import_default_converters()
