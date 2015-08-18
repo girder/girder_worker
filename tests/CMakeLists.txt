@@ -58,10 +58,9 @@ add_docstring_test(romanesco.specs.spec)
 add_docstring_test(romanesco.specs.task)
 add_docstring_test(romanesco.specs.port)
 add_docstring_test(romanesco.specs.port_list)
-# add_docstring_test(romanesco.specs.operators)
 
 # Look for plugin.cmake in plugin dirs, include if they exist
-file(GLOB pluginDirs "${PROJECT_SOURCE_DIR}/plugins/*")
+file(GLOB pluginDirs "${PROJECT_SOURCE_DIR}/romanesco/plugins/*")
 foreach(pluginDir ${pluginDirs})
   if(EXISTS "${pluginDir}/plugin.cmake")
     get_filename_component(pluginName "${pluginDir}" NAME)
