@@ -1,6 +1,7 @@
 import imp
 import json
 import sys
+import tempfile
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -12,7 +13,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         custom.__dict__[name] = inputs[name]["script_data"]
 
     if task.get('debug', kwargs.get('debug', False)):
-        import tempfile
         debug_path = tempfile.mktemp()
         with open(debug_path, 'wb') as fh:
             fh.write(task["script"])
