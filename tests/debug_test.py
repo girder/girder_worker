@@ -9,6 +9,7 @@ import math
 
 _tmpfiles = []
 
+
 def _mockTempfile():
     global _tmpfiles
     out = mktemp()
@@ -59,10 +60,8 @@ class TestDebug(unittest.TestCase):
         os.chdir(cur_path)
         self.analysis_path = os.path.join(cur_path, "..", "analysis")
 
-
     def tearDown(self):
         os.chdir(self.prevdir)
-
 
     def test_analysis_debug(self):
         """Runs the table json test but with asserts for analysis debugging"""
@@ -78,7 +77,6 @@ class TestDebug(unittest.TestCase):
         # File contents equals script
         with open(_tmpfiles[0], "r") as fh:
             self.assertEquals(fh.read(), self.script)
-
 
     def test_kwargs_debug(self):
         """Runs the table json test but with asserts for kwarg debugging"""
