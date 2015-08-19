@@ -1,6 +1,5 @@
 import romanesco
 import unittest
-import rpy2
 
 
 class TestR(unittest.TestCase):

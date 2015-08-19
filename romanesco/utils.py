@@ -274,6 +274,9 @@ def with_tmpdir(fn):
     """
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
+        if '_tmp_dir' in kwargs:
+            return fn(*args, **kwargs)
+
         cleanup = kwargs.get('cleanup', True)
         with tmpdir(cleanup=cleanup) as tmp_dir:
             kwargs['_tmp_dir'] = tmp_dir
