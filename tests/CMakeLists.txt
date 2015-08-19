@@ -39,7 +39,6 @@ if(PYTHON_STYLE_TESTS)
   add_python_pep8_test(pep8_style_core_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
-add_python_test(geometry PLUGINS_ENABLED vtk)
 add_python_test(graph)
 add_python_test(image)
 add_python_test(io)
