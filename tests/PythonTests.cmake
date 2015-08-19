@@ -37,10 +37,16 @@ function(add_python_test case)
   set(name "${case}")
 
   set(_multival_args "")
-  set(_args PLUGINS_ENABLED)
+  set(_args PLUGIN PLUGINS_ENABLED)
   cmake_parse_arguments(fn "${_options}" "${_args}" "${_multival_args}" ${ARGN})
 
-  set(module tests.${case}_test)
+
+  if (fn_PLUGIN)
+    set(name "plugins.${fn_PLUGIN}.${case}")
+    set(module romanesco.plugins.${fn_PLUGIN}.tests.${case}_test)
+  else()
+    set(module tests.${case}_test)
+  endif()
 
   if(PYTHON_COVERAGE)
     add_test(

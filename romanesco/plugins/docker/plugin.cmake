@@ -1,1 +1,1 @@
-add_python_test(docker PLUGINS_ENABLED docker)
+add_python_test(docker PLUGIN docker PLUGINS_ENABLED docker)
