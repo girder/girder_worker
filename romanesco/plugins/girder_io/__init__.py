@@ -12,7 +12,7 @@ def _init_client(spec, require_token=False):
         'http': 80,
         'https': 443
     }[scheme])
-    api_root = spec.get('apiRoot', '/api/v1')
+    api_root = spec.get('api_root', '/api/v1')
     client = girder_client.GirderClient(
         host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
 
@@ -25,7 +25,7 @@ def _init_client(spec, require_token=False):
 
 
 def fetch_handler(spec, **kwargs):
-    resource_type = spec.get('resourceType', 'file').lower()
+    resource_type = spec.get('resource_type', 'file').lower()
 
     if 'id' not in spec:
         raise Exception('Must pass a resource ID for girder inputs.')
@@ -42,29 +42,29 @@ def fetch_handler(spec, **kwargs):
     elif resource_type == 'file':
         client.downloadFile(spec['id'], dest)
     else:
-        raise Exception('Invalid resourceType: ' + resource_type)
+        raise Exception('Invalid resource type: ' + resource_type)
 
     return dest
 
 
 def push_handler(data, spec, **kwargs):
-    parent_type = spec.get('parentType', 'folder')
+    parent_type = spec.get('parent_type', 'folder')
     name = spec.get('name', os.path.basename(data))
     description = spec.get('description')
 
-    if 'parentId' not in spec:
-        raise Exception('Must pass parentId for girder outputs.')
+    if 'parent_id' not in spec:
+        raise Exception('Must pass parent ID for girder outputs.')
 
     client = _init_client(spec, require_token=True)
 
     if parent_type == 'folder':
         item = client.createItem(
-            spec['parentId'], name, description=description)
+            spec['parent_id'], name, description=description)
         client.uploadFileToItem(item['_id'], data)
     elif parent_type == 'item':
-        client.uploadFileToItem(spec['parentId'], data)
+        client.uploadFileToItem(spec['parent_id'], data)
     else:
-        raise Exception('Invalid parentType: ' + parent_type)
+        raise Exception('Invalid parent type: ' + parent_type)
 
 
 def load(params):

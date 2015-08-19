@@ -27,7 +27,7 @@ class TestGirderIo(unittest.TestCase):
             api_root = '/girder/api/v1'
             self.assertEqual(request.headers['Girder-Token'], 'foo')
             self.assertEqual(url.scheme, 'http')
-            self.assertTrue(url.path.startswith(api_root))
+            self.assertTrue(url.path.startswith(api_root), url.path)
             self.assertEqual(url.netloc, 'localhost:8080')
 
             if url.path == api_root + '/item/item_id/files':
@@ -68,8 +68,8 @@ class TestGirderIo(unittest.TestCase):
                 'host': 'localhost',
                 'scheme': 'http',
                 'port': 8080,
-                'apiRoot': '/girder/api/v1',
-                'resourceType': 'item',
+                'api_root': '/girder/api/v1',
+                'resource_type': 'item',
                 'id': 'item_id',
                 'type': 'string',
                 'format': 'text',
@@ -95,9 +95,9 @@ class TestGirderIo(unittest.TestCase):
                     'host': 'localhost',
                     'scheme': 'http',
                     'port': 8080,
-                    'apiRoot': '/girder/api/v1',
-                    'parentType': 'folder',
-                    'parentId': 'some_folder_id',
+                    'api_root': '/girder/api/v1',
+                    'parent_type': 'folder',
+                    'parent_id': 'some_folder_id',
                     'format': 'text',
                     'type': 'string',
                     'token': 'foo'
