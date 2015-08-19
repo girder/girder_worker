@@ -40,7 +40,7 @@ if(PYTHON_STYLE_TESTS)
 endif()
 
 add_python_test(geometry PLUGINS_ENABLED vtk)
-add_python_test(graph PLUGINS_ENABLED vtk)
+add_python_test(graph)
 add_python_test(image)
 add_python_test(io)
 add_python_test(number)
