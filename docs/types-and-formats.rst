@@ -28,13 +28,14 @@ particular form, loaded with
 :py:func:`romanesco.format.import_converters`. See that function's documentation
 for how to define validators and converters.
 
-The following are the types available to the Romanesco system by default.
-Add or remove files and directories in the ``romanesco/format`` directory
-to customize the available formats.
+The following are the types available in Romanesco core. Plugins may add their own
+types and formats using the ``romanesco.format.import_converters`` function. See
+the :doc:`plugins` section for details on plugin-specific types and formats.
+
 
 ``"boolean"`` type
 -----------------------
-A truthy or falsy value. Formats:
+A true or false value. Formats:
 
 :``"boolean"``: An in-memory Python ``bool``.
 
@@ -97,16 +98,6 @@ A list of rows with ordered, named column attributes. Formats:
 :``"tsv"``: A string containing the contents of a tab-separated TSV file.
     Column headers are detected the same as for the ``"csv"`` format.
 
-:``"r.dataframe"``: An R data frame. If the first column contains unique values,
-    these are set as the row names of the data frame.
-
-:``"vtktable"``: A vtkTable_.
-
-:``"vtktable.serialized"``: A vtkTable serialized with vtkTableWriter_.
-
-.. _`has_header`: https://docs.python.org/3.1/library/csv.html#csv.Sniffer.has_header
-.. _vtkTable: http://www.vtk.org/doc/nightly/html/classvtkTable.html
-.. _vtkTableWriter: http://www.vtk.org/doc/nightly/html/classvtkTableWriter.html
 
 ``"tree"`` type
 -----------------------
@@ -149,20 +140,12 @@ A hierarchy of nodes with node and/or link attributes. Formats:
 
 :``"nested.json"``: The equivalent JSON representation of the ``"nested"`` format.
 
-:``"vtktree"``: A vtkTree_.
-
-:``"vtktree.serialized"``: A vtkTree serialized with vtkTreeWriter_.
-
-:``"r.apetree"``: A tree in the R package ``"ape"`` format.
-
 :``"newick"``: A tree in Newick format.
 
 :``"nexus"``: A tree in Nexus format.
 
 :``"phyloxml"``: A phylogenetic tree in PhyloXML format.
 
-.. _vtkTree: http://www.vtk.org/doc/nightly/html/classvtkTree.html
-.. _vtkTreeWriter: http://www.vtk.org/doc/nightly/html/classvtkTreeWriter.html
 
 ``"graph"`` type
 -----------------------
@@ -178,19 +161,10 @@ A collection of nodes and edges with optional attributes. Formats:
 
 :``"adjacencylist"``: A string representing a very simple `adjacency list`_ which does not preserve node or edge attributes.
 
-:``"vtkgraph"``: A vtkGraph_.
-
-.. note :: vtkGraphs lose their actual node values as they are represented by their index. In addition, nodes and edges are given all metadata attributes with defaults if they do not specify the metadatum themselves.
-  This is noted further in :py:mod:`romanesco.plugins.vtk.converters.graph.networkx_to_vtkgraph`
-
-:``"vtkgraph.serialized"``: A vtkGraph serialized with vtkGraphWriter_.
-
 .. _nx.Graph: https://networkx.github.io/documentation/latest/reference/classes.graph.html
 .. _Clique: https://github.com/Kitware/clique
 .. _GraphML: https://networkx.github.io/documentation/latest/reference/readwrite.graphml.html
 .. _`adjacency list`: https://networkx.github.io/documentation/latest/reference/readwrite.adjlist.html#format
-.. _vtkGraph: http://www.vtk.org/doc/nightly/html/classvtkGraph.html
-.. _vtkGraphWriter: http://www.vtk.org/doc/nightly/html/classvtkGraphWriter.html
 
 ``"image"`` type
 -----------------------
@@ -201,22 +175,3 @@ A 2D matrix of uniformly-typed numbers. Formats:
 :``"png.base64"``: A Base-64 encoded PNG image.
 
 :``"pil"``: An image as a ``PIL.Image`` from the Python Imaging Library.
-
-``"r"`` type
------------------------
-An arbitrary R object.
-
-:``"object"``: An in-memory R object.
-
-:``"serialized"``: An R object serialized with R's ``serialize`` function.
-
-`"geometry"` type
------------------------
-3D geometry. Formats:
-
-:``"vtkpolydata"``: A vtkPolyData_ object.
-
-:``"vtkpolydata.serialized"``: A vtkPolyData serialized with vtkPolyDataWriter_.
-
-.. _vtkPolyData: http://www.vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtkPolyDataWriter: http://www.vtk.org/doc/nightly/html/classvtkPolyDataWriter.html
