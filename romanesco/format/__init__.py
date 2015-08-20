@@ -10,8 +10,20 @@ from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
 
 
-Validator = namedtuple('Validator', ['type', 'format'])
 conv_graph = nx.DiGraph()
+
+
+class Validator(namedtuple('Validator', ['type', 'format'])):
+    """ Validator
+
+    .. py:attribute:: type
+
+        The validator type, like ``string``.
+
+    .. py:attribute:: format
+
+        The validator format, like ``text``.
+    """
 
 
 def csv_to_rows(input):
@@ -67,9 +79,12 @@ def converter_path(source, target):
     """Gives the shortest path that should be taken to go from a source
     type/format to a target type/format.
 
-    Throws a NetworkXNoPath exception if it can not find a path.
+    Throws a ``NetworkXNoPath`` exception if it can not find a path.
 
-    Returns a list of edges in the order they should be traversed.
+    :param source: Validator tuple indicating the type/format being converted `from`.
+    :param target: ``Validator`` tuple indicating the type/format being converted `to`.
+    :returns: An ordered list of the analyses that need to be run to convert from
+    ``source`` to ``target``.
     """
     # These are to ensure an exception gets thrown if source/target don't exist
     get_validator(source)
@@ -82,13 +97,15 @@ def converter_path(source, target):
 
 
 def has_converter(source, target=Validator(type=None, format=None)):
-    """Determines if any converters exist from a given type, and possibly format.
-
-    Further specificity can determine if a converter exists from a given type/format, to
-    any other type/format.
+    """Determines if any converters exist from a given type, and optionally format.
 
     Underneath, this just traverses the edges until it finds one which matches the
     arguments.
+
+    :param source: ``Validator`` tuple indicating the type/format being converted `from`.
+    :param target: ``Validator`` tuple indicating the type/format being converted `to`.
+    :returns: ``True`` if it can converter from ``source`` to ``target``, ``False``
+    otherwise.
     """
     for (u, v) in conv_graph.edges():
         if source.type and source.type != u.type:
@@ -138,6 +155,10 @@ def get_validator(validator):
     Traceback (most recent call last):
        ...
     Exception: No such validator foo/bar
+
+    :param validator: A ``Validator`` namedtuple
+    :returns: A tuple including the passed ``Validator`` namedtuple, with a second
+    element being the analysis data.
     """
     for (node, data) in conv_graph.nodes(data=True):
         if node == validator:
@@ -150,8 +171,8 @@ def import_converters(search_paths):
     """
     Import converters and validators from the specified search paths.
     These functions are loaded into ``romanesco.format.conv_graph`` with
-    validators representing nodes, and converters representing directed
-    edges.
+    nodes representing validators, and directed edges representing
+    converters.
 
     Any files in a search path matching ``validate_*.json`` are loaded
     as validators. Validators should be fast (ideally O(1)) algorithms
