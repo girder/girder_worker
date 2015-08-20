@@ -161,7 +161,7 @@ def import_converters(search_paths):
     The output must have type and format ``"boolean"``. The script performs
     the validation and sets the output variable to either true or false.
 
-    Any other ``.json`` files are imported as converters.
+    Any ``*_to_*.json`` files are imported as converters.
     A converter is simply an analysis with one input named ``"input"`` and one
     output named ``"output"``. The input and output should have matching
     type but should be of different formats.
@@ -189,7 +189,8 @@ def import_converters(search_paths):
     for path in search_paths:
         os.chdir(path)
         validator_files = set(glob.glob(os.path.join(path, "validate_*.json")))
-        converter_files = set(glob.glob(os.path.join(path, "*.json"))) - validator_files
+        converter_files = set(glob.glob(os.path.join(path,
+                                                     "*_to_*.json"))) - validator_files
 
         for filename in validator_files:
             analysis = get_analysis(filename)
