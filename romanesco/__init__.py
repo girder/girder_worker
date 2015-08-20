@@ -4,7 +4,7 @@ import os
 import romanesco.events
 import romanesco.format
 import romanesco.io
-from romanesco.format import converter_path, get_validator
+from romanesco.format import converter_path, get_validator, Validator
 
 from ConfigParser import ConfigParser
 from . import executors, utils
@@ -102,7 +102,7 @@ def isvalid(type, binding, **kwargs):
     """
     if "data" not in binding:
         binding["data"] = romanesco.io.fetch(binding, **kwargs)
-    validator = get_validator(type, binding["format"])[1]
+    validator = get_validator(Validator(type, binding["format"]))[1]
     outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
                             validate=False, **kwargs)
     return outputs["output"]["data"]
@@ -139,8 +139,8 @@ def convert(type, input, output, **kwargs):
         data = input["data"]
     else:
         data_descriptor = input
-        for c in converter_path((type, input['format']),
-                                (type, output['format'])):
+        for c in converter_path(Validator(type, input['format']),
+                                Validator(type, output['format'])):
             result = romanesco.run(c, {"input": data_descriptor},
                                    auto_convert=False, **kwargs)
             data_descriptor = result["output"]

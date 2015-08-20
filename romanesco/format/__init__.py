@@ -5,9 +5,12 @@ import os
 import math
 import romanesco.io
 import networkx as nx
+from collections import namedtuple
 from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
 
+
+Validator = namedtuple('Validator', ['type', 'format'])
 conv_graph = nx.DiGraph()
 
 
@@ -69,8 +72,8 @@ def converter_path(source, target):
     Returns a list of edges in the order they should be traversed.
     """
     # These are to ensure an exception gets thrown if source/target don't exist
-    get_validator(*source)
-    get_validator(*target)
+    get_validator(source)
+    get_validator(target)
 
     path = shortest_path(conv_graph, source, target)
     path = zip(path[:-1], path[1:])
@@ -78,7 +81,7 @@ def converter_path(source, target):
     return [get_edge(u, v)[2] for (u, v) in path]
 
 
-def has_converter(type, format=None, out_type=None, out_format=None):
+def has_converter(source, target=Validator(type=None, format=None)):
     """Determines if any converters exist from a given type, and possibly format.
 
     Further specificity can determine if a converter exists from a given type/format, to
@@ -87,17 +90,17 @@ def has_converter(type, format=None, out_type=None, out_format=None):
     Underneath, this just traverses the edges until it finds one which matches the
     arguments.
     """
-    for ((u_type, u_format), (v_type, v_format)) in conv_graph.edges():
-        if u_type != type:
+    for (u, v) in conv_graph.edges():
+        if source.type and source.type != u.type:
             continue
 
-        if format and u_format != format:
+        if source.format and source.format != u.format:
             continue
 
-        if out_type and v_type != out_type:
+        if target.type and target.type != v.type:
             continue
 
-        if out_format and v_format != out_format:
+        if target.format and target.format != v.format:
             continue
 
         return True
@@ -113,35 +116,34 @@ def get_edge(u, v):
     return None
 
 
-def get_validator(type, format):
+def get_validator(validator):
     """Gets a validator node from the conversion graph by its type and format.
 
-    >>> validator = get_validator('string', 'text')
+    >>> validator = get_validator(Validator('string', 'text'))
 
     Returns a tuple containing 2 elements
     >>> len(validator)
     2
 
-    First is the type/format
+    First is the Validator namedtuple
     >>> validator[0]
-    (u'string', u'text')
+    Validator(type=u'string', format=u'text')
 
     and second is the validator itself
     >>> validator[1].keys()
     ['validator', 'type', 'format']
 
     If the validator doesn't exist, an exception will be raised
-    >>> get_validator('foo', 'bar')
+    >>> get_validator(Validator('foo', 'bar'))
     Traceback (most recent call last):
        ...
     Exception: No such validator foo/bar
     """
     for (node, data) in conv_graph.nodes(data=True):
-        if 'type' in data and data['type'] == type and \
-           'format' in data and data['format'] == format:
+        if node == validator:
             return (node, data)
 
-    raise Exception('No such validator %s/%s' % (type, format))
+    raise Exception('No such validator %s/%s' % (validator.type, validator.format))
 
 
 def import_converters(search_paths):
@@ -195,7 +197,7 @@ def import_converters(search_paths):
             in_type = analysis["inputs"][0]["type"]
             in_format = analysis["inputs"][0]["format"]
 
-            conv_graph.add_node((in_type, in_format), {
+            conv_graph.add_node(Validator(in_type, in_format), {
                 "type": analysis["inputs"][0]["type"],
                 "format": analysis["inputs"][0]["format"],
                 "validator": analysis
@@ -208,8 +210,8 @@ def import_converters(search_paths):
             in_format = analysis["inputs"][0]["format"]
             out_format = analysis["outputs"][0]["format"]
 
-            conv_graph.add_edge(get_validator(in_type, in_format)[0],
-                                get_validator(in_type, out_format)[0],
+            conv_graph.add_edge(get_validator(Validator(in_type, in_format))[0],
+                                get_validator(Validator(in_type, out_format))[0],
                                 analysis)
 
     os.chdir(prevdir)
