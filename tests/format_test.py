@@ -1,11 +1,21 @@
+import os
+import sys
 import unittest
-from romanesco.format import converter_path, has_converter, Validator
+from romanesco.format import converter_path, has_converter, Validator, \
+    print_conversion_graph, print_conversion_table
+from six import StringIO
 from networkx import NetworkXNoPath
 
 
 class TestFormat(unittest.TestCase):
     def setUp(self):
         self.stringTextValidator = Validator('string', 'text')
+
+        self.prev_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+    def tearDown(self):
+        sys.stdout = self.prev_stdout
 
     def test_converter_path(self):
         with self.assertRaisesRegexp(Exception,
@@ -49,3 +59,15 @@ class TestFormat(unittest.TestCase):
         # Converters don't go from one type to another
         self.assertFalse(has_converter(Validator('string', format=None),
                                        Validator('number', format=None)))
+
+    def test_conversion_graph(self):
+        print_conversion_graph()
+
+        with open(os.path.join('tests', 'data', 'conversion_graph.txt'), 'rb') as fixture:
+            self.assertEquals(sys.stdout.getvalue(), fixture.read())
+
+    def test_conversion_table(self):
+        print_conversion_table()
+
+        with open(os.path.join('tests', 'data', 'conversion_table.txt'), 'rb') as fixture:
+            self.assertEquals(sys.stdout.getvalue(), fixture.read())
