@@ -5,11 +5,11 @@ import os
 import math
 import romanesco.io
 import networkx as nx
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
 
-
+nx.DiGraph.node_dict_factory = OrderedDict
 conv_graph = nx.DiGraph()
 
 
