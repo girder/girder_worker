@@ -9,8 +9,13 @@ from collections import namedtuple, OrderedDict
 from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
 
-nx.DiGraph.node_dict_factory = OrderedDict
-conv_graph = nx.DiGraph()
+
+class OrderedDiGraph(nx.DiGraph):
+    node_dict_factory = OrderedDict
+    adjlist_dict_factory = OrderedDict
+
+# Since we want stable paths, we have to maintain the order of the nodes/edges
+conv_graph = OrderedDiGraph()
 
 
 class Validator(namedtuple('Validator', ['type', 'format'])):
