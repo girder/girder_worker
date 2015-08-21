@@ -66,17 +66,18 @@ R
   the R code to run is passed via the ``script`` field of the task specification.
   The ``r`` data type refers to objects compatible with the R runtime environment.
 * **Converters added:**
-    * ``r/object`` |ba| ``r/serialized``: Convert between in-memory R object and a serialized version.
+    * ``r/object`` |ba| ``r/serialized``
     * ``table/csv`` |ba| ``table/r.dataframe``
     * ``tree/newick`` |ba| ``tree/r.apetree``
     * ``tree/nexus`` |ba| ``tree/r.apetree``
     * ``r/apetree`` |ra| ``tree/treestore``
 
 * **Validators added:**
-    * ``r/object``
-    * ``r/serialized``
-    * ``table/r.dataframe``
-    * ``tree/r.apetree``
+    * ``r/object``: An in-memory R object.
+    * ``r/serialized``: A serialized version of an R object created using R's ``serialize`` function.
+    * ``table/r.dataframe``: An R data frame. If the first column contains unique values,
+      these are set as the row names of the data frame.
+    * ``tree/r.apetree``: A tree in the R package ``ape`` format.
 
 Spark
 -----
@@ -103,7 +104,8 @@ VTK
 * **Plugin ID:** ``vtk``
 * **Description:** This plugin exposes the ``geometry`` type and provides converters
   and validators for several types. This plugin requires that you have the VTK
-  python package exposed in Romanesco's python environment.
+  python package exposed in Romanesco's python environment. The ``geometry`` type
+  represents 3D geometry.
 * **Converters added:**
     * ``geometry/vtkpolydata`` |ba| ``geometry/vtkpolydata.serialized``
     * ``table/rows`` |ba| ``table/vtktable``
@@ -115,15 +117,28 @@ VTK
     * ``graph/vtkgraph`` |ba| ``graph/vtkgraph.serialized``
 
 * **Validators added:**
-    * ``geometry/vtkpolydata``
-    * ``geometry/vtkpolydata.serialized``
-    * ``table/vtktable``
-    * ``table/vtktable.serialized``
-    * ``tree/vtktree``
-    * ``tree/vtktree.serialized``
-    * ``graph/vtkgraph``
-    * ``graph/vtkgraph.serialized``
+    * ``geometry/vtkpolydata``: A vtkPolyData_ object.
+    * ``geometry/vtkpolydata.serialized``: A vtkPolyData serialized with vtkPolyDataWriter_.
+    * ``table/vtktable``: A vtkTable_.
+    * ``table/vtktable.serialized``: A vtkTable serialized with vtkTableWriter_.
+    * ``tree/vtktree``: A vtkTree_.
+    * ``tree/vtktree.serialized``: A vtkTree serialized with vtkTreeWriter_.
+    * ``graph/vtkgraph``: A vtkGraph_.
+    * ``graph/vtkgraph.serialized``: A vtkGraph serialized with vtkGraphWriter_.
 
+.. note :: vtkGraphs lose their actual node values as they are represented by their index.
+  In addition, nodes and edges are given all metadata attributes with defaults if they do not specify the metadatum themselves.
+  This is noted further in :py:mod:`romanesco.plugins.vtk.converters.graph.networkx_to_vtkgraph`
 
-    .. |ra| unicode:: 8594 .. right arrow
-    .. |ba| unicode:: 8596 .. bidirectional arrow
+.. _vtkGraph: http://www.vtk.org/doc/nightly/html/classvtkGraph.html
+.. _vtkGraphWriter: http://www.vtk.org/doc/nightly/html/classvtkGraphWriter.html
+.. _vtkTree: http://www.vtk.org/doc/nightly/html/classvtkTree.html
+.. _vtkTreeWriter: http://www.vtk.org/doc/nightly/html/classvtkTreeWriter.html
+.. _vtkTable: http://www.vtk.org/doc/nightly/html/classvtkTable.html
+.. _vtkTableWriter: http://www.vtk.org/doc/nightly/html/classvtkTableWriter.html
+.. _vtkPolyData: http://www.vtk.org/doc/nightly/html/classvtkPolyData.html
+.. _vtkPolyDataWriter: http://www.vtk.org/doc/nightly/html/classvtkPolyDataWriter.html
+.. _vtkTree: http://www.vtk.org/doc/nightly/html/classvtkTree.html
+
+.. |ra| unicode:: 8594 .. right arrow
+.. |ba| unicode:: 8596 .. bidirectional arrow
