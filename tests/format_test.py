@@ -64,10 +64,12 @@ class TestFormat(unittest.TestCase):
         print_conversion_graph()
 
         with open(os.path.join('tests', 'data', 'conversion_graph.txt'), 'rb') as fixture:
-            self.assertEquals(sys.stdout.getvalue(), fixture.read())
+            self.assertEquals(sorted(sys.stdout.getvalue().splitlines()),
+                              sorted(fixture.read().splitlines()))
 
     def test_conversion_table(self):
         print_conversion_table()
 
         with open(os.path.join('tests', 'data', 'conversion_table.txt'), 'rb') as fixture:
-            self.assertEquals(sys.stdout.getvalue(), fixture.read())
+            self.assertEquals(sorted(sys.stdout.getvalue().splitlines()),
+                              sorted(fixture.read().splitlines()))

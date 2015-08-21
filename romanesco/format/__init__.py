@@ -5,17 +5,12 @@ import os
 import math
 import romanesco.io
 import networkx as nx
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
 
 
-class OrderedDiGraph(nx.DiGraph):
-    node_dict_factory = OrderedDict
-    adjlist_dict_factory = OrderedDict
-
-# Since we want stable paths, we have to maintain the order of the nodes/edges
-conv_graph = OrderedDiGraph()
+conv_graph = nx.DiGraph()
 
 
 class Validator(namedtuple('Validator', ['type', 'format'])):
