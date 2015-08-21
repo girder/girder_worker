@@ -1,5 +1,7 @@
-import requests
+import os
 
-raw = requests.get('https://www.google.org/flutrends/us/data.txt').text
+with open(os.path.join('data', 'flutrends_us_data.txt'), 'rb') as fixture:
+    raw = fixture.read()
+
 lines = raw.split("\n")
 data = "\n".join(lines[11:])
