@@ -23,7 +23,7 @@ it is. The structure for the task dictionary is described below. Uppercase names
 within angle braces represent symbols defined in the specification. Optional parts
 of the specification are surrounded by parenthesis to avoid ambiguity with the
 square braces, which represent lists in python or Arrays in JSON. The Python task
-also accepts a ``debug`` paramater that when set to 1 will write task scripts to
+also accepts a ``write_script`` paramater that when set to 1 will write task scripts to
 disk before executing them.  This aids in readability for interactive debuggers
 such as ``pdb.``
 
@@ -36,7 +36,7 @@ such as ``pdb.``
         "script": <python code to run as a string>
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
-	(, "debug": 1)
+	(, "write_script": 1)
     }
 
     <R_TASK> ::= {

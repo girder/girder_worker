@@ -184,7 +184,7 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         buggy scripts that do not produce the correct type of output. An
         invalid input or output will raise an exception. If ``False``, perform
         no validation.
-    :param debug: If ``True`` task scripts will be written to file before
+    :param write_script: If ``True`` task scripts will be written to file before
         being passed to ``exec``. This improves interactive debugging with
         tools such as ``pdb`` at the cost of additional file I/O. Note that
         when passed to run *all* tasks will be written to file including

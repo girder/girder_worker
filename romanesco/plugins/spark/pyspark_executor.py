@@ -15,7 +15,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     for name in inputs:
         custom.__dict__[name] = inputs[name]["script_data"]
 
-    if task.get('debug', kwargs.get('debug', False)):
+    if task.get('write_script', kwargs.get('write_script', False)):
         import tempfile
         debug_path = tempfile.mktemp()
         with open(debug_path, 'wb') as fh:
