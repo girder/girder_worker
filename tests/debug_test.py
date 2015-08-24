@@ -2,10 +2,6 @@ from tempfile import mktemp
 import romanesco
 import os
 import unittest
-import collections
-import vtk
-import json
-import math
 
 _tmpfiles = []
 
