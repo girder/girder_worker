@@ -88,7 +88,7 @@ def converter_path(source, target):
     """
     def get_edge_analysis(source, target):
         """Return the analysis associated with an edge in the conversion graph,
-        given the source Validator and the target Validator).
+        given the source Validator and the target Validator.
         """
         for (u, v, data) in conv_graph.edges([source], data=True):
             if v == target:
