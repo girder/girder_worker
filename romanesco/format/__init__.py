@@ -121,24 +121,23 @@ def has_converter(source, target=Validator(type=None, format=None)):
     :returns: ``True`` if it can converter from ``source`` to ``target``, ``False``
     otherwise.
     """
-    for (u, v) in conv_graph.edges():
-        if source.type and source.type != u.type:
-            continue
+    sources = []
 
-        if source.format and source.format != u.format:
-            continue
+    for node in conv_graph.nodes():
+        if (((source.type is None) or (source.type == node.type)) and
+            ((source.format is None) or (source.format == node.format))):
+            sources.append(node)
 
-        if target.type and target.type != v.type:
-            continue
+    for u in sources:
+        reachable = single_source_shortest_path(conv_graph, u)
+        del reachable[u] # Ignore the path to ourself, since there are no self loops
 
-        if target.format and target.format != v.format:
-            continue
-
-        return True
+        for (v, _) in reachable.items():
+            if (((target.type is None) or (target.type == v.type)) and
+                ((target.format is None) or (target.format == v.format))):
+                return True
 
     return False
-
-
 
 
 def get_validator(validator):

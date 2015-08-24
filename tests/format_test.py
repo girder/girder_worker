@@ -60,6 +60,10 @@ class TestFormat(unittest.TestCase):
         self.assertFalse(has_converter(Validator('string', format=None),
                                        Validator('number', format=None)))
 
+        # This only has a converter which is multiple hops away
+        self.assertTrue(has_converter(Validator('table', format='rows'),
+                                      Validator('table', format='objectlist.json')))
+
     def test_conversion_graph(self):
         print_conversion_graph()
 
