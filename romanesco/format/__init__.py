@@ -219,19 +219,17 @@ def import_converters(search_paths):
 
         for filename in validator_files:
             analysis = get_analysis(filename)
-
             in_type = analysis["inputs"][0]["type"]
             in_format = analysis["inputs"][0]["format"]
 
             conv_graph.add_node(Validator(in_type, in_format), {
-                "type": analysis["inputs"][0]["type"],
-                "format": analysis["inputs"][0]["format"],
+                "type": in_type,
+                "format": in_format,
                 "validator": analysis
             })
 
         for filename in converter_files:
             analysis = get_analysis(filename)
-
             in_type = analysis["inputs"][0]["type"]
             in_format = analysis["inputs"][0]["format"]
             out_format = analysis["outputs"][0]["format"]
