@@ -9,6 +9,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     for name in inputs:
         custom.__dict__[name] = inputs[name]["script_data"]
 
+    custom.__dict__['_job_manager'] = kwargs.get('_job_manager')
+
     try:
         exec task["script"] in custom.__dict__
     except Exception, e:

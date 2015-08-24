@@ -20,7 +20,8 @@ def main():
 
         with JobManager(logPrint=jobInfo.get('logPrint', True),
                         url=jobInfo.get('url'), method=jobInfo.get('method'),
-                        headers=jobInfo.get('headers')):
+                        headers=jobInfo.get('headers')) as jm:
+            kwargs['_job_manager'] = jm
             retval = romanesco.run(*pargs, **kwargs)
         return retval
 
