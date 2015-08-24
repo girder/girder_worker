@@ -56,6 +56,52 @@ The temporary directory for the romanesco task is mapped into the running contai
 under the directory ``/data``, so any files that were fetched into that temp directory
 will be available inside the running container at that path.
 
+Girder IO
+---------
+
+* **Plugin ID:** ``girder_io``
+* **Description:** This plugin adds new fetch and push modes called ``girder``. The
+  fetch mode for inputs supports downloading folders, items, or files from a Girder
+  server. Inputs can be downloaded anonymously (if they are public) or using an
+  authentication token. This data is always written to disk within the task's
+  temporary directory, and is always a ``string/text`` format since the data itself
+  is simply the path to the downloaded file or directory.
+
+.. code-block :: none
+
+    <GIRDER_INPUT> ::= {
+        "mode": "girder",
+        "id": <the _id value of the resource to download>,
+        "name": <the name of the resource to download>,
+        "host": <the hostname of the girder server>,
+        "format": "text",
+        "type": "string"
+        (, "port": <the port of the girder server, default is 80 for http: and 443 for https:>)
+        (, "api_root": <path to the girder REST API, default is "/api/v1")
+        (, "scheme": <"http" or "https", default is "http">)
+        (, "token": <girder token used for authentication>)
+        (, "resource_type": <"file", "item", or "folder", default is "file">)
+    }
+
+The output mode also assumes data of format ``string/text`` that is a path to a file
+in the filesystem. That file will then be uploaded under an existing folder (under a
+new item with the same name as the file), or into an existing item.
+
+.. code-block :: none
+
+    <GIRDER_OUTPUT> ::= {
+        "mode": "girder",
+        "parent_id": <the _id value of the folder or item to upload into>,
+        "name": <the name of the resource to download>,
+        "host": <the hostname of the girder server>,
+        "format": "text",
+        "type": "string"
+        (, "port": <the port of the girder server, default is 80 for http and 443 for https>)
+        (, "api_root": <path to the girder REST API, default is "/api/v1")
+        (, "scheme": <"http" or "https", default is "http">)
+        (, "token": <girder token used for authentication>)
+        (, "parent_type": <"folder" or "item", default is "folder">)
+    }
 R
 -
 

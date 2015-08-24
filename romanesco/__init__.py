@@ -100,7 +100,7 @@ def isvalid(type, binding, **kwargs):
         ``False`` otherwise.
     """
     if "data" not in binding:
-        binding["data"] = romanesco.io.fetch(binding)
+        binding["data"] = romanesco.io.fetch(binding, **kwargs)
     validator = romanesco.format.validators[type][binding["format"]]
     outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
                             validate=False, **kwargs)
@@ -132,7 +132,7 @@ def convert(type, input, output, **kwargs):
     """
 
     if "data" not in input:
-        input["data"] = romanesco.io.fetch(input)
+        input["data"] = romanesco.io.fetch(input, **kwargs)
 
     if input["format"] == output["format"]:
         data = input["data"]
