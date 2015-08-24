@@ -124,17 +124,17 @@ def has_converter(source, target=Validator(type=None, format=None)):
     sources = []
 
     for node in conv_graph.nodes():
-        if (((source.type is None) or (source.type == node.type)) and
-            ((source.format is None) or (source.format == node.format))):
+        if ((source.type is None) or (source.type == node.type)) and \
+           ((source.format is None) or (source.format == node.format)):
             sources.append(node)
 
     for u in sources:
         reachable = single_source_shortest_path(conv_graph, u)
-        del reachable[u] # Ignore the path to ourself, since there are no self loops
+        del reachable[u]  # Ignore the path to ourself, since there are no self loops
 
         for (v, _) in reachable.items():
-            if (((target.type is None) or (target.type == v.type)) and
-                ((target.format is None) or (target.format == v.format))):
+            if ((target.type is None) or (target.type == v.type)) and \
+               ((target.format is None) or (target.format == v.format)):
                 return True
 
     return False
