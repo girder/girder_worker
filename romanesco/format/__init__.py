@@ -86,6 +86,16 @@ def converter_path(source, target):
     :returns: An ordered list of the analyses that need to be run to convert from
     ``source`` to ``target``.
     """
+    def get_edge_analysis(source, target):
+        """Return the analysis associated with an edge in the conversion graph,
+        given the source Validator and the target Validator).
+        """
+        for (u, v, data) in conv_graph.edges([source], data=True):
+            if v == target:
+                return data
+
+        return {}
+
     # These are to ensure an exception gets thrown if source/target don't exist
     get_validator(source)
     get_validator(target)
@@ -97,7 +107,7 @@ def converter_path(source, target):
     path = sorted(paths)[0]
     path = zip(path[:-1], path[1:])
 
-    return [get_edge(u, v)[2] for (u, v) in path]
+    return [get_edge_analysis(u, v) for (u, v) in path]
 
 
 def has_converter(source, target=Validator(type=None, format=None)):
@@ -129,12 +139,6 @@ def has_converter(source, target=Validator(type=None, format=None)):
     return False
 
 
-def get_edge(u, v):
-    for edge in conv_graph.edges([u], data=True):
-        if edge[1] == v:
-            return edge
-
-    return None
 
 
 def get_validator(validator):
