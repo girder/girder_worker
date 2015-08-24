@@ -2,6 +2,7 @@ include(CMakeParseArguments)
 
 set(py_coverage_rc "${PROJECT_BINARY_DIR}/tests/romanesco.coveragerc")
 set(pep8_config "${PROJECT_SOURCE_DIR}/tests/pep8.cfg")
+set(flake8_config "${PROJECT_SOURCE_DIR}/tests/flake8.cfg")
 set(coverage_html_dir "${PROJECT_SOURCE_DIR}/docs/_build/html/py_coverage")
 set(py_testdir "${PROJECT_SOURCE_DIR}/tests")
 
@@ -21,7 +22,7 @@ function(add_python_pep8_test name input)
   add_test(
     NAME ${name}
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PEP8_EXECUTABLE}" "${input}"
+    COMMAND "${PEP8_EXECUTABLE}" "--config=${pep8_config}" "${input}"
   )
 endfunction()
 
@@ -29,7 +30,7 @@ function(add_python_flake8_test name input)
   add_test(
     NAME ${name}
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${FLAKE8_EXECUTABLE}" "${input}"
+    COMMAND "${FLAKE8_EXECUTABLE}" "--config=${flake8_config}" "${input}"
   )
 endfunction()
 
