@@ -33,7 +33,7 @@ def fetch(spec, **kwargs):
 
     try:
         request.raise_for_status()
-    except:
+    except Exception:
         print 'HTTP fetch failed (%s). Response: %s' % (url, request.text)
         raise
 
@@ -87,6 +87,6 @@ def push(data, spec, **kwargs):
 
     try:
         request.raise_for_status()
-    except:
+    except Exception:
         print 'HTTP push failed (%s). Response: %s' % (url, request.text)
         raise

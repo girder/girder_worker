@@ -16,7 +16,7 @@ def recursive_attr(obj):
                 else:
                     dictionary[key] = getattr(obj, key)
         return dictionary
-    except:
+    except Exception:
         # else just return the object
         return obj
 

@@ -60,7 +60,7 @@ def csv_to_rows(input):
         for col in row:
             try:
                 row[col] = int(row[col])
-            except:
+            except Exception:
                 try:
                     orig = row[col]
                     row[col] = float(row[col])
@@ -69,7 +69,7 @@ def csv_to_rows(input):
                     # pass through JSON converters cleanly
                     if math.isnan(row[col]) or math.isinf(row[col]):
                         row[col] = orig
-                except:
+                except Exception:
                     pass
 
     return output
