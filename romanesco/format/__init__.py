@@ -6,7 +6,7 @@ import math
 import romanesco.io
 import networkx as nx
 from collections import namedtuple
-from networkx.algorithms.shortest_paths.generic import shortest_path
+from networkx.algorithms.shortest_paths.generic import all_shortest_paths
 from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
 
 
@@ -90,7 +90,11 @@ def converter_path(source, target):
     get_validator(source)
     get_validator(target)
 
-    path = shortest_path(conv_graph, source, target)
+    # We sort and pick the first of the shortest paths just to produce a stable
+    # conversion path. This is stable in regards to which plugins are loaded at the
+    # time.
+    paths = all_shortest_paths(conv_graph, source, target)
+    path = sorted(paths)[0]
     path = zip(path[:-1], path[1:])
 
     return [get_edge(u, v)[2] for (u, v) in path]
