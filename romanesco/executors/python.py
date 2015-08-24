@@ -6,6 +6,8 @@ import sys
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     custom = imp.new_module("custom")
 
+    custom.__dict__['_job_manager'] = kwargs.get('_job_manager')
+
     for name in inputs:
         custom.__dict__[name] = inputs[name]["script_data"]
 
