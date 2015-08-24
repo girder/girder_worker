@@ -3,7 +3,7 @@ import romanesco
 from romanesco.utils import toposort
 
 
-def run(task, inputs, outputs, task_inputs, task_outputs, validate,
+def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
         auto_convert, **kwargs):
     # Make map of steps
     steps = {step["name"]: step for step in task["steps"]}

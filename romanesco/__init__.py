@@ -153,7 +153,7 @@ def convert(type, input, output, **kwargs):
     return output
 
 
-@utils.with_tmpdir
+@utils.with_tmpdir  # noqa
 def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         **kwargs):
     """
