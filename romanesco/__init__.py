@@ -1,5 +1,4 @@
 import json
-import tempfile
 import os
 import romanesco.events
 import romanesco.format

@@ -83,7 +83,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,
                 raise Exception(
                     "Output %s (%s) is not in the expected type (%s) and "
                     "format (%s)." % (name, type(script_output["data"]),
-                                      vis_input["type"], d["format"]))
+                                      vis_input["type"], script_output["format"]))
 
             if auto_convert:
                 vis_bindings[b] = romanesco.convert(

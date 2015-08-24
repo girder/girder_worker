@@ -15,7 +15,7 @@ def process_node(vtknode, node):
     if "children" in node:
         for n in node["children"]:
             vtkchild = vtk_builder.AddVertex()
-            vtkparentedge = vtk_builder.AddGraphEdge(vtknode, vtkchild).GetId()
+            vtk_builder.AddGraphEdge(vtknode, vtkchild).GetId()
             dict_to_vtkrow(n["node_data"], vtk_builder.GetVertexData())
             if "edge_data" in n:
                 dict_to_vtkrow(n["edge_data"], vtk_builder.GetEdgeData())

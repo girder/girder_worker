@@ -313,7 +313,7 @@ def load_plugins(plugins, paths, ignore_errors=False, quiet=False):
                 print(TerminalColor.success('Loaded plugin "%s"' % plugin))
         except Exception:
             print(TerminalColor.error(
-                    'ERROR: Failed to load plugin "%s":' % plugin))
+                'ERROR: Failed to load plugin "%s":' % plugin))
             if ignore_errors:
                 traceback.print_exc()
             else:

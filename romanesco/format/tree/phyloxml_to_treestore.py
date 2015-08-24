@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Bio import Phylo
 from Bio.Phylo import BaseTree
-
-import pymongo
-import logging
 
 
 def recursive_attr(obj):
