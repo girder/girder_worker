@@ -17,7 +17,6 @@ endif()
 
 if(PYTHON_STYLE_TESTS)
   find_program(FLAKE8_EXECUTABLE flake8)
-  find_program(PEP8_EXECUTABLE pep8)
 endif()
 
 if(BUILD_TESTING)

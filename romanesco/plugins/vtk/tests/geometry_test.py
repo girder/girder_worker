@@ -1,6 +1,4 @@
 import romanesco
-import os
-import tempfile
 import unittest
 import vtk
 

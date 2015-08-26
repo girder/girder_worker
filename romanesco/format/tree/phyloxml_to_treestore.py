@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Bio import Phylo
 from Bio.Phylo import BaseTree
-
-import pymongo
-import logging
 
 
 def recursive_attr(obj):
@@ -20,7 +16,7 @@ def recursive_attr(obj):
                 else:
                     dictionary[key] = getattr(obj, key)
         return dictionary
-    except:
+    except Exception:
         # else just return the object
         return obj
 

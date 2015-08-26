@@ -3,7 +3,7 @@ import romanesco
 from romanesco.utils import toposort
 
 
-def run(task, inputs, outputs, task_inputs, task_outputs, validate,
+def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
         auto_convert, **kwargs):
     # Make map of steps
     steps = {step["name"]: step for step in task["steps"]}
@@ -83,7 +83,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,
                 raise Exception(
                     "Output %s (%s) is not in the expected type (%s) and "
                     "format (%s)." % (name, type(script_output["data"]),
-                                      vis_input["type"], d["format"]))
+                                      vis_input["type"], script_output["format"]))
 
             if auto_convert:
                 vis_bindings[b] = romanesco.convert(

@@ -1,5 +1,4 @@
 import json
-import girder_client
 import httmock
 import os
 import romanesco

@@ -26,12 +26,10 @@ class TestSpark(unittest.TestCase):
             script = fp.read()
             analysis['script'] = script
 
-        outputs = romanesco.run(analysis, {
-                'a': {'format': 'json', 'data': '[1,2,3,4,5,6,7,8,9]'}
-            },
-            {
-                'b': {'format': 'number'}
-            })
+        outputs = romanesco.run(analysis,
+                                {'a': {'format': 'json',
+                                       'data': '[1,2,3,4,5,6,7,8,9]'}},
+                                {'b': {'format': 'number'}})
 
         expected = {'b': {'data': 45, 'format': 'number'}}
         self.assertEqual(outputs, expected)
@@ -52,12 +50,10 @@ class TestSpark(unittest.TestCase):
             script = fp.read()
             analysis['script'] = script
 
-        outputs = romanesco.run(analysis, {
-                'a': {'format': 'json', 'data': '[1,2,3,4,5,6,7,8,9]'}
-            },
-            {
-                'b': {'format': 'json'}
-            })
+        outputs = romanesco.run(analysis,
+                                {'a': {'format': 'json',
+                                       'data': '[1,2,3,4,5,6,7,8,9]'}},
+                                {'b': {'format': 'json'}})
 
         expected = {'b': {'data': '[1, 4, 9, 16, 25, 36, 49, 64, 81]', 'format': 'json'}}
         self.assertEqual(outputs, expected)

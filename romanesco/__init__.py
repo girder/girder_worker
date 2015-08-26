@@ -1,13 +1,13 @@
 import json
-import tempfile
 import os
 import romanesco.events
 import romanesco.format
 import romanesco.io
 from romanesco.format import converter_path, get_validator, Validator
-
 from ConfigParser import ConfigParser
-from . import executors, utils
+from executors.python import run as python_run
+from executors.workflow import run as workflow_run
+from . import utils
 
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,8 +45,8 @@ def unregister_executor(name):
 
 
 # Register the core executors that are always enabled.
-register_executor('python', executors.python.run)
-register_executor('workflow', executors.workflow.run)
+register_executor('python', python_run)
+register_executor('workflow', workflow_run)
 
 # Load plugins that are enabled in the config file
 _plugins = os.environ.get('ROMANESCO_PLUGINS_ENABLED',
@@ -153,7 +153,7 @@ def convert(type, input, output, **kwargs):
     return output
 
 
-@utils.with_tmpdir
+@utils.with_tmpdir  # noqa
 def run(task, inputs, outputs=None, auto_convert=True, validate=True,
         **kwargs):
     """

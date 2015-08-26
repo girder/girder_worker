@@ -18,11 +18,9 @@ def printApeTree(apeTree):
 def returnNodeNameFromIndex(apeTree, index):
     if (len(apeTree[1]) == 1):
         leafIndex = 2
-        countIndex = 1
     else:
         # print "alternative ape tree compondent order case"
         leafIndex = 1
-        countIndex = 2
     leafCount = len(apeTree[leafIndex])
     # print "lookup for index:",index
     if index < leafCount+1:
@@ -98,11 +96,9 @@ def addApeTreeEdgesIntoTreeStore(apeTree, data_coll):
 def addHandleNodeIntoTreeStore(apeTree, data_coll):
     if (len(apeTree[1]) == 1):
         leafIndex = 2
-        countIndex = 1
     else:
         # print "alternative ape tree compondent order case"
         leafIndex = 1
-        countIndex = 2
     leafCount = len(apeTree[leafIndex])
     # add the 'handle node' to the collection.  Find the root of the dataset by
     # getting the node immediately after the last leaf

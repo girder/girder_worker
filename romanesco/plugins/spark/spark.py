@@ -1,9 +1,8 @@
-import six
 import romanesco
 import os
 import sys
 
-from ConfigParser import ConfigParser, NoOptionError, NoSectionError
+from ConfigParser import NoOptionError, NoSectionError
 
 
 def setup_spark_env():
@@ -33,7 +32,7 @@ def setup_spark_env():
     sys.path.append(os.path.join(spark_home, 'bin'))
 
     # Check that we can import SparkContext
-    from pyspark import SparkConf, SparkContext
+    from pyspark import SparkConf, SparkContext  # noqa
 
 
 def create_spark_context(task_spark_conf):

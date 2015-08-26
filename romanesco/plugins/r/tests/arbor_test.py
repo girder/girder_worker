@@ -1,7 +1,6 @@
 import romanesco
 import unittest
 import os
-import json
 
 
 class TestArbor(unittest.TestCase):
@@ -17,7 +16,7 @@ class TestArbor(unittest.TestCase):
         pgls = romanesco.load(os.path.join(self.arbor_path, "pgls.json"))
         tree_file = os.path.join("data", "anolis.phy")
         table_file = os.path.join("data", "anolisDataAppended.csv")
-        outputs = romanesco.run(
+        romanesco.run(
             pgls,
             {
                 "tree": {"format": "newick", "url": "file://" + tree_file},
@@ -49,7 +48,7 @@ class TestArbor(unittest.TestCase):
         cont2disc = romanesco.load(
             os.path.join(self.arbor_path, "continuous_to_discrete.json"))
         table_file = os.path.join("data", "anolisDataAppended.csv")
-        outputs = romanesco.run(
+        romanesco.run(
             cont2disc,
             {
                 "table": {"format": "csv", "url": "file://" + table_file},
@@ -65,7 +64,7 @@ class TestArbor(unittest.TestCase):
     def test_mammal_tree(self):
         mammal = romanesco.load(
             os.path.join("data", "Mammal tree extraction.json"))
-        outputs = romanesco.run(
+        romanesco.run(
             mammal,
             {
                 "table": {

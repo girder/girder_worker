@@ -2,7 +2,6 @@ import httmock
 import mock
 import os
 import romanesco
-import select
 import shutil
 import six
 import sys

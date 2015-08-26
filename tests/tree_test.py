@@ -155,7 +155,7 @@ END;"""
         self.assertEqual(out, expected)
 
     def test_non_binary_tree(self):
-        output = romanesco.convert(
+        romanesco.convert(
             "tree",
             {
                 "format": "newick",
