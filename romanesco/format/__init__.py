@@ -14,7 +14,7 @@ conv_graph = nx.DiGraph()
 
 
 class Validator(namedtuple('Validator', ['type', 'format'])):
-    """ Validator
+    """Validator
 
     .. py:attribute:: type
 
