@@ -64,6 +64,10 @@ function(add_python_test case)
     set_property(TEST ${name} PROPERTY ENVIRONMENT
       "ROMANESCO_PLUGINS_ENABLED=${fn_PLUGINS_ENABLED}"
     )
+  else()
+    set_property(TEST ${name} PROPERTY ENVIRONMENT
+      "ROMANESCO_PLUGINS_ENABLED="
+    )
   endif()
 endfunction()
 
