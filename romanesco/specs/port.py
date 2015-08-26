@@ -2,7 +2,8 @@
 
 import six
 
-from romanesco import io, convert, isvalid, format
+from romanesco import io, convert, isvalid
+from romanesco.format import has_converter, Validator
 from .spec import Spec
 
 
@@ -113,12 +114,12 @@ class Port(Spec):
 
     def __check_types(self, key=None, oldvalue=None, newvalue=None, **kw):
         """Ensure the data format given is known."""
-        if key in ('type', None) and self['type'] not in format.converters:
+        if key in ('type', None) and not has_converter(Validator(self['type'], None)):
             raise ValueError(
                 'Unknown type "%s"' % (self['type'],)
             )
-        elif key in ('format', None) and \
-                self['format'] not in format.converters[self['type']]:
+        elif key in ('format', None) and not has_converter(Validator(self['type'],
+                                                                     self['format'])):
             raise ValueError(
                 'Unknown format "%s.%s"' % (self['type'], self['format'])
             )

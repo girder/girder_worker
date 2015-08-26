@@ -4,6 +4,7 @@ import os
 import romanesco.events
 import romanesco.format
 import romanesco.io
+from romanesco.format import converter_path, get_validator, Validator
 
 from ConfigParser import ConfigParser
 from . import executors, utils
@@ -101,7 +102,7 @@ def isvalid(type, binding, **kwargs):
     """
     if "data" not in binding:
         binding["data"] = romanesco.io.fetch(binding, **kwargs)
-    validator = romanesco.format.validators[type][binding["format"]]
+    validator = get_validator(Validator(type, binding["format"]))[1]
     outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
                             validate=False, **kwargs)
     return outputs["output"]["data"]
@@ -137,16 +138,9 @@ def convert(type, input, output, **kwargs):
     if input["format"] == output["format"]:
         data = input["data"]
     else:
-        converter_type = romanesco.format.converters[type]
-        if not input['format'] in converter_type:
-            raise Exception('Invalid conversion source format "%s/%s".' % (
-                            type, input['format']))
-        if not output['format'] in converter_type[input['format']]:
-            raise Exception('Invalid conversion: "%s/%s -> %s".' % (
-                            type, input['format'], output['format']))
-        converter_path = converter_type[input["format"]][output["format"]]
         data_descriptor = input
-        for c in converter_path:
+        for c in converter_path(Validator(type, input['format']),
+                                Validator(type, output['format'])):
             result = romanesco.run(c, {"input": data_descriptor},
                                    auto_convert=False, **kwargs)
             data_descriptor = result["output"]
@@ -194,6 +188,9 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     """
     def extractId(spec):
         return spec["id"] if "id" in spec else spec["name"]
+
+    if 'validator' in task:
+        task = task['validator']
 
     task_inputs = {extractId(d): d for d in task.get("inputs", ())}
     task_outputs = {extractId(d): d for d in task.get("outputs", ())}
