@@ -20,7 +20,7 @@ romanesco is already installed.
 .. _configuration:
 
 Configuration
-=============
+-------------
 
 Several aspects of Romanesco's behavior are controlled via its configuration file. This
 file is found within the installed package directory as ``worker.local.cfg``. If this
