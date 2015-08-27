@@ -86,19 +86,9 @@ def converter_path(source, target):
     :returns: An ordered list of the analyses that need to be run to convert from
     ``source`` to ``target``.
     """
-    def get_edge_analysis(source, target):
-        """Return the analysis associated with an edge in the conversion graph,
-        given the source Validator and the target Validator.
-        """
-        for (u, v, data) in conv_graph.edges([source], data=True):
-            if v == target:
-                return data
-
-        return {}
-
     # These are to ensure an exception gets thrown if source/target don't exist
-    get_validator(source)
-    get_validator(target)
+    get_validator_analysis(source)
+    get_validator_analysis(target)
 
     # We sort and pick the first of the shortest paths just to produce a stable
     # conversion path. This is stable in regards to which plugins are loaded at the
@@ -107,7 +97,7 @@ def converter_path(source, target):
     path = sorted(paths)[0]
     path = zip(path[:-1], path[1:])
 
-    return [get_edge_analysis(u, v) for (u, v) in path]
+    return [conv_graph.edge[u][v] for (u, v) in path]
 
 
 def has_converter(source, target=Validator(type=None, format=None)):
@@ -132,7 +122,7 @@ def has_converter(source, target=Validator(type=None, format=None)):
         reachable = single_source_shortest_path(conv_graph, u)
         del reachable[u]  # Ignore the path to ourself, since there are no self loops
 
-        for v in reachable.keys():
+        for v in reachable:
             if ((target.type is None) or (target.type == v.type)) and \
                ((target.format is None) or (target.format == v.format)):
                 return True
@@ -140,38 +130,32 @@ def has_converter(source, target=Validator(type=None, format=None)):
     return False
 
 
-def get_validator(validator):
-    """Gets a validator node from the conversion graph by its type and format.
+def get_validator_analysis(validator):
+    """Gets a validators analysis from the conversion graph.
 
-    >>> validator = get_validator(Validator('string', 'text'))
+    >>> analysis = get_validator_analysis(Validator('string', 'text'))
 
-    Returns a tuple containing 2 elements
-    >>> len(validator)
-    2
+    Returns an analysis dictionary
+    >>> type(analysis) == dict
+    True
 
-    First is the Validator namedtuple
-    >>> validator[0]
-    Validator(type=u'string', format=u'text')
-
-    and second is the validator itself
-    >>> validator[1].keys()
-    ['validator', 'type', 'format']
+    Which contains an inputs key
+    >>> 'inputs' in analysis
+    True
 
     If the validator doesn't exist, an exception will be raised
-    >>> get_validator(Validator('foo', 'bar'))
+    >>> get_validator_analysis(Validator('foo', 'bar'))
     Traceback (most recent call last):
        ...
     Exception: No such validator foo/bar
 
     :param validator: A ``Validator`` namedtuple
-    :returns: A tuple including the passed ``Validator`` namedtuple, with a second
-    element being the analysis data.
+    :returns: A dictionary containing the runnable analysis.
     """
-    for (node, data) in conv_graph.nodes(data=True):
-        if node == validator:
-            return (node, data)
-
-    raise Exception('No such validator %s/%s' % (validator.type, validator.format))
+    try:
+        return conv_graph.node[validator]
+    except KeyError:
+        raise Exception('No such validator %s/%s' % (validator.type, validator.format))
 
 
 def import_converters(search_paths):
@@ -222,14 +206,10 @@ def import_converters(search_paths):
 
         for filename in validator_files:
             analysis = get_analysis(filename)
-            in_type = analysis["inputs"][0]["type"]
-            in_format = analysis["inputs"][0]["format"]
 
-            conv_graph.add_node(Validator(in_type, in_format), {
-                "type": in_type,
-                "format": in_format,
-                "validator": analysis
-            })
+            conv_graph.add_node(Validator(analysis["inputs"][0]["type"],
+                                          analysis["inputs"][0]["format"]),
+                                analysis)
 
         for filename in converter_files:
             analysis = get_analysis(filename)
@@ -237,8 +217,8 @@ def import_converters(search_paths):
             in_format = analysis["inputs"][0]["format"]
             out_format = analysis["outputs"][0]["format"]
 
-            conv_graph.add_edge(get_validator(Validator(in_type, in_format))[0],
-                                get_validator(Validator(in_type, out_format))[0],
+            conv_graph.add_edge(Validator(in_type, in_format),
+                                Validator(in_type, out_format),
                                 analysis)
 
     os.chdir(prevdir)

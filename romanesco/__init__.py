@@ -3,7 +3,7 @@ import os
 import romanesco.events
 import romanesco.format
 import romanesco.io
-from romanesco.format import converter_path, get_validator, Validator
+from romanesco.format import converter_path, get_validator_analysis, Validator
 from ConfigParser import ConfigParser
 from executors.python import run as python_run
 from executors.workflow import run as workflow_run
@@ -102,8 +102,8 @@ def isvalid(type, binding, **kwargs):
     """
     if "data" not in binding:
         binding["data"] = romanesco.io.fetch(binding, **kwargs)
-    validator = get_validator(Validator(type, binding["format"]))[1]
-    outputs = romanesco.run(validator, {"input": binding}, auto_convert=False,
+    analysis = get_validator_analysis(Validator(type, binding["format"]))
+    outputs = romanesco.run(analysis, {"input": binding}, auto_convert=False,
                             validate=False, **kwargs)
     return outputs["output"]["data"]
 
@@ -193,9 +193,6 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     """
     def extractId(spec):
         return spec["id"] if "id" in spec else spec["name"]
-
-    if 'validator' in task:
-        task = task['validator']
 
     task_inputs = {extractId(d): d for d in task.get("inputs", ())}
     task_outputs = {extractId(d): d for d in task.get("outputs", ())}
