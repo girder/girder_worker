@@ -6,7 +6,7 @@ import sys
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     from . import SC_KEY
 
-    custom = imp.new_module("custom")
+    custom = imp.new_module("__romanesco__")
 
     sc = kwargs[SC_KEY]
     custom.__dict__['sc'] = sc
