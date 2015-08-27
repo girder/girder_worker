@@ -116,7 +116,7 @@ R
     * ``table/csv`` |ba| ``table/r.dataframe``
     * ``tree/newick`` |ba| ``tree/r.apetree``
     * ``tree/nexus`` |ba| ``tree/r.apetree``
-    * ``r/apetree`` |ra| ``tree/treestore``
+    * ``tree/r.apetree`` |ra| ``tree/treestore``
 
 * **Validators added:**
     * ``r/object``: An in-memory R object.
