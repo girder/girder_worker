@@ -1,4 +1,5 @@
 from romanesco.plugins.vtk import dict_to_vtkarrays, dict_to_vtkrow
+import six
 import vtk
 
 """
@@ -53,12 +54,12 @@ for (_, _, data) in edges:
 
 # Merge default attributes into nodes and edges
 for (_, data) in nodes:
-    for (field, field_type) in node_field_types.iteritems():
+    for (field, field_type) in six.iteritems(node_field_types):
         if field not in data:
             data[field] = field_type()
 
 for (_, _, data) in edges:
-    for (field, field_type) in edge_field_types.iteritems():
+    for (field, field_type) in six.iteritems(edge_field_types):
         if field not in data:
             data[field] = field_type()
 
