@@ -1,6 +1,21 @@
-document.addEventListener("DOMContentLoaded", function() {
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+ .node {
+     stroke: #fff;
+     stroke-width: 1.5px;
+ }
+
+ .link {
+     stroke: #999;
+     stroke-opacity: .6;
+ }
+</style>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <script>
     var width = 700,
-        height = 350;
+    height = 400;
 
     var force = d3.layout.force()
             .charge(-120)
@@ -11,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("width", width)
             .attr("height", height);
 
-    d3.json("/_static/facebook-data.json", function(error, graph) {
+    d3.json("/data.json", function(error, graph) {
         if (error) throw error;
 
         force
@@ -46,4 +61,3 @@ document.addEventListener("DOMContentLoaded", function() {
                 .attr("cy", function(d) { return d.y; });
         });
     });
-});

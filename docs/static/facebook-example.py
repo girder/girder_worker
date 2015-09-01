@@ -15,7 +15,13 @@ most_popular_task = Task({
          'type': 'graph',
          'format': 'networkx'}
     ],
-    'script_uri': 'file:///facebook-example-most-popular.py'
+    'script':
+'''
+from networkx import degree
+
+degrees = degree(G)
+most_popular_person = max(degrees, key=degrees.get)
+'''
 })
 
 find_neighborhood_task = Task({
@@ -32,7 +38,12 @@ find_neighborhood_task = Task({
          'type': 'graph',
          'format': 'networkx'}
     ],
-    'script_uri': 'file:///facebook-example-find-neighborhood.py'
+    'script':
+'''
+from networkx import ego_graph
+
+subgraph = ego_graph(G, most_popular_person)
+'''
 })
 
 
