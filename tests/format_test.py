@@ -4,7 +4,7 @@ import unittest
 from romanesco.format import converter_path, has_converter, Validator, \
     print_conversion_graph, print_conversion_table
 from six import StringIO
-from networkx import NetworkXNoPath
+from networkx.exception import NetworkXNoPath
 
 
 class TestFormat(unittest.TestCase):
@@ -18,11 +18,12 @@ class TestFormat(unittest.TestCase):
         sys.stdout = self.prev_stdout
 
     def test_converter_path(self):
-        with self.assertRaisesRegexp(Exception,
-                                     'No such validator foo/bar'):
+        # There is no path from validators that don't exist
+        with self.assertRaises(NetworkXNoPath):
             converter_path(Validator('foo', 'bar'),
                            Validator('foo', 'baz'))
 
+        # There is no path for types which lie in different components
         with self.assertRaises(NetworkXNoPath):
             converter_path(self.stringTextValidator,
                            Validator('graph', 'networkx'))
