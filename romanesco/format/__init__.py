@@ -211,6 +211,8 @@ def import_converters(search_paths):
         for filename in validator_files:
             analysis = get_analysis(filename)
 
+            # Validators only contain 1 input and output, so the type/format of
+            # it can be gleaned from the first input.
             conv_graph.add_node(Validator(analysis["inputs"][0]["type"],
                                           analysis["inputs"][0]["format"]),
                                 analysis)
