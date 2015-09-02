@@ -85,7 +85,7 @@ def converter_path(source, target):
     :param source: Validator tuple indicating the type/format being converted `from`.
     :param target: ``Validator`` tuple indicating the type/format being converted `to`.
     :returns: An ordered list of the analyses that need to be run to convert from
-    ``source`` to ``target``.
+        ``source`` to ``target``.
     """
     # Ensure an exception gets thrown if source/target don't exist
     try:
@@ -113,7 +113,7 @@ def has_converter(source, target=Validator(type=None, format=None)):
     :param source: ``Validator`` tuple indicating the type/format being converted `from`.
     :param target: ``Validator`` tuple indicating the type/format being converted `to`.
     :returns: ``True`` if it can converter from ``source`` to ``target``, ``False``
-    otherwise.
+        otherwise.
     """
     sources = []
 
@@ -150,7 +150,7 @@ def get_validator_analysis(validator):
     If the validator doesn't exist, an exception will be raised
     >>> get_validator_analysis(Validator('foo', 'bar'))
     Traceback (most recent call last):
-       ...
+    ...
     Exception: No such validator foo/bar
 
     :param validator: A ``Validator`` namedtuple
