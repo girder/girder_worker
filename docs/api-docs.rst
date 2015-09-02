@@ -237,9 +237,3 @@ Formats
 
 .. automodule:: romanesco.format
    :members:
-
-URIs
-----
-
-.. automodule:: romanesco.uri
-   :members:
