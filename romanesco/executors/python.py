@@ -5,7 +5,7 @@ import tempfile
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
-    custom = imp.new_module("custom")
+    custom = imp.new_module("__romanesco__")
 
     custom.__dict__['_job_manager'] = kwargs.get('_job_manager')
 
