@@ -39,10 +39,8 @@ out = echo_app(strcat("a,b,c\\n", a, ",2,3"));
             }
         }
 
-        # Use user-specified filename
         out = romanesco.run(task, inputs=inputs)
 
-        # We bound _stderr as a task output, so it should be in the output
         self.assertEqual(out, {
             'out.csv': {
                 'data': 'a,b,c\n5,2,3\n',
