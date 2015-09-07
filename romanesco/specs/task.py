@@ -179,11 +179,8 @@ class Task(AnonymousTask):
     def __init__(self, name, *args, **kw):
         """Initialize the spec and add private attributes."""
 
-        if {'inputs', 'outputs'} & set(kw.keys()):
-            raise ReadOnlyAttributeException('inputs and outputs are '
-                                             'read only attributes.')
-
         super(Task, self).__init__(*args, **kw)
+
         self.name = name
         self['mode'] = kw.get("mode", "python")
 
@@ -197,6 +194,20 @@ class Task(AnonymousTask):
             raise ReadOnlyAttributeException('%s is a read only attribute.' % key)
         else:
             super(Task, self).__setitem__(key, value)
+
+    def update(self, other=None, **kw):
+
+        """A recursive version of ``dict.update``."""
+
+        if other is not None:
+            if {'inputs', 'outputs'} & set(other):
+                raise ReadOnlyAttributeException('inputs and outputs are '
+                                                 'read only attributes.')
+        if {'inputs', 'outputs'} & set(kw):
+            raise ReadOnlyAttributeException('inputs and outputs are '
+                                             'read only attributes.')
+        super(Task, self).update(other, **kw)
+
 
 
 __all__ = ('AnonymousTask', 'Task', 'ReadOnlyAttributeException', )

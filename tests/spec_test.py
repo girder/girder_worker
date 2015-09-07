@@ -161,6 +161,18 @@ class TestTask(TestCase):
             __inputs__ = specs.PortList(self.inputs)
             __outputs__ = specs.PortList(self.outputs)
 
+        # Test if passed in in spec dict
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            spec = self.spec.copy()
+            spec['inputs'] = specs.PortList()
+            TempTask("temp", spec)
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            spec = self.spec.copy()
+            spec['outputs'] = specs.PortList()
+            TempTask("temp", spec)
+
+        # Test if assigned after instatiation
         t = TempTask("temp", self.spec)
 
         with self.assertRaises(specs.ReadOnlyAttributeException):
@@ -331,7 +343,7 @@ class TestWorkflow(TestCase):
                 }
             ]
         }
-        
-            
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
