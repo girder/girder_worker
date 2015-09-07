@@ -32,6 +32,7 @@ via its plugin system, which is described in :doc:`plugins`.
    installation
    types-and-formats
    api-docs
+   examples
    developer-docs
    plugins
 
