@@ -77,17 +77,9 @@ class TestPort(TestCase):
             p.type = 'notatype'
 
 
-class TestAnonymousTask(TestCase):
+class TestTaskSpec(TestCase):
 
     """Tests edge cases of the anonymous task spec."""
-
-    def test_set_input(self):
-        """Test set_input method."""
-        t = specs.AnonymousTask(inputs=[{'name': 'a'}, {'name': 'b'}])
-        t.outputs.append({'name': 'z'})
-
-        with self.assertRaises(ValueError):
-            t.set_input(z=0)
 
     def test_task_inputs_outputs_equality(self):
         """Test input and output equality through specs, task __getitem__
@@ -106,7 +98,7 @@ class TestAnonymousTask(TestCase):
             'outputs': outputs,
             'script': "d = a + ':' + str(b + c)"}
 
-        t = specs.AnonymousTask(spec)
+        t = specs.TaskSpec(spec)
 
         self.assertEquals(sorted(spec['inputs']), inputs)
         self.assertEqual(sorted(spec['outputs']), outputs)
@@ -133,7 +125,8 @@ class TestTask(TestCase):
         ])
 
         self.spec = {
-            'script': "d = a + ':' + str(b + c)"
+            'script': "d = a + ':' + str(b + c)",
+            'mode': "python"
         }
 
     def test_class_level_set_of_inputs_outputs(self):
@@ -144,13 +137,13 @@ class TestTask(TestCase):
             __inputs__ = specs.PortList(self.inputs)
             __outputs__ = specs.PortList(self.outputs)
 
-        t = specs.Task("temp", self.spec)
+        t = specs.Task(self.spec)
         self.assertEquals(set(t.keys()), {'inputs', 'outputs', 'mode', 'script'})
 
         self.assertEquals(t['inputs'], specs.PortList())
         self.assertEquals(t['outputs'], specs.PortList())
 
-        t2 = TempTask("temp", self.spec)
+        t2 = TempTask(self.spec)
         self.assertEquals(t2['inputs'], self.inputs)
         self.assertEquals(t2['outputs'], self.outputs)
 
@@ -166,15 +159,15 @@ class TestTask(TestCase):
         with self.assertRaises(specs.ReadOnlyAttributeException):
             spec = self.spec.copy()
             spec['inputs'] = specs.PortList()
-            TempTask("temp", spec)
+            TempTask(spec)
 
         with self.assertRaises(specs.ReadOnlyAttributeException):
             spec = self.spec.copy()
             spec['outputs'] = specs.PortList()
-            TempTask("temp", spec)
+            TempTask(spec)
 
         # Test if assigned after instatiation
-        t = TempTask("temp", self.spec)
+        t = TempTask(self.spec)
 
         with self.assertRaises(specs.ReadOnlyAttributeException):
             t['inputs'] = specs.PortList()
@@ -263,11 +256,11 @@ class TestWorkflow(TestCase):
         }
 
     def test_spec_class_generator(self):
-        for spec in [self.add, self.add_three, self.add_two,
-                     self.multiply, self.workflow]:
-            cls = spec_class_generator("cls", spec)
-            self.assertEqual(cls("test"), spec)
 
+        """Instantiated classes from spec_class_generator should equal their spec"""
+        for spec in [self.add, self.add_three, self.add_two, self.multiply]:
+            cls = spec_class_generator("cls", spec)
+            self.assertEqual(cls(), spec)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

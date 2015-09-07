@@ -1,14 +1,21 @@
 """This module defines tasks executed in the pipeline."""
 
-import six
+# import six
 
-import romanesco
+# import romanesco
 
 from .spec import Spec
 from .port_list import PortList
 
+from collections import MutableMapping
 
-class AnonymousTask(Spec):
+
+class ReadOnlyAttributeException(Exception):
+    """Exception thrown when attempting to set a read only attribute"""
+    pass
+
+
+class TaskSpec(Spec):
 
     """Defines a pipeline element.
 
@@ -19,7 +26,7 @@ class AnonymousTask(Spec):
 
     def __init__(self, *args, **kw):
         """Initialize the spec and add private attributes."""
-        super(AnonymousTask, self).__init__(*args, **kw)
+        super(TaskSpec, self).__init__(*args, **kw)
         self._input_data = {}
         self._output_data = {}
         self._dirty = True
@@ -28,7 +35,7 @@ class AnonymousTask(Spec):
         """Extend spec setitem to call PortList for input/output properties."""
         if key in ('inputs', 'outputs'):
             value = PortList(value)
-        super(AnonymousTask, self).__setitem__(key, value)
+        super(TaskSpec, self).__setitem__(key, value)
 
     def update(self, other, **kw):
         """Extend update to call PortList for input/output properties."""
@@ -36,164 +43,84 @@ class AnonymousTask(Spec):
             other['inputs'] = PortList(other['inputs'])
         if 'outputs' in other:
             other['outputs'] = PortList(other['outputs'])
-        super(AnonymousTask, self).update(other, **kw)
-
-    def set_input(self, *arg, **kw):
-        """Bind (and cache) data to input ports.
-
-        Positional arguments map to input ports numbered as '0', '1', etc.
-        Keyword arguments set inputs by name.
-
-        Example task:
-        >>> def func(a='value', b=0, c=0):
-        ...     return {'d': a + ':' + str(b + c)}
-        >>> spec = {
-        ...     'inputs': [
-        ...         {'name': 'a', 'type': 'string', 'format': 'text'},
-        ...         {'name': 'b', 'type': 'number', 'format': 'number'},
-        ...         {'name': 'c', 'type': 'number', 'format': 'number'},
-        ...     ],
-        ...     'outputs': [
-        ...         {'name': 'd', 'type': 'string', 'format': 'text'}
-        ...     ],
-        ...     'script': func
-        ... }
-        >>> t1 = AnonymousTask(spec)
-        >>> t2 = AnonymousTask(spec)
-        >>> t2.script = "d = a + ';' + str(b - c)"
-
-        # Input set from data sources
-        >>> t1.set_input(a='The sum', b=2, c=3).get_output('d')
-        'The sum:5'
-
-        # Input set from data bindings (required for non-callable ``script``)
-        >>> t2.set_input(a={'data': t1.get_output('d'), 'format': 'text'},
-        ...              b={'data': 4, 'format': 'number'},
-        ...              c={'data': 5, 'format': 'number'}).get_output('d')
-        'The sum:5;-1'
-        """
-        # Convert arguments into keyword arguments
-        for i, a in enumerate(arg):
-            kw[str(i)] = a
-
-        for name, value in six.iteritems(kw):
-            if name not in self.inputs:
-                raise ValueError("Invalid port name '{0}'".format(name))
-
-            self._input_data[name] = value
-
-            self._dirty = True
-        return self
-
-    def get_input(self, name='0'):
-        """Return the data bound to the given input port.
-
-        :param str name: An input port name
-        :rtype: object or None
-        """
-        return self._input_data.get(name)
-
-    def _set_output(self, val):
-        """Set the output data cache.
-
-        :param dict val: Output port -> data mapping
-        """
-        self._output_data = val
-
-    def get_output(self, name='0'):
-        """Return the data bound to the given output port.
-
-        :param str name: An input port name
-        :rtype: object or None
-        """
-        if name not in self.outputs:
-            raise ValueError("Invalid port name '{0}'".format(name))
-        if self.dirty:
-            self.run()
-        return self._output_data.get(name)
-
-    def run(self, *arg, **kw):
-        """Execute the task.
-
-        This method requires at a minimum that all input ports are connected
-        to valid data sources.  Subclasses can customize the execution with
-        keyword arguments.  The reference implementation only checks that
-        the input ports are all connected and raises an error if they
-        aren't.
-        """
-        all_inputs = {}
-        for port in self.inputs.keys():
-            all_inputs[port] = self.get_input(name=port)
-        if self.mode == 'python' and callable(self.script):
-            self._set_output(self.script(**all_inputs))
-        else:
-            all_outputs = {}
-            romanesco.run(self, all_inputs, all_outputs)
-            for key in self.outputs.keys():
-                all_outputs[key] = self.outputs[key].fetch(all_outputs[key])
-            self._set_output(all_outputs)
-
-        self._dirty = False
-
-    def _reset(self, *args):
-        """Set dirty state for the task."""
-        self._dirty = True
-
-    def _reset_downstream(self, _, isdirty, *args):
-        """Set dirty state on all downstream tasks."""
-        if isdirty and not self.dirty:
-            self._reset()
-
-    @property
-    def dirty(self):
-        """Return the dirty state of the task."""
-        return self._dirty
+        super(TaskSpec, self).update(other, **kw)
 
     _serializer = str
 
 # add base spec properties
-AnonymousTask.make_property('mode', 'The execution mode of the task', 'python')
-AnonymousTask.make_property('script', 'A script or function to execute', '')
-AnonymousTask.make_property(
+TaskSpec.make_property('mode', 'The execution mode of the task', 'python')
+TaskSpec.make_property('script', 'A script or function to execute', '')
+TaskSpec.make_property(
     'inputs',
     'A list of inputs accepted by the task',
     PortList()
 )
-AnonymousTask.make_property(
+TaskSpec.make_property(
     'outputs',
     'A list of outputs returned by the task',
     PortList()
 )
 
 
-class ReadOnlyAttributeException(Exception):
-    """Exception thrown when attempting to set a read only attribute"""
-    pass
-
-
-class Task(AnonymousTask):
+class Task(MutableMapping):
 
     __inputs__ = PortList()
     __outputs__ = PortList()
 
-    def __init__(self, name, *args, **kw):
+    # Should probably be a property/function on Spec
+    def get_spec_props(self):
+        return ['mode', 'script', 'inputs', 'outputs']
+
+    def __init__(self, spec=None, **kw):
         """Initialize the spec and add private attributes."""
 
-        super(Task, self).__init__(*args, **kw)
+        self.__spec__ = TaskSpec()
 
-        self.name = name
-        self['mode'] = kw.get("mode", "python")
+        if spec is None:
+            spec = {}
 
-        self.__setitem__('inputs', self.__inputs__, force=True)
-        self.__setitem__('outputs', self.__outputs__, force=True)
+        spec.update(kw)
+        for k, v in spec.items():
+            self[k] = v
 
-    def __setitem__(self, key, value, force=False):
+        self.__spec__.__setitem__('inputs', self.__inputs__)
+        self.__spec__.__setitem__('outputs', self.__outputs__)
+
+    # Shadow attr getters for attributes in __spec__
+    #  using Our own __getitem__ method
+    def __getattr__(self, key):
+        if key in self.get_spec_props():
+            return self.__getitem__(key)
+        else:
+            return super(Task, self).__getattr__(key)
+
+    # Shadow attr setters for attributes in __spec__
+    # using our own __setitem__ method
+    def __setattr__(self, key, value):
+        if key in self.get_spec_props():
+            return self.__setitem__(key, value)
+        else:
+            return super(Task, self).__setattr__(key, value)
+
+    def __setitem__(self, key, value):
         """Extend spec setitem to call PortList for input/output properties."""
 
-        if key in ('inputs', 'outputs') and force is False:
+        if key in ('inputs', 'outputs'):
             raise ReadOnlyAttributeException('%s is a read only attribute.' % key)
         else:
-            super(Task, self).__setitem__(key, value)
+            self.__spec__.__setitem__(key, value)
+
+    def __getitem__(self, key):
+        return self.__spec__.__getitem__(key)
+
+    def __delitem__(self, key):
+        self.__spec__.__delitem__(key)
+
+    def __iter__(self):
+        return self.__spec__.__iter__()
+
+    def __len__(self):
+        return self.__spec__.__len__()
 
     def update(self, other=None, **kw):
 
@@ -206,6 +133,6 @@ class Task(AnonymousTask):
         if {'inputs', 'outputs'} & set(kw):
             raise ReadOnlyAttributeException('inputs and outputs are '
                                              'read only attributes.')
-        super(Task, self).update(other, **kw)
+        self.__spec__.update(other, **kw)
 
-__all__ = ('AnonymousTask', 'Task', 'ReadOnlyAttributeException', )
+__all__ = ('TaskSpec', 'Task', 'ReadOnlyAttributeException', )
