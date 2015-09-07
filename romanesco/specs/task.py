@@ -176,7 +176,7 @@ class Task(AnonymousTask):
     __inputs__ = PortList()
     __outputs__ = PortList()
 
-    def __init__(self, *args, **kw):
+    def __init__(self, name, *args, **kw):
         """Initialize the spec and add private attributes."""
 
         if {'inputs', 'outputs'} & set(kw.keys()):
@@ -184,7 +184,7 @@ class Task(AnonymousTask):
                                              'read only attributes.')
 
         super(Task, self).__init__(*args, **kw)
-
+        self.name = name
         self['mode'] = kw.get("mode", "python")
 
         self.__setitem__('inputs', self.__inputs__, force=True)

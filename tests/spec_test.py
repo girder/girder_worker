@@ -143,13 +143,13 @@ class TestTask(TestCase):
             __inputs__ = specs.PortList(self.inputs)
             __outputs__ = specs.PortList(self.outputs)
 
-        t = specs.Task(self.spec)
+        t = specs.Task("temp", self.spec)
         self.assertEquals(set(t.keys()), {'inputs', 'outputs', 'mode', 'script'})
 
         self.assertEquals(t['inputs'], specs.PortList())
         self.assertEquals(t['outputs'], specs.PortList())
 
-        t2 = TempTask(self.spec)
+        t2 = TempTask("temp", self.spec)
         self.assertEquals(t2['inputs'], self.inputs)
         self.assertEquals(t2['outputs'], self.outputs)
 
@@ -161,7 +161,7 @@ class TestTask(TestCase):
             __inputs__ = specs.PortList(self.inputs)
             __outputs__ = specs.PortList(self.outputs)
 
-        t = TempTask(self.spec)
+        t = TempTask("temp", self.spec)
 
         with self.assertRaises(specs.ReadOnlyAttributeException):
             t['inputs'] = specs.PortList()
@@ -176,5 +176,162 @@ class TestTask(TestCase):
             t.outputs = specs.PortList()
 
 
+class TestWorkflow(TestCase):
+
+    def setUp(self):
+        self.add_three = {
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "b",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "mode": "python",
+            "script": "b = a + 3"
+        }
+
+        self.add_two = {
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "b",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "mode": "python",
+            "script": "b = a + 2"
+        }
+
+        self.add = {
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "number",
+                    "format": "number",
+                },
+                {
+                    "name": "b",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "c",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "script": "c = a + b",
+            "mode": "python"
+        }
+
+        self.multiply = {
+            "inputs": [
+                {
+                    "name": "in1",
+                    "type": "number",
+                    "format": "number"
+                },
+                {
+                    "name": "in2",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "mode": "python",
+            "script": "out = in1 * in2"
+        }
+
+        self.workflow = {
+            "mode": "workflow",
+            "inputs": [
+                {
+                    "name": "x",
+                    "type": "number",
+                    "format": "number",
+                    "default": {"format": "number", "data": 10}
+                },
+                {
+                    "name": "y",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "result",
+                    "type": "number",
+                    "format": "number"
+                }
+            ],
+            "steps": [
+                {
+                    "name": "af352b243109c4235d2549",
+                    "task": self.add_three,
+                },
+                {
+                    "name": "af352b243109c4235d25fb",
+                    "task": self.add_two,
+                },
+                {
+                    "name": "af352b243109c4235d25ec",
+                    "task": self.multiply,
+                }
+            ],
+            "connections": [
+                {
+                    "name": "x",
+                    "input_step": "af352b243109c4235d2549",
+                    "input": "a"
+                },
+                {
+                    "name": "y",
+                    "input_step": "af352b243109c4235d25fb",
+                    "input": "a"
+                },
+                {
+                    "output_step": "af352b243109c4235d2549",
+                    "output": "b",
+                    "input_step": "af352b243109c4235d25ec",
+                    "input": "in1"
+                },
+                {
+                    "output_step": "af352b243109c4235d25fb",
+                    "output": "b",
+                    "input_step": "af352b243109c4235d25ec",
+                    "input": "in2"
+                },
+                {
+                    "name": "result",
+                    "output_step": "af352b243109c4235d25ec",
+                    "output": "out"
+                }
+            ]
+        }
+        
+            
 if __name__ == '__main__':
     unittest.main(verbosity=2)
