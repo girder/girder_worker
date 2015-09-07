@@ -56,6 +56,7 @@ add_docstring_test(romanesco.specs.spec)
 add_docstring_test(romanesco.specs.task)
 add_docstring_test(romanesco.specs.port)
 add_docstring_test(romanesco.specs.port_list)
+add_docstring_test(romanesco.specs.utils)
 add_docstring_test(romanesco.format)
 
 # Look for plugin.cmake in plugin dirs, include if they exist

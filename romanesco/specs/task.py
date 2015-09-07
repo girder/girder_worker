@@ -208,6 +208,4 @@ class Task(AnonymousTask):
                                              'read only attributes.')
         super(Task, self).update(other, **kw)
 
-
-
 __all__ = ('AnonymousTask', 'Task', 'ReadOnlyAttributeException', )

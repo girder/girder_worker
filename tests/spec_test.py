@@ -2,6 +2,7 @@
 import unittest
 from unittest import TestCase
 from romanesco import specs
+from romanesco.specs.utils import spec_class_generator
 
 
 class TestSpec(TestCase):
@@ -191,128 +192,45 @@ class TestTask(TestCase):
 class TestWorkflow(TestCase):
 
     def setUp(self):
+        self.add = {
+            "inputs": [{"name": "a", "type": "number", "format": "number"},
+                       {"name": "b", "type": "number", "format": "number"}],
+            "outputs": [{"name": "c", "type": "number", "format": "number"}],
+            "script": "c = a + b",
+            "mode": "python"}
+
         self.add_three = {
-            "inputs": [
-                {
-                    "name": "a",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "b",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
+            "inputs": [{"name": "a", "type": "number", "format": "number"}],
+            "outputs": [{"name": "b", "type": "number", "format": "number"}],
             "mode": "python",
-            "script": "b = a + 3"
-        }
+            "script": "b = a + 3"}
 
         self.add_two = {
-            "inputs": [
-                {
-                    "name": "a",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "b",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
+            "inputs": [{"name": "a", "type": "number", "format": "number"}],
+            "outputs": [{"name": "b", "type": "number", "format": "number"}],
             "mode": "python",
-            "script": "b = a + 2"
-        }
-
-        self.add = {
-            "inputs": [
-                {
-                    "name": "a",
-                    "type": "number",
-                    "format": "number",
-                },
-                {
-                    "name": "b",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "c",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "script": "c = a + b",
-            "mode": "python"
-        }
+            "script": "b = a + 2"}
 
         self.multiply = {
-            "inputs": [
-                {
-                    "name": "in1",
-                    "type": "number",
-                    "format": "number"
-                },
-                {
-                    "name": "in2",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "out",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
+            "inputs": [{"name": "in1", "type": "number", "format": "number"},
+                       {"name": "in2", "type": "number", "format": "number"}],
+            "outputs": [{"name": "out", "type": "number", "format": "number"}],
             "mode": "python",
-            "script": "out = in1 * in2"
-        }
+            "script": "out = in1 * in2"}
 
         self.workflow = {
             "mode": "workflow",
-            "inputs": [
-                {
-                    "name": "x",
-                    "type": "number",
-                    "format": "number",
-                    "default": {"format": "number", "data": 10}
-                },
-                {
-                    "name": "y",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "result",
-                    "type": "number",
-                    "format": "number"
-                }
-            ],
-            "steps": [
-                {
-                    "name": "af352b243109c4235d2549",
-                    "task": self.add_three,
-                },
-                {
-                    "name": "af352b243109c4235d25fb",
-                    "task": self.add_two,
-                },
-                {
-                    "name": "af352b243109c4235d25ec",
-                    "task": self.multiply,
-                }
-            ],
+
+            "inputs": [{"name": "x", "type": "number", "format": "number",
+                        "default": {"format": "number", "data": 10}},
+                       {"name": "y", "type": "number", "format": "number"}],
+
+            "outputs": [{"name": "result", "type": "number", "format": "number"}],
+
+            "steps": [{"task": self.add_three, "name": "af352b243109c4235d2549"},
+                      {"task": self.add_two, "name": "af352b243109c4235d25fb"},
+                      {"task": self.multiply, "name": "af352b243109c4235d25ec"}],
+
             "connections": [
                 {
                     "name": "x",
@@ -343,6 +261,12 @@ class TestWorkflow(TestCase):
                 }
             ]
         }
+
+    def test_spec_class_generator(self):
+        for spec in [self.add, self.add_three, self.add_two,
+                     self.multiply, self.workflow]:
+            cls = spec_class_generator("cls", spec)
+            self.assertEqual(cls("test"), spec)
 
 
 if __name__ == '__main__':
