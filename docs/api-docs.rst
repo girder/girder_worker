@@ -78,6 +78,11 @@ such as ``pdb.``
 The workflow mode simply allows for a directed acyclic graph of tasks to be
 specified to :py:func:`romanesco.run`.
 
+.. seealso::
+
+   Visualize Facebook data with Romanesco in :doc:`examples`
+      A full example of how to create workflows in Romanesco.
+
 .. code-block:: none
 
     <TASK_INPUT> ::= {

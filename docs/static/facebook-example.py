@@ -1,7 +1,4 @@
-import romanesco
-from romanesco.specs import Task
-
-most_popular_task = Task({
+most_popular_task = {
     'inputs': [
         {'name': 'G',
          'type': 'graph',
@@ -16,15 +13,15 @@ most_popular_task = Task({
          'format': 'networkx'}
     ],
     'script':
-'''
+    '''
 from networkx import degree
 
 degrees = degree(G)
 most_popular_person = max(degrees, key=degrees.get)
-'''
-})
+    '''
+}
 
-find_neighborhood_task = Task({
+find_neighborhood_task = {
     'inputs': [
         {'name': 'G',
          'type': 'graph',
@@ -39,37 +36,58 @@ find_neighborhood_task = Task({
          'format': 'networkx'}
     ],
     'script':
-'''
+    '''
 from networkx import ego_graph
 
 subgraph = ego_graph(G, most_popular_person)
-'''
-})
+    '''
+}
 
+workflow = {
+    'mode': 'workflow',
+    'inputs': [
+        {'name': 'G',
+         'type': 'graph',
+         'format': 'adjacencylist'}
+    ],
+    'outputs': [
+        {'name': 'result_graph',
+         'type': 'graph',
+         'format': 'networkx'}
+    ]
+}
 
-# Set our adjacency list as our tasks input
+workflow['steps'] = [{'name': 'most_popular',
+                      'task': most_popular_task},
+                     {'name': 'find_neighborhood',
+                      'task': find_neighborhood_task}]
+
+workflow['connections'] = [
+    {'name': 'G',
+     'input_step': 'most_popular',
+     'input': 'G'},
+    {'output_step': 'most_popular',
+     'output': 'G',
+     'input_step': 'find_neighborhood',
+     'input': 'G'},
+    {'output_step': 'most_popular',
+     'output': 'most_popular_person',
+     'input_step': 'find_neighborhood',
+     'input': 'most_popular_person'},
+    {'name': 'result_graph',
+     'output': 'subgraph',
+     'output_step': 'find_neighborhood'}
+]
+
+import romanesco
+
 with open('facebook-sample-data.txt') as infile:
-    most_popular_task.set_input(G={'format': 'adjacencylist',
-                                   'data': infile.read()})
+    workflow_out = romanesco.run(workflow, inputs={'G': {'format': 'adjacencylist',
+                                                         'data': infile.read()}})
 
-# Run the task to find the most popular person
-most_popular_task.run()
-
-# Use the most popular tasks output to set the next tasks input
-find_neighborhood_task.set_input(G={'format': 'networkx',
-                                    'data': most_popular_task.get_output('G')},
-                                 most_popular_person={'format': 'text',
-                                                      'data': most_popular_task.get_output('most_popular_person')})
-
-# Run the task to find the neighborhood we want to visualize
-find_neighborhood_task.run()
-
-
-# Retrieve the subgraph output from our task
-subgraph = find_neighborhood_task.get_output('subgraph')
-
-# Convert it to a JSON format we can use with d3.js
 with open('data.json', 'wb') as outfile:
-    outfile.write(romanesco.convert('graph', {'format': 'networkx',
-                                              'data': subgraph},
-                                    {'format': 'networkx.json'})['data'])
+    converter_out = romanesco.convert('graph',
+                                      workflow_out['result_graph'],
+                                      {'format': 'networkx.json'})
+
+    outfile.write(converter_out['data'])
