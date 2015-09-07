@@ -87,3 +87,30 @@ class TestTask(TestCase):
 
         with self.assertRaises(ValueError):
             t.set_input(z=0)
+
+    def test_task_inputs_outputs_equality(self):
+        """Test input and output equality through specs, task __getitem__
+        interface and task __getattr__ interface."""
+        inputs = sorted([
+            {'name': 'a', 'type': 'string', 'format': 'text'},
+            {'name': 'b', 'type': 'number', 'format': 'number'},
+            {'name': 'c', 'type': 'number', 'format': 'number'},
+        ])
+        outputs = sorted([
+            {'name': 'd', 'type': 'string', 'format': 'text'}
+        ])
+
+        spec = {
+            'inputs': inputs,
+            'outputs': outputs,
+            'script': "d = a + ':' + str(b + c)"}
+
+        t = specs.Task(spec)
+
+        self.assertEquals(sorted(spec['inputs']), inputs)
+        self.assertEqual(sorted(spec['outputs']), outputs)
+
+        self.assertEquals(sorted(t['inputs']), inputs)
+        self.assertEqual(sorted(t['outputs']), outputs)
+
+        self.assertEquals(sorted(t.inputs), inputs)
