@@ -82,12 +82,10 @@ workflow['connections'] = [
 import romanesco
 
 with open('facebook-sample-data.txt') as infile:
-    workflow_out = romanesco.run(workflow, inputs={'G': {'format': 'adjacencylist',
-                                                         'data': infile.read()}})
+    output = romanesco.run(workflow,
+                           inputs={'G': {'format': 'adjacencylist',
+                                         'data': infile.read()}},
+                           outputs={'result_graph': {'format': 'networkx.json'}})
 
 with open('data.json', 'wb') as outfile:
-    converter_out = romanesco.convert('graph',
-                                      workflow_out['result_graph'],
-                                      {'format': 'networkx.json'})
-
-    outfile.write(converter_out['data'])
+    outfile.write(output['result_graph']['data'])

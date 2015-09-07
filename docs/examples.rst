@@ -62,7 +62,7 @@ Defining our Romanesco task, we can embed this script:
 
 .. literalinclude:: static/facebook-example.py
     :caption: workflow.py/most_popular_task
-    :lines: 1-25
+    :lines: 1-22
     :linenos:
 
 .. note :: As we saw with our last script assuming ``G`` would in be scope, this task explicitly states that both ``most_popular_person`` and ``G`` will be in scope (as its outputs) when it's done.
