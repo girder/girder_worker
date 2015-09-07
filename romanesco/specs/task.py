@@ -8,7 +8,7 @@ from .spec import Spec
 from .port_list import PortList
 
 
-class Task(Spec):
+class AnonymousTask(Spec):
 
     """Defines a pipeline element.
 
@@ -19,7 +19,7 @@ class Task(Spec):
 
     def __init__(self, *args, **kw):
         """Initialize the spec and add private attributes."""
-        super(Task, self).__init__(*args, **kw)
+        super(AnonymousTask, self).__init__(*args, **kw)
         self._input_data = {}
         self._output_data = {}
         self._dirty = True
@@ -28,7 +28,7 @@ class Task(Spec):
         """Extend spec setitem to call PortList for input/output properties."""
         if key in ('inputs', 'outputs'):
             value = PortList(value)
-        super(Task, self).__setitem__(key, value)
+        super(AnonymousTask, self).__setitem__(key, value)
 
     def update(self, other, **kw):
         """Extend update to call PortList for input/output properties."""
@@ -36,7 +36,7 @@ class Task(Spec):
             other['inputs'] = PortList(other['inputs'])
         if 'outputs' in other:
             other['outputs'] = PortList(other['outputs'])
-        super(Task, self).update(other, **kw)
+        super(AnonymousTask, self).update(other, **kw)
 
     def set_input(self, *arg, **kw):
         """Bind (and cache) data to input ports.
@@ -58,8 +58,8 @@ class Task(Spec):
         ...     ],
         ...     'script': func
         ... }
-        >>> t1 = Task(spec)
-        >>> t2 = Task(spec)
+        >>> t1 = AnonymousTask(spec)
+        >>> t2 = AnonymousTask(spec)
         >>> t2.script = "d = a + ';' + str(b - c)"
 
         # Input set from data sources
@@ -152,18 +152,51 @@ class Task(Spec):
     _serializer = str
 
 # add base spec properties
-Task.make_property('mode', 'The execution mode of the task', 'python')
-Task.make_property('script', 'A script or function to execute', '')
-Task.make_property(
+AnonymousTask.make_property('mode', 'The execution mode of the task', 'python')
+AnonymousTask.make_property('script', 'A script or function to execute', '')
+AnonymousTask.make_property(
     'inputs',
     'A list of inputs accepted by the task',
     PortList()
 )
-Task.make_property(
+AnonymousTask.make_property(
     'outputs',
     'A list of outputs returned by the task',
     PortList()
 )
 
 
-__all__ = ('Task',)
+class ReadOnlyAttributeException(Exception):
+    """Exception thrown when attempting to set a read only attribute"""
+    pass
+
+
+class Task(AnonymousTask):
+
+    __inputs__ = PortList()
+    __outputs__ = PortList()
+
+    def __init__(self, *args, **kw):
+        """Initialize the spec and add private attributes."""
+
+        if {'inputs', 'outputs'} & set(kw.keys()):
+            raise ReadOnlyAttributeException('inputs and outputs are '
+                                             'read only attributes.')
+
+        super(Task, self).__init__(*args, **kw)
+
+        self['mode'] = kw.get("mode", "python")
+
+        self.__setitem__('inputs', self.__inputs__, force=True)
+        self.__setitem__('outputs', self.__outputs__, force=True)
+
+    def __setitem__(self, key, value, force=False):
+        """Extend spec setitem to call PortList for input/output properties."""
+
+        if key in ('inputs', 'outputs') and force is False:
+            raise ReadOnlyAttributeException('%s is a read only attribute.' % key)
+        else:
+            super(Task, self).__setitem__(key, value)
+
+
+__all__ = ('AnonymousTask', 'Task', 'ReadOnlyAttributeException', )

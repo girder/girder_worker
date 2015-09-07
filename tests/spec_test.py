@@ -1,5 +1,5 @@
 """Tests for core spec objects."""
-
+import unittest
 from unittest import TestCase
 from romanesco import specs
 
@@ -76,13 +76,13 @@ class TestPort(TestCase):
             p.type = 'notatype'
 
 
-class TestTask(TestCase):
+class TestAnonymousTask(TestCase):
 
-    """Tests edge cases of the task spec."""
+    """Tests edge cases of the anonymous task spec."""
 
     def test_set_input(self):
         """Test set_input method."""
-        t = specs.Task(inputs=[{'name': 'a'}, {'name': 'b'}])
+        t = specs.AnonymousTask(inputs=[{'name': 'a'}, {'name': 'b'}])
         t.outputs.append({'name': 'z'})
 
         with self.assertRaises(ValueError):
@@ -105,7 +105,7 @@ class TestTask(TestCase):
             'outputs': outputs,
             'script': "d = a + ':' + str(b + c)"}
 
-        t = specs.Task(spec)
+        t = specs.AnonymousTask(spec)
 
         self.assertEquals(sorted(spec['inputs']), inputs)
         self.assertEqual(sorted(spec['outputs']), outputs)
@@ -114,3 +114,67 @@ class TestTask(TestCase):
         self.assertEqual(sorted(t['outputs']), outputs)
 
         self.assertEquals(sorted(t.inputs), inputs)
+        self.assertEquals(sorted(t.outputs), outputs)
+
+
+class TestTask(TestCase):
+
+    """Tests edge cases of the task spec."""
+
+    def setUp(self):
+        self.inputs = sorted([
+            {'name': 'a', 'type': 'string', 'format': 'text'},
+            {'name': 'b', 'type': 'number', 'format': 'number'},
+            {'name': 'c', 'type': 'number', 'format': 'number'},
+        ])
+        self.outputs = sorted([
+            {'name': 'd', 'type': 'string', 'format': 'text'}
+        ])
+
+        self.spec = {
+            'script': "d = a + ':' + str(b + c)"
+        }
+
+    def test_class_level_set_of_inputs_outputs(self):
+
+        """Test task input/output attributes are set from class vars"""
+
+        class TempTask(specs.Task):
+            __inputs__ = specs.PortList(self.inputs)
+            __outputs__ = specs.PortList(self.outputs)
+
+        t = specs.Task(self.spec)
+        self.assertEquals(set(t.keys()), {'inputs', 'outputs', 'mode', 'script'})
+
+        self.assertEquals(t['inputs'], specs.PortList())
+        self.assertEquals(t['outputs'], specs.PortList())
+
+        t2 = TempTask(self.spec)
+        self.assertEquals(t2['inputs'], self.inputs)
+        self.assertEquals(t2['outputs'], self.outputs)
+
+    def test_read_only_attributes(self):
+
+        """Raise exception if task input/output are assigned"""
+
+        class TempTask(specs.Task):
+            __inputs__ = specs.PortList(self.inputs)
+            __outputs__ = specs.PortList(self.outputs)
+
+        t = TempTask(self.spec)
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            t['inputs'] = specs.PortList()
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            t['outputs'] = specs.PortList()
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            t.inputs = specs.PortList()
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            t.outputs = specs.PortList()
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
