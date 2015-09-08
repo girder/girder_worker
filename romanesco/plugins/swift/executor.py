@@ -1,8 +1,6 @@
 import os
 import re
-import select
-import subprocess
-import sys
+import romanesco.utils
 import tempfile
 
 
@@ -46,39 +44,6 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     return newArgs
 
 
-def _run_swift_process(command, outputs, print_stdout, print_stderr):
-    p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    fds = [p.stdout, p.stderr]
-    while True:
-        ready = select.select(fds, (), fds, 1)[0]
-
-        if p.stdout in ready:
-            buf = os.read(p.stdout.fileno(), 1024)
-            if buf:
-                if print_stdout:
-                    sys.stdout.write(buf)
-                else:
-                    outputs['_stdout']['script_data'] += buf
-            else:
-                fds.remove(p.stdout)
-        if p.stderr in ready:
-            buf = os.read(p.stderr.fileno(), 1024)
-            if buf:
-                if print_stderr:
-                    sys.stderr.write(buf)
-                else:
-                    outputs['_stderr']['script_data'] += buf
-            else:
-                fds.remove(p.stderr)
-        if (not fds or not ready) and p.poll() is not None:
-            break
-        elif not fds and p.poll() is None:
-            p.wait()
-
-    return p
-
-
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     script = task['script']
     script_fname = tempfile.mktemp()
@@ -101,7 +66,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     print('Running swift: "%s"' % ' '.join(command))
 
-    p = _run_swift_process(command, outputs, print_stdout, print_stderr)
+    p = romanesco.utils.run_process(command, outputs,
+                                    print_stdout, print_stderr)
 
     if p.returncode != 0:
         raise Exception('Error: swift run returned code {}.'.format(
