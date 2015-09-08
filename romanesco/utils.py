@@ -4,7 +4,9 @@ import imp
 import os
 import requests
 import romanesco
+import select
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -356,3 +358,36 @@ def load_plugin(name, paths):
         raise PluginNotFoundException(
             'Plugin "%s" not found. Looked in: \n   %s\n' % (
                 name, '\n   '.join(paths)))
+
+
+def run_process(command, outputs, print_stdout, print_stderr):
+    p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    fds = [p.stdout, p.stderr]
+    while True:
+        ready = select.select(fds, (), fds, 1)[0]
+
+        if p.stdout in ready:
+            buf = os.read(p.stdout.fileno(), 1024)
+            if buf:
+                if print_stdout:
+                    sys.stdout.write(buf)
+                else:
+                    outputs['_stdout']['script_data'] += buf
+            else:
+                fds.remove(p.stdout)
+        if p.stderr in ready:
+            buf = os.read(p.stderr.fileno(), 1024)
+            if buf:
+                if print_stderr:
+                    sys.stderr.write(buf)
+                else:
+                    outputs['_stderr']['script_data'] += buf
+            else:
+                fds.remove(p.stderr)
+        if (not fds or not ready) and p.poll() is not None:
+            break
+        elif not fds and p.poll() is None:
+            p.wait()
+
+    return p

@@ -16,7 +16,7 @@ _err = six.StringIO('error message')
 # Monkey patch select.select in the docker task module
 def _mockSelect(r, w, x, *args, **kwargs):
     return r, w, x
-romanesco.plugins.docker.executor.select.select = _mockSelect
+romanesco.utils.select.select = _mockSelect
 
 
 # Monkey patch os.read to simulate subprocess stdout and stderr
