@@ -3,10 +3,28 @@
 # import six
 
 # import romanesco
-from romanesco.specs import PortList, ReadOnlyAttributeException
+from romanesco.specs import PortList, ReadOnlyAttributeException, Spec
 
 from collections import MutableMapping
 import networkx as nx
+
+
+class WorkflowException(Exception):
+    """Exception thrown for issues with Workflows"""
+    pass
+
+
+class DuplicateTaskException(WorkflowException):
+    """Exception thrown when adding a duplicate task"""
+    pass
+
+
+class StepSpec(Spec):
+    def __init__(self, *args, **kwargs):
+        super(StepSpec, self).__init__(*args, **kwargs)
+
+StepSpec.make_property("name", "Name of the step in the workflow")
+StepSpec.make_property("task", "Workflow task associated with this step")
 
 
 class Workflow(MutableMapping):
@@ -61,4 +79,4 @@ class Workflow(MutableMapping):
             yield key
 
 
-__all__ = ("Workflow", )
+__all__ = ("Workflow", "StepSpec", )
