@@ -4,30 +4,11 @@ import romanesco.utils
 import tempfile
 
 
-def _transform_path(inputs, taskInputs, inputId, tmpDir):
-    """
-    If the input specified by inputId is a filepath target, we transform it to
-    its absolute path within the docker container (underneath /data).
-    """
-    for ti in taskInputs.itervalues():
-        tiId = ti['id'] if 'id' in ti else ti['name']
-        if tiId == inputId:
-            if ti.get('target') == 'filepath':
-                rel = os.path.relpath(inputs[inputId]['script_data'], tmpDir)
-                return os.path.join('/data', rel)
-            else:
-                return inputs[inputId]['script_data']
-
-    raise Exception('No task input found with id = ' + inputId)
-
-
 def _expand_args(args, inputs, taskInputs, tmpDir):
     """
     Expands arguments to the container execution if they reference input
     data. For example, if an input has id=foo, then a container arg of the form
-    $input{foo} would be expanded to the runtime value of that input. If that
-    input is a filepath target, the file path will be transformed into the
-    location that it will be available inside the running container.
+    $input{foo} would be expanded to the runtime value of that input.
     """
     newArgs = []
     regex = re.compile(r'\$input\{([^}]+)\}')
@@ -35,9 +16,8 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     for arg in args:
         for inputId in re.findall(regex, arg):
             if inputId in inputs:
-                transformed = _transform_path(inputs, taskInputs, inputId,
-                                              tmpDir)
-                arg = arg.replace('$input{%s}' % inputId, transformed)
+                arg = arg.replace('$input{%s}' % inputId,
+                                  inputs[inputId]['script_data'])
 
         newArgs.append(arg)
 
