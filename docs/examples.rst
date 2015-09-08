@@ -46,7 +46,7 @@ Build a Workflow
 
 Create a file named ``workflow.py``, this is the file we'll be using to create our Romanesco workflow.
 
-Finding the Most Popular Person
+Find the Most Popular Person
 ###############################
 One way of measuring who the most "popular" person in our graph is, is by taking the node with the largest
 `degree <https://en.wikipedia.org/wiki/Degree_%28graph_theory%29>`_.
@@ -68,7 +68,7 @@ Defining our Romanesco task, we can embed this script:
 .. note :: As we saw with our last script assuming ``G`` would in be scope, this task explicitly states that both ``most_popular_person`` and ``G`` will be in scope (as its outputs) when it's done.
 
 
-Finding Their Neighborhood
+Find Their Neighborhood
 ##########################
 Now that we have the most popular node in the graph, we can take the `subgraph <https://en.wikipedia.org/wiki/Glossary_of_graph_theory#Subgraphs>`_ including only this person and all of their neighbors. These are
 sometimes referred to as `Ego Networks <http://www.analytictech.com/networks/egonet.htm>`_.
@@ -87,7 +87,7 @@ Again, we can create a Romanesco task using our new script, like so:
     :linenos:
 
 
-Putting It Together
+Put It Together
 ###################
 Conceptually, this is what our workflow will look like:
 
