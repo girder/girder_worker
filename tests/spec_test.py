@@ -1,8 +1,9 @@
 """Tests for core spec objects."""
 import unittest
+import collections
 from unittest import TestCase
 from romanesco import specs
-from romanesco.specs.utils import spec_class_generator
+from romanesco.specs.utils import spec_class_generator, to_frozenset
 
 
 class TestSpec(TestCase):
@@ -295,6 +296,47 @@ class TestWorkflow(TestCase):
 
         with self.assertRaises(KeyError):
             wf['foo'] = "foo"
+
+    def test_workflow_add_task_dict(self):
+        """Adding task dicts should show up in Workflow.steps"""
+        wf = specs.Workflow()
+
+        wf.add_task(self.add, "add")
+        task_list = [{"name": "add", "task": self.add}]
+        # Steps should be equal to a list of dicts
+        self.assertEquals(wf['steps'], task_list)
+        self.assertEquals(wf.steps, task_list)
+
+        # Steps should be equal to a list of Spec() dicts
+        self.assertEquals(wf['steps'], [specs.Spec(t) for t in task_list])
+        self.assertEquals(wf.steps, [specs.Spec(t) for t in task_list])
+
+        # Steps should be equal to a list of StepSpec() dicts
+        self.assertEquals(wf['steps'], [specs.StepSpec(t) for t in task_list])
+        self.assertEquals(wf.steps, [specs.StepSpec(t) for t in task_list])
+
+        # No duplicate nodes
+        with self.assertRaises(specs.DuplicateTaskException):
+            wf.add_task(self.add, "add")
+
+        # Test with multiple tasks of the same type (different name)
+        wf.add_task(self.add, "add2")
+        task_list += [{"name": "add2", "task": self.add}]
+
+        self.assertEquals(to_frozenset(wf['steps']), to_frozenset(task_list))
+        self.assertEquals(to_frozenset(wf.steps), to_frozenset(task_list))
+
+        self.assertEquals(to_frozenset(wf['steps']),
+                          to_frozenset([specs.Spec(t) for t in task_list]))
+        self.assertEquals(to_frozenset(wf.steps),
+                          to_frozenset([specs.Spec(t) for t in task_list]))
+
+        # Steps should be equal to a list of StepSpec() dicts
+        self.assertEquals(to_frozenset(wf['steps']),
+                          to_frozenset([specs.StepSpec(t) for t in task_list]))
+        self.assertEquals(to_frozenset(wf.steps),
+                          to_frozenset([specs.StepSpec(t) for t in task_list]))
+
 
 
 if __name__ == '__main__':

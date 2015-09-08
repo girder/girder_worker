@@ -1,5 +1,5 @@
 from romanesco import specs
-
+from collections import Hashable
 
 def spec_class_generator(class_type, spec):
 
@@ -63,3 +63,15 @@ def spec_class_generator(class_type, spec):
         "__init__": __init__}
 
     return type(class_type, (specs.Task,), cls_vars)
+
+
+def to_frozenset(item):
+    """Recursively convert 'item' to a frozenset"""
+    if isinstance(item, Hashable):
+        return item
+
+    if isinstance(item, dict):
+        return frozenset([(k, to_frozenset(v)) for k, v in item.items()])
+
+    if isinstance(item, list):
+        return frozenset([to_frozenset(v) for v in item])
