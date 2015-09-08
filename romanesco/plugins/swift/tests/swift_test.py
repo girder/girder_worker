@@ -1,5 +1,24 @@
+import os
 import romanesco
+import shutil
 import unittest
+
+
+def setUpModule():
+    global _tmp
+    global _cwd
+    _cwd = os.getcwd()
+    _tmp = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'tmp', 'swift')
+    if not os.path.isdir(_tmp):
+        os.makedirs(_tmp)
+    os.chdir(_tmp)
+
+
+def tearDownModule():
+    os.chdir(_cwd)
+    if os.path.isdir(_tmp):
+        shutil.rmtree(_tmp)
 
 
 class TestSwiftMode(unittest.TestCase):
