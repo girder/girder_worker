@@ -256,11 +256,46 @@ class TestWorkflow(TestCase):
         }
 
     def test_spec_class_generator(self):
-
         """Instantiated classes from spec_class_generator should equal their spec"""
         for spec in [self.add, self.add_three, self.add_two, self.multiply]:
             cls = spec_class_generator("cls", spec)
             self.assertEqual(cls(), spec)
+
+    def test_empty_workflow(self):
+        """Empty Workflow objects should have certain properties"""
+        wf = specs.Workflow()
+
+        self.assertEquals(len(wf), 5)
+        self.assertEquals(set(wf.keys()), set(["mode", "steps",
+                                               "connections", "inputs",
+                                               "outputs"]))
+        self.assertEquals(wf['mode'], "workflow")
+        self.assertEquals(wf['steps'], [])
+        self.assertEquals(wf['connections'], [])
+        self.assertEquals(wf['inputs'], [])
+        self.assertEquals(wf['outputs'], [])
+
+        self.assertEquals(wf.mode, "workflow")
+        self.assertEquals(wf.steps, [])
+        self.assertEquals(wf.connections, [])
+        self.assertEquals(wf.inputs, [])
+        self.assertEquals(wf.outputs, [])
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            del wf['mode']
+
+        with self.assertRaises(KeyError):
+            del wf['foo']
+
+        with self.assertRaises(specs.ReadOnlyAttributeException):
+            wf['mode'] = "foo"
+
+        with self.assertRaises(KeyError):
+            wf['foo']
+
+        with self.assertRaises(KeyError):
+            wf['foo'] = "foo"
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
