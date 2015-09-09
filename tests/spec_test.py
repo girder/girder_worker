@@ -612,12 +612,75 @@ class TestWorkflow(TestCase):
 
         self.assertEquals(system, ground)
 
-    def test_workflow_with_task_classes(self):
+    def test_workflow_with_generated_task_classes(self):
         wf = specs.Workflow()
 
         AddTwo = spec_class_generator("AddTwo", self.add_two)
         AddThree = spec_class_generator("AddThree", self.add_three)
         Multiply = spec_class_generator("Multiply", self.multiply)
+
+        wf.add_task(AddTwo(), "a2")
+        wf.add_task(AddThree(), "a3")
+        wf.add_task(Multiply(), "m")
+
+        wf.connect_tasks("a3", "m", {"b": "in1"})
+        wf.connect_tasks("a2", "m", {"b": "in2"})
+
+        # Add default as defined in self.workflow
+        wf.set_default("a3.a", {"format": "number", "data": 10})
+
+        self.assertEquals(wf, self.workflow)
+        inputs = {"a2.a": {"format": "json", "data": "1"},
+                  "a3.a": {"format": "number", "data": 2}}
+
+        ground = romanesco.run(self.workflow, inputs=inputs)
+        system = romanesco.run(wf, inputs=inputs)
+
+        self.assertEquals(system, ground)
+
+    def test_workflow_with_task_classes(self):
+
+        class AddTwo(specs.Task):
+            __inputs__ = specs.PortList([
+                {"name": "a", "type": "number", "format": "number"}
+            ])
+            __outputs__ = specs.PortList([
+                {"name": "b", "type": "number", "format": "number"}
+            ])
+
+            def __init__(self, spec=None, **kw):
+                super(AddTwo, self).__init__(spec, **kw)
+                self.mode = "python"
+                self.script = "b = a + 2"
+
+        class AddThree(specs.Task):
+            __inputs__ = specs.PortList([
+                {"name": "a", "type": "number", "format": "number"}
+            ])
+            __outputs__ = specs.PortList([
+                {"name": "b", "type": "number", "format": "number"}
+            ])
+
+            def __init__(self, spec=None, **kw):
+                super(AddThree, self).__init__(spec, **kw)
+                self.mode = "python"
+                self.script = "b = a + 3"
+
+        class Multiply(specs.Task):
+            __inputs__ = specs.PortList([
+                {"name": "in1", "type": "number", "format": "number"},
+                {"name": "in2", "type": "number", "format": "number"}
+            ])
+            __outputs__ = specs.PortList([
+                {"name": "out", "type": "number", "format": "number"}
+            ])
+
+            def __init__(self, spec=None, **kw):
+                super(Multiply, self).__init__(spec, **kw)
+                self.mode = "python"
+                self.script = "out = in1 * in2"
+
+        wf = specs.Workflow()
 
         wf.add_task(AddTwo(), "a2")
         wf.add_task(AddThree(), "a3")
