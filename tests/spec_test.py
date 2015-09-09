@@ -612,6 +612,32 @@ class TestWorkflow(TestCase):
 
         self.assertEquals(system, ground)
 
+    def test_workflow_with_task_classes(self):
+        wf = specs.Workflow()
+
+        AddTwo = spec_class_generator("AddTwo", self.add_two)
+        AddThree = spec_class_generator("AddThree", self.add_three)
+        Multiply = spec_class_generator("Multiply", self.multiply)
+
+        wf.add_task(AddTwo(), "a2")
+        wf.add_task(AddThree(), "a3")
+        wf.add_task(Multiply(), "m")
+
+        wf.connect_tasks("a3", "m", {"b": "in1"})
+        wf.connect_tasks("a2", "m", {"b": "in2"})
+
+        # Add default as defined in self.workflow
+        wf.set_default("a3.a", {"format": "number", "data": 10})
+
+        self.assertEquals(wf, self.workflow)
+        inputs = {"a2.a": {"format": "json", "data": "1"},
+                  "a3.a": {"format": "number", "data": 2}}
+
+        ground = romanesco.run(self.workflow, inputs=inputs)
+        system = romanesco.run(wf, inputs=inputs)
+
+        self.assertEquals(system, ground)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
