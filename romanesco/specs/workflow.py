@@ -27,6 +27,17 @@ StepSpec.make_property("name", "Name of the step in the workflow")
 StepSpec.make_property("task", "Workflow task associated with this step")
 
 
+class ConnectionSpec(Spec):
+    def __init__(self, *args, **kwargs):
+        super(ConnectionSpec, self).__init__(*args, **kwargs)
+
+ConnectionSpec.make_property("name", "Workflow external facing input or output name")
+ConnectionSpec.make_property("input", "Name of input Port")
+ConnectionSpec.make_property("input_step", "Name of input step")
+ConnectionSpec.make_property("output", "Name of input Port")
+ConnectionSpec.make_property("output_step", "Name of output step")
+
+
 class Workflow(MutableMapping):
 
     def __init__(self, *args, **kw):
@@ -43,7 +54,7 @@ class Workflow(MutableMapping):
     def _add_node(self, name, task):
         if name in self.__graph__.nodes():
             raise DuplicateTaskException("%s is already in Workflow!" % name)
-        self.__graph__.add_node(name, data=task)
+        self.__graph__.add_node(name, task=task)
 
     def add_task(self, task, name=None):
         if hasattr(task, "name"):
@@ -97,12 +108,82 @@ class Workflow(MutableMapping):
 
     @property
     def steps(self):
-        return [StepSpec({"name": n,  "task": dict(props['data'])})
-                for n, props in self.__graph__.nodes(data=True)]
+        return [StepSpec({"name": n,  "task": dict(data['task'])})
+                for n, data in self.__graph__.nodes(data=True)]
+
+    def _get_connections_and_open_ports(self):
+        """Internal function that returns three arguments. The first argument
+        is a list of tuples of the form (output_node, output_port, input_node,
+        input_port).  The second argument is a dict of open input ports. The
+        third argument is a dict of open output ports.
+        """
+
+        # Generate sets of input/output ports indexed by node name
+        # We will remove ports from these input/output sets as we
+        # loop through the graph edge data.  This should leave us
+        # with all 'open' input ports and all 'open' output ports
+        input_ports = {}
+        output_ports = {}
+        for name, data in self.__graph__.nodes(data=True):
+            input_ports[name] = set([d['name'] for d in data['task']['inputs']])
+            output_ports[name] = set([d['name'] for d in data['task']['outputs']])
+
+        internal_connections = []
+        for output_node, input_node, connections in self.__graph__.edges(data=True):
+            for output_port, input_port in connections.items():
+
+                # Add to internal connections set
+                internal_connections.append((output_node, output_port,
+                                             input_node, input_port))
+
+                # Pop output_port off of output_node
+                output_ports[output_node].remove(output_port)
+
+                # Pop input_port off of input_node
+                input_ports[input_node].remove(input_port)
+
+        return internal_connections, input_ports, output_ports
+
+    def _get_node_name(self, node, port, ports):
+        """Return 'node.port' if there is any other port under a different node
+        with the same name. Otherwise return 'port'"""
+        if any(port in S for k, S in ports.items() if k != node):
+            return "%s.%s" % (node, port)
+        return port
 
     @property
     def connections(self):
-        return []
+        internal, input_ports, output_ports = self._get_connections_and_open_ports()
+        connections = []
+
+        for node, inputs in input_ports.items():
+            for input_port in inputs:
+                connections.append(
+                    ConnectionSpec({
+                        "name": self._get_node_name(node, input_port, input_ports),
+                        "input_step": node,
+                        "input": input_port
+                    }))
+
+        for output_node, output_port, input_node, input_port in internal:
+            connections.append(
+                ConnectionSpec({
+                    "output_step": output_node,
+                    "output": output_port,
+                    "input_step": input_node,
+                    "input": input_port
+                }))
+
+        for node, outputs in output_ports.items():
+            for output_port in outputs:
+                connections.append(
+                    ConnectionSpec({
+                        "name": self._get_node_name(node, output_port, output_ports),
+                        "output_step": node,
+                        "output": output_port
+                    }))
+
+        return connections
 
     @property
     def inputs(self):

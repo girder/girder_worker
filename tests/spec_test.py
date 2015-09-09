@@ -337,6 +337,83 @@ class TestWorkflow(TestCase):
         self.assertEquals(to_frozenset(wf.steps),
                           to_frozenset([specs.StepSpec(t) for t in task_list]))
 
+    def test_workflow_connect_tasks(self):
+        """Verify connections is correct given a known task graph"""
+        #################################################################
+        #                          Task Graph
+        #                        ==============
+        #
+        #        +               +          +              +
+        # {in1}  |        {in2}  |          | {a}          | {b}
+        #        |               |          |              |
+        #        +--^---------+^-+          +-^---------+ <+
+        #           |         |               |         |
+        #           |    M1   |               |   A1    |
+        #           |         |               |         |
+        #           +----+----+               +-----+---+
+        #                |                          |
+        #          {out} |                          |  {c}
+        #                |                          |
+        #                |       +-----------+      |
+        #                |       |           |      |
+        #                +------^+           +^-----+
+        #                  {in1} |    M2     |  {in2}
+        #                        |           |
+        #                        +-----+-----+                  ^
+        #                              |                        |
+        #                        {out} |                        |
+        #                              |                        |
+        #                              |    +------------+      |
+        #                              |    |            |      |
+        #                              +---^+            +------+
+        #                              {a}  |    A2      |   {b}
+        #                                   |            |
+        #                                   +-----+------+
+        #                                         |
+        #                                         |  {c}
+        #                                         |
+        #                                         v
+        #################################################################
+        wf = specs.Workflow()
+
+        wf.add_task(self.multiply, "m1")
+        wf.add_task(self.multiply, "m2")
+        wf.add_task(self.add, "a1")
+        wf.add_task(self.add, "a2")
+
+        wf.connect_tasks("m1", "m2", {"out": "in1"})
+        wf.connect_tasks("a1", "m2", {"c": "in2"})
+        wf.connect_tasks("m2", "a2", {"out": "a"})
+
+        ground = [{"input": "a", "input_step": "a1", "name": "a"},
+                  {"input": "b", "input_step": "a1", "name": "a1.b"},
+                  {"input": "b", "input_step": "a2", "name": "a2.b"},
+                  {"input": "in1", "input_step": "m1", "name": "in1"},
+                  {"input": "in2", "input_step": "m1", "name": "in2"},
+                  {"input": "in2", "input_step": "m2",
+                   "output": "c", "output_step": "a1"},
+                  {"input": "in1", "input_step": "m2",
+                   "output": "out", "output_step": "m1"},
+                  {"input": "a", "input_step": "a2",
+                   "output": "out", "output_step": "m2"},
+                  {"name": "c", "output": "c", "output_step": "a2"}]
+
+        self.assertEquals(to_frozenset(wf.connections), to_frozenset(ground))
+
+        self.assertEquals(to_frozenset(wf.connections),
+                          to_frozenset([specs.Spec(d) for d in ground]))
+
+        self.assertEquals(to_frozenset(wf.connections),
+                          to_frozenset([specs.ConnectionSpec(d) for d in ground]))
+
+
+    # Test connect_tasks(t1, t2, {"output": input})
+
+    # Test connect_tasks(t1, t2, output="input")
+
+    # Test connect_tasks((t1, t2, {"output", "input"}), (t3, t2, {"output", "input"}))
+
+
 
 
 if __name__ == '__main__':
