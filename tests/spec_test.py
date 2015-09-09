@@ -1,9 +1,9 @@
 """Tests for core spec objects."""
 import unittest
-import collections
 from unittest import TestCase
 from romanesco import specs
 from romanesco.specs.utils import spec_class_generator, to_frozenset
+import romanesco
 
 
 class TestSpec(TestCase):
@@ -237,7 +237,7 @@ class TestWorkflow(TestCase):
                         "default": {"format": "number", "data": 10}},
                        {"name": "a2.a", "type": "number", "format": "number"}],
 
-            "outputs": [{"name": "output", "type": "number", "format": "number"}],
+            "outputs": [{"name": "out", "type": "number", "format": "number"}],
 
             "steps": [{"task": self.add_three, "name": "a3"},
                       {"task": self.add_two, "name": "a2"},
@@ -267,7 +267,7 @@ class TestWorkflow(TestCase):
                     "input": "in2"
                 },
                 {
-                    "name": "result",
+                    "name": "out",
                     "output_step": "m",
                     "output": "out"
                 }
@@ -542,6 +542,32 @@ class TestWorkflow(TestCase):
         self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
 
     def test_workflow(self):
+        #                     Task Graph 2
+        #                    ==============
+        #  This is the same task graph from workflow_test.py with minor
+        #  alterations (specifically the task names).
+        #
+        #               +                      +
+        #            {a}|                      | {a}
+        #               |                      |
+        #            +--^----+              +--^----+
+        #            |       |              |       |
+        #            |  A3   |              |  A2   |
+        #            |       |              |       |
+        #            +---+---+              +---+---+
+        #           {b}  |                      |  {b}
+        #                |                      |
+        #                |      +---------+     |
+        #                |      |         |     |
+        #                +-----^+    M    +^----+
+        #                 {in1} |         | {in2}
+        #                       +----+----+
+        #                            |
+        #                            |
+        #                            | {out}
+        #                            |
+        #                            v
+
         wf = specs.Workflow()
 
         wf.add_task(self.add_two, "a2")
@@ -551,6 +577,10 @@ class TestWorkflow(TestCase):
         wf.connect_tasks("a3", "m", {"b": "in1"})
         wf.connect_tasks("a2", "m", {"b": "in2"})
 
+        # Add default as defined in self.workflow
+        wf.set_default("a3.a", {"format": "number", "data": 10})
+
+        # Asset that the components are equal and consistent
         self.assertConsistent(wf.inputs, self.workflow['inputs'],
                               type_spec=specs.Port)
         self.assertConsistent(wf['inputs'], self.workflow['inputs'],
@@ -571,7 +601,16 @@ class TestWorkflow(TestCase):
         self.assertConsistent(wf['connections'], self.workflow['connections'],
                               type_spec=specs.ConnectionSpec)
 
-        self.assertEquals(dict(wf), self.workflow)
+        # Assert the equality of the Workflow object and the workflow dict
+        self.assertEquals(wf, self.workflow)
+
+        inputs = {"a2.a": {"format": "json", "data": "1"},
+                  "a3.a": {"format": "number", "data": 2}}
+
+        ground = romanesco.run(self.workflow, inputs=inputs)
+        system = romanesco.run(wf, inputs=inputs)
+
+        self.assertEquals(system, ground)
 
 
 if __name__ == '__main__':

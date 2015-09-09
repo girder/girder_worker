@@ -9,6 +9,7 @@ from collections import MutableMapping
 import networkx as nx
 import copy
 
+
 class WorkflowException(Exception):
     """Exception thrown for issues with Workflows"""
     pass
@@ -45,6 +46,8 @@ class Workflow(MutableMapping):
 
         self.__interface = {"mode", "steps", "connections",
                             "inputs", "outputs"}
+        self._defaults = {}
+
         self.mode = "workflow"
 
     ##
@@ -197,7 +200,7 @@ class Workflow(MutableMapping):
     def inputs(self):
         _, open_port_names, _ = self._get_connections_and_open_ports()
         ports = []
-        
+
         for node, port_names in open_port_names.items():
 
             # Hash the actual analysis imports by name
@@ -212,6 +215,10 @@ class Workflow(MutableMapping):
 
                 # Set the port name (handles conflicts by prefixing with node name)
                 port['name'] = self._get_node_name(node, port_name, open_port_names)
+
+                # Check defaults
+                if self.has_default(port['name']):
+                    port['default'] = self.get_default(port['name'])
 
                 ports.append(port)
 
@@ -237,10 +244,13 @@ class Workflow(MutableMapping):
                 # Set the port name (handles conflicts by prefixing with node name)
                 port['name'] = self._get_node_name(node, port_name, open_port_names)
 
+                # Check defaults
+                if self.has_default(port['name']):
+                    port['default'] = self.get_default(port['name'])
+
                 ports.append(port)
 
         return PortList(ports)
-
 
     def __getitem__(self, key):
         if key not in self.__interface:
@@ -268,5 +278,33 @@ class Workflow(MutableMapping):
         for key in self.__interface:
             yield key
 
+    #####
+    #  Workflow API
+    #
+
+    # Implementing a full default wrapper because we may need
+    # to support more sophisticated functionality down the line.
+    # For example we may want to 'alais' external workflow port names
+    # to internal open port names. This means we could set a default
+    # on 'a2.a' and then later alais 'a2.a'  to 'x' the input port
+    # would still need to look like {name: 'x', default: {....}, ...}
+    # even though we set the default on 'a2.a.' to support something like
+    # that we need a consistent CRUD-like API around self._defaults.
+
+    def set_default(self, node_name, default):
+        # TODO create DefaultSpec and wrap assignment here
+        self._defaults[node_name] = default
+
+    def get_default(self, node_name):
+        return self._defaults[node_name]
+
+    def has_default(self, node_name):
+        return node_name in self._defaults.keys()
+
+    def remove_default(self, node_name):
+        try:
+            del self._defaults[node_name]
+        except KeyError:
+            pass
 
 __all__ = ("Workflow", "StepSpec", "ConnectionSpec")

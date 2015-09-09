@@ -1,6 +1,7 @@
 from romanesco import specs
 from collections import Hashable
 
+
 def spec_class_generator(class_type, spec):
 
     """Generate a generic Task style class from a Spec style dict.
