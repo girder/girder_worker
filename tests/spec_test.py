@@ -185,6 +185,24 @@ class TestTask(TestCase):
 
 class TestWorkflow(TestCase):
 
+    def assertConsistent(self, system, ground, type_spec=None):
+        """Assert that the system and ground are consistent i.e., they
+        have the same order-variant dicts. We test raw dicts,
+        and Spec dicts and if present type specific dicts"""
+
+        # Test dicts
+        self.assertEquals(to_frozenset(system),
+                          to_frozenset(ground))
+        # Test Specs
+        self.assertEquals(to_frozenset(system),
+                          to_frozenset([specs.Spec(d)
+                                        for d in ground]))
+        if type_spec is not None:
+            # Type specific spec
+            self.assertEquals(to_frozenset(system),
+                              to_frozenset([type_spec(d)
+                                            for d in ground]))
+
     def setUp(self):
         self.add = {
             "inputs": [{"name": "a", "type": "number", "format": "number"},
@@ -215,42 +233,42 @@ class TestWorkflow(TestCase):
         self.workflow = {
             "mode": "workflow",
 
-            "inputs": [{"name": "x", "type": "number", "format": "number",
+            "inputs": [{"name": "a3.a", "type": "number", "format": "number",
                         "default": {"format": "number", "data": 10}},
-                       {"name": "y", "type": "number", "format": "number"}],
+                       {"name": "a2.a", "type": "number", "format": "number"}],
 
-            "outputs": [{"name": "result", "type": "number", "format": "number"}],
+            "outputs": [{"name": "output", "type": "number", "format": "number"}],
 
-            "steps": [{"task": self.add_three, "name": "af352b243109c4235d2549"},
-                      {"task": self.add_two, "name": "af352b243109c4235d25fb"},
-                      {"task": self.multiply, "name": "af352b243109c4235d25ec"}],
+            "steps": [{"task": self.add_three, "name": "a3"},
+                      {"task": self.add_two, "name": "a2"},
+                      {"task": self.multiply, "name": "m"}],
 
             "connections": [
                 {
-                    "name": "x",
-                    "input_step": "af352b243109c4235d2549",
+                    "name": "a3.a",
+                    "input_step": "a3",
                     "input": "a"
                 },
                 {
-                    "name": "y",
-                    "input_step": "af352b243109c4235d25fb",
+                    "name": "a2.a",
+                    "input_step": "a2",
                     "input": "a"
                 },
                 {
-                    "output_step": "af352b243109c4235d2549",
+                    "output_step": "a3",
                     "output": "b",
-                    "input_step": "af352b243109c4235d25ec",
+                    "input_step": "m",
                     "input": "in1"
                 },
                 {
-                    "output_step": "af352b243109c4235d25fb",
+                    "output_step": "a2",
                     "output": "b",
-                    "input_step": "af352b243109c4235d25ec",
+                    "input_step": "m",
                     "input": "in2"
                 },
                 {
                     "name": "result",
-                    "output_step": "af352b243109c4235d25ec",
+                    "output_step": "m",
                     "output": "out"
                 }
             ]
@@ -339,14 +357,118 @@ class TestWorkflow(TestCase):
 
     def test_workflow_connect_tasks(self):
         """Verify connections is correct given a known task graph"""
-        #################################################################
-        #                          Task Graph
+
+        # * Test connect_tasks(t1, t2, {"output": input})
+        inputs_ground = [{"format": "number", "name": "a", "type": "number"}]
+        outputs_ground = [{"format": "number", "name": "b", "type": "number"}]
+        steps_ground = [{"name": "a2", "task": self.add_two},
+                        {"name": "a3", "task": self.add_three}]
+        connections_ground = [{"input": "a", "input_step": "a2", "name": "a"},
+                              {"input": "a", "input_step": "a3",
+                               "output": "b", "output_step": "a2"},
+                              {"name": "b", "output": "b", "output_step": "a3"}]
+
+        wf = specs.Workflow()
+        wf.add_task(self.add_two, "a2")
+        wf.add_task(self.add_three, "a3")
+
+        wf.connect_tasks("a2", "a3", {"b": "a"})
+
+        self.assertConsistent(wf.inputs, inputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
+
+        self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+
+        self.assertConsistent(wf.steps, steps_ground)
+        self.assertConsistent(wf['steps'], steps_ground)
+
+        self.assertConsistent(wf.connections, connections_ground)
+        self.assertConsistent(wf['connections'], connections_ground)
+
+        #####
+        # * Test connect_tasks(t1, t2, output="input")
+
+        wf = specs.Workflow()
+        wf.add_task(self.add_two, "a2")
+        wf.add_task(self.add_three, "a3")
+
+        wf.connect_tasks("a2", "a3", b="a")
+
+        self.assertConsistent(wf.inputs, inputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
+
+        self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+
+        self.assertConsistent(wf.steps, steps_ground)
+        self.assertConsistent(wf['steps'], steps_ground)
+
+        self.assertConsistent(wf.connections, connections_ground)
+        self.assertConsistent(wf['connections'], connections_ground)
+
+        #####
+        # * Test connect_tasks((t1, t2, {"output", "input"}),
+        #                      (t3, t2, {"output", "input"}))
+
+        inputs_ground = [{"format": "number", "name": "a", "type": "number"}]
+        outputs_ground = [{"format": "number", "name": "b", "type": "number"}]
+        steps_ground = [{"name": "a1", "task": self.add_two},
+                        {"name": "a2", "task": self.add_two},
+                        {"name": "a3", "task": self.add_three}]
+        connections_ground = [{"input": "a", "input_step": "a1", "name": "a"},
+                              {"input": "a", "input_step": "a2",
+                               "output": "b", "output_step": "a1"},
+                              {"input": "a", "input_step": "a3",
+                               "output": "b", "output_step": "a2"},
+                              {"name": "b", "output": "b", "output_step": "a3"}]
+
+        wf = specs.Workflow()
+
+        wf.add_task(self.add_two, "a1")
+        wf.add_task(self.add_two, "a2")
+        wf.add_task(self.add_three, "a3")
+
+        wf.connect_tasks([("a1", "a2", {"b": "a"}),
+                          ("a2", "a3", {"b": "a"})])
+
+        self.assertConsistent(wf.inputs, inputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
+
+        self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+
+        self.assertConsistent(wf.steps, steps_ground)
+        self.assertConsistent(wf['steps'], steps_ground)
+
+        self.assertConsistent(wf.connections, connections_ground)
+        self.assertConsistent(wf['connections'], connections_ground)
+
+        #####
+        # * Test connect_tasks with invalid input/output mapping
+        # ** Doesn't exist
+        #    TO IMPLEMENT
+
+        # ** Isn't valid
+        #    NOT CURRENTLY IMPLEMENTED/TESTED
+
+        #####################################################################
+        # * Edge Cases
+        #
+        #                         Task Graph 1
         #                        ==============
+        #  Testing with a non-trival task graph including several edge cases
+        #  This has multipe unconnected inputs that need to be propigated up
+        #  To the top level inputs/outputs attributes on the workflow.
+        #  Additionally the 'b' input on A2  will conflict with the 'b' input
+        #  on A1.  This tests the conflict resolution strategy which is to
+        #  prefix port names with task names (e.g.,  'a1.b'  and 'a2.b')
+        #
         #
         #        +               +          +              +
         # {in1}  |        {in2}  |          | {a}          | {b}
         #        |               |          |              |
-        #        +--^---------+^-+          +-^---------+ <+
+        #        +--^---------^--+          +-^---------^--+
         #           |         |               |         |
         #           |    M1   |               |   A1    |
         #           |         |               |         |
@@ -359,13 +481,13 @@ class TestWorkflow(TestCase):
         #                +------^+           +^-----+
         #                  {in1} |    M2     |  {in2}
         #                        |           |
-        #                        +-----+-----+                  ^
+        #                        +-----+-----+                  +
         #                              |                        |
         #                        {out} |                        |
         #                              |                        |
         #                              |    +------------+      |
         #                              |    |            |      |
-        #                              +---^+            +------+
+        #                              +---^+            +^-----+
         #                              {a}  |    A2      |   {b}
         #                                   |            |
         #                                   +-----+------+
@@ -373,6 +495,7 @@ class TestWorkflow(TestCase):
         #                                         |  {c}
         #                                         |
         #                                         v
+        #
         #################################################################
         wf = specs.Workflow()
 
@@ -385,35 +508,70 @@ class TestWorkflow(TestCase):
         wf.connect_tasks("a1", "m2", {"c": "in2"})
         wf.connect_tasks("m2", "a2", {"out": "a"})
 
-        ground = [{"input": "a", "input_step": "a1", "name": "a"},
-                  {"input": "b", "input_step": "a1", "name": "a1.b"},
-                  {"input": "b", "input_step": "a2", "name": "a2.b"},
-                  {"input": "in1", "input_step": "m1", "name": "in1"},
-                  {"input": "in2", "input_step": "m1", "name": "in2"},
-                  {"input": "in2", "input_step": "m2",
-                   "output": "c", "output_step": "a1"},
-                  {"input": "in1", "input_step": "m2",
-                   "output": "out", "output_step": "m1"},
-                  {"input": "a", "input_step": "a2",
-                   "output": "out", "output_step": "m2"},
-                  {"name": "c", "output": "c", "output_step": "a2"}]
+        connections_ground = [{"input": "a", "input_step": "a1", "name": "a"},
+                              {"input": "b", "input_step": "a1", "name": "a1.b"},
+                              {"input": "b", "input_step": "a2", "name": "a2.b"},
+                              {"input": "in1", "input_step": "m1", "name": "in1"},
+                              {"input": "in2", "input_step": "m1", "name": "in2"},
+                              {"input": "in2", "input_step": "m2",
+                               "output": "c", "output_step": "a1"},
+                              {"input": "in1", "input_step": "m2",
+                               "output": "out", "output_step": "m1"},
+                              {"input": "a", "input_step": "a2",
+                               "output": "out", "output_step": "m2"},
+                              {"name": "c", "output": "c", "output_step": "a2"}]
 
-        self.assertEquals(to_frozenset(wf.connections), to_frozenset(ground))
+        inputs_ground = [{"format": "number", "name": "a", "type": "number"},
+                         {"format": "number", "name": "a1.b", "type": "number"},
+                         {"format": "number", "name": "a2.b", "type": "number"},
+                         {"format": "number", "name": "in1", "type": "number"},
+                         {"format": "number", "name": "in2", "type": "number"}]
 
-        self.assertEquals(to_frozenset(wf.connections),
-                          to_frozenset([specs.Spec(d) for d in ground]))
+        outputs_ground = [{"format": "number", "name": "c", "type": "number"}]
 
-        self.assertEquals(to_frozenset(wf.connections),
-                          to_frozenset([specs.ConnectionSpec(d) for d in ground]))
+        # Connections
+        self.assertConsistent(wf.connections, connections_ground)
+        self.assertConsistent(wf['connections'], connections_ground)
 
+        # Inputs
+        self.assertConsistent(wf.inputs, inputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
 
-    # Test connect_tasks(t1, t2, {"output": input})
+        # Outputs
+        self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
 
-    # Test connect_tasks(t1, t2, output="input")
+    def test_workflow(self):
+        wf = specs.Workflow()
 
-    # Test connect_tasks((t1, t2, {"output", "input"}), (t3, t2, {"output", "input"}))
+        wf.add_task(self.add_two, "a2")
+        wf.add_task(self.add_three, "a3")
+        wf.add_task(self.multiply, "m")
 
+        wf.connect_tasks("a3", "m", {"b": "in1"})
+        wf.connect_tasks("a2", "m", {"b": "in2"})
 
+        self.assertConsistent(wf.inputs, self.workflow['inputs'],
+                              type_spec=specs.Port)
+        self.assertConsistent(wf['inputs'], self.workflow['inputs'],
+                              type_spec=specs.Port)
+
+        self.assertConsistent(wf.outputs, self.workflow['outputs'],
+                              type_spec=specs.Port)
+        self.assertConsistent(wf['outputs'], self.workflow['outputs'],
+                              type_spec=specs.Port)
+
+        self.assertConsistent(wf.steps, self.workflow['steps'],
+                              type_spec=specs.StepSpec)
+        self.assertConsistent(wf['steps'], self.workflow['steps'],
+                              type_spec=specs.StepSpec)
+
+        self.assertConsistent(wf.connections, self.workflow['connections'],
+                              type_spec=specs.ConnectionSpec)
+        self.assertConsistent(wf['connections'], self.workflow['connections'],
+                              type_spec=specs.ConnectionSpec)
+
+        self.assertEquals(dict(wf), self.workflow)
 
 
 if __name__ == '__main__':

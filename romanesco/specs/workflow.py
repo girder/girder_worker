@@ -7,7 +7,7 @@ from romanesco.specs import PortList, ReadOnlyAttributeException, Spec
 
 from collections import MutableMapping
 import networkx as nx
-
+import copy
 
 class WorkflowException(Exception):
     """Exception thrown for issues with Workflows"""
@@ -79,10 +79,18 @@ class Workflow(MutableMapping):
         self.__graph__.add_edge(t1, t2, metadata)
 
     def connect_tasks(self, *args, **kwargs):
-        """"""
+        """Connect two tasks together specifying which input ports connect
+        to which output ports. This function takes either 1, 2 or 3 arguments.
+        In the case of one argument it expects a list of tuples where the tuples
+        are the first, second and third arguments to connect_tasks. If there are
+        two arguments given they must be nodes in the workflow and ports must
+        be specified as key word arguments.  If three arguments are supplied
+        they should be node1, node2 and a dict of port connections where keys
+        are the output ports on node1 and value are the input ports on node2."""
+
         # Single iterable argument - apply connect_tasks() to
         # each element in the iterable
-        if len(args) == 1 and hasattr("__iter__", args[0]):
+        if len(args) == 1 and hasattr(args[0], "__iter__"):
             for arg in args[0]:
                 self.connect_tasks(*arg)
 
@@ -187,11 +195,52 @@ class Workflow(MutableMapping):
 
     @property
     def inputs(self):
-        return PortList()
+        _, open_port_names, _ = self._get_connections_and_open_ports()
+        ports = []
+        
+        for node, port_names in open_port_names.items():
+
+            # Hash the actual analysis imports by name
+            input_ports = {v['name']: v for v in
+                           self.__graph__.node[node]['task']['inputs']}
+
+            # loop through open port names for this node
+            for port_name in port_names:
+
+                # Copy the actual analysis port
+                port = copy.deepcopy(input_ports[port_name])
+
+                # Set the port name (handles conflicts by prefixing with node name)
+                port['name'] = self._get_node_name(node, port_name, open_port_names)
+
+                ports.append(port)
+
+        return PortList(ports)
 
     @property
     def outputs(self):
-        return PortList()
+        _, _, open_port_names = self._get_connections_and_open_ports()
+        ports = []
+
+        for node, port_names in open_port_names.items():
+
+            # Hash the actual analysis imports by name
+            output_ports = {v['name']: v for v in
+                            self.__graph__.node[node]['task']['outputs']}
+
+            # loop through open port names for this node
+            for port_name in port_names:
+
+                # Copy the actual analysis port
+                port = copy.deepcopy(output_ports[port_name])
+
+                # Set the port name (handles conflicts by prefixing with node name)
+                port['name'] = self._get_node_name(node, port_name, open_port_names)
+
+                ports.append(port)
+
+        return PortList(ports)
+
 
     def __getitem__(self, key):
         if key not in self.__interface:
@@ -220,4 +269,4 @@ class Workflow(MutableMapping):
             yield key
 
 
-__all__ = ("Workflow", "StepSpec", )
+__all__ = ("Workflow", "StepSpec", "ConnectionSpec")
