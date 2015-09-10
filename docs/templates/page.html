@@ -1,4 +1,4 @@
-{% extends "!layout.html" %}
+{%- extends "layout.html" %}
 
 {% block extrahead %}
   {% if pagename == 'examples' %}
@@ -6,4 +6,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
     <script src="{{ pathto('_static/facebook-example.js', 1) }}"></script>
   {% endif %}
+{% endblock %}
+
+
+{% block body %}
+  {{ body }}
 {% endblock %}
