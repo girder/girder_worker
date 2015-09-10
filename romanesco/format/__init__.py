@@ -225,7 +225,7 @@ def import_converters(search_paths):
 
             conv_graph.add_edge(Validator(in_type, in_format),
                                 Validator(in_type, out_format),
-                                analysis)
+                                attr_dict=analysis)
 
     os.chdir(prevdir)
 

@@ -21,4 +21,4 @@ for node in nodes:
 for edge in edges:
     output.add_edge(edge['source']['$oid'],
                     edge['target']['$oid'],
-                    edge['data'] if 'data' in edge else {})
+                    attr_dict=edge['data'] if 'data' in edge else {})

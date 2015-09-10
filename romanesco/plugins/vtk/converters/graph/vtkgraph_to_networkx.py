@@ -13,4 +13,4 @@ for node in range(input.GetNumberOfVertices()):
 for edge in range(input.GetNumberOfEdges()):
     output.add_edge(input.GetSourceVertex(edge),
                     input.GetTargetVertex(edge),
-                    vtkrow_to_dict(input.GetEdgeData(), edge))
+                    attr_dict=vtkrow_to_dict(input.GetEdgeData(), edge))
