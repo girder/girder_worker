@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("width", width)
             .attr("height", height);
 
-    d3.json("/_static/facebook-data.json", function(error, graph) {
+    d3.json("_static/facebook-data.json", function(error, graph) {
         if (error) throw error;
 
         force
