@@ -3,6 +3,7 @@
 import six
 import json
 from collections import Mapping
+import copy
 
 
 class SpecMixin(object):
@@ -48,6 +49,12 @@ class SpecMixin(object):
 
         # process keyword arguments
         self.update(kw)
+
+    def __copy__(self):
+        return copy.copy(dict(self))
+
+    def __deepcopy__(self, memodict={}):
+        return copy.deepcopy(dict(self))
 
     @staticmethod
     def _serializer(value):
