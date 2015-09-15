@@ -47,6 +47,9 @@ def _detectMode(spec):
     if mode == 'auto':
         # We guess the mode based on the "url" value
         if 'url' not in spec:
+            if 'data' in spec:
+                return 'inline'
+
             raise Exception('IO mode "auto" requires a "url" field.')
         scheme = spec['url'].split(':', 1)[0]
 
