@@ -135,4 +135,7 @@ class Task(MutableMapping):
                                              'read only attributes.')
         self.__spec__.update(other, **kw)
 
+    def get(self, key, default=None):
+        return self.__spec__.get(key, default)
+
 __all__ = ('TaskSpec', 'Task', 'ReadOnlyAttributeException', )
