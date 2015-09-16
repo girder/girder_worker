@@ -280,8 +280,8 @@ def with_tmpdir(fn):
             return fn(*args, **kwargs)
 
         cleanup = kwargs.get('cleanup', True)
-        with tmpdir(cleanup=cleanup) as tmp_dir:
-            kwargs['_tempdir'] = tmp_dir
+        with tmpdir(cleanup=cleanup) as tempdir:
+            kwargs['_tempdir'] = tempdir
             return fn(*args, **kwargs)
     return wrapped
 

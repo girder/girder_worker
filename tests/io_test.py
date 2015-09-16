@@ -140,3 +140,18 @@ class TestIo(unittest.TestCase):
                 task, inputs=copy.deepcopy(inputs), cleanup=False,
                 validate=False, auto_convert=False)
             self.assertEqual(out['y']['data'], 'dummy file contents_suffix')
+
+    def testMagicVariables(self):
+        task = {
+            'outputs': [{
+                'id': '_tempdir',
+                'type': 'string',
+                'format': 'text'
+
+            }],
+            'script': ''
+        }
+
+        outputs = romanesco.run(task)
+        self.assertTrue('_tempdir' in outputs)
+        self.assertRegexpMatches(outputs['_tempdir']['data'], _tmp + '.+')

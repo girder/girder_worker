@@ -56,7 +56,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
                                               tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, transformed)
             elif inputId == '_tempdir':
-                arg = arg.replace('$input{_tempdir}', tmpDir)
+                arg = arg.replace('$input{_tempdir}', '/data')
 
         newArgs.append(arg)
 

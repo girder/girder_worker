@@ -3,6 +3,8 @@ import romanesco
 import shutil
 import unittest
 
+_cwd = _tmp = None
+
 
 def setUpModule():
     global _tmp
