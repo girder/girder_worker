@@ -11,6 +11,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     sc = kwargs[SC_KEY]
     custom.__dict__['sc'] = sc
     custom.__dict__['spark_context'] = sc
+    custom.__dict__['_job_manager'] = kwargs.get('_job_manager')
+    custom.__dict__['_tempdir'] = kwargs.get('_tempdir')
 
     for name in inputs:
         custom.__dict__[name] = inputs[name]["script_data"]

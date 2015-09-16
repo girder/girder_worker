@@ -38,7 +38,7 @@ def fetch(spec, **kwargs):
         raise
 
     if target == 'filepath':
-        tmpDir = kwargs['_tmp_dir']  # TODO create if not set?
+        tmpDir = kwargs['_tempdir']
 
         if 'filename' in taskInput:
             filename = taskInput['filename']
