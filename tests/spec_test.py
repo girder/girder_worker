@@ -130,6 +130,16 @@ class TestTask(TestCase):
             'mode': "python"
         }
 
+    def test_mutable_mapping_interface(self):
+        class TempTask(specs.Task):
+            __inputs__ = specs.PortList(self.inputs)
+            __outputs__ = specs.PortList(self.outputs)
+
+        t = specs.Task(self.spec)
+
+        self.assertEquals(t['script'], t.get('script'))
+        self.assertEquals('default', t.get('non_present_key', 'default'))
+
     def test_class_level_set_of_inputs_outputs(self):
 
         """Test task input/output attributes are set from class vars"""
