@@ -21,6 +21,34 @@ def tearDownModule():
 
 
 class TestIo(unittest.TestCase):
+    def testDefaultInline(self):
+        task = {
+            'mode': 'python',
+            'script': 'b = a ** 2',
+            'inputs': [{
+                'id': 'a',
+                'format': 'number',
+                'type': 'number'
+            }],
+            'outputs': [{
+                'id': 'b',
+                'format': 'number',
+                'type': 'number'
+            }]
+        }
+
+        # Mode should default to "inline" if data key is set
+        inputs = {
+            'a': {
+                'data': 5,
+                'format': 'number',
+                'type': 'number'
+            }
+        }
+
+        outputs = romanesco.run(task, inputs)
+        self.assertEqual(outputs['b']['data'], 25)
+
     def testHttpIo(self):
         task = {
             'mode': 'python',
