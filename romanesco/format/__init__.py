@@ -26,6 +26,22 @@ class Validator(namedtuple('Validator', ['type', 'format'])):
         The validator format, like ``text``.
     """
 
+    def is_valid(self):
+        """Return whether the type/format combination is valid.
+
+        If rformat is None is_valid just checks for the presense of any
+        valid type/format has that type.
+
+        :param rtype" ``string``
+        :param rformat" ``string`` optional
+        :returns: ``True`` if ``rtype`` and ``rformat`` are a valid, loaded
+        romanesco type/format pair.
+        """
+        if self.format is None:
+            return self.type in set(v.type for v in conv_graph.nodes())
+
+        return self in conv_graph.nodes()
+
 
 def csv_to_rows(input):
 
@@ -91,7 +107,7 @@ def converter_path(source, target):
     try:
         get_validator_analysis(source)
         get_validator_analysis(target)
-    except:
+    except Exception:
         raise NetworkXNoPath
 
     # We sort and pick the first of the shortest paths just to produce a stable
