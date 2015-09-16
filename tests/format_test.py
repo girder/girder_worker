@@ -35,6 +35,22 @@ class TestFormat(unittest.TestCase):
         self.assertEquals(len(converter_path(self.stringTextValidator,
                                              Validator('string', 'json'))), 1)
 
+    def test_is_valid(self):
+        self.assertEquals(Validator('string', None).is_valid(), True)
+
+        self.assertEquals(Validator('string', 'json').is_valid(), True)
+
+        self.assertEquals(Validator("invalid_type", None).is_valid(), False)
+
+        self.assertEquals(Validator("invalid_type",
+                                    "invalid_format").is_valid(), False)
+
+        self.assertEquals(Validator("string",
+                                    "invalid_format").is_valid(), False)
+
+        self.assertEquals(Validator("invalid_type",
+                                    "json").is_valid(), False)
+
     def test_has_converter(self):
         # There are converters from string type
         self.assertTrue(has_converter(Validator('string', None)))
