@@ -31,8 +31,11 @@ before_install:
   - wget http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz -O vtk-precise64.tar.gz
   - tar xzvf vtk-precise64.tar.gz -C ~
   # install R
-  - eval "$(curl https://data.kitware.com/api/v1/file/55735da88d777f649a9ba181/download | /bin/bash)"
-  - eval "$(travis-install 5575e0d88d777f649a9ba197)"
+  - mkdir -p $HOME/local
+  - curl http://midas3.kitware.com/midas/download/bitstream/457205/R_3.2.0.tar.bz2 | tar jx -C $HOME/local/
+  - source $HOME/local/env
+  - curl http://midas3.kitware.com/midas/download/bitstream/457206/aRbor-packages_1.0.0.tar.bz2 | tar jx -C $HOME/local/
+  - source $HOME/local/env
   - R --version
   - R -e '.libPaths(); sessionInfo()'
   # install spark
