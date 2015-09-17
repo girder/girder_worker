@@ -52,11 +52,13 @@ class Port(Spec):
     >>> port = Port(spec)
 
     The port object is serialized as a json object
+
     >>> import json
     >>> json.loads(str(port)) == spec
     True
 
     It has several properties derived from the spec
+
     >>> port.name == spec['name']
     True
     >>> port.type == spec['type']
@@ -65,12 +67,14 @@ class Port(Spec):
     True
 
     It also supports auto converting formats and validation by default
+
     >>> port.auto_convert
     True
     >>> port.auto_validate
     True
 
     Spec properties are automatically validated when setting them
+
     >>> port = Port()
     Traceback (most recent call last):
         ...
@@ -83,6 +87,7 @@ class Port(Spec):
     ValueError: Unknown format "python.invalid"
 
     Checking the ``type`` is deferred to allow incremental updating
+
     >>> port['type'] = 'image'
     >>> port.json()
     Traceback (most recent call last):
