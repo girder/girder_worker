@@ -17,10 +17,12 @@ class PortList(SpecMixin, list):
     '[]'
 
     Ports can be added as instances or dictionaries
+
     >>> l.append(Port(name='z'))
     >>> l.append({'name': 'a', 'type': 'image', 'format': 'png'})
 
     Normal list methods are supported
+
     >>> l[1] = '{"name": "b"}'
     >>> l.insert(1, {"name": "c"})
     >>> del l[1]
@@ -28,21 +30,25 @@ class PortList(SpecMixin, list):
     '[{"name": "z"}, {"name": "b"}]'
 
     Port lists have keys and values methods like dicts
+
     >>> l.keys()[0]
     'z'
 
     Ports can be referenced by either their index in the list or by name
+
     >>> l[0] is l['z']
     True
     >>> 'z' in l
     True
 
     Ports can be modified after they are added
+
     >>> l[0].name = 'y'
     >>> l.json()
     '[{"name": "y"}, {"name": "b"}]'
 
     Several validation checks are performed
+
     >>> l[0].name = 'b'
     Traceback (most recent call last):
         ...

@@ -93,7 +93,6 @@ A list of rows with ordered, named column attributes. Formats:
 :``"csv"``: A string containing the contents of a comma-separated CSV file.
     Column headers will be reasonably detected if present, otherwise
     columns will be named ``"Column 1"``, ``Column 2"``, etc.
-    See `has_header`_ for details on header detection.
 
 :``"tsv"``: A string containing the contents of a tab-separated TSV file.
     Column headers are detected the same as for the ``"csv"`` format.

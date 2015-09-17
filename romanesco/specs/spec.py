@@ -199,27 +199,32 @@ class Spec(SpecMixin, dict):
     Defines core utility methods that all spec objects have in common.
 
     Supports dict-like initialization.
+
     >>> a = Spec({'a': 1, 'b': {'c': [1, 2, None]}})
     >>> b = Spec(a=1, b={'c': [1, 2, None]})
     >>> a == b
     True
 
     Also supports initialization from json.
+
     >>> c = Spec('{"a": 1, "b": {"c": [1, 2, null]}}')
     >>> a == c
     True
 
     Multiple initialization method can be used together, which will be inserted
     in order.
+
     >>> Spec('{"a": 0}', {'a': 1}, a=2)
     {"a": 2}
 
     Updating merging specs is always done recursively.
+
     >>> Spec('{"a": {"b": 0}}', a={'c': 1})
     {"a": {"b": 0, "c": 1}}
 
     Conflicts are resolved by taking the value with highest priority (i.e.
     the once provided next in the constructor.)
+
     >>> Spec('{"a": {"b": 0}}', {"a": []})
     {"a": []}
     >>> Spec('{"a": {"b": 0}}', {"a": []}, a={"c": 1})
@@ -228,15 +233,18 @@ class Spec(SpecMixin, dict):
     {"a": {"b": 0, "c": 1}}
 
     Serialization is performed as json
+
     >>> str(a)
     '{"a": 1, "b": {"c": [1, 2, null]}}'
 
     Strings are assumed to be utf-8 encoded.
+
     >>> str(Spec({u"for\u00eat": u"\ud83c\udf33 \ud83c\udf32 \ud83c\udf34"}))
     '{"for\\u00eat": "\\ud83c\\udf33 \\ud83c\\udf32 \\ud83c\\udf34"}'
 
     Methods that mutate the state of the Spec will test if the new state is
     valid, restoring the original state before raising an exception.
+
     >>> s = Spec({'a': 0})
     >>> try:
     ...     s['a'] = object
@@ -248,6 +256,7 @@ class Spec(SpecMixin, dict):
     {"a": 0}
 
     Spec constructors are idempotent
+
     >>> Spec(a='a') == Spec(Spec(a='a'))
     True
     """

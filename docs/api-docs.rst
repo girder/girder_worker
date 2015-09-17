@@ -242,3 +242,9 @@ Formats
 
 .. automodule:: romanesco.format
    :members:
+
+Pythonic task API
+-----------------
+
+.. automodule:: romanesco.specs
+   :members:
