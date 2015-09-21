@@ -364,7 +364,7 @@ def load(info):
         (':itemId', 'romanesco', ':jobId'),
         romanescoStopRun)
 
-    info['apiRoot'].validator = Validator(getCeleryApp())
+    info['apiRoot'].romanesco_validator = Validator(getCeleryApp())
 
     events.bind('jobs.schedule', 'romanesco', schedule)
     events.bind('model.setting.validate', 'romanesco', validateSettings)
