@@ -2,6 +2,7 @@ from girder.api import access
 from girder.api.rest import Resource
 from girder.api.describe import Description
 
+
 class Validator(Resource):
     def __init__(self, celeryApp):
         self.resourceName = 'romanesco_validator'
