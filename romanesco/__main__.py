@@ -1,4 +1,5 @@
 import romanesco
+from romanesco.format import conv_graph
 
 from .utils import JobManager
 from celery import Celery
@@ -28,6 +29,20 @@ def main():
     @app.task
     def convert(*pargs, **kwargs):
         return romanesco.convert(*pargs, **kwargs)
+
+    @app.task
+    def validators(*pargs, **kwargs):
+        _type, _format = pargs
+        nodes = []
+
+        for (node, data) in conv_graph.nodes(data=True):
+            if ((_type is None) or (_type == node.type)) and \
+               ((_format is None) or (_format == node.format)):
+                nodes.append({'type': node.type,
+                              'format': node.format,
+                              'validator': data})
+
+        return nodes
 
     app.worker_main()
 

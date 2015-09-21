@@ -16,6 +16,7 @@ from girder.api.describe import Description
 from girder.models.model_base import AccessException, ValidationException
 from girder.utility.model_importer import ModelImporter
 from girder.plugins.jobs.constants import JobStatus
+from girder.plugins.romanesco.validator import Validator
 
 # If you desire authorization to run analyses (strongly encouraged), make sure
 # to specify so in the plugin settings page. By default, authorization control
@@ -362,6 +363,8 @@ def load(info):
         'DELETE',
         (':itemId', 'romanesco', ':jobId'),
         romanescoStopRun)
+
+    info['apiRoot'].validator = Validator(getCeleryApp())
 
     events.bind('jobs.schedule', 'romanesco', schedule)
     events.bind('model.setting.validate', 'romanesco', validateSettings)
