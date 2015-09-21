@@ -1,4 +1,3 @@
-import bson
 import celery
 import cherrypy
 import json
@@ -8,7 +7,6 @@ import time
 from celery.result import AsyncResult
 from six import StringIO
 from girder.constants import AccessType
-import sys
 
 from girder import events
 from girder.api import access, rest
@@ -119,6 +117,7 @@ def getItemContent(itemId, itemApi):
         io.write(chunk)
     return io.getvalue()
 
+
 def runAnalysis(user, analysis, kwargs):
     # Create the job record.
     jobModel = ModelImporter.model('job', 'jobs')
@@ -150,7 +149,8 @@ def runAnalysis(user, analysis, kwargs):
     jobModel.scheduleJob(job)
     return jobModel.filter(job, user)
 
-def load(info):
+
+def load(info):  # noqa
     @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
@@ -209,7 +209,6 @@ def load(info):
         .param('jobId', 'The job ID for this task.', paramType='path')
         .param('itemId', 'Not used.', paramType='path'))
 
-
     @access.public
     def romanescoRunResult(itemId, jobId, params):
         taskId = getTaskId(jobId)
@@ -237,9 +236,9 @@ def load(info):
             start = time.time()
             endtime = None
             oldLog = ''
-            while (time.time() - start < timeout
-                    and cherrypy.engine.state == cherrypy.engine.states.STARTED
-                    and (endtime is None or time.time() < endtime)):
+            while (time.time() - start < timeout and
+                   cherrypy.engine.state == cherrypy.engine.states.STARTED and
+                   (endtime is None or time.time() < endtime)):
                 # Display new log info from this job since the
                 # last execution of this loop.
                 job = jobApi.model('job', 'jobs').load(
