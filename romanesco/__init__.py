@@ -154,7 +154,7 @@ def convert(type, input, output, **kwargs):
 
 
 @utils.with_tmpdir  # noqa
-def run(task, inputs, outputs=None, auto_convert=True, validate=True,
+def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         **kwargs):
     """
     Run a Romanesco task with the specified I/O bindings.
@@ -163,6 +163,7 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     :type task: dict
     :param inputs: Specification of how input objects should be fetched
         into the runtime environment of this task.
+    :type inputs: dict
     :param outputs: Speficiation of what should be done with outputs
         of this task.
     :type outputs: dict
@@ -193,6 +194,9 @@ def run(task, inputs, outputs=None, auto_convert=True, validate=True,
     """
     def extractId(spec):
         return spec["id"] if "id" in spec else spec["name"]
+
+    if inputs is None:
+        inputs = {}
 
     task_inputs = {extractId(d): d for d in task.get("inputs", ())}
     task_outputs = {extractId(d): d for d in task.get("outputs", ())}

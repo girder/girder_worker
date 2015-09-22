@@ -14,6 +14,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         }
         """, env)
 
+    env["tempdir"] = kwargs.get("_tempdir")
+
     for name in inputs:
         env[str(name)] = inputs[name]["script_data"]
 

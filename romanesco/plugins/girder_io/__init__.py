@@ -33,12 +33,12 @@ def fetch_handler(spec, **kwargs):
         raise Exception('Must pass a name for girder inputs.')
 
     client = _init_client(spec)
-    dest = os.path.join(kwargs['_tmp_dir'], spec['name'])
+    dest = os.path.join(kwargs['_tempdir'], spec['name'])
 
     if resource_type == 'folder':
         client.downloadFolderRecursive(spec['id'], dest)
     elif resource_type == 'item':
-        client.downloadItem(spec['id'], kwargs['_tmp_dir'], spec['name'])
+        client.downloadItem(spec['id'], kwargs['_tempdir'], spec['name'])
     elif resource_type == 'file':
         client.downloadFile(spec['id'], dest)
     else:

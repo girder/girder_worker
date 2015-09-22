@@ -8,6 +8,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     custom = imp.new_module("__romanesco__")
 
     custom.__dict__['_job_manager'] = kwargs.get('_job_manager')
+    custom.__dict__['_tempdir'] = kwargs.get('_tempdir')
 
     for name in inputs:
         custom.__dict__[name] = inputs[name]["script_data"]

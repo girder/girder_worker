@@ -57,7 +57,8 @@ class TestDockerMode(unittest.TestCase):
         task = {
             'mode': 'docker',
             'docker_image': 'test/test:latest',
-            'container_args': ['-f', '$input{foo}'],
+            'container_args': [
+                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}'],
             'inputs': [{
                 'id': 'foo',
                 'name': 'A variable',
@@ -119,12 +120,17 @@ class TestDockerMode(unittest.TestCase):
                              ['docker', 'run', '--rm', '-u',
                               str(os.getuid()), '-v'])
             self.assertRegexpMatches(cmd2[6], _tmp + '/.*:/data')
-            self.assertEqual(cmd2[7:],
+            self.assertEqual(cmd2[7:10],
                              ['test/test:latest', '-f', '/data/file.txt'])
+            self.assertEqual(cmd2[-1], '--temp-dir=/data')
 
             # Make sure we can specify a custom entrypoint to the container
             mockPopen.reset_mock()
             task['entrypoint'] = '/bin/bash'
+            inputs['foo'] = {
+                'mode': 'http',
+                'url': 'https://foo.com/file.txt'
+            }
             out = romanesco.run(task, inputs=inputs, validate=False,
                                 auto_convert=False)
             self.assertEqual(mockPopen.call_count, 2)
@@ -134,3 +140,4 @@ class TestDockerMode(unittest.TestCase):
                               str(os.getuid()), '-v'])
             self.assertRegexpMatches(cmd2[6], _tmp + '/.*:/data')
             self.assertEqual(cmd2[7:9], ['--entrypoint', '/bin/bash'])
+            self.assertEqual(cmd2[-1], '--temp-dir=/data')

@@ -272,16 +272,16 @@ def with_tmpdir(fn):
     This function is provided as a convenience to allow use as a decorator of
     a function rather than using "with tmpdir()" around the whole function
     body. It passes the generated temp dir path into the function as the
-    special kwarg "_tmp_dir".
+    special kwarg "_tempdir".
     """
     @functools.wraps(fn)
     def wrapped(*args, **kwargs):
-        if '_tmp_dir' in kwargs:
+        if '_tempdir' in kwargs:
             return fn(*args, **kwargs)
 
         cleanup = kwargs.get('cleanup', True)
-        with tmpdir(cleanup=cleanup) as tmp_dir:
-            kwargs['_tmp_dir'] = tmp_dir
+        with tmpdir(cleanup=cleanup) as tempdir:
+            kwargs['_tempdir'] = tempdir
             return fn(*args, **kwargs)
     return wrapped
 

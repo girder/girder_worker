@@ -17,6 +17,8 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
             if inputId in inputs:
                 arg = arg.replace('$input{%s}' % inputId,
                                   inputs[inputId]['script_data'])
+            elif inputId == '_tempdir':
+                arg = arg.replace('$input{_tempdir}', tmpDir)
 
         newArgs.append(arg)
 
@@ -29,7 +31,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     with open(script_fname, 'w') as script_file:
         script_file.write(script)
 
-    tmpDir = kwargs.get('_tmp_dir')
+    tmpDir = kwargs.get('_tempdir')
     args = _expand_args(task['swift_args'], inputs, task_inputs, tmpDir)
 
     print_stderr, print_stdout = True, True

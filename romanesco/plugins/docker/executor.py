@@ -55,6 +55,8 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
                 transformed = _transform_path(inputs, taskInputs, inputId,
                                               tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, transformed)
+            elif inputId == '_tempdir':
+                arg = arg.replace('$input{_tempdir}', '/data')
 
         newArgs.append(arg)
 
@@ -66,7 +68,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     print('Pulling docker image: ' + image)
     _pull_image(image)
 
-    tmpDir = kwargs.get('_tmp_dir')
+    tmpDir = kwargs.get('_tempdir')
     args = _expand_args(task['container_args'], inputs, task_inputs, tmpDir)
 
     print_stderr, print_stdout = True, True
