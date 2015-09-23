@@ -103,6 +103,7 @@ specified to :py:func:`romanesco.run`.
         (, "target": <INPUT_TARGET_TYPE>)   ; default is "memory"
     }
 
+.. _input-spec:
 
 The input specification
 ***********************
