@@ -43,8 +43,7 @@ before_install:
   - tar xzvf scala-2.10.5.tgz -C ~
   - export SCALA_HOME=$HOME/scala-2.10.5
   - export PATH=$PATH:$SCALA_HOME/bin
-  - wget http://psg.mtu.edu/pub/apache/spark/spark-1.3.1/spark-1.3.1-bin-hadoop2.4.tgz
-  - tar xzvf spark-1.3.1-bin-hadoop2.4.tgz -C ~
+  - curl -L https://www.apache.org/dist/spark/spark-1.3.1/spark-1.3.1-bin-hadoop2.4.tgz | tar -zx -C ~
   - export SPARK_HOME=$HOME/spark-1.3.1-bin-hadoop2.4
   - export SPARK_MASTER_IP=localhost
   - $SPARK_HOME/sbin/start-master.sh
