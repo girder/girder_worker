@@ -13,7 +13,7 @@ In this example we will:
  3. Find the subgraph of the most popular person's neighborhood
  4. Visualize this neighborhood using d3
 
-Obtain thie dataset
+Obtain the dataset
 ~~~~~~~~~~~~~~~~~~~
 
 The dataset is a small sample of Facebook links representing friendships, which can be obtained `here <_static/facebook-sample-data.txt>`__ [#f1]_.
@@ -88,7 +88,7 @@ Conceptually, this is what our workflow will look like:
     :align: center
     :alt: Visualize Facebook Data Workflow Diagram
 
-\* The format changes because of Romanescos auto-conversion functionality.
+\* The format changes because of Romanesco's auto-conversion functionality.
 
 The entire rectangle is our workflow, and the blue rectangles are our tasks. Black arrows represent inputs and outputs and the red arrows represent connections which we’ll see shortly.
 
@@ -153,7 +153,7 @@ however by following this you should have learned how to do the following with R
 
  * Create Romanesco tasks which consume and produce multiple inputs and outputs
  * Run Romanesco tasks as part of a multi-step workflow
- * Use Romanescos converter system to serialize it in a format JavaScript can read 
+ * Use Romanesco's converter system to serialize it in a format JavaScript can read
  * Visualize the data using d3.js
 
 
