@@ -151,6 +151,18 @@ Running a workflow has the same syntax as running a single task.
       }
    )
 
+.. |lenna| image:: static/lenna.jpg
+   :width: 100%
+
+.. |lenna10| image:: static/lenna10.jpg
+   :width: 100%
+
+.. table:: Blur image workflow
+
+   +-----------+-----------+
+   | |lenna|   | |lenna10| |
+   +-----------+-----------+
+
 .. testoutput::
    :hide:
 
