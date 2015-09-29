@@ -10,6 +10,13 @@ addons:
       - gfortran
       - openjdk-7-jdk
 
+cache:
+  directories:
+    - $HOME/spark-1.3.1-bin-hadoop2.4
+    - $HOME/scala-2.10.5
+    - $HOME/local
+    - $HOME/swift-0.96.1
+
 # environment variables
 env:
   - PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib:~/local/lib:~/local/lib/R/lib
@@ -28,31 +35,28 @@ before_install:
   - popd
   - cmake --version
   # download VTK
-  - wget http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz -O vtk-precise64.tar.gz
-  - tar xzvf vtk-precise64.tar.gz -C ~
+  - curl -L http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz | tar zx -C ~
   # install R
   - mkdir -p $HOME/local
-  - curl http://midas3.kitware.com/midas/download/bitstream/457205/R_3.2.0.tar.bz2 | tar jx -C $HOME/local/
-  - source $HOME/local/env
-  - curl http://midas3.kitware.com/midas/download/bitstream/457206/aRbor-packages_1.0.0.tar.bz2 | tar jx -C $HOME/local/
-  - source $HOME/local/env
+  - if [ ! -f $HOME/local/env-R ] ; then curl -L http://midas3.kitware.com/midas/download/bitstream/457205/R_3.2.0.tar.bz2 | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-R ; fi
+  - source $HOME/local/env-R
+  - if [ ! -f $HOME/local/env-arbor ] ; then curl -L http://midas3.kitware.com/midas/download/bitstream/457206/aRbor-packages_1.0.0.tar.bz2 | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
+  - source $HOME/local/env-arbor
   - R --version
   - R -e '.libPaths(); sessionInfo()'
   # install spark
-  - wget http://www.scala-lang.org/files/archive/scala-2.10.5.tgz
-  - tar xzvf scala-2.10.5.tgz -C ~
   - export SCALA_HOME=$HOME/scala-2.10.5
+  - if [ ! -d $SCALA_HOME ] ; then curl -L http://www.scala-lang.org/files/archive/scala-2.10.5.tgz | tar zx -C ~ ; fi
   - export PATH=$PATH:$SCALA_HOME/bin
-  - curl -L https://www.apache.org/dist/spark/spark-1.3.1/spark-1.3.1-bin-hadoop2.4.tgz | tar -zx -C ~
   - export SPARK_HOME=$HOME/spark-1.3.1-bin-hadoop2.4
   - export SPARK_MASTER_IP=localhost
+  - if [ ! -f $SPARK_HOME/sbin/start-master.sh ] ; then curl -L http://mirrors.koehn.com/apache/spark/spark-1.3.1/spark-1.3.1-bin-hadoop2.4.tgz | tar -zx -C ~ ; fi
   - $SPARK_HOME/sbin/start-master.sh
   - sleep 3
   - $SPARK_HOME/sbin/start-slave.sh worker1 spark://localhost:7077
   # install swift
-  - wget http://swiftlang.org/packages/swift-0.96.1.tar.gz
-  - tar xfz swift-0.96.1.tar.gz -C ~
   - export PATH=$PATH:$HOME/swift-0.96.1/bin
+  - swift --version || curl -L http://swiftlang.org/packages/swift-0.96.1.tar.gz | tar zx -C ~
   - swift --version
 
 # install dependencies
