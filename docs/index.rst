@@ -20,7 +20,8 @@ Romanesco defines a specification that prescribes a loose coupling between a tas
 and its runtime inputs and outputs. That specification is described in the :doc:`api-docs`
 section. This specification is language-independent and instances of the spec are best
 represented by a hierarchical data format such as JSON or YAML, or an equivalent
-serializable type such as a ``dict`` in python.
+serializable type such as a ``dict`` in python.  Several :doc:`examples` of using
+these specifications to generate tasks and workflows are provided.
 
 Romanesco is designed to be easily extended to new languages and environments, or
 to support new data types and formats, or modes of data transfer. This is accomplished
