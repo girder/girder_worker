@@ -1,3 +1,5 @@
+.. _romanesco-plugins:
+
 Plugins
 =======
 

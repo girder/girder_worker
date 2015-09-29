@@ -60,6 +60,14 @@ add_docstring_test(romanesco.specs.port_list)
 add_docstring_test(romanesco.specs.utils)
 add_docstring_test(romanesco.format)
 
+if(SPHINX_DOCTEST)
+  add_test(
+    NAME sphinx_doctest
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    COMMAND "${SPHINX_BUILD_EXECUTABLE}" -b doctest docs "${PROJECT_BINARY_DIR}/docs"
+  )
+endif()
+
 # Look for plugin.cmake in plugin dirs, include if they exist
 file(GLOB pluginDirs "${PROJECT_SOURCE_DIR}/romanesco/plugins/*")
 foreach(pluginDir ${pluginDirs})

@@ -1,3 +1,5 @@
+.. _types-and-formats:
+
 Types and formats
 =================
 
