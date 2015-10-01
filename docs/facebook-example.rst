@@ -13,6 +13,10 @@ In this example we will:
  3. Find the subgraph of the most popular person's neighborhood
  4. Visualize this neighborhood using d3
 
+.. testsetup::
+
+   import romanesco
+
 Obtain the dataset
 ~~~~~~~~~~~~~~~~~~~
 
@@ -48,15 +52,39 @@ The script below finds the most popular person in the graph.
 
 .. note :: This script assumes a variable ``G`` exists, that's because we define it as an input in the ``Task`` we define in the next step.
 
-.. literalinclude:: static/facebook-example-most-popular.py
-    :linenos:
+.. code-block:: python
+
+   from networkx import degree
+
+   degrees = degree(G)
+   most_popular_person = max(degrees, key=degrees.get)
 
 Defining our Romanesco task, we can embed this script:
 
-.. literalinclude:: static/facebook-example.py
-    :caption: workflow.py/most_popular_task
-    :lines: 1-22
-    :linenos:
+.. testcode::
+
+   most_popular_task = {
+       'inputs': [
+           {'name': 'G',
+            'type': 'graph',
+            'format': 'networkx'}
+       ],
+       'outputs': [
+           {'name': 'most_popular_person',
+            'type': 'string',
+            'format': 'text'},
+           {'name': 'G',
+            'type': 'graph',
+            'format': 'networkx'}
+       ],
+       'script':
+       '''
+   from networkx import degree
+
+   degrees = degree(G)
+   most_popular_person = max(degrees, key=degrees.get)
+       '''
+   }
 
 .. note :: As we saw with our last script assuming ``G`` would in be scope, this task explicitly states that both ``most_popular_person`` and ``G`` will be in scope (as its outputs) when it's done.
 
@@ -66,18 +94,39 @@ Find the neighborhood
 Now that we have the most popular node in the graph, we can take the `subgraph <https://en.wikipedia.org/wiki/Glossary_of_graph_theory#Subgraphs>`_ including only this person and all of their neighbors. These are
 sometimes referred to as `Ego Networks <http://www.analytictech.com/networks/egonet.htm>`_.
 
-.. literalinclude:: static/facebook-example-find-neighborhood.py
-    :linenos:
+.. code-block:: python
+
+   from networkx import ego_graph
+
+   subgraph = ego_graph(G, most_popular_person)
 
 Again, we can create a Romanesco task using our new script, like so:
 
 .. note :: Since these steps are going to be connected, our inputs are going to be the same as the last steps outputs.
 
-.. literalinclude:: static/facebook-example.py
-    :caption: workflow.py/find_neighborhood_task
-    :lines: 24-44
-    :lineno-start: 27
-    :linenos:
+.. testcode::
+
+   find_neighborhood_task = {
+       'inputs': [
+           {'name': 'G',
+            'type': 'graph',
+            'format': 'networkx'},
+           {'name': 'most_popular_person',
+            'type': 'string',
+            'format': 'text'}
+       ],
+       'outputs': [
+           {'name': 'subgraph',
+            'type': 'graph',
+            'format': 'networkx'}
+       ],
+       'script':
+       '''
+   from networkx import ego_graph
+
+   subgraph = ego_graph(G, most_popular_person)
+       '''
+    }
 
 
 Put it together
@@ -97,36 +146,78 @@ To make this happen, since we've written the tasks already, we just need to form
 
 To start, let's create our workflow from a high level, starting with just its inputs and outputs (the black arrows):
 
-.. literalinclude:: static/facebook-example.py
-    :caption: workflow.py/workflow
-    :lines: 46-58
-    :lineno-start: 46
-    :linenos:
+.. testcode::
+
+   workflow = {
+       'mode': 'workflow',
+       'inputs': [
+           {'name': 'G',
+            'type': 'graph',
+            'format': 'adjacencylist'}
+       ],
+       'outputs': [
+           {'name': 'result_graph',
+            'type': 'graph',
+            'format': 'networkx'}
+       ]
+   }
 
 Now we need to add our tasks to the workflow, which is pretty straightforward since we've defined them in the previous steps.
 
-.. literalinclude:: static/facebook-example.py
-    :caption: workflow.py/workflow_tasks
-    :lines: 60-63
-    :lineno-start: 60
-    :linenos:
+.. testcode::
+
+   workflow['steps'] = [{'name': 'most_popular',
+                         'task': most_popular_task},
+                        {'name': 'find_neighborhood',
+                         'task': find_neighborhood_task}]
 
 Finally, we need to add the red arrows within the workflow, telling Romanesco how the inputs and outputs are going to flow from each task. These are called *connections* in Romanesco.
 
-.. literalinclude:: static/facebook-example.py
-    :caption: workflow.py/workflow_connections
-    :lines: 65-80
-    :lineno-start: 65
-    :linenos:
+.. testcode::
 
+   workflow['connections'] = [
+       {'name': 'G',
+        'input_step': 'most_popular',
+        'input': 'G'},
+       {'output_step': 'most_popular',
+        'output': 'G',
+        'input_step': 'find_neighborhood',
+        'input': 'G'},
+       {'output_step': 'most_popular',
+        'output': 'most_popular_person',
+        'input_step': 'find_neighborhood',
+        'input': 'most_popular_person'},
+       {'name': 'result_graph',
+        'output': 'subgraph',
+        'output_step': 'find_neighborhood'}
+   ]
 
 We now have a complete workflow! Let's run this, and write the final data to a file.
 
-.. literalinclude:: static/facebook-example.py
-    :caption: workflow.py/run
-    :lines: 82-91
-    :lineno-start: 82
-    :linenos:
+.. testcode::
+
+   with open('docs/static/facebook-sample-data.txt') as infile:
+       output = romanesco.run(workflow,
+                              inputs={'G': {'format': 'adjacencylist',
+                                            'data': infile.read()}},
+                              outputs={'result_graph': {'format': 'networkx.json'}})
+
+   with open('data.json', 'wb') as outfile:
+       outfile.write(output['result_graph']['data'])
+
+.. testoutput::
+   :hide:
+
+   --- beginning: most_popular ---
+   --- finished: most_popular ---
+   --- beginning: find_neighborhood ---
+   --- finished: find_neighborhood ---
+
+.. doctest::
+   :hide:
+
+   >>> open('data.json').read() == open('docs/static/data.json').read()
+   True
 
 Running ``workflow.py`` will produce the JSON in a file called ``data.json``, which we'll pass to d3.js in the next step.
 
@@ -139,7 +230,6 @@ Visualize the results
 Using JavaScript similar to `this d3.js example <http://bl.ocks.org/mbostock/4062045>`_ we're going to add the following to our ``index.html`` file:
 
 .. literalinclude:: static/facebook-example.html
-    :linenos:
 
 Which should leave us with a visualization similar to the following:
 
@@ -156,6 +246,9 @@ however by following this you should have learned how to do the following with R
  * Use Romanesco's converter system to serialize it in a format JavaScript can read
  * Visualize the data using d3.js
 
+.. testcleanup::
 
+   import os
+   os.remove('data.json')
 
 .. [#f1] For attribution refer `here <http://socialnetworks.mpi-sws.org/data-wosn2009.html>`_.
