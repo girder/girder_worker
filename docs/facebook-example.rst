@@ -213,10 +213,29 @@ We now have a complete workflow! Let's run this, and write the final data to a f
    --- beginning: find_neighborhood ---
    --- finished: find_neighborhood ---
 
+.. testcode::
+   :hide:
+
+   import json
+
+   with open('data.json') as infile:
+       actual = json.load(infile)
+
+   with open('docs/static/data.json') as infile:
+       expected = json.load(infile)
+
+   def dict_ordered(obj):
+       if isinstance(obj, dict):
+           return sorted((k, dict_ordered(v)) for k, v in obj.items())
+       elif isinstance(obj, list):
+           return sorted(dict_ordered(x) for x in obj)
+       else:
+           return obj
+
 .. doctest::
    :hide:
 
-   >>> open('data.json').read() == open('docs/static/data.json').read()
+   >>> dict_ordered(actual) == dict_ordered(expected)
    True
 
 Running ``workflow.py`` will produce the JSON in a file called ``data.json``, which we'll pass to d3.js in the next step.
