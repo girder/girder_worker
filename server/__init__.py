@@ -144,7 +144,7 @@ def runAnalysis(user, analysis, kwargs, item):
 
     job['kwargs'] = kwargs
     job['args'] = [analysis]
-    job['romanescoItemId'] = item['_id']
+    job['meta']['romanescoItemId'] = item['_id']
     job = jobModel.save(job)
 
     # Schedule the job (triggers the schedule method above)
@@ -153,9 +153,6 @@ def runAnalysis(user, analysis, kwargs, item):
 
 
 def load(info):  # noqa
-    ModelImporter.model('job', 'jobs').exposeFields(
-        level=AccessType.READ, fields='romanescoItemId')
-
     @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
