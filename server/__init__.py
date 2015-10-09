@@ -119,7 +119,7 @@ def getItemContent(itemId, itemApi):
     return io.getvalue()
 
 
-def runAnalysis(user, analysis, kwargs):
+def runAnalysis(user, analysis, kwargs, item):
     # Create the job record.
     jobModel = ModelImporter.model('job', 'jobs')
     public = False
@@ -144,6 +144,7 @@ def runAnalysis(user, analysis, kwargs):
 
     job['kwargs'] = kwargs
     job['args'] = [analysis]
+    job['romanescoItemId'] = item['_id']
     job = jobModel.save(job)
 
     # Schedule the job (triggers the schedule method above)
@@ -152,6 +153,9 @@ def runAnalysis(user, analysis, kwargs):
 
 
 def load(info):  # noqa
+    ModelImporter.model('job', 'jobs').exposeFields(
+        level=AccessType.READ, fields='romanescoItemId')
+
     @access.public
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
@@ -313,7 +317,7 @@ def load(info):  # noqa
             raise rest.RestException(
                 'You must pass a valid JSON object in the request body.')
 
-        return runAnalysis(user, analysis, kwargs)
+        return runAnalysis(user, analysis, kwargs, item)
     romanescoRun.description = (
         Description('Run a task specified by item metadata.')
         .param('itemId', 'The item containing the analysis as metadata.',
