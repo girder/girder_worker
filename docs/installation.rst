@@ -48,3 +48,18 @@ The core configuration parameters are outlined below.
 
 .. note :: After making changes to values in the config file, you will need to
    restart the worker before the changes will be reflected.
+
+Installing the Girder plugin
+----------------------------
+
+Romanesco also includes a plugin to the `Girder <http://girder.readthedocs.org>`_
+data management service that can be used to run and monitor Romanesco tasks from
+a Girder server. To install the plugin, copy or symlink the romanesco directory
+underneath Girder's ``plugins`` directory. Then navigate to the Girder directory
+and run ``npm install``. This should build the web client extensions so that
+system settings for the plugin can be configured via the web application.
+
+Then navigate your browser to the Girder web application as an administrative
+user and enable the plugin via the **Plugins** page under the **Admin console**.
+Once you've enabled Romanesco as a plugin, restart the Girder server. The plugin
+should now be running.
