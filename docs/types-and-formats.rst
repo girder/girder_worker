@@ -151,7 +151,7 @@ A hierarchy of nodes with node and/or link attributes. Formats:
 -----------------------
 A collection of nodes and edges with optional attributes. Formats:
 
-:``"networkx"``: A representation of a graph using an object of type nx.Graph_ (or any of its subclasses).
+:``"networkx"``: An in-memory representation of a graph using an object of type nx.Graph_ (or any of its subclasses).
 
 :``"networkx.json"``: A JSON representation of a NetworkX graph.
 
