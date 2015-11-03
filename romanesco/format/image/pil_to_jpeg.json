@@ -1,0 +1,7 @@
+{
+    "name": "PIL Image to JPEG",
+    "inputs": [{"name": "input", "type": "image", "format": "pil"}],
+    "outputs": [{"name": "output", "type": "image", "format": "jpeg"}],
+    "script_uri": "file://pil_to_jpeg.py",
+    "mode": "python"
+}
