@@ -164,6 +164,11 @@ def load(info):  # noqa
         ])
 
         return asyncResult.get()
+    romanescoConvertData.description = (
+        Description('Convert data from one format to another')
+        .param('inputType', 'The type of the input data')
+        .param('inputFormat', 'The format of the input data')
+        .param('outputFormat', 'The desired output format'))
 
     @access.public
     def romanescoConvert(itemId, inputType, inputFormat, outputFormat, params):
@@ -178,6 +183,12 @@ def load(info):  # noqa
         ])
 
         return asyncResult.get()
+    romanescoConvert.description = (
+        Description('Convert an item from one format to another')
+        .param('itemId', 'ID of the item to be converted')
+        .param('inputType', 'The type of the input data')
+        .param('inputFormat', 'The format of the input data')
+        .param('outputFormat', 'The desired output format'))
 
     @access.public
     def getTaskId(jobId):
@@ -327,6 +338,9 @@ def load(info):  # noqa
         task = AsyncResult(jobId, backend=getCeleryApp().backend)
         task.revoke(getCeleryApp().broker_connection(), terminate=True)
         return {'status': task.state}
+    romanescoStopRun.description = (
+        Description('Stop execution of the specified job')
+        .param('jobId', 'The Job ID for this task'))
 
     info['apiRoot'].item.route(
         'POST',
