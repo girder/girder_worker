@@ -48,6 +48,9 @@ before_install:
   - export SCALA_HOME=$HOME/scala-2.10.5
   - if [ ! -d $SCALA_HOME ] ; then curl -L http://www.scala-lang.org/files/archive/scala-2.10.5.tgz | tar zx -C ~ ; fi
   - export PATH=$PATH:$SCALA_HOME/bin
+  - echo $SCALA_HOME
+  - echo $PATH
+  - ls $SCALA_HOME/bin
   - scala -version
   - export SPARK_HOME=$HOME/spark-1.3.1-bin-hadoop2.4
   - export SPARK_MASTER_IP=localhost
