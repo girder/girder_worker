@@ -100,8 +100,7 @@ def isvalid(type, binding, **kwargs):
     :returns: ``True`` if the binding matches the type and format,
         ``False`` otherwise.
     """
-    if "data" not in binding:
-        binding["data"] = romanesco.io.fetch(binding, **kwargs)
+    binding["data"] = romanesco.io.fetch(binding, **kwargs)
     analysis = get_validator_analysis(Validator(type, binding["format"]))
     outputs = romanesco.run(analysis, {"input": binding}, auto_convert=False,
                             validate=False, **kwargs)
@@ -132,8 +131,7 @@ def convert(type, input, output, **kwargs):
         returns the output binding unchanged.
     """
 
-    if "data" not in input:
-        input["data"] = romanesco.io.fetch(input, **kwargs)
+    input["data"] = romanesco.io.fetch(input, **kwargs)
 
     if input["format"] == output["format"]:
         data = input["data"]
@@ -240,14 +238,15 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             # Convert data
             if auto_convert:
+                d["data"] = romanesco.io.fetch(
+                    d, task_input=task_input, **kwargs)
                 converted = romanesco.convert(task_input["type"], d,
                                               {"format": task_input["format"]}, **kwargs)
                 d["script_data"] = converted["data"]
             elif (d.get("format", task_input.get("format")) ==
                   task_input.get("format")):
-                if "data" not in d:
-                    d["data"] = romanesco.io.fetch(
-                        d, task_input=task_input, **kwargs)
+                d["data"] = romanesco.io.fetch(
+                    d, task_input=task_input, **kwargs)
                 d["script_data"] = d["data"]
             else:
                 raise Exception("Expected exact format match but '%s != %s'." % (
