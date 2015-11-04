@@ -1,0 +1,7 @@
+{
+    "inputs": [{"name": "input", "type": "image", "format": "jpeg"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "extensions": ["jpeg", "jpg"],
+    "script": "output = isinstance(input, str)",
+    "mode": "python"
+}
