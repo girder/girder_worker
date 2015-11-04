@@ -46,7 +46,7 @@ before_install:
   - R -e '.libPaths(); sessionInfo()'
   # install spark
   - export SCALA_HOME=$HOME/scala-2.10.5
-  - if [ ! -d $SCALA_HOME ] ; then curl -L http://www.scala-lang.org/files/archive/scala-2.10.5.tgz | tar zx -C ~ ; fi
+  - if [ ! -d $SCALA_HOME/bin ] ; then curl -L http://www.scala-lang.org/files/archive/scala-2.10.5.tgz | tar zx -C ~ ; fi
   - export PATH=$PATH:$SCALA_HOME/bin
   - echo $SCALA_HOME
   - echo $PATH
