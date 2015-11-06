@@ -100,14 +100,13 @@ def isvalid(type, binding, **kwargs):
     :returns: ``True`` if the binding matches the type and format,
         ``False`` otherwise.
     """
-    binding["data"] = romanesco.io.fetch(binding, **kwargs)
     analysis = get_validator_analysis(Validator(type, binding["format"]))
     outputs = romanesco.run(analysis, {"input": binding}, auto_convert=False,
                             validate=False, **kwargs)
     return outputs["output"]["data"]
 
 
-def convert(type, input, output, **kwargs):
+def convert(type, input, output, fetch=True, **kwargs):
     """
     Convert data from one format to another.
 
@@ -124,6 +123,8 @@ def convert(type, input, output, **kwargs):
         The binding may also be in the form
         ``{"format": format, "uri", uri}``, where ``uri`` specifies
         where to place the converted data.
+    :param fetch: Whether to do an initial data fetch before conversion
+        (default ``True``).
     :returns: The output binding
         dict with an additional field ``"data"`` containing the converted data.
         If ``"uri"`` is present in the output binding, instead saves the data
@@ -131,7 +132,8 @@ def convert(type, input, output, **kwargs):
         returns the output binding unchanged.
     """
 
-    input["data"] = romanesco.io.fetch(input, **kwargs)
+    if fetch:
+        input["data"] = romanesco.io.fetch(input, **kwargs)
 
     if input["format"] == output["format"]:
         data = input["data"]
@@ -144,10 +146,7 @@ def convert(type, input, output, **kwargs):
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
-    if "mode" in output:
-        romanesco.io.push(data, output)
-    else:
-        output["data"] = data
+    romanesco.io.push(data, output)
     return output
 
 
@@ -228,6 +227,9 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         for name, d in inputs.iteritems():
             task_input = task_inputs[name]
 
+            # Fetch the input
+            d["data"] = romanesco.io.fetch(d, task_input=task_input, **kwargs)
+
             # Validate the input
             if validate and not romanesco.isvalid(task_input["type"], d, **kwargs):
                 raise Exception(
@@ -238,15 +240,14 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             # Convert data
             if auto_convert:
-                d["data"] = romanesco.io.fetch(
-                    d, task_input=task_input, **kwargs)
-                converted = romanesco.convert(task_input["type"], d,
-                                              {"format": task_input["format"]}, **kwargs)
+                converted = romanesco.convert(
+                    task_input["type"], d,
+                    {"format": task_input["format"]},
+                    fetch=False, **kwargs)
+
                 d["script_data"] = converted["data"]
             elif (d.get("format", task_input.get("format")) ==
                   task_input.get("format")):
-                d["data"] = romanesco.io.fetch(
-                    d, task_input=task_input, **kwargs)
                 d["script_data"] = d["data"]
             else:
                 raise Exception("Expected exact format match but '%s != %s'." % (
@@ -286,10 +287,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                     task_output["type"], script_output, d, **kwargs)
             elif d["format"] == task_output["format"]:
                 data = d["script_data"]
-                if d.get("mode"):
-                    romanesco.io.push(data, d, task_output=task_output, **kwargs)
-                else:
-                    d["data"] = data
+                romanesco.io.push(data, d, task_output=task_output, **kwargs)
             else:
                 raise Exception("Expected exact format match but %s != %s.'" % (
                     d["format"], task_output["format"]))

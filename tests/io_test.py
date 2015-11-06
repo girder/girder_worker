@@ -49,6 +49,61 @@ class TestIo(unittest.TestCase):
         outputs = romanesco.run(task, inputs)
         self.assertEqual(outputs['b']['data'], 25)
 
+    def testInlineFilepath(self):
+        task = {
+            'mode': 'python',
+            'script': """
+fname = file
+with open(file) as f:
+    out = f.read()
+""",
+            'inputs': [{
+                'id': 'file',
+                'format': 'text',
+                'type': 'string',
+                'target': 'filepath'
+            }],
+            'outputs': [
+                {
+                    'id': 'out',
+                    'format': 'text',
+                    'type': 'string'
+                },
+                {
+                    'id': 'fname',
+                    'format': 'text',
+                    'type': 'string'
+                }
+            ]
+        }
+
+        # Test filepath input
+        inputs = {
+            'file': {
+                'data': 'a,b,c\n1,2,3\n',
+                'format': 'text',
+                'type': 'string'
+            }
+        }
+
+        outputs = romanesco.run(task, inputs)
+        self.assertEqual(outputs['out']['data'], 'a,b,c\n1,2,3\n')
+
+        # Test filepath input with filename specified
+        task['inputs'][0]['filename'] = 'file.csv'
+
+        inputs = {
+            'file': {
+                'data': 'a,b,c\n1,2,3\n',
+                'format': 'text',
+                'type': 'string'
+            }
+        }
+
+        outputs = romanesco.run(task, inputs)
+        self.assertEqual(outputs['out']['data'], 'a,b,c\n1,2,3\n')
+        self.assertEqual(outputs['fname']['data'][-8:], 'file.csv')
+
     def testHttpIo(self):
         task = {
             'mode': 'python',
