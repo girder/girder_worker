@@ -59,10 +59,8 @@ def fetch_handler(spec, **kwargs):
 
 def push_handler(data, spec, **kwargs):
     parent_type = spec.get('parent_type', 'folder')
-    name = spec.get('name', os.path.basename(data))
     taskOutput = kwargs.get('task_output', {})
     target = taskOutput.get('target', 'filepath')
-    description = spec.get('description')
 
     if 'parent_id' not in spec:
         raise Exception('Must pass parent ID for girder outputs.')
@@ -72,8 +70,9 @@ def push_handler(data, spec, **kwargs):
     if target == 'memory':
         fd = StringIO(data)
         client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
-                          parentType=parent_type, name=name)
+                          parentType=parent_type, name=spec['name'])
     elif target == 'filepath':
+        name = spec.get('name', os.path.basename(data))
         size = os.path.getsize(data)
         with open(data, 'rb') as fd:
             client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,

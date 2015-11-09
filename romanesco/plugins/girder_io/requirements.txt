@@ -1,1 +1,1 @@
-girder-client==1.0.1
+girder-client==1.1.0
