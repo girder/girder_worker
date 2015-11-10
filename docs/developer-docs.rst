@@ -15,7 +15,7 @@ Install requirements: ::
 
     pip install -r requirements.txt
     
-    # If you plan on developing for Romanesco, you may also want to 
+    # If you plan on developing for Romanesco, you may also want to
     pip install -r requirements-dev.txt
 
 Test it: ::
@@ -74,7 +74,13 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 An individual plugin can be installed through pip, in editable mode, like so: ::
 
-    pip install -e .[spark]
+    pip install -U -e .[spark]
+
+You can run this command at any time to install dependencies of other plugins, even if Romanesco is already installed.
+
+.. seealso::
+
+   For more information on the Romanesco plugin system, see :doc:`plugins`.
 
 
 Note on building VTK
