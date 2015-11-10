@@ -10,6 +10,13 @@ Clone from git: ::
 
     git clone https://github.com/Kitware/romanesco.git
     cd romanesco
+    
+Install requirements: ::
+
+    pip install -r requirements.txt
+    
+    # If you plan on developing for Romanesco, you may also want to 
+    pip install -r requirements-dev.txt
 
 Test it: ::
 
@@ -61,6 +68,13 @@ On the client, run a script akin to the following example: ::
 
 This section of the documentation is meant for those who wish to contribute to
 the Romanesco core platform.
+
+Installing Romanesco plugins from pip
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+An individual plugin can be installed through pip, in editable mode, like so: ::
+
+    pip install -e .[spark]
 
 
 Note on building VTK
