@@ -6,22 +6,25 @@ from six import StringIO
 
 
 def _init_client(spec, require_token=False):
-    if 'host' not in spec:
-        raise Exception('Host key required for girder fetch mode')
-
-    scheme = spec.get('scheme', 'http')
-    port = spec.get('port', {
-        'http': 80,
-        'https': 443
-    }[scheme])
-    api_root = spec.get('api_root', '/api/v1')
-    client = girder_client.GirderClient(
-        host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
+    if 'api_url' in spec:
+        client = girder_client.GirderClient(api_url=spec['api_url'])
+    elif 'host' in spec:
+        scheme = spec.get('scheme', 'http')
+        port = spec.get('port', {
+            'http': 80,
+            'https': 443
+        }[scheme])
+        api_root = spec.get('api_root', '/api/v1')
+        client = girder_client.GirderClient(
+            host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
 
     if 'token' in spec:
         client.token = spec['token']
     elif require_token:
-        raise Exception('You must pass a token for girder authentication.')
+        raise Exception('You must pass a token for Girder authentication.')
+    else:
+        raise Exception('You must pass either an api_url or host key for '
+                        'Girder input and output bindings.')
 
     return client
 
