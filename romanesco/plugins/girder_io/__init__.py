@@ -71,11 +71,14 @@ def push_handler(data, spec, **kwargs):
     client = _init_client(spec, require_token=True)
 
     if target == 'memory':
+        if not spec.get('name'):
+            raise Exception('Girder uploads from memory objects must '
+                            'explicitly pass a "name" field.')
         fd = StringIO(data)
         client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
                           parentType=parent_type, name=spec['name'])
     elif target == 'filepath':
-        name = spec.get('name', os.path.basename(data))
+        name = spec.get('name') or os.path.basename(data)
         size = os.path.getsize(data)
         with open(data, 'rb') as fd:
             client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,

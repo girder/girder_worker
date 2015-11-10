@@ -108,6 +108,7 @@ new item with the same name as the file), or into an existing item.
 
     <GIRDER_OUTPUT> ::= {
         "mode": "girder",
+        "token": <girder token used for authentication>,
         "parent_id": <the _id value of the folder or item to upload into>,
         "format": "text",
         "type": "string"
@@ -117,7 +118,6 @@ new item with the same name as the file), or into an existing item.
         (, "port": <the port of the girder server, default is 80 for http: and 443 for https:>)
         (, "api_root": <path to the girder REST API, default is "/api/v1")
         (, "scheme": <"http" or "https", default is "http">)
-        (, "token": <girder token used for authentication>)
         (, "parent_type": <"folder" or "item", default is "folder">)
     }
 
