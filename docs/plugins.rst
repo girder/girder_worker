@@ -85,6 +85,14 @@ Girder IO
         (, "resource_type": <"file", "item", or "folder", default is "file">)
     }
 
+.. note :: For historical reasons, task inputs that do not specify a ``target`` field
+   and are bound to a Girder input will default to having the data downloaded to
+   a file (i.e. ``target="filepath"`` behavior). This is different from the normal
+   default behavior for other IO modes, which is to download the data to an
+   object in memory. For this reason, it is suggested that if your task input is going
+   to support Girder IO mode, that you specify the ``target`` field explicitly
+   on it rather than using the default.
+
 The output mode also assumes data of format ``string/text`` that is a path to a file
 in the filesystem. That file will then be uploaded under an existing folder (under a
 new item with the same name as the file), or into an existing item.
