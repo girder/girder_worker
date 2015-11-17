@@ -2,12 +2,34 @@ from __future__ import absolute_import
 
 from . import http, local, mongodb
 
+import os
+import tempfile
+
 _fetch_map = {}
 _push_map = {}
 
 
 def _inline_fetch(spec, **kwargs):
-    return spec['data']
+    taskInput = kwargs.get('task_input', {})
+    target = taskInput.get('target', 'memory')
+    if target == 'filepath':
+        tmpDir = kwargs['_tempdir']
+
+        if 'filename' in taskInput:
+            filename = taskInput['filename']
+            path = os.path.join(tmpDir, filename)
+            with open(path, 'wb') as out:
+                out.write(spec['data'])
+        else:
+            with tempfile.NamedTemporaryFile('wb', prefix=tmpDir, delete=False) as out:
+                out.write(spec['data'])
+                path = out.name
+
+        return path
+    elif target == 'memory':
+        return spec['data']
+    else:
+        raise Exception('Invalid fetch target: ' + target)
 
 
 def _inline_push(data, spec, **kwargs):
@@ -47,10 +69,8 @@ def _detectMode(spec):
     if mode == 'auto':
         # We guess the mode based on the "url" value
         if 'url' not in spec:
-            if 'data' in spec:
-                return 'inline'
+            return 'inline'
 
-            raise Exception('IO mode "auto" requires a "url" field.')
         scheme = spec['url'].split(':', 1)[0]
 
         if scheme == 'https':
