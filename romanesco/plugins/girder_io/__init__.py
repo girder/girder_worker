@@ -2,6 +2,8 @@ import girder_client
 import os
 import romanesco
 
+from six import StringIO
+
 
 def _init_client(spec, require_token=False):
     if 'host' not in spec:
@@ -26,6 +28,8 @@ def _init_client(spec, require_token=False):
 
 def fetch_handler(spec, **kwargs):
     resource_type = spec.get('resource_type', 'file').lower()
+    taskInput = kwargs.get('task_input', {})
+    target = taskInput.get('target', 'filepath')
 
     if 'id' not in spec:
         raise Exception('Must pass a resource ID for girder inputs.')
@@ -44,27 +48,37 @@ def fetch_handler(spec, **kwargs):
     else:
         raise Exception('Invalid resource type: ' + resource_type)
 
-    return dest
+    if target == 'filepath':
+        return dest
+    elif target == 'memory':
+        with open(dest, 'rb') as fd:
+            return fd.read()
+    else:
+        raise Exception('Invalid Girder push target: ' + target)
 
 
 def push_handler(data, spec, **kwargs):
     parent_type = spec.get('parent_type', 'folder')
-    name = spec.get('name', os.path.basename(data))
-    description = spec.get('description')
+    taskOutput = kwargs.get('task_output', {})
+    target = taskOutput.get('target', 'filepath')
 
     if 'parent_id' not in spec:
         raise Exception('Must pass parent ID for girder outputs.')
 
     client = _init_client(spec, require_token=True)
 
-    if parent_type == 'folder':
-        item = client.createItem(
-            spec['parent_id'], name, description=description)
-        client.uploadFileToItem(item['_id'], data)
-    elif parent_type == 'item':
-        client.uploadFileToItem(spec['parent_id'], data)
+    if target == 'memory':
+        fd = StringIO(data)
+        client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
+                          parentType=parent_type, name=spec['name'])
+    elif target == 'filepath':
+        name = spec.get('name', os.path.basename(data))
+        size = os.path.getsize(data)
+        with open(data, 'rb') as fd:
+            client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,
+                              parentType=parent_type, name=name)
     else:
-        raise Exception('Invalid parent type: ' + parent_type)
+        raise Exception('Invalid Girder push target: ' + target)
 
 
 def load(params):
