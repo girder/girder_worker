@@ -146,7 +146,7 @@ def convert(type, input, output, fetch=True, **kwargs):
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
-    romanesco.io.push(data, output)
+    romanesco.io.push(data, output, **kwargs)
     return output
 
 
@@ -228,10 +228,12 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             task_input = task_inputs[name]
 
             # Fetch the input
-            d["data"] = romanesco.io.fetch(d, task_input=task_input, **kwargs)
+            d["data"] = romanesco.io.fetch(
+                d, **dict({'task_input': task_input}, **kwargs))
 
             # Validate the input
-            if validate and not romanesco.isvalid(task_input["type"], d, **kwargs):
+            if validate and not romanesco.isvalid(
+                    task_input["type"], d, **dict({'task_input': task_input}, **kwargs)):
                 raise Exception(
                     "Input %s (Python type %s) is not in the expected type (%s) "
                     "and format (%s)." % (
@@ -241,10 +243,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             # Convert data
             if auto_convert:
                 converted = romanesco.convert(
-                    task_input["type"], d,
-                    {"format": task_input["format"]},
-                    fetch=False, **kwargs)
-
+                    task_input["type"], d, {"format": task_input["format"]},
+                    **dict({'task_input': task_input, 'fetch': False}, **kwargs))
                 d["script_data"] = converted["data"]
             elif (d.get("format", task_input.get("format")) ==
                   task_input.get("format")):
@@ -273,8 +273,9 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                              "format": task_output["format"]}
 
             # Validate the output
-            if validate and not romanesco.isvalid(task_output["type"],
-                                                  script_output, **kwargs):
+            if validate and not romanesco.isvalid(
+                    task_output["type"], script_output,
+                    **dict({'task_output': task_output}, **kwargs)):
                 raise Exception(
                     "Output %s (%s) is not in the expected type (%s) and format "
                     " (%s)." % (
@@ -284,10 +285,12 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             if auto_convert:
                 outputs[name] = romanesco.convert(
-                    task_output["type"], script_output, d, **kwargs)
+                    task_output["type"], script_output, d,
+                    **dict({'task_output': task_output}, **kwargs))
             elif d["format"] == task_output["format"]:
                 data = d["script_data"]
-                romanesco.io.push(data, d, task_output=task_output, **kwargs)
+                romanesco.io.push(data, d,
+                                  **dict({'task_output': task_output}, **kwargs))
             else:
                 raise Exception("Expected exact format match but %s != %s.'" % (
                     d["format"], task_output["format"]))

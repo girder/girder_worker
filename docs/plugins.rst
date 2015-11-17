@@ -65,9 +65,15 @@ Girder IO
 * **Description:** This plugin adds new fetch and push modes called ``girder``. The
   fetch mode for inputs supports downloading folders, items, or files from a Girder
   server. Inputs can be downloaded anonymously (if they are public) or using an
-  authentication token. This data is always written to disk within the task's
-  temporary directory, and is always a ``string/text`` format since the data itself
-  is simply the path to the downloaded file or directory.
+  authentication token. The downloaded data is either written to disk and passed
+  as a file, or read into memory, depending on whether the corresponding task
+  input's ``target`` field is set to ``"filepath"`` or ``"memory"``. Likewise for
+  uploads, the value of the output variable is interpreted as a path to a file to
+  be uploaded if the task output ``target`` is set to ``filepath``. If it's set to
+  ``memory``, the value of the output variable becomes the contents of the uploaded
+  file. The URL to access the Girder API must be specified either as a full URL in
+  the ``api_url`` field, or in parts via the ``host``, ``port``, ``api_root``, and
+  ``scheme`` fields.
 
 .. code-block :: none
 
@@ -75,15 +81,24 @@ Girder IO
         "mode": "girder",
         "id": <the _id value of the resource to download>,
         "name": <the name of the resource to download>,
-        "host": <the hostname of the girder server>,
         "format": "text",
         "type": "string"
+        (, "api_url": <full URL to the API, can be used instead of scheme/host/port/api_root>)
+        (, "host": <the hostname of the girder server. Required if no api_url is passed>)
         (, "port": <the port of the girder server, default is 80 for http: and 443 for https:>)
         (, "api_root": <path to the girder REST API, default is "/api/v1")
         (, "scheme": <"http" or "https", default is "http">)
         (, "token": <girder token used for authentication>)
         (, "resource_type": <"file", "item", or "folder", default is "file">)
     }
+
+.. note :: For historical reasons, task inputs that do not specify a ``target`` field
+   and are bound to a Girder input will default to having the data downloaded to
+   a file (i.e. ``target="filepath"`` behavior). This is different from the normal
+   default behavior for other IO modes, which is to download the data to an
+   object in memory. For this reason, it is suggested that if your task input is going
+   to support Girder IO mode, that you specify the ``target`` field explicitly
+   on it rather than using the default.
 
 The output mode also assumes data of format ``string/text`` that is a path to a file
 in the filesystem. That file will then be uploaded under an existing folder (under a
@@ -93,15 +108,16 @@ new item with the same name as the file), or into an existing item.
 
     <GIRDER_OUTPUT> ::= {
         "mode": "girder",
+        "token": <girder token used for authentication>,
         "parent_id": <the _id value of the folder or item to upload into>,
-        "host": <the hostname of the girder server>,
         "format": "text",
         "type": "string"
         (, "name": <optionally override name of the file to upload>)
-        (, "port": <the port of the girder server, default is 80 for http and 443 for https>)
+        (, "api_url": <full URL to the API, can be used instead of scheme/host/port/api_root>)
+        (, "host": <the hostname of the girder server. Required if no api_url is passed>)
+        (, "port": <the port of the girder server, default is 80 for http: and 443 for https:>)
         (, "api_root": <path to the girder REST API, default is "/api/v1")
         (, "scheme": <"http" or "https", default is "http">)
-        (, "token": <girder token used for authentication>)
         (, "parent_type": <"folder" or "item", default is "folder">)
     }
 

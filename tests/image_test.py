@@ -6,6 +6,7 @@ import os
 import tempfile
 import unittest
 from PIL import Image
+from PIL.JpegImagePlugin import JpegImageFile
 from six import StringIO
 
 
@@ -102,6 +103,16 @@ class TestImage(unittest.TestCase):
         io2 = StringIO(output["data"])
         im2 = Image.open(io2)
         self.assertEqual(compareImages(im1, im2), 0)
+
+        output = romanesco.convert("image", {
+            "format": "png.base64",
+            "data": self.image
+        }, {
+            "format": "jpeg"
+        })
+        data = StringIO(output['data'])
+        jpeg = Image.open(data)
+        self.assertTrue(isinstance(jpeg, JpegImageFile))
 
 
 if __name__ == '__main__':
