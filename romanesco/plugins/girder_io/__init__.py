@@ -6,22 +6,25 @@ from six import StringIO
 
 
 def _init_client(spec, require_token=False):
-    if 'host' not in spec:
-        raise Exception('Host key required for girder fetch mode')
-
-    scheme = spec.get('scheme', 'http')
-    port = spec.get('port', {
-        'http': 80,
-        'https': 443
-    }[scheme])
-    api_root = spec.get('api_root', '/api/v1')
-    client = girder_client.GirderClient(
-        host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
+    if 'api_url' in spec:
+        client = girder_client.GirderClient(apiUrl=spec['api_url'])
+    elif 'host' in spec:
+        scheme = spec.get('scheme', 'http')
+        port = spec.get('port', {
+            'http': 80,
+            'https': 443
+        }[scheme])
+        api_root = spec.get('api_root', '/api/v1')
+        client = girder_client.GirderClient(
+            host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
 
     if 'token' in spec:
         client.token = spec['token']
     elif require_token:
-        raise Exception('You must pass a token for girder authentication.')
+        raise Exception('You must pass a token for Girder authentication.')
+    else:
+        raise Exception('You must pass either an api_url or host key for '
+                        'Girder input and output bindings.')
 
     return client
 
@@ -68,11 +71,14 @@ def push_handler(data, spec, **kwargs):
     client = _init_client(spec, require_token=True)
 
     if target == 'memory':
+        if not spec.get('name'):
+            raise Exception('Girder uploads from memory objects must '
+                            'explicitly pass a "name" field.')
         fd = StringIO(data)
         client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
                           parentType=parent_type, name=spec['name'])
     elif target == 'filepath':
-        name = spec.get('name', os.path.basename(data))
+        name = spec.get('name') or os.path.basename(data)
         size = os.path.getsize(data)
         with open(data, 'rb') as fd:
             client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,

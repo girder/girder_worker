@@ -1,3 +1,4 @@
+import copy
 import json
 import httmock
 import os
@@ -192,6 +193,120 @@ class TestGirderIo(unittest.TestCase):
             outputs = romanesco.run(task, inputs=inputs, outputs=outputs)
             self.assertEqual(chunk_sent, [1])
             self.assertEqual(upload_initialized, [1])
+
+    def test_girder_io_params(self):
+        task = {
+            'inputs': [{
+                'name': 'input',
+                'type': 'string',
+                'format': 'text',
+                'target': 'memory'
+            }],
+            'outputs': [{
+                'name': 'out',
+                'type': 'string',
+                'format': 'text',
+                'target': 'memory'
+            }],
+            'script': 'out = input',
+            'mode': 'python'
+        }
+
+        @httmock.all_requests
+        def girder_mock(url, request):
+            api_root = self.api_root
+            self.assertEqual(request.headers['Girder-Token'], 'foo')
+            self.assertEqual(url.scheme, self.scheme)
+            self.assertTrue(url.path.startswith(api_root), url.path)
+            self.assertEqual(url.netloc, self.netloc)
+
+            if url.path == api_root + '/item/item_id/files':
+                return json.dumps([{
+                    'name': 'test.txt',
+                    '_id': 'file_id',
+                    'size': 13
+                }])
+            elif url.path == api_root + '/item/new_item_id/files':
+                return '[]'
+            elif url.path == api_root + '/file/file_id/download':
+                return 'file_contents'
+            elif url.path == api_root + '/file' and request.method == 'POST':
+                return json.dumps({
+                    '_id': 'upload_id'
+                })
+            elif (url.path == api_root + '/file/chunk' and
+                  request.method == 'POST'):
+                self.assertTrue('file_contents' in request.body)
+                return json.dumps({
+                    '_id': 'new_file_id',
+                    'name': 'test.txt'
+                })
+            else:
+                raise Exception('Unexpected %s request to %s.' % (
+                    request.method, url.path))
+
+        # Test that api_url overrides the other values
+        self.api_root = '/foo/bar/api'
+        self.netloc = 'hello.com:1234'
+        self.scheme = 'https'
+
+        inputs = {
+            'input': {
+                'mode': 'girder',
+                'api_url': 'https://hello.com:1234/foo/bar/api',
+                'token': 'foo',
+                'host': 'wrong_host',
+                'id': 'item_id',
+                'name': 'test.txt',
+                'resource_type': 'item',
+                'port': 5678,
+                'api_root': '/wrong/api/root',
+                'scheme': 'http',
+                'format': 'text',
+                'type': 'string'
+            }
+        }
+
+        outputs = {
+            'out': {
+                'mode': 'girder',
+                'api_url': 'https://hello.com:1234/foo/bar/api',
+                'token': 'foo',
+                'host': 'wrong_host',
+                'port': 5678,
+                'api_root': '/wrong/api/root',
+                'scheme': 'http',
+                'name': 'out.txt',
+                'format': 'text',
+                'type': 'string',
+                'parent_id': 'abcd',
+                'parent_type': 'folder'
+            }
+        }
+
+        with httmock.HTTMock(girder_mock):
+            outputs = romanesco.run(copy.deepcopy(task), inputs=inputs,
+                                    outputs=outputs)
+
+            # Test default values for scheme, host, and port
+            self.scheme = 'http'
+            self.netloc = 'wrong_host:80'
+            self.api_root = '/api/v1'
+
+            inputs = {
+                'input': {
+                    'mode': 'girder',
+                    'token': 'foo',
+                    'host': 'wrong_host',
+                    'id': 'item_id',
+                    'name': 'test.txt',
+                    'resource_type': 'item',
+                    'format': 'text',
+                    'type': 'string'
+                }
+            }
+
+            romanesco.run(copy.deepcopy(task), inputs=inputs)
 
 
 if __name__ == '__main__':
