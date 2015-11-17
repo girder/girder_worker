@@ -86,7 +86,7 @@ def load(task_file):
     return task
 
 
-def isvalid(type, binding, **kwargs):
+def isvalid(type, binding, fetch=True, **kwargs):
     """
     Determine whether a data binding is of the appropriate type and format.
 
@@ -97,12 +97,14 @@ def isvalid(type, binding, **kwargs):
         The dict may also be of the form
         ``{"format": format, "uri", uri}``, where ``uri`` is the location of
         the data (see :py:mod:`romanesco.uri` for URI formats).
+    :param fetch: Whether to do an initial data fetch before conversion
+        (default ``True``).
     :returns: ``True`` if the binding matches the type and format,
         ``False`` otherwise.
     """
     analysis = get_validator_analysis(Validator(type, binding["format"]))
     outputs = romanesco.run(analysis, {"input": binding}, auto_convert=False,
-                            validate=False, **kwargs)
+                            validate=False, fetch=fetch, **kwargs)
     return outputs["output"]["data"]
 
 
@@ -152,7 +154,7 @@ def convert(type, input, output, fetch=True, **kwargs):
 
 @utils.with_tmpdir  # noqa
 def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
-        **kwargs):
+        fetch=True, **kwargs):
     """
     Run a Romanesco task with the specified I/O bindings.
 
@@ -181,6 +183,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         tools such as ``pdb`` at the cost of additional file I/O. Note that
         when passed to run *all* tasks will be written to file including
         validation and conversion tasks.
+    :param fetch: If ``True`` will perform a fetch on the input before
+        running the task (default ``True``).
     :returns: A dictionary of the form ``name: binding`` where ``name`` is
         the name of the output and ``binding`` is an output binding of the form
         ``{"format": format, "data": data}``. If the `outputs` param
@@ -228,12 +232,14 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             task_input = task_inputs[name]
 
             # Fetch the input
-            d["data"] = romanesco.io.fetch(
-                d, **dict({'task_input': task_input}, **kwargs))
+            if fetch:
+                d["data"] = romanesco.io.fetch(
+                    d, **dict({'task_input': task_input}, **kwargs))
 
             # Validate the input
             if validate and not romanesco.isvalid(
-                    task_input["type"], d, **dict({'task_input': task_input}, **kwargs)):
+                    task_input["type"], d,
+                    **dict({'task_input': task_input, 'fetch': False}, **kwargs)):
                 raise Exception(
                     "Input %s (Python type %s) is not in the expected type (%s) "
                     "and format (%s)." % (
