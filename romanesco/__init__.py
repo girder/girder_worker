@@ -288,7 +288,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             if auto_convert:
                 outputs[name] = romanesco.convert(
                     task_output["type"], script_output, d,
-                    task_output=task_output, **kwargs)
+                    **dict({'task_output': task_output}, **kwargs))
             elif d["format"] == task_output["format"]:
                 data = d["script_data"]
                 if d.get("mode"):
