@@ -7,7 +7,7 @@ from six import StringIO
 
 def _init_client(spec, require_token=False):
     if 'api_url' in spec:
-        client = girder_client.GirderClient(api_url=spec['api_url'])
+        client = girder_client.GirderClient(apiUrl=spec['api_url'])
     elif 'host' in spec:
         scheme = spec.get('scheme', 'http')
         port = spec.get('port', {
