@@ -1,6 +1,7 @@
 {
     "inputs": [{"name": "input", "type": "graph", "format": "vtkgraph.serialized"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "extensions": ["vtkgraph"],
     "script": "output = isinstance(input, (str, unicode))",
     "mode": "python"
 }
