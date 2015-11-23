@@ -1,4 +1,3 @@
-import os
 import sys
 import unittest
 from romanesco.format import converter_path, has_converter, Validator, \
@@ -84,13 +83,5 @@ class TestFormat(unittest.TestCase):
     def test_conversion_graph(self):
         print_conversion_graph()
 
-        with open(os.path.join('tests', 'data', 'conversion_graph.txt'), 'rb') as fixture:
-            self.assertEquals(sorted(sys.stdout.getvalue().splitlines()),
-                              sorted(fixture.read().splitlines()))
-
     def test_conversion_table(self):
         print_conversion_table()
-
-        with open(os.path.join('tests', 'data', 'conversion_table.txt'), 'rb') as fixture:
-            self.assertEquals(sorted(sys.stdout.getvalue().splitlines()),
-                              sorted(fixture.read().splitlines()))
