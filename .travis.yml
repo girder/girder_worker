@@ -62,9 +62,9 @@ before_install:
   - swift --version || curl -L http://swiftlang.org/packages/swift-0.96.1.tar.gz | tar zx -C ~
   - swift --version
   # install julia
-  - export JULIA_HOME=$HOME/julia-0.4.2
-  - mkdir $JULIA_HOME && curl https://julialang.s3.amazonaws.com/bin/linux/x64/0.4/julia-0.4.2-linux-x86_64.tar.gz | tar zx -C $JULIA_HOME --strip-components 1
-  - export PATH=$PATH:$JULIA_HOME/bin
+  - export JULIA_INSTALL_HOME=$HOME/julia-0.4.2
+  - mkdir $JULIA_INSTALL_HOME && curl https://julialang.s3.amazonaws.com/bin/linux/x64/0.4/julia-0.4.2-linux-x86_64.tar.gz | tar zx -C $JULIA_INSTALL_HOME --strip-components 1
+  - export PATH=$PATH:$JULIA_INSTALL_HOME/bin
 
 # install dependencies
 install:
