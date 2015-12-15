@@ -11,7 +11,7 @@ def setUpModule():
     global _cwd
     _cwd = os.getcwd()
     _tmp = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'tmp', 'julia')
+        os.path.dirname(os.path.abspath(__file__)), 'tmp')
     if not os.path.isdir(_tmp):
         os.makedirs(_tmp)
     os.chdir(_tmp)
