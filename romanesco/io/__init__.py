@@ -13,7 +13,8 @@ def _inline_fetch(spec, **kwargs):
     taskInput = kwargs.get('task_input', {})
     target = taskInput.get('target', 'memory')
     if target == 'filepath':
-        tmpDir = kwargs['_tempdir']
+        # Ensure we have a trailing slash
+        tmpDir = os.path.join(kwargs['_tempdir'], '')
 
         if 'filename' in taskInput:
             filename = taskInput['filename']
