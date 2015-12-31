@@ -64,9 +64,9 @@ def schedule(event):
             'romanesco.run', job['args'], job['kwargs'])
 
         # Set the job status to queued and record the task ID from celery.
-        job['status'] = JobStatus.QUEUED
         job['taskId'] = asyncResult.task_id
-        ModelImporter.model('job', 'jobs').save(job)
+        ModelImporter.model('job', 'jobs').updateJob(
+            job, status=JobStatus.QUEUED)
 
 
 def validateSettings(event):

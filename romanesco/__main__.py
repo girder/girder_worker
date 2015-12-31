@@ -1,7 +1,7 @@
 import romanesco
 from romanesco.format import conv_graph
 
-from .utils import JobManager
+from .utils import JobManager, JobStatus
 from celery import Celery
 
 app = None
@@ -23,6 +23,7 @@ def main():
                         url=jobInfo.get('url'), method=jobInfo.get('method'),
                         headers=jobInfo.get('headers')) as jm:
             kwargs['_job_manager'] = jm
+            kwargs['status'] = JobStatus.RUNNING
             retval = romanesco.run(*pargs, **kwargs)
         return retval
 

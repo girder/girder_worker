@@ -21,6 +21,11 @@ class JobStatus(object):
     ERROR = 4
     CANCELED = 5
 
+    FETCHING_INPUT = 820
+    CONVERTING_INPUT = 821
+    CONVERTING_OUTPUT = 822
+    PUSHING_OUTPUT = 823
+
 
 class TerminalColor(object):
     """
@@ -34,7 +39,7 @@ class TerminalColor(object):
 
     @staticmethod
     def _color(tag, text):
-        return ''.join([tag, text, TerminalColor.ENDC])
+        return ''.join((tag, text, TerminalColor.ENDC))
 
     @staticmethod
     def error(text):
@@ -79,6 +84,7 @@ class JobManager(object):
         self.url = url
         self.headers = headers or {}
         self.interval = interval
+        self.status = None
 
         self._last = time.time()
         self._buf = ''
@@ -91,7 +97,6 @@ class JobManager(object):
             sys.stdout, sys.stderr = self, self
 
     def __enter__(self):
-        self.updateStatus(JobStatus.RUNNING)
         return self
 
     def __exit__(self, excType, excValue, tb):
@@ -175,7 +180,7 @@ class JobManager(object):
         :param status: The status to set on the job.
         :type status: JobStatus
         """
-        if not self.url:
+        if not self.url or status is None or status == self.status:
             return
 
         self._redirectPipes(False)

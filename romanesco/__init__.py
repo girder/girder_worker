@@ -108,7 +108,7 @@ def isvalid(type, binding, fetch=True, **kwargs):
     return outputs["output"]["data"]
 
 
-def convert(type, input, output, fetch=True, **kwargs):
+def convert(type, input, output, fetch=True, status=None, **kwargs):
     """
     Convert data from one format to another.
 
@@ -133,7 +133,6 @@ def convert(type, input, output, fetch=True, **kwargs):
         to the specified URI and
         returns the output binding unchanged.
     """
-
     if fetch:
         input["data"] = romanesco.io.fetch(input, **kwargs)
 
@@ -143,8 +142,9 @@ def convert(type, input, output, fetch=True, **kwargs):
         data_descriptor = input
         for c in converter_path(Validator(type, input['format']),
                                 Validator(type, output['format'])):
-            result = romanesco.run(c, {"input": data_descriptor},
-                                   auto_convert=False, **kwargs)
+            result = romanesco.run(
+                c, {"input": data_descriptor}, auto_convert=False,
+                status=status, **kwargs)
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
@@ -152,9 +152,14 @@ def convert(type, input, output, fetch=True, **kwargs):
     return output
 
 
+def _job_status(mgr, status):
+    if mgr:
+        mgr.updateStatus(status)
+
+
 @utils.with_tmpdir  # noqa
 def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
-        fetch=True, **kwargs):
+        fetch=True, status=None, **kwargs):
     """
     Run a Romanesco task with the specified I/O bindings.
 
@@ -185,6 +190,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         validation and conversion tasks.
     :param fetch: If ``True`` will perform a fetch on the input before
         running the task (default ``True``).
+    :param status: Job status to update to during execution of this task.
+    :type status: romanesco.utils.JobStatus
     :returns: A dictionary of the form ``name: binding`` where ``name`` is
         the name of the output and ``binding`` is an output binding of the form
         ``{"format": format, "data": data}``. If the `outputs` param
@@ -205,6 +212,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
     if mode not in _task_map:
         raise Exception("Invalid mode: %s" % mode)
+
+    job_mgr = kwargs.get('_job_manager')
 
     info = {
         'task': task,
@@ -233,6 +242,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             # Fetch the input
             if fetch:
+                _job_status(job_mgr, utils.JobStatus.FETCHING_INPUT)
                 d["data"] = romanesco.io.fetch(
                     d, **dict({'task_input': task_input}, **kwargs))
 
@@ -250,6 +260,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             if auto_convert:
                 converted = romanesco.convert(
                     task_input["type"], d, {"format": task_input["format"]},
+                    status=utils.JobStatus.CONVERTING_INPUT,
                     **dict({'task_input': task_input, 'fetch': False}, **kwargs))
                 d["script_data"] = converted["data"]
             elif (d.get("format", task_input.get("format")) ==
@@ -267,6 +278,9 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         for name, task_output in task_outputs.iteritems():
             if name not in outputs:
                 outputs[name] = {"format": task_output["format"]}
+
+        # Set the appropriate job status flag
+        _job_status(job_mgr, status)
 
         # Actually run the task for the given mode
         _task_map[mode](task=task, inputs=inputs, outputs=outputs,
@@ -292,9 +306,11 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             if auto_convert:
                 outputs[name] = romanesco.convert(
                     task_output["type"], script_output, d,
+                    status=utils.JobStatus.CONVERTING_OUTPUT,
                     **dict({'task_output': task_output}, **kwargs))
             elif d["format"] == task_output["format"]:
                 data = d["script_data"]
+                _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
                 romanesco.io.push(data, d,
                                   **dict({'task_output': task_output}, **kwargs))
             else:
