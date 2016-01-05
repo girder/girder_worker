@@ -5,6 +5,8 @@ import romanesco
 import shutil
 import unittest
 
+from romanesco.utils import JobStatus
+
 _tmp = None
 
 
@@ -110,20 +112,18 @@ with open(file) as f:
             'script': 'y = x + "_suffix"\nfoo="bar"',
             'inputs': [{
                 'id': 'x',
-                'name': 'x',
-                'format': 'string',
+                'format': 'text',
                 'type': 'string',
                 'target': 'filepath',
                 'filename': 'override.txt'
             }],
             'outputs': [{
                 'id': 'y',
-                'name': 'y',
-                'format': 'string',
+                'format': 'text',
                 'type': 'string'
             }, {
                 'id': 'foo',
-                'format': 'string',
+                'format': 'text',
                 'type': 'string'
             }]
         }
@@ -131,21 +131,27 @@ with open(file) as f:
         inputs = {
             'x': {
                 'mode': 'http',
-                'url': 'https://foo.com/file.txt'
+                'url': 'https://foo.com/file.txt',
+                'format': 'text',
+                'type': 'string'
             }
         }
 
         outputs = {
             'foo': {
                 'mode': 'http',
-                'format': 'string',
+                'format': 'text',
+                'type': 'string',
                 'url': 'https://output.com/location.out',
                 'headers': {'foo': 'bar'},
                 'method': 'PUT'
             }
         }
 
+        job_mgr = romanesco.utils.JobManager(True, url='http://jobstatus/')
+
         received = []
+        status_changes = []
 
         @httmock.all_requests
         def fetchMock(url, request):
@@ -155,6 +161,10 @@ with open(file) as f:
             elif url.netloc == 'output.com' and url.path == '/location.out':
                 received.append(request.body)
                 return ''
+            elif (url.netloc == 'jobstatus' and url.path == '/' and
+                    request.method == 'PUT'):
+                status_changes.append(request.body)
+                return ''
             else:
                 raise Exception('Unexpected url ' + repr(url))
 
@@ -162,11 +172,20 @@ with open(file) as f:
             # Use user-specified filename
             out = romanesco.run(
                 task, inputs=copy.deepcopy(inputs), outputs=outputs,
-                cleanup=False, validate=False, auto_convert=False)
+                cleanup=False, _job_manager=job_mgr, status=JobStatus.RUNNING)
 
             val = out['y']['data']
             self.assertTrue(val.endswith('override.txt_suffix'))
             path = val[:-7]
+
+            # We should have received 3 status changes
+            expected_statuses = [
+                JobStatus.FETCHING_INPUT,
+                JobStatus.RUNNING,
+                JobStatus.PUSHING_OUTPUT
+            ]
+            self.assertEqual(status_changes, [
+                'status=%d' % i for i in expected_statuses])
 
             self.assertTrue(os.path.exists(path), path)
             with open(path) as f:
@@ -183,7 +202,6 @@ with open(file) as f:
 
             # Use automatically detected filename
             del task['inputs'][0]['filename']
-
             out = romanesco.run(
                 task, inputs=copy.deepcopy(inputs), cleanup=False,
                 validate=False, auto_convert=False)
@@ -210,3 +228,64 @@ with open(file) as f:
         outputs = romanesco.run(task)
         self.assertTrue('_tempdir' in outputs)
         self.assertRegexpMatches(outputs['_tempdir']['data'], _tmp + '.+')
+
+    def testConvertingStatus(self):
+        job_mgr = romanesco.utils.JobManager(True, url='http://jobstatus/')
+
+        status_changes = []
+
+        task = {
+            'mode': 'python',
+            'script': 'y = x',
+            'inputs': [{
+                'id': 'x',
+                'format': 'tsv',
+                'type': 'table'
+            }],
+            'outputs': [{
+                'id': 'y',
+                'format': 'tsv',
+                'type': 'table'
+            }]
+        }
+
+        inputs = {
+            'x': {
+                'mode': 'inline',
+                'data': 'a,b,c\nd,e,f\n',
+                'type': 'table',
+                'format': 'csv'
+            }
+        }
+
+        outputs = {
+            'y': {
+                'mode': 'inline',
+                'type': 'table',
+                'format': 'csv'
+            }
+        }
+
+        @httmock.all_requests
+        def fetchMock(url, request):
+            if (url.netloc == 'jobstatus' and url.path == '/' and
+                    request.method == 'PUT'):
+                status_changes.append(request.body)
+                return ''
+            else:
+                raise Exception('Unexpected url ' + repr(url))
+
+        with httmock.HTTMock(fetchMock):
+            romanesco.run(
+                task, inputs=inputs, outputs=outputs, _job_manager=job_mgr,
+                status=JobStatus.RUNNING)
+
+            # We should have received 3 status changes
+            expected_statuses = [
+                JobStatus.CONVERTING_INPUT,
+                JobStatus.RUNNING,
+                JobStatus.CONVERTING_OUTPUT,
+                JobStatus.PUSHING_OUTPUT
+            ]
+            self.assertEqual(status_changes, [
+                'status=%d' % i for i in expected_statuses])
