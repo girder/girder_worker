@@ -276,7 +276,7 @@ with open(file) as f:
                 raise Exception('Unexpected url ' + repr(url))
 
         with httmock.HTTMock(fetchMock):
-            out = romanesco.run(
+            romanesco.run(
                 task, inputs=inputs, outputs=outputs, _job_manager=job_mgr,
                 status=JobStatus.RUNNING)
 
