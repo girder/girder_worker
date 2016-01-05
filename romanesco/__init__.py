@@ -148,6 +148,9 @@ def convert(type, input, output, fetch=True, status=None, **kwargs):
             data_descriptor = result["output"]
         data = data_descriptor["data"]
 
+    if status == utils.JobStatus.CONVERTING_OUTPUT:
+        job_mgr = kwargs.get('_job_manager')
+        _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
     romanesco.io.push(data, output, **kwargs)
     return output
 
@@ -242,7 +245,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             # Fetch the input
             if fetch:
-                _job_status(job_mgr, utils.JobStatus.FETCHING_INPUT)
+                if status == utils.JobStatus.RUNNING and 'data' not in d:
+                    _job_status(job_mgr, utils.JobStatus.FETCHING_INPUT)
                 d["data"] = romanesco.io.fetch(
                     d, **dict({'task_input': task_input}, **kwargs))
 
@@ -303,6 +307,9 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                         d["format"])
                     )
 
+            # We should consider refactoring the logic below, reasoning about
+            # the paths through this code is difficult, since this logic is
+            # entered by "run", "isvalid", and "convert".
             if auto_convert:
                 outputs[name] = romanesco.convert(
                     task_output["type"], script_output, d,
@@ -310,7 +317,9 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                     **dict({'task_output': task_output}, **kwargs))
             elif d["format"] == task_output["format"]:
                 data = d["script_data"]
-                _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
+
+                if status == utils.JobStatus.RUNNING:
+                    _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
                 romanesco.io.push(data, d,
                                   **dict({'task_output': task_output}, **kwargs))
             else:
