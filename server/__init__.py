@@ -23,13 +23,32 @@ from girder.plugins.romanesco.validator import Validator
 _celeryapp = None
 
 
-class PluginSettings():
+class PluginSettings(object):
     BROKER = 'romanesco.broker'
     BACKEND = 'romanesco.backend'
     FULL_ACCESS_USERS = 'romanesco.full_access_users'
     FULL_ACCESS_GROUPS = 'romanesco.full_access_groups'
     REQUIRE_AUTH = 'romanesco.require_auth'
     SAFE_FOLDERS = 'romanesco.safe_folders'
+
+
+class CustomJobStatus(object):
+    """
+    The custom job status flags for romanesco.
+    """
+    FETCHING_INPUT = 820
+    CONVERTING_INPUT = 821
+    CONVERTING_OUTPUT = 822
+    PUSHING_OUTPUT = 823
+
+    @classmethod
+    def isValid(cls, status):
+        return status in (
+            cls.FETCHING_INPUT,
+            cls.CONVERTING_INPUT,
+            cls.CONVERTING_OUTPUT,
+            cls.PUSHING_OUTPUT
+        )
 
 
 def getCeleryApp():
@@ -102,6 +121,12 @@ def validateSettings(event):
         if not isinstance(val, (list, tuple)):
             raise ValidationException('Safe folders must be a JSON list.')
         event.preventDefault()
+
+
+def validateJobStatus(event):
+    """Allow our custom job status values."""
+    if CustomJobStatus.isValid(event.info):
+        event.preventDefault().addResponse(True)
 
 
 def getItemContent(itemId, itemApi):
@@ -381,4 +406,5 @@ def load(info):  # noqa
     info['apiRoot'].romanesco_validator = Validator(getCeleryApp())
 
     events.bind('jobs.schedule', 'romanesco', schedule)
+    events.bind('jobs.status.validate', 'romanesco', validateJobStatus)
     events.bind('model.setting.validate', 'romanesco', validateSettings)

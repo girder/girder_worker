@@ -183,6 +183,7 @@ class JobManager(object):
         if not self.url or status is None or status == self.status:
             return
 
+        self.status = status
         self._redirectPipes(False)
         requests.request(self.method.upper(), self.url, headers=self.headers,
                          data={'status': status}, allow_redirects=True)
