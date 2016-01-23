@@ -147,7 +147,7 @@ Running a workflow has the same syntax as running a single task.
       wf,
       inputs={
          'blur_input': lenna,
-         'blur_radius': {'format': 'number', 'data': 10}
+         'blur_radius': {'format': 'number', 'data': 5}
       }
    )
 
@@ -243,9 +243,9 @@ port name with the task name.
       wf,
       inputs={
          'blur1.blur_input': lenna,
-         'blur1.blur_radius': {'format': 'number', 'data': 2},
+         'blur1.blur_radius': {'format': 'number', 'data': 1},
          'blur2.blur_input': lenna,
-         'blur2.blur_radius': {'format': 'number', 'data': 16},
+         'blur2.blur_radius': {'format': 'number', 'data': 8},
       }
    )
    print output['mean_value']['data']
@@ -262,4 +262,4 @@ port name with the task name.
    --- finished: subtract ---
    --- beginning: mean ---
    --- finished: mean ---
-   24.7668...
+   27.7978668213
