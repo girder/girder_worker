@@ -11,6 +11,11 @@ Clone from git: ::
     git clone https://github.com/Kitware/romanesco.git
     cd romanesco
     
+Install required system packages: ::
+
+    # Command for Ubuntu
+    sudo apt-get install libjpeg-dev zlib1g-dev
+
 Install requirements: ::
 
     pip install -r requirements.txt

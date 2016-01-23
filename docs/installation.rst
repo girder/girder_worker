@@ -3,7 +3,14 @@ Installation
 
 To install the romanesco worker on your system, we recommend using ``pip`` to
 install the package. (If you wish to install from source, see the :ref:`install-from-source`
-section of the developer documentation.) The following command will install the core dependencies: ::
+section of the developer documentation.)
+
+First, install required system packages: ::
+
+    # Command for Ubuntu
+    sudo apt-get install libjpeg-dev zlib1g-dev
+
+Next, the following command will install the core dependencies: ::
 
     pip install romanesco
 
