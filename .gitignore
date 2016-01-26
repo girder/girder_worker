@@ -9,3 +9,4 @@ tmp/
 .pydevproject
 __pycache__
 /girder_worker.egg-info/
+/girder-worker-*.tar.gz
