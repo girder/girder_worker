@@ -1,14 +1,16 @@
-Romanesco |build-status|
+Girder worker |build-status|
 ========================
 
-A flexible, simple script execution engine.
+A flexible, simple script execution engine that integrates with the
+`Girder <http://girder.readthedocs.org>` data management system to run
+distributed batch jobs.
 
-Romanesco is a simple, flexible execution engine
-that features cross-language scripting support (currently Python and R),
-automatic format conversion, and loading from and saving to URIs.
+The worker supports running tasks in many environments including python, R,
+Scala, pyspark, Julia, and Docker, and supports fetching and pushing data to
+and from various data sources, including Girder.
 
-Visit the `documentation <http://romanesco.readthedocs.org>`_ for more details and API documentation.
+Visit the `documentation <http://girder_worker.readthedocs.org>`_ for more details and API documentation.
 
-.. |build-status| image:: https://travis-ci.org/Kitware/romanesco.png?branch=master
-    :target: https://travis-ci.org/Kitware/romanesco
+.. |build-status| image:: https://travis-ci.org/girder/girder_worker.png?branch=master
+    :target: https://travis-ci.org/girder/girder_worker
     :alt: Build Status

@@ -1,4 +1,4 @@
-import romanesco
+import girder_worker
 import unittest
 
 
@@ -29,7 +29,7 @@ class TestNumber(unittest.TestCase):
         }
 
     def test_text(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "text", "data": "hi, "},
@@ -42,7 +42,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], "hi, there")
 
     def test_json(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "json", "data": '"hi, "'},
@@ -55,7 +55,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], '"hi, there"')
 
     def test_unicode(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "text", "data": u"hi, "},

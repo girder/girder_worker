@@ -1,4 +1,4 @@
-import romanesco
+import girder_worker
 import os
 import shutil
 import tarfile
@@ -57,7 +57,7 @@ class TestDirectory(unittest.TestCase):
             os.remove(self.createFromDir + '.tgz')
 
     def testExtractZip(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.extractTask,
             inputs={
                 "myDir": {
@@ -76,7 +76,7 @@ class TestDirectory(unittest.TestCase):
             os.path.isfile(os.path.join(self.zipDir, 'provision.retry')))
 
     def testExtractTgz(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.extractTask,
             inputs={
                 "myDir": {
@@ -110,7 +110,7 @@ class TestDirectory(unittest.TestCase):
             "mode": "python"
         }
 
-        outputs = romanesco.run(task, inputs={
+        outputs = girder_worker.run(task, inputs={
             "myArchive": {
                 "format": "path",
                 "data": self.createFromDir
@@ -141,7 +141,7 @@ class TestDirectory(unittest.TestCase):
             "mode": "python"
         }
 
-        outputs = romanesco.run(task, inputs={
+        outputs = girder_worker.run(task, inputs={
             "myArchive": {
                 "format": "path",
                 "data": self.createFromDir

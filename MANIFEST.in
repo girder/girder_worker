@@ -1,12 +1,12 @@
 prune analysis
-prune clients
+prune examples
 prune tests
 include LICENSE
 include setup.py
 include requirements.txt
 include plugin.json
 include README.rst
-include romanesco/worker.dist.cfg
-recursive-include romanesco/format *
-recursive-include romanesco/plugins *
+include girder_worker/worker.dist.cfg
+recursive-include girder_worker/format *
+recursive-include girder_worker/plugins *
 global-exclude *.pyc *.pyo *.cmake

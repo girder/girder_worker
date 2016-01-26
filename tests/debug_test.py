@@ -1,5 +1,5 @@
 from tempfile import mktemp
-import romanesco
+import girder_worker
 import os
 import unittest
 
@@ -12,7 +12,7 @@ def _mockTempfile():
     _tmpfiles.append(out)
     return out
 
-romanesco.executors.python.tempfile.mktemp = _mockTempfile
+girder_worker.executors.python.tempfile.mktemp = _mockTempfile
 
 
 class TestDebug(unittest.TestCase):
@@ -63,9 +63,9 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for analysis debugging"""
         global _tmpfiles
 
-        romanesco.run(dict(self.analysis.items() + [("debug", 1)]),
-                      inputs=self.inputs,
-                      outputs=self.outputs)
+        girder_worker.run(dict(self.analysis.items() + [("debug", 1)]),
+                          inputs=self.inputs,
+                          outputs=self.outputs)
 
         # Should have generated just one debug file
         self.assertEquals(len(_tmpfiles), 1)
@@ -78,10 +78,8 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for kwarg debugging"""
         global _tmpfiles
 
-        romanesco.run(self.analysis,
-                      self.inputs,
-                      self.outputs,
-                      debug=True)
+        girder_worker.run(
+            self.analysis, self.inputs, self.outputs, debug=True)
 
         # Should have generated serveral files ()
         self.assertGreater(len(_tmpfiles), 1)

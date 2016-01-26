@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.6)
 
-project(Romanesco NONE)
+project(girder_worker NONE)
 
 include(CTest)
 enable_testing()

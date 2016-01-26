@@ -10,16 +10,11 @@ Clone from git: ::
 
     git clone https://github.com/Kitware/romanesco.git
     cd romanesco
-    
-Install required system packages: ::
-
-    # Command for Ubuntu
-    sudo apt-get install libjpeg-dev zlib1g-dev
 
 Install requirements: ::
 
     pip install -r requirements.txt
-    
+
     # If you plan on developing for Romanesco, you may also want to
     pip install -r requirements-dev.txt
 
@@ -69,7 +64,7 @@ Then fire up the celery worker: ::
 
 On the client, run a script akin to the following example: ::
 
-    python clients/client.py
+    python examples/example_client.py
 
 This section of the documentation is meant for those who wish to contribute to
 the Romanesco core platform.

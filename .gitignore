@@ -5,8 +5,6 @@ venv/
 _build
 build
 tmp/
-/romanesco-*.tar.gz
-/romanesco.egg-info/
 .project
 .pydevproject
 __pycache__

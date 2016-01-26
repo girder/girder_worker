@@ -1,9 +1,9 @@
 """Tests for core spec objects."""
 import unittest
 from unittest import TestCase
-from romanesco import specs
-from romanesco.specs.utils import spec_class_generator, to_frozenset
-import romanesco
+from girder_worker import specs
+from girder_worker.specs.utils import spec_class_generator, to_frozenset
+import girder_worker
 
 
 class TestSpec(TestCase):
@@ -617,8 +617,8 @@ class TestWorkflow(TestCase):
         inputs = {"a2.a": {"format": "json", "data": "1"},
                   "a3.a": {"format": "number", "data": 2}}
 
-        ground = romanesco.run(self.workflow, inputs=inputs)
-        system = romanesco.run(wf, inputs=inputs)
+        ground = girder_worker.run(self.workflow, inputs=inputs)
+        system = girder_worker.run(wf, inputs=inputs)
 
         self.assertEquals(system, ground)
 
@@ -643,8 +643,8 @@ class TestWorkflow(TestCase):
         inputs = {"a2.a": {"format": "json", "data": "1"},
                   "a3.a": {"format": "number", "data": 2}}
 
-        ground = romanesco.run(self.workflow, inputs=inputs)
-        system = romanesco.run(wf, inputs=inputs)
+        ground = girder_worker.run(self.workflow, inputs=inputs)
+        system = girder_worker.run(wf, inputs=inputs)
 
         self.assertEquals(system, ground)
 
@@ -706,8 +706,8 @@ class TestWorkflow(TestCase):
         inputs = {"a2.a": {"format": "json", "data": "1"},
                   "a3.a": {"format": "number", "data": 2}}
 
-        ground = romanesco.run(self.workflow, inputs=inputs)
-        system = romanesco.run(wf, inputs=inputs)
+        ground = girder_worker.run(self.workflow, inputs=inputs)
+        system = girder_worker.run(wf, inputs=inputs)
 
         self.assertEquals(system, ground)
 

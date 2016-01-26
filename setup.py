@@ -25,6 +25,8 @@ import shutil
 from pkg_resources import parse_requirements
 from setuptools.command.install import install
 
+WORKER_VERSION = '0.1.0'
+
 
 class CustomInstall(install):
     """
@@ -34,8 +36,8 @@ class CustomInstall(install):
     def run(self, *args, **kwargs):
         install.run(self, *args, **kwargs)
 
-        distcfg = os.path.join('romanesco', 'worker.dist.cfg')
-        localcfg = os.path.join('romanesco', 'worker.local.cfg')
+        distcfg = os.path.join('girder_worker', 'worker.dist.cfg')
+        localcfg = os.path.join('girder_worker', 'worker.local.cfg')
         if not os.path.isfile(localcfg):
             print('Creating worker.local.cfg')
             shutil.copyfile(distcfg, localcfg)
@@ -44,13 +46,10 @@ class CustomInstall(install):
 with open('README.rst') as f:
     readme = f.read()
 
-with open('plugin.json') as f:
-    version = json.load(f)['version']
-
 plugin_data = []
 # We must manually glob for plugin data since setuptools package_data
 # errors out when trying to include directories recursively
-os.chdir('romanesco')
+os.chdir('girder_worker')
 for root, dirnames, filenames in os.walk('plugins'):
     plugin_data.extend([os.path.join(root, fn) for fn in filenames])
 os.chdir('..')
@@ -66,7 +65,7 @@ reqs = [str(req) for req in install_reqs]
 
 # Build up extras_require for plugin requirements
 extras_require = {}
-plugins_dir = os.path.join('romanesco', 'plugins')
+plugins_dir = os.path.join('girder_worker', 'plugins')
 for name in os.listdir(plugins_dir):
     reqs_file = os.path.join(plugins_dir, name, 'requirements.txt')
     if os.path.isfile(reqs_file):
@@ -78,13 +77,13 @@ for name in os.listdir(plugins_dir):
 
 # perform the install
 setuptools.setup(
-    name='romanesco',
-    version=version,
+    name='girder-worker',
+    version=WORKER_VERSION,
     description='Batch execution engine built on celery.',
     long_description=readme,
     author='Kitware, Inc.',
     author_email='kitware@kitware.com',
-    url='http://romanesco.readthedocs.org',
+    url='https://github.com/girder/girder_worker',
     license='Apache 2.0',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -95,10 +94,10 @@ setuptools.setup(
     ],
     extras_require=extras_require,
     packages=setuptools.find_packages(
-        exclude=('tests.*', 'tests', 'server.*', 'server')
+        exclude=('tests.*', 'tests')
     ),
     package_data={
-        'romanesco': [
+        'girder_worker': [
             'worker.dist.cfg',
             'worker.local.cfg',
             'format/**/*'
@@ -111,7 +110,7 @@ setuptools.setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'romanesco-worker = romanesco.__main__:main'
+            'girder-worker = girder_worker.__main__:main'
         ]
     }
 )

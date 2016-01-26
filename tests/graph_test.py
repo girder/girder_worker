@@ -1,6 +1,6 @@
 import json
 import os
-import romanesco
+import girder_worker
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
 import unittest
@@ -30,7 +30,7 @@ class TestGraph(unittest.TestCase):
 
     def test_clique(self):
         # clique.json -> NetworkX
-        output = romanesco.convert('graph',
+        output = girder_worker.convert('graph',
                                    self.test_input['alphabetGraph'],
                                    {'format': 'networkx'})
 
@@ -40,7 +40,7 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(output['data'].degree('55ba5019f8883b5bf35f3e30'), 0)
 
         # NetworkX -> clique.json
-        output = romanesco.convert('graph',
+        output = girder_worker.convert('graph',
                                    output,
                                    {'format': 'clique.json'})
 
@@ -70,7 +70,7 @@ class TestGraph(unittest.TestCase):
         self.assertIn((oid_by_name['b'], oid_by_name['c']), edges)
 
     def test_adjacencylist(self):
-        output = romanesco.convert('graph',
+        output = girder_worker.convert('graph',
                                    self.test_input['distances'],
                                    {'format': 'adjacencylist'})
 
@@ -90,7 +90,7 @@ class TestGraph(unittest.TestCase):
 
         self.assertEqual(expected_edges, actual_edges)
 
-        output = romanesco.convert('graph',
+        output = girder_worker.convert('graph',
                                    output,
                                    {'format': 'networkx'})
 
@@ -102,7 +102,7 @@ class TestGraph(unittest.TestCase):
                           edge_match=None))
 
     def test_graphml(self):
-        output = romanesco.convert('graph',
+        output = girder_worker.convert('graph',
                                    self.test_input['distances'],
                                    {'format': 'graphml'})
         expected_edges = set(self.test_input['distances']['data'].edges(
@@ -125,7 +125,7 @@ class TestGraph(unittest.TestCase):
 
         self.assertEqual(expected_edges, actual_edges)
 
-        output = romanesco.convert('graph',
+        output = girder_worker.convert('graph',
                                    output,
                                    {'format': 'networkx'})
 

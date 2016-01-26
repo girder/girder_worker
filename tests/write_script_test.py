@@ -1,5 +1,5 @@
 from tempfile import mktemp
-import romanesco
+import girder_worker
 import os
 import unittest
 
@@ -12,7 +12,7 @@ def _mockTempfile():
     _tmpfiles.append(out)
     return out
 
-romanesco.executors.python.tempfile.mktemp = _mockTempfile
+girder_worker.executors.python.tempfile.mktemp = _mockTempfile
 
 
 class TestDebug(unittest.TestCase):
@@ -63,7 +63,7 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for analysis debugging"""
         global _tmpfiles
 
-        romanesco.run(dict(self.analysis.items() + [("write_script", 1)]),
+        girder_worker.run(dict(self.analysis.items() + [("write_script", 1)]),
                       inputs=self.inputs,
                       outputs=self.outputs)
 
@@ -78,7 +78,7 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for kwarg debugging"""
         global _tmpfiles
 
-        romanesco.run(self.analysis,
+        girder_worker.run(self.analysis,
                       self.inputs,
                       self.outputs,
                       write_script=True)

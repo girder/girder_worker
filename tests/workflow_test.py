@@ -1,4 +1,4 @@
-import romanesco
+import girder_worker
 import unittest
 
 
@@ -330,7 +330,7 @@ class TestWorkflow(unittest.TestCase):
         }
 
     def test_workflow(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.workflow,
             inputs={
                 "x": {"format": "json", "data": "1"},
@@ -340,7 +340,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs["result"]["data"], (1+3)*(2+2))
 
         # Test using the default value for x (10).
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.workflow,
             inputs={
                 "y": {"format": "number", "data": 2}
@@ -349,7 +349,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs["result"]["data"], (10+3)*(2+2))
 
     def test_multi_input(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.multi_input,
             inputs={
                 "x": {"format": "number", "data": 2},
@@ -359,7 +359,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs["result"]["data"], (2*2)+(3*3))
 
     def test_visualization(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.visualization,
             inputs={
                 "x": {"format": "number", "data": 2},

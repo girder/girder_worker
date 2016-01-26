@@ -1,5 +1,5 @@
 import base64
-import romanesco
+import girder_worker
 import math
 import operator
 import os
@@ -61,7 +61,7 @@ class TestImage(unittest.TestCase):
         }
 
     def test_base64(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "png.base64", "data": self.image},
@@ -72,7 +72,7 @@ class TestImage(unittest.TestCase):
     def test_convert(self):
         tmp = tempfile.mktemp()
 
-        output = romanesco.convert("image", {
+        output = girder_worker.convert("image", {
             "format": "png.base64",
             "data": self.image
         }, {
@@ -86,14 +86,14 @@ class TestImage(unittest.TestCase):
         self.assertEqual(output["format"], "png")
         self.assertEqual(base64.b64encode(value), self.image)
 
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "image",
             {"format": "png.base64", "data": self.image},
             {"format": "pil"})
 
         tmp = tempfile.mktemp()
 
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "image",
             output,
             {"format": "png"})
@@ -104,7 +104,7 @@ class TestImage(unittest.TestCase):
         im2 = Image.open(io2)
         self.assertEqual(compareImages(im1, im2), 0)
 
-        output = romanesco.convert("image", {
+        output = girder_worker.convert("image", {
             "format": "png.base64",
             "data": self.image
         }, {
