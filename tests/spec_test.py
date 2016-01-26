@@ -7,7 +7,6 @@ import girder_worker
 
 
 class TestSpec(TestCase):
-
     """Tests edge cases of the base spec."""
 
     def test_key_not_str(self):
@@ -30,7 +29,6 @@ class TestSpec(TestCase):
 
 
 class TestPort(TestCase):
-
     """Tests edge cases of the port spec."""
 
     def test_port_fetch(self):
@@ -79,7 +77,6 @@ class TestPort(TestCase):
 
 
 class TestTaskSpec(TestCase):
-
     """Tests edge cases of the anonymous task spec."""
 
     def test_task_inputs_outputs_equality(self):
@@ -112,7 +109,6 @@ class TestTaskSpec(TestCase):
 
 
 class TestTask(TestCase):
-
     """Tests edge cases of the task spec."""
 
     def setUp(self):

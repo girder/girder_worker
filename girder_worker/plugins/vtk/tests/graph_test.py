@@ -66,9 +66,9 @@ class TestGraph(unittest.TestCase):
 
     def test_vtkgraph(self):
         # Test vtkgraph -> vtkgraph.serialized on a simple digraph
-        output = girder_worker.convert('graph',
-                                   self.test_input['simpleVtkDiGraph'],
-                                   {'format': 'vtkgraph.serialized'})
+        output = girder_worker.convert(
+            'graph', self.test_input['simpleVtkDiGraph'],
+            {'format': 'vtkgraph.serialized'})
 
         with open(os.path.join('tests', 'data', 'vtkDiGraph.txt'), 'rb') as fixture:
             self.assertEqual(output['data'].splitlines()[1:],
@@ -76,9 +76,8 @@ class TestGraph(unittest.TestCase):
 
         # Test networkx -> vtkgraph.serialized on an undirected
         # graph w/ edge data
-        output = girder_worker.convert('graph',
-                                   self.test_input['distances'],
-                                   {'format': 'vtkgraph.serialized'})
+        output = girder_worker.convert(
+            'graph', self.test_input['distances'], {'format': 'vtkgraph.serialized'})
 
         with open(os.path.join('tests', 'data', 'vtkDistancesUndirectedGraph.txt'),
                   'rb') as fixture:
@@ -86,9 +85,8 @@ class TestGraph(unittest.TestCase):
                              fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph with missing edge attributes
-        output = girder_worker.convert('graph',
-                                   self.test_input['grants'],
-                                   {'format': 'vtkgraph.serialized'})
+        output = girder_worker.convert(
+            'graph', self.test_input['grants'], {'format': 'vtkgraph.serialized'})
 
         with open(os.path.join('tests', 'data', 'vtkGrantsDirectedGraph.txt'),
                   'rb') as fixture:
@@ -97,18 +95,15 @@ class TestGraph(unittest.TestCase):
 
         # Test networkx -> vtkgraph throws errors for different types of metadata
         with self.assertRaises(Exception):
-            output = girder_worker.convert('graph',
-                                       {'format': 'networkx',
-                                        'data': nx.Graph([
-                                            ('A', 'B', {'value': 10}),
-                                            ('B', 'C', {'value': '10'})
-                                        ])},
-                                       {'format': 'vtkgraph'})
+            output = girder_worker.convert(
+                'graph', {'format': 'networkx', 'data': nx.Graph([
+                    ('A', 'B', {'value': 10}),
+                    ('B', 'C', {'value': '10'})
+                ])}, {'format': 'vtkgraph'})
 
         # Test vtkgraph -> networkx
-        output = girder_worker.convert('graph',
-                                   self.test_input['simpleVtkDiGraph'],
-                                   {'format': 'networkx'})
+        output = girder_worker.convert(
+            'graph', self.test_input['simpleVtkDiGraph'], {'format': 'networkx'})
 
         self.assertIsInstance(output['data'], nx.DiGraph)
 

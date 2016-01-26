@@ -49,10 +49,10 @@ register_executor('python', python_run)
 register_executor('workflow', workflow_run)
 
 # Load plugins that are enabled in the config file
-_plugins = os.environ.get('girder_worker_PLUGINS_ENABLED',
+_plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
                           config.get('girder_worker', 'plugins_enabled'))
 _plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
-_paths = os.environ.get('girder_worker_PLUGIN_LOAD_PATH',
+_paths = os.environ.get('WORKER_PLUGIN_LOAD_PATH',
                         config.get('girder_worker', 'plugin_load_path')).split(':')
 _paths = [p for p in _paths if p.strip()]
 _paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
@@ -104,7 +104,7 @@ def isvalid(type, binding, fetch=True, **kwargs):
     """
     analysis = get_validator_analysis(Validator(type, binding["format"]))
     outputs = girder_worker.run(analysis, {"input": binding}, auto_convert=False,
-                            validate=False, fetch=fetch, **kwargs)
+                                validate=False, fetch=fetch, **kwargs)
     return outputs["output"]["data"]
 
 

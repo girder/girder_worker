@@ -1,7 +1,7 @@
 Facebook network analysis
 -------------------------
 
-This example demonstrates how to use Romanesco as a workflow system to load graph data,
+This example demonstrates how to use the worker as a workflow system to load graph data,
 perform analyses and transformations of the data using
 `NetworkX <https://networkx.github.io/>`_, and then visualize the result
 using `d3.js <http://d3js.org/>`_.
@@ -15,16 +15,17 @@ In this example we will:
 
 .. testsetup::
 
-   import romanesco
+   import girder_worker
 
 Obtain the dataset
 ~~~~~~~~~~~~~~~~~~~
 
 The dataset is a small sample of Facebook links representing friendships, which can be obtained `here <_static/facebook-sample-data.txt>`__ [#f1]_.
 
-The data we'll be using is in a format commonly used when dealing with graphs, referred to as an `adjacency list <https://en.wikipedia.org/wiki/Adjacency_list>`_. Romanesco supports using adjacency lists with graphs out of the box.
+The data we'll be using is in a format commonly used when dealing with graphs, referred to as an `adjacency list <https://en.wikipedia.org/wiki/Adjacency_list>`_.
+The worker supports using adjacency lists with graphs out of the box.
 
-.. note :: A full list of the types and formats that Romanesco supports is documented in :doc:`types-and-formats`.
+.. note :: A full list of the supported types and formats is documented in :doc:`types-and-formats`.
 
 Here is a sample of what the data looks like:
 
@@ -41,7 +42,7 @@ Each integer represents an anonymized Facebook user. Users belonging to the same
 Build a workflow
 ~~~~~~~~~~~~~~~~
 
-Create a file named ``workflow.py``, this is the file we'll be using to create our Romanesco workflow.
+Create a file named ``workflow.py``, this is the file we'll be using to create our workflow.
 
 Find the most popular person
 ############################
@@ -59,7 +60,7 @@ The script below finds the most popular person in the graph.
    degrees = degree(G)
    most_popular_person = max(degrees, key=degrees.get)
 
-Defining our Romanesco task, we can embed this script:
+Defining our task, we can embed this script:
 
 .. testcode::
 
@@ -100,7 +101,7 @@ sometimes referred to as `Ego Networks <http://www.analytictech.com/networks/ego
 
    subgraph = ego_graph(G, most_popular_person)
 
-Again, we can create a Romanesco task using our new script, like so:
+Again, we can create a task using our new script, like so:
 
 .. note :: Since these steps are going to be connected, our inputs are going to be the same as the last steps outputs.
 
@@ -137,12 +138,12 @@ Conceptually, this is what our workflow will look like:
     :align: center
     :alt: Visualize Facebook Data Workflow Diagram
 
-\* The format changes because of Romanesco's auto-conversion functionality.
+\* The format changes because of Girder worker's auto-conversion functionality.
 
 The entire rectangle is our workflow, and the blue rectangles are our tasks. Black arrows represent inputs and outputs and the red arrows represent connections which we’ll see shortly.
 
 
-To make this happen, since we've written the tasks already, we just need to format this in a way Romanesco understands.
+To make this happen, since we've written the tasks already, we just need to format this in a way the worker understands.
 
 To start, let's create our workflow from a high level, starting with just its inputs and outputs (the black arrows):
 
@@ -171,7 +172,8 @@ Now we need to add our tasks to the workflow, which is pretty straightforward si
                         {'name': 'find_neighborhood',
                          'task': find_neighborhood_task}]
 
-Finally, we need to add the red arrows within the workflow, telling Romanesco how the inputs and outputs are going to flow from each task. These are called *connections* in Romanesco.
+Finally, we need to add the red arrows within the workflow, telling the worker how the inputs and outputs are going to flow from each task.
+These are called *connections* in Girder worker parlance.
 
 .. testcode::
 
@@ -197,10 +199,10 @@ We now have a complete workflow! Let's run this, and write the final data to a f
 .. testcode::
 
    with open('docs/static/facebook-sample-data.txt') as infile:
-       output = romanesco.run(workflow,
-                              inputs={'G': {'format': 'adjacencylist',
-                                            'data': infile.read()}},
-                              outputs={'result_graph': {'format': 'networkx.json'}})
+       output = girder_worker.run(workflow,
+                                  inputs={'G': {'format': 'adjacencylist',
+                                                'data': infile.read()}},
+                                  outputs={'result_graph': {'format': 'networkx.json'}})
 
    with open('data.json', 'wb') as outfile:
        outfile.write(output['result_graph']['data'])
@@ -240,7 +242,7 @@ We now have a complete workflow! Let's run this, and write the final data to a f
 
 Running ``workflow.py`` will produce the JSON in a file called ``data.json``, which we'll pass to d3.js in the next step.
 
-.. note :: More information on Romanesco Tasks and Workflows can be found in :doc:`api-docs`.
+.. note :: More information on Girder worker tasks and workflows can be found in :doc:`api-docs`.
 
 
 Visualize the results
@@ -258,11 +260,11 @@ Which should leave us with a visualization similar to the following:
 
 
 This is of course a more verbose than necessary workflow for the purposes of demonstration. This could have easily been done with one task,
-however by following this you should have learned how to do the following with Romanesco:
+however by following this you should have learned how to do the following with the Girder worker:
 
- * Create Romanesco tasks which consume and produce multiple inputs and outputs
- * Run Romanesco tasks as part of a multi-step workflow
- * Use Romanesco's converter system to serialize it in a format JavaScript can read
+ * Create tasks which consume and produce multiple inputs and outputs
+ * Run tasks as part of a multi-step workflow
+ * Use the worker's converter system to serialize it in a format JavaScript can read
  * Visualize the data using d3.js
 
 .. testcleanup::

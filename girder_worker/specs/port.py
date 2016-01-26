@@ -8,7 +8,6 @@ from .spec import Spec
 
 
 class ValidationError(Exception):
-
     """An exception type raised when encountering invalid data types."""
 
     message_format = (
@@ -37,7 +36,6 @@ class ValidationError(Exception):
 
 
 class Port(Spec):
-
     """A port defines a communication channel between tasks.
 
     Ports enable bidirectional communication between tasks and are responsible

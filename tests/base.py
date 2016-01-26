@@ -17,7 +17,6 @@ _modpath = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestCase(_TestCase):
-
     """Base testing class extending unittest.TestCase."""
 
     girder_worker = _girder_worker

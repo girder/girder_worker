@@ -12,7 +12,6 @@ class ReadOnlyAttributeException(Exception):
 
 
 class TaskSpec(Spec):
-
     """Defines a pipeline element.
 
     A task is an element of the pipeline responsible for completing an

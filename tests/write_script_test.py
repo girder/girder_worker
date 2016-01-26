@@ -63,9 +63,9 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for analysis debugging"""
         global _tmpfiles
 
-        girder_worker.run(dict(self.analysis.items() + [("write_script", 1)]),
-                      inputs=self.inputs,
-                      outputs=self.outputs)
+        girder_worker.run(
+            dict(self.analysis.items() + [("write_script", 1)]),
+            inputs=self.inputs, outputs=self.outputs)
 
         # Should have generated just one debug file
         self.assertEquals(len(_tmpfiles), 1)
@@ -78,10 +78,7 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for kwarg debugging"""
         global _tmpfiles
 
-        girder_worker.run(self.analysis,
-                      self.inputs,
-                      self.outputs,
-                      write_script=True)
+        girder_worker.run(self.analysis, self.inputs, self.outputs, write_script=True)
 
         # Should have generated serveral files ()
         self.assertGreater(len(_tmpfiles), 1)

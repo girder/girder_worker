@@ -6,7 +6,6 @@ from .port import Port
 
 
 class PortList(SpecMixin, list):
-
     """A list that only accepts port specs.
 
     This class is extended to behave like a read-only dictionary, where

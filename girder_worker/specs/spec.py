@@ -7,7 +7,6 @@ import copy
 
 
 class SpecMixin(object):
-
     """An abstract mixin class implementing the Spec methods."""
 
     __defaults = {}
@@ -194,7 +193,6 @@ class SpecMixin(object):
 
 
 class Spec(SpecMixin, dict):
-
     r"""
     Defines core utility methods that all spec objects have in common.
 

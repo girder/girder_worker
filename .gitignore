@@ -8,3 +8,4 @@ tmp/
 .project
 .pydevproject
 __pycache__
+/girder_worker.egg-info/

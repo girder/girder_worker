@@ -285,8 +285,8 @@ class TestGirderIo(unittest.TestCase):
         }
 
         with httmock.HTTMock(girder_mock):
-            outputs = girder_worker.run(copy.deepcopy(task), inputs=inputs,
-                                    outputs=outputs)
+            outputs = girder_worker.run(
+                copy.deepcopy(task), inputs=inputs, outputs=outputs)
 
             # Test default values for scheme, host, and port
             self.scheme = 'http'

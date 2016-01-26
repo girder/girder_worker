@@ -93,7 +93,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     print('Running container: "%s"' % ' '.join(command))
 
     p = girder_worker.utils.run_process(command, outputs,
-                                    print_stdout, print_stderr)
+                                        print_stdout, print_stderr)
 
     if p.returncode != 0:
         raise Exception('Error: docker run returned code {}.'.format(
