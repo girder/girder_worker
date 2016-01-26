@@ -25,7 +25,7 @@ import shutil
 from pkg_resources import parse_requirements
 from setuptools.command.install import install
 
-WORKER_VERSION = '0.1.0'
+WORKER_VERSION = '0.2.0'
 
 
 class CustomInstall(install):

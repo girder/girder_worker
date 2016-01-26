@@ -8,14 +8,14 @@ Installing from source
 
 Clone from git: ::
 
-    git clone https://github.com/Kitware/romanesco.git
-    cd romanesco
+    git clone https://github.com/Kitware/girder_worker.git
+    cd girder_worker
 
 Install requirements: ::
 
     pip install -r requirements.txt
 
-    # If you plan on developing for Romanesco, you may also want to
+    # If you plan on developing the worker, you will also want to do:
     pip install -r requirements-dev.txt
 
 Test it: ::
@@ -38,7 +38,7 @@ In R, you'll need to install some stuff too, currently just the ``ape`` package:
 
     install.packages("ape")
 
-Some things depend on VTK Python bindings. Romanesco uses some features from
+Some things depend on VTK Python bindings. The worker uses some features from
 cutting-edge VTK,
 so you'll likely need to build it from scratch (takes ~30 minutes).
 First get CMake_, then do the following: ::
@@ -60,27 +60,28 @@ Want to run things remotely? On the client and server install celery: ::
 
 Then fire up the celery worker: ::
 
-    python -m romanesco
+    python -m girder_worker
 
 On the client, run a script akin to the following example: ::
 
     python examples/example_client.py
 
 This section of the documentation is meant for those who wish to contribute to
-the Romanesco core platform.
+the Girder worker platform.
 
-Installing Romanesco plugins from pip
-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+Installing worker plugins from pip
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 An individual plugin can be installed through pip, in editable mode, like so: ::
 
     pip install -U -e .[spark]
 
-You can run this command at any time to install dependencies of other plugins, even if Romanesco is already installed.
+You can run this command at any time to install dependencies of other plugins, even if
+the worker is already installed.
 
 .. seealso::
 
-   For more information on the Romanesco plugin system, see :doc:`plugins`.
+   For more information on the worker plugin system, see :doc:`plugins`.
 
 
 Note on building VTK
@@ -118,11 +119,11 @@ an Ubuntu precise 64-bit VM using the following commands: ::
 Creating a new release
 ----------------------
 
-Romanesco releases are uploaded to `PyPI <https://pypi.python.org/pypi/romanesco>`_
+Girder worker releases are uploaded to `PyPI <https://pypi.python.org/pypi/girder-worker>`_
 for easy installation via ``pip``. The recommended process for generating a new
 release is described here.
 
-1.  From the target commit, set the desired version number in ``plugin.json``.
+1.  From the target commit, set the desired version number in ``setup.py``.
     Create a new commit and note the SHA; this will become the release tag.
 
 2.  Ensure that all tests pass.
@@ -132,7 +133,7 @@ release is described here.
     mistakenly included in the source distribution.)
 
 4.  Run ``python setup.py sdist --dist-dir .`` to generate the distribution
-    tarball in the project directory, which looks like ``romanesco-x.y.z.tar.gz``.
+    tarball in the project directory, which looks like ``girder-worker-x.y.z.tar.gz``.
 
 5.  Create a new virtual environment and install the python package into
     it. This should not be done in the repository directory because the wrong package
@@ -141,20 +142,19 @@ release is described here.
         mkdir test && cd test
         virtualenv release
         source release/bin/activate
-        pip install ../romanesco-<version>.tar.gz
+        pip install ../girder-worker-<version>.tar.gz
 
 6.  Once that finishes, you should be able to start the worker by simply running
-    ``romanesco-worker``.
+    ``girder-worker``.
 
 7.  When you are confident everything is working correctly, generate
-    a `new release <https://github.com/Kitware/romanesco/releases/new>`_
+    a `new release <https://github.com/girder/girder-worker/releases/new>`_
     on GitHub.  You must be
     sure to use a tag version of ``v<version>``, where ``<version>``
-    is the version number as it exists in ``plugin.json``.  For
-    example, ``v0.2.4``.  Attach the three tarballs you generated
-    to the release.
+    is the version number as it exists in ``setup.py``.  For
+    example, ``v0.2.4``.  Attach the tarball you generated to the release.
 
-8.  Add the tagged version to `readthedocs <https://readthedocs.org/projects/romanesco/>`_
+8.  Add the tagged version to `readthedocs <https://readthedocs.org/projects/girder_worker/>`_
     and make sure it builds correctly.
 
 9.  Finally, upload the release to PyPI with the following command: ::
