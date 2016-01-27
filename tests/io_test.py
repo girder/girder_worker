@@ -1,11 +1,11 @@
 import copy
 import httmock
 import os
-import romanesco
+import girder_worker
 import shutil
 import unittest
 
-from romanesco.utils import JobStatus
+from girder_worker.utils import JobStatus
 
 _tmp = None
 
@@ -14,7 +14,7 @@ def setUpModule():
     global _tmp
     _tmp = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'tmp', 'fetch')
-    romanesco.config.set('romanesco', 'tmp_root', _tmp)
+    girder_worker.config.set('girder_worker', 'tmp_root', _tmp)
 
 
 def tearDownModule():
@@ -48,7 +48,7 @@ class TestIo(unittest.TestCase):
             }
         }
 
-        outputs = romanesco.run(task, inputs)
+        outputs = girder_worker.run(task, inputs)
         self.assertEqual(outputs['b']['data'], 25)
 
     def testInlineFilepath(self):
@@ -88,7 +88,7 @@ with open(file) as f:
             }
         }
 
-        outputs = romanesco.run(task, inputs)
+        outputs = girder_worker.run(task, inputs)
         self.assertEqual(outputs['out']['data'], 'a,b,c\n1,2,3\n')
 
         # Test filepath input with filename specified
@@ -102,7 +102,7 @@ with open(file) as f:
             }
         }
 
-        outputs = romanesco.run(task, inputs)
+        outputs = girder_worker.run(task, inputs)
         self.assertEqual(outputs['out']['data'], 'a,b,c\n1,2,3\n')
         self.assertEqual(outputs['fname']['data'][-8:], 'file.csv')
 
@@ -148,7 +148,7 @@ with open(file) as f:
             }
         }
 
-        job_mgr = romanesco.utils.JobManager(True, url='http://jobstatus/')
+        job_mgr = girder_worker.utils.JobManager(True, url='http://jobstatus/')
 
         received = []
         status_changes = []
@@ -170,7 +170,7 @@ with open(file) as f:
 
         with httmock.HTTMock(fetchMock):
             # Use user-specified filename
-            out = romanesco.run(
+            out = girder_worker.run(
                 task, inputs=copy.deepcopy(inputs), outputs=outputs,
                 cleanup=False, _job_manager=job_mgr, status=JobStatus.RUNNING)
 
@@ -202,14 +202,14 @@ with open(file) as f:
 
             # Use automatically detected filename
             del task['inputs'][0]['filename']
-            out = romanesco.run(
+            out = girder_worker.run(
                 task, inputs=copy.deepcopy(inputs), cleanup=False,
                 validate=False, auto_convert=False)
             self.assertTrue(out['y']['data'].endswith('file.txt_suffix'))
 
             # Download to memory instead of a file (the default target value)
             del task['inputs'][0]['target']
-            out = romanesco.run(
+            out = girder_worker.run(
                 task, inputs=copy.deepcopy(inputs), cleanup=False,
                 validate=False, auto_convert=False)
             self.assertEqual(out['y']['data'], 'dummy file contents_suffix')
@@ -225,12 +225,12 @@ with open(file) as f:
             'script': ''
         }
 
-        outputs = romanesco.run(task)
+        outputs = girder_worker.run(task)
         self.assertTrue('_tempdir' in outputs)
         self.assertRegexpMatches(outputs['_tempdir']['data'], _tmp + '.+')
 
     def testConvertingStatus(self):
-        job_mgr = romanesco.utils.JobManager(True, url='http://jobstatus/')
+        job_mgr = girder_worker.utils.JobManager(True, url='http://jobstatus/')
 
         status_changes = []
 
@@ -276,7 +276,7 @@ with open(file) as f:
                 raise Exception('Unexpected url ' + repr(url))
 
         with httmock.HTTMock(fetchMock):
-            romanesco.run(
+            girder_worker.run(
                 task, inputs=inputs, outputs=outputs, _job_manager=job_mgr,
                 status=JobStatus.RUNNING)
 

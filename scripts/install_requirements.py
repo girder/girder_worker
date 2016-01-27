@@ -32,18 +32,18 @@ def main(args):
     # Read the configuration files
     files = ('worker.dist.cfg', 'worker.local.cfg')
     config = ConfigParser()
-    config.read([os.path.join(basePath, 'romanesco', f) for f in files])
+    config.read([os.path.join(basePath, 'girder_worker', f) for f in files])
     os.chdir(basePath)
     isDevMode = args.mode in ('dev', 'devel', 'development')
-    plugins = os.environ.get('ROMANESCO_PLUGINS_ENABLED',
-                              config.get('romanesco', 'plugins_enabled'))
+    plugins = os.environ.get('GIRDER_WORKER_PLUGINS_ENABLED',
+                              config.get('girder_worker', 'plugins_enabled'))
     plugins = [p.strip() for p in plugins.split(',') if p.strip()]
 
     # Install core requirements files
     installFromDir(basePath, isDevMode)
 
     # Install plugins requirements files
-    pluginsDir = os.path.join(basePath, 'romanesco', 'plugins')
+    pluginsDir = os.path.join(basePath, 'girder_worker', 'plugins')
     for path in os.listdir(pluginsDir):
         if args.all or path in plugins:
             pluginPath = os.path.join(pluginsDir, path)

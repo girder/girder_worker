@@ -1,7 +1,7 @@
 Image processing
 ----------------
 
-This example will introduce how to use Romanesco to build some simple image
+This example will introduce how to use the Girder worker to build some simple image
 processing tasks using Pillow_.  We will learn how to chain several tasks
 together in a workflow and finally how to run these workflows both locally
 and through a remote worker.
@@ -11,7 +11,7 @@ and through a remote worker.
 
 .. testsetup::
 
-   import romanesco
+   import girder_worker
    from PIL.Image import Image
 
 Download and view an image
@@ -21,7 +21,7 @@ For our first task, we will download a png image from a public website and
 display it on the screen.  We begin by defining a new task that will take
 a single image object and call its ``show`` method.
 
-A Romanesco task is a special kind of dictionary with keys ``inputs`` and
+A task is a special kind of dictionary with keys ``inputs`` and
 ``outputs`` as well as other metadata describing how these objects will be
 used.  In the case of simple python scripts, they can be provided inline as
 we have done in this example.  Each input and output spec in a task is a dict
@@ -34,12 +34,12 @@ with the following keys:
 
 ``type``
    The general data type expected by the task.  See :ref:`types-and-formats`
-   for a list of types provided by Romanesco's core library as well as
-   :ref:`romanesco-plugins` for additional data types provided by optional
+   for a list of types provided by the worker's core library as well as
+   :ref:`worker-plugins` for additional data types provided by optional
    plugins.
 
 ``format``
-   The specific representation or encoding of the data type.  Romanesco will
+   The specific representation or encoding of the data type. The worker will
    automatically convert between different data formats provided that they
    are of the same base type.
 
@@ -52,9 +52,9 @@ with the following keys:
    }
 
 In order to run the task, we will need to provide an :ref:`input binding <input-spec>`
-that tells Romanesco where it can get the data to be injected into the port.  Several
+that tells the worker where it can get the data to be injected into the port.  Several
 I/O modes are supported; in this case, we provide a public URL to an image that
-Romanesco will download and open using Pillow.  Notice that Romanesco downloads and
+the worker will download and open using Pillow.  Notice that the worker downloads and
 reads the file as part of the automatic data format conversion.
 
 .. testcode::
@@ -77,12 +77,12 @@ reads the file as part of the automatic data format conversion.
    }
 
 Finally to run this task, we only need to provide the task object and the input binding to
-:func:`romanesco.run`.  The object returned by this function contains data extracted
+:func:`girder_worker.run`.  The object returned by this function contains data extracted
 and converted through the task's output ports.
 
 .. testcode::
 
-   output = romanesco.run(show_image, {'the_image': lenna})
+   output = girder_worker.run(show_image, {'the_image': lenna})
 
 .. doctest::
    :hide:
@@ -94,10 +94,10 @@ and converted through the task's output ports.
 Perform an image blur inside a workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that we know how to generate a simple task using Romanesco, we
+Now that we know how to generate a simple task using the worker, we
 want to learn how to connect multiple tasks together in a workflow.
-Romanesco's pythonic API allows us to do this easily.  Lets create
-a new task that performs a blur operation on an image.  This might
+The worker's pythonic API allows us to do this easily. Let's create
+a new task that performs a blur operation on an image. This might
 look like the following:
 
 .. testcode::
@@ -117,15 +117,15 @@ look like the following:
 Notice that this task takes an additional numeric input that acts as
 a parameter for the blurring filter.  Connecting our ``show_image``
 task, we can view the result of our image filter.  First, we create
-a new workflow object from the :mod:`romanesco.specs` module.
+a new workflow object from the :mod:`girder_worker.specs` module.
 
 .. testcode::
 
-   from romanesco.specs import Workflow
+   from girder_worker.specs import Workflow
    wf = Workflow()
 
 Next, we add all the tasks to the workflow.  The order in which the tasks
-are added is insignificant because Romanesco will automatically sort them
+are added is insignificant because the worker will automatically sort them
 according to their position in the workflow.
 
 .. testcode::
@@ -143,7 +143,7 @@ Running a workflow has the same syntax as running a single task.
 
 .. testcode::
 
-   output = romanesco.run(
+   output = girder_worker.run(
       wf,
       inputs={
          'blur_input': lenna,
@@ -239,7 +239,7 @@ port name with the task name.
 
 .. testcode::
 
-   output = romanesco.run(
+   output = girder_worker.run(
       wf,
       inputs={
          'blur1.blur_input': lenna,

@@ -1,4 +1,4 @@
-.. _romanesco-plugins:
+.. _worker-plugins:
 
 Plugins
 =======

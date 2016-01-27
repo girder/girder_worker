@@ -7,20 +7,19 @@ import tempfile
 from unittest import TestCase as _TestCase
 
 try:
-    import romanesco as _romanesco
+    import girder_worker as _girder_worker
 except Exception:
     sys.path.append(os.path.abspath(os.path.join('..', '..')))
     sys.path.append(os.getcwd())
-    import romanesco as _romanesco
+    import girder_worker as _girder_worker
 
 _modpath = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestCase(_TestCase):
-
     """Base testing class extending unittest.TestCase."""
 
-    romanesco = _romanesco
+    girder_worker = _girder_worker
     outpath = os.environ.get('CTEST_BINARY_DIRECTORY')
     modpath = _modpath
 

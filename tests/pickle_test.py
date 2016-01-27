@@ -3,11 +3,10 @@ import unittest
 import tempfile
 import six
 
-from romanesco import convert, run
+from girder_worker import convert, run
 
 
 class TestPickle(unittest.TestCase):
-
     """Tests for the "Pickle" data type."""
 
     def round_trip(self, obj):

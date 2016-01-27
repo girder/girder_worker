@@ -1,6 +1,6 @@
 import sys
 import unittest
-from romanesco.format import converter_path, has_converter, Validator, \
+from girder_worker.format import converter_path, has_converter, Validator, \
     print_conversion_graph, print_conversion_table
 from six import StringIO
 from networkx.exception import NetworkXNoPath

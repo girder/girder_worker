@@ -1,4 +1,4 @@
-import romanesco
+import girder_worker
 import unittest
 
 
@@ -29,7 +29,7 @@ class TestNumber(unittest.TestCase):
         }
 
     def test_numeric(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "number", "data": 1},
@@ -42,7 +42,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], 3)
 
     def test_json(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "json", "data": "1"},
@@ -55,7 +55,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], "3")
 
     def test_float(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "number", "data": 1.5},
@@ -68,7 +68,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs["c"]["data"], 4)
 
     def test_default(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "b": {"format": "number", "data": 2}
@@ -81,7 +81,7 @@ class TestNumber(unittest.TestCase):
 
         self.assertRaisesRegexp(
             Exception, "^Required input 'b' not provided.$",
-            romanesco.run, self.analysis,
+            girder_worker.run, self.analysis,
             inputs={
                 "a": {"format": "number", "data": 2}
             },

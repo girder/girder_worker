@@ -1,6 +1,6 @@
 import bson
 import os
-import romanesco
+import girder_worker
 import unittest
 
 
@@ -57,7 +57,7 @@ END;"""
         os.chdir(self.prevdir)
 
     def test_newick(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "newick"}}
@@ -66,7 +66,7 @@ END;"""
         self.assertEqual(outputs["b"]["data"], self.newick)
 
     def test_json(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "nested"}}
@@ -112,7 +112,7 @@ END;"""
             outputs["b"]["data"], expected)
 
     def test_vtktree(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis_vtk,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "newick"}}
@@ -121,7 +121,7 @@ END;"""
         self.assertEqual(outputs["b"]["data"], self.newick)
 
     def test_r_apetree(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "r.apetree"}}
@@ -132,7 +132,7 @@ END;"""
             '\nPhylogenetic tree with 3 tips and 2 internal nodes.')
 
     def test_r(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis_r,
             inputs={"a": {"format": "newick", "data": self.newick}},
             outputs={"b": {"format": "newick"}}
@@ -140,7 +140,7 @@ END;"""
         self.assertEqual(outputs["b"]["format"], "newick")
         self.assertEqual(outputs["b"]["data"], self.newick)
 
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis_r,
             inputs={"a": {"format": "nexus", "data": self.nexus}},
             outputs={"b": {"format": "nexus"}}
@@ -155,7 +155,7 @@ END;"""
         self.assertEqual(out, expected)
 
     def test_non_binary_tree(self):
-        romanesco.convert(
+        girder_worker.convert(
             "tree",
             {
                 "format": "newick",
@@ -165,11 +165,11 @@ END;"""
             {"format": "nested"})
 
     def test_treestore(self):
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "tree",
             {"format": "newick", "data": self.newick},
             {"format": "r.apetree"})
-        output = romanesco.convert("tree", output, {"format": "treestore"})
+        output = girder_worker.convert("tree", output, {"format": "treestore"})
         self.assertEqual(output["format"], "treestore")
         rows = bson.decode_all(output["data"])
         for d in rows:

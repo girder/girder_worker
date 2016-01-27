@@ -5,8 +5,8 @@ venv/
 _build
 build
 tmp/
-/romanesco-*.tar.gz
-/romanesco.egg-info/
 .project
 .pydevproject
 __pycache__
+/girder_worker.egg-info/
+/girder-worker-*.tar.gz

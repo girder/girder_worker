@@ -1,4 +1,4 @@
-import romanesco
+import girder_worker
 import os
 import tempfile
 import unittest
@@ -69,7 +69,7 @@ class TestTable(unittest.TestCase):
         os.chdir(self.prevdir)
 
     def test_json(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs=self.test_input,
             outputs={
@@ -83,7 +83,7 @@ class TestTable(unittest.TestCase):
 
     def test_bson(self):
         import pymongo
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {
@@ -113,7 +113,7 @@ class TestTable(unittest.TestCase):
 
     def test_file(self):
         tmp = tempfile.mktemp()
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs=self.test_input,
             outputs={
@@ -127,7 +127,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output.splitlines(), ["aa,bb", "1,2", "3,4"])
 
     def test_csv(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "csv", "data": 'a,b,c\n1,2,3'},
@@ -141,7 +141,7 @@ class TestTable(unittest.TestCase):
                          ["a,b,c", "1,2,3", "4,5,6"])
 
     def test_singlecolumn(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "csv", "data": 'A\none\ntwo'},
@@ -155,7 +155,7 @@ class TestTable(unittest.TestCase):
                          ["A", "one", "two", "three", "four"])
 
     def test_singlerow(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "csv", "data": 'A,one,two'},
@@ -170,7 +170,7 @@ class TestTable(unittest.TestCase):
                          ["A,one,two"])
 
     def test_tsv(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {"format": "csv", "data": 'a,b,c\n1,2,3'},
@@ -184,7 +184,7 @@ class TestTable(unittest.TestCase):
                          ["a\tb\tc", "1\t2\t3", "4\t5\t6"])
 
     def test_vtktable(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs=self.test_input,
             outputs={
@@ -200,7 +200,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(t.GetValueByName(1, "bb"), 4)
 
     def test_mongo_to_python(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {
@@ -224,7 +224,7 @@ class TestTable(unittest.TestCase):
             'fields': ['_id', 'bar', 'foo'], 'rows': [self.aobj, self.bobj]})
 
     def test_chaining(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": {
@@ -243,7 +243,7 @@ class TestTable(unittest.TestCase):
                 "c": {"format": "rows"}
             })
 
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis,
             inputs={
                 "a": outputs["c"],
@@ -263,7 +263,7 @@ class TestTable(unittest.TestCase):
 
     def test_objectlist_to_rows(self):
         objlist = [{"a": {"b": 5}}, {"a": {"b": {"c": 3}}}]
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "objectlist",
             "data": objlist
         }, {"format": "rows"})
@@ -271,14 +271,14 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["data"], {
             "fields": ["a.b", "a.b.c"],
             "rows": [{"a.b": 5}, {"a.b.c": 3}]})
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "rows",
             "data": output["data"]
         }, {"format": "objectlist"})
         self.assertEqual(output["data"], objlist)
 
     def test_column_names(self):
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "rows",
             "data": {"fields": ["a", "b"], "rows": [{"a": 6, "b": 5}]}
         }, {"format": "column.names"})
@@ -286,7 +286,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["data"], ["a", "b"])
 
     def test_column_names_csv(self):
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "csv",
             "data": ",a,b,longer name\n1,1,1,1\n2,2,2,2\n3,3,3,3\n"
         }, {"format": "column.names"})
@@ -294,7 +294,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["data"], ["", "a", "b", "longer name"])
 
     def test_column_names_discrete(self):
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "rows",
             "data": {
                 "fields": ["a", "b", "disc"],
@@ -305,7 +305,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["data"], ["disc"])
 
     def test_column_names_continuous(self):
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "rows",
             "data": {
                 "fields": ["a", "b", "disc"],
@@ -316,7 +316,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["data"], ["a", "b"])
 
     def test_r_dataframe(self):
-        outputs = romanesco.run(
+        outputs = girder_worker.run(
             self.analysis_r,
             inputs={
                 "a": {
@@ -334,7 +334,7 @@ class TestTable(unittest.TestCase):
             "fields": ["aa", "bb"], "rows": [{"aa": 1, "bb": 2}]})
 
     def test_flu(self):
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "table",
             {
                 "format": "csv",
@@ -350,7 +350,7 @@ class TestTable(unittest.TestCase):
         )
 
     def test_header_detection(self):
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "table",
             {"format": "csv", "data": "a,b,c\n7,1,c\n8,2,f\n9,3,i"},
             {"format": "rows"}
@@ -358,7 +358,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(output["data"]["fields"], ["a", "b", "c"])
         self.assertEqual(len(output["data"]["rows"]), 3)
 
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "table",
             {"format": "csv", "data": "1,2,3\n7,10,\n,11,\n,12,"},
             {"format": "rows"}
@@ -370,7 +370,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(len(output["data"]["rows"]), 3)
 
     def test_sniffer(self):
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "table",
             {
                 "format": "csv",
@@ -384,10 +384,10 @@ class TestTable(unittest.TestCase):
         ])
         self.assertEqual(len(output["data"]["rows"]), 14)
 
-        flu = romanesco.load(os.path.join(
+        flu = girder_worker.load(os.path.join(
             self.analysis_path, "xdata", "flu.json"))
 
-        output = romanesco.run(
+        output = girder_worker.run(
             flu,
             inputs={},
             outputs={"data": {"type": "table", "format": "rows"}}
@@ -397,7 +397,7 @@ class TestTable(unittest.TestCase):
         ])
 
     def test_big_header(self):
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "table",
             {
                 "format": "csv",
@@ -412,7 +412,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(len(output["data"]["rows"]), 99)
 
     def test_nan(self):
-        output = romanesco.convert(
+        output = girder_worker.convert(
             "table",
             {
                 "format": "csv",
@@ -442,7 +442,7 @@ class TestTable(unittest.TestCase):
         }
 
         # Conversion to vtkTable
-        vtktable = romanesco.convert(
+        vtktable = girder_worker.convert(
             "table",
             {"format": "rows", "data": rows},
             {"format": "vtktable"}
@@ -461,7 +461,7 @@ class TestTable(unittest.TestCase):
             self.assertEqual(b.GetValue(i), str(i + 1))
 
         # Conversion back to rows
-        rows2 = romanesco.convert(
+        rows2 = girder_worker.convert(
             "table",
             {"format": "vtktable", "data": vtktable},
             {"format": "rows"}
@@ -476,7 +476,7 @@ class TestTable(unittest.TestCase):
                 {"a": 4, "b": 'y'}
             ]
         }
-        objectlist = romanesco.convert(
+        objectlist = girder_worker.convert(
             "table",
             {"format": "rows", "data": rows},
             {"format": "objectlist"}
@@ -484,7 +484,7 @@ class TestTable(unittest.TestCase):
         # Should have same row data
         self.assertEqual(objectlist, rows["rows"])
 
-        rows2 = romanesco.convert(
+        rows2 = girder_worker.convert(
             "table",
             {"format": "objectlist", "data": objectlist},
             {"format": "rows"}
@@ -495,9 +495,9 @@ class TestTable(unittest.TestCase):
         self.assertEqual(rows["rows"], rows2["rows"])
 
         # Make sure we can go back and forth to JSON
-        objectlist = romanesco.convert(
+        objectlist = girder_worker.convert(
             "table",
-            romanesco.convert(
+            girder_worker.convert(
                 "table",
                 {"format": "objectlist", "data": rows["rows"]},
                 {"format": "objectlist.json"}
@@ -507,7 +507,7 @@ class TestTable(unittest.TestCase):
         self.assertEqual(rows["rows"], objectlist)
 
     def test_jsonlines(self):
-        output = romanesco.convert("table", {
+        output = girder_worker.convert("table", {
             "format": "jsonlines",
             "data": '{"a": 1, "b": 2}\n{"a": 3, "b": 4}'
         }, {"format": "objectlist"})
