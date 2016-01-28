@@ -44,7 +44,7 @@ function(add_python_test case)
     add_test(
       NAME ${name}
       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-      COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run -p --append "--rcfile=${py_coverage_rc}"
+      COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run --parallel-mode "--rcfile=${py_coverage_rc}"
               "--source=girder_worker" -m unittest -v ${module}
     )
   else()
@@ -77,7 +77,7 @@ function(add_docstring_test module)
     add_test(
       NAME ${name}
       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-      COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run -p --append "--rcfile=${py_coverage_rc}"
+      COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" run --parallel-mode "--rcfile=${py_coverage_rc}"
               "--source=girder_worker" "${py_testdir}/docstring_test.py" -v ${module}
     )
   else()
