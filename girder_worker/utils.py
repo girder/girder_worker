@@ -68,7 +68,8 @@ class JobManager(object):
     It also exposes utilities for updating other job fields such as progress
     and status.
     """
-    def __init__(self, logPrint, url, method=None, headers=None, interval=0.5):
+    def __init__(self, logPrint, url, method=None, headers=None, interval=0.5,
+                 reference=None):
         """
         :param on: Whether print messages should be logged to the job log.
         :type on: bool
@@ -78,6 +79,7 @@ class JobManager(object):
         :param interval: Minimum time interval at which to send log updates
         back to Girder over HTTP (seconds).
         :type interval: int or float
+        :param reference: optional reference to store with the job.
         """
         self.logPrint = logPrint
         self.method = method or 'PUT'
@@ -85,6 +87,7 @@ class JobManager(object):
         self.headers = headers or {}
         self.interval = interval
         self.status = None
+        self.reference = reference
 
         self._last = time.time()
         self._buf = ''
@@ -257,7 +260,8 @@ def toposort(data):
 @contextlib.contextmanager
 def tmpdir(cleanup=True):
     # Make the temp dir underneath tmp_root config setting
-    root = os.path.abspath(girder_worker.config.get('girder_worker', 'tmp_root'))
+    root = os.path.abspath(girder_worker.config.get(
+        'girder_worker', 'tmp_root'))
     try:
         os.makedirs(root)
     except OSError:
