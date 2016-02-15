@@ -61,6 +61,7 @@ def fetch_handler(spec, **kwargs):
 
 
 def push_handler(data, spec, **kwargs):
+    reference = getattr(kwargs.get('_job_manager'), 'reference', None)
     parent_type = spec.get('parent_type', 'folder')
     taskOutput = kwargs.get('task_output', {})
     target = taskOutput.get('target', 'filepath')
@@ -76,13 +77,15 @@ def push_handler(data, spec, **kwargs):
                             'explicitly pass a "name" field.')
         fd = StringIO(data)
         client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
-                          parentType=parent_type, name=spec['name'])
+                          parentType=parent_type, name=spec['name'],
+                          reference=reference)
     elif target == 'filepath':
         name = spec.get('name') or os.path.basename(data)
         size = os.path.getsize(data)
         with open(data, 'rb') as fd:
             client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,
-                              parentType=parent_type, name=name)
+                              parentType=parent_type, name=name,
+                              reference=reference)
     else:
         raise Exception('Invalid Girder push target: ' + target)
 

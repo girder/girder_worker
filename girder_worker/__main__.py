@@ -21,7 +21,8 @@ def main():
 
         with JobManager(logPrint=jobInfo.get('logPrint', True),
                         url=jobInfo.get('url'), method=jobInfo.get('method'),
-                        headers=jobInfo.get('headers')) as jm:
+                        headers=jobInfo.get('headers'),
+                        reference=jobInfo.get('reference')) as jm:
             kwargs['_job_manager'] = jm
             kwargs['status'] = JobStatus.RUNNING
             retval = girder_worker.run(*pargs, **kwargs)
