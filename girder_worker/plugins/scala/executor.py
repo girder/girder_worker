@@ -6,6 +6,8 @@ import json
 def _write_scala_script(script, inputs, task_outputs, tmp_dir):
     script_fname = os.path.join(tmp_dir, 'script.scala')
     with open(script_fname, 'w') as script_file:
+        script_file.write('{\n')
+
         # Send input values to the script
         for name, binding in inputs.iteritems():
             value = json.dumps(binding['script_data'])
@@ -15,7 +17,7 @@ def _write_scala_script(script, inputs, task_outputs, tmp_dir):
         script_file.write(script)
 
         # Write output values to temporary files
-        script_file.write('import java.io._\n')
+        script_file.write('\nimport java.io._\n')
         for name in task_outputs:
             if name != '_stderr' and name != '_stdout':
                 fname = os.path.join(tmp_dir, name)
@@ -26,6 +28,7 @@ new PrintWriter({}) {{
 """.format(json.dumps(fname), name + '.toString()'))
 
         # Exit the interactive shell
+        script_file.write('}\n')
         script_file.write('System.exit(0)\n')
 
     return script_fname
@@ -66,7 +69,7 @@ def _run(spark, task, inputs, outputs, task_inputs, task_outputs, **kwargs):
                 outputs[name]['script_data'] = output_file.read()
 
             # Deal with converting from string - assume JSON
-            if task_output['type'] != 'string':
+            if task_output['type'] in ('number', 'boolean'):
                 outputs[name]['script_data'] = json.loads(outputs[name]['script_data'])
 
 
