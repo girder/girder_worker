@@ -1,0 +1,7 @@
+{
+    "name": "JSON to String List",
+    "inputs": [{"name": "input", "type": "string_list", "format": "json"}],
+    "outputs": [{"name": "output", "type": "string_list", "format": "string_list"}],
+    "script_uri": "file://json_to_string_list.py",
+    "mode": "python"
+}

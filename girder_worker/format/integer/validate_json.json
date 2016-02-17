@@ -1,0 +1,7 @@
+{
+    "inputs": [{"name": "input", "type": "integer", "format": "json"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "output = isinstance(input, (str, unicode))",
+    "extensions": ["integer-json"],
+    "mode": "python"
+}

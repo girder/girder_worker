@@ -1,0 +1,6 @@
+{
+    "inputs": [{"name": "input", "type": "integer_list", "format": "integer_list"}],
+    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
+    "script": "output = isinstance(input, list) and all([isinstance(elm, int) for elm in input])",
+    "mode": "python"
+}
