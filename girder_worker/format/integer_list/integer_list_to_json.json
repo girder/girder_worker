@@ -1,0 +1,7 @@
+{
+    "name": "Integer List to JSON",
+    "inputs": [{"name": "input", "type": "integer_list", "format": "integer_list"}],
+    "outputs": [{"name": "output", "type": "integer_list", "format": "json"}],
+    "script_uri": "file://integer_list_to_json.py",
+    "mode": "python"
+}

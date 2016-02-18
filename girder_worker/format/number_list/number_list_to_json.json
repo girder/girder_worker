@@ -1,0 +1,7 @@
+{
+    "name": "Number List to JSON",
+    "inputs": [{"name": "input", "type": "number_list", "format": "number_list"}],
+    "outputs": [{"name": "output", "type": "number_list", "format": "json"}],
+    "script_uri": "file://number_list_to_json.py",
+    "mode": "python"
+}

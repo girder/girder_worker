@@ -1,0 +1,7 @@
+{
+    "name": "JSON to Integer",
+    "inputs": [{"name": "input", "type": "integer", "format": "json"}],
+    "outputs": [{"name": "output", "type": "integer", "format": "integer"}],
+    "script_uri": "file://json_to_integer.py",
+    "mode": "python"
+}
