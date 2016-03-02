@@ -2,7 +2,7 @@ Examples
 ==============================================
 
 Before getting started, make sure you've followed the necessary steps when it comes to
-:doc:`installation` of Romanesco.
+:doc:`installation` of Girder Worker.
 
 
 .. toctree::

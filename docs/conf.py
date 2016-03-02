@@ -196,7 +196,7 @@ todo_include_todos = False
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'RomanescoDoc'
+htmlhelp_basename = 'GirderWorkerDoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -215,7 +215,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Romanesco.tex', 'Romanesco Documentation',
+  ('index', 'GirderWorker.tex', 'Girder Worker Documentation',
    'Kitware, Inc.', 'manual'),
 ]
 
@@ -245,7 +245,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'romanesco', 'Romanesco Documentation',
+    ('index', 'girder_worker', 'Girder Worker Documentation',
      ['Kitware, Inc.'], 1)
 ]
 
@@ -259,8 +259,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'Romanesco', 'Romanesco Documentation',
-   'Kitware, Inc.', 'Romanesco', 'Simple, flexible execution engine.',
+  ('index', 'Girder Worker', 'Girder Worker Documentation',
+   'Kitware, Inc.', 'Girder Worker', 'Simple, flexible execution engine.',
    'Miscellaneous'),
 ]
 

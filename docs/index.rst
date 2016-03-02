@@ -1,10 +1,10 @@
-Romanesco: A simple, flexible execution engine
+Girder Worker: A simple, flexible execution engine
 ==============================================
 
-What is Romanesco?
+What is Girder Worker?
 ------------------
 
-Romanesco is a python application for generic task execution. It can be run within a
+Girder Worker is a python application for generic task execution. It can be run within a
 `celery <http://docs.celeryproject.org/en/latest/index.html>`_ worker to provide a
 distributed batch job execution platform.
 
@@ -16,14 +16,14 @@ converted into a format understandable in the target environment. For example, a
 object from a python task can be automatically converted into an R object for an R
 task at the next stage of a pipeline.
 
-Romanesco defines a specification that prescribes a loose coupling between a task
+Girder Worker defines a specification that prescribes a loose coupling between a task
 and its runtime inputs and outputs. That specification is described in the :doc:`api-docs`
 section. This specification is language-independent and instances of the spec are best
 represented by a hierarchical data format such as JSON or YAML, or an equivalent
 serializable type such as a ``dict`` in python.  Several :doc:`examples` of using
 these specifications to generate tasks and workflows are provided.
 
-Romanesco is designed to be easily extended to new languages and environments, or
+Girder Worker is designed to be easily extended to new languages and environments, or
 to support new data types and formats, or modes of data transfer. This is accomplished
 via its plugin system, which is described in :doc:`plugins`.
 
