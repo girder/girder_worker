@@ -3,35 +3,35 @@
 Types and formats
 =================
 
-In Romanesco, every analysis input and output is typed. A `type` in Romanesco is a
+In Girder Worker, every analysis input and output is typed. A `type` in Girder Worker is a
 high-level description of a data structure useful for intuitive workflows.
 It is not tied to a particular representation.
 For example, the `table` type may be defined as a list of rows with ordered,
 named column fields. This description does not specify any central representation
 since the information may be stored in a variety of ways.
-A type is specified by a string unique to your Romanesco environment, such
+A type is specified by a string unique to your Girder Worker environment, such
 as ``"table"`` for the table type.
 
-An explicit representation of data is called a `format` in Romanesco. A format
+An explicit representation of data is called a `format` in Girder Worker. A format
 is a low-level description of data layout. For example, the table type may have
 formats for CSV, database table, R data frame, or JSON. The format may be text,
 serialized binary, or even in-memory data layouts. Just like types, a format is
-specified by a string unique to your Romanesco environment, such as ``"csv"``
+specified by a string unique to your Girder Worker environment, such as ``"csv"``
 for the CSV format. Formats under the same type should be convertable
 between each other.
 
 Notice that the above uses the phrases such as "may be defined" and "may have formats".
-This is because at its core Romanesco does not contain types or formats.
-The :py:func:`romanesco.run` function will attempt to match given input bindings
+This is because at its core Girder Worker does not contain types or formats.
+The :py:func:`girder_worker.run` function will attempt to match given input bindings
 to analysis inputs, validating data and performing conversions as needed.
-To make Romanesco aware of certain types and formats, you must define validation and
-conversion routines. These routines are themselves Romanesco algorithms of a
+To make Girder Worker aware of certain types and formats, you must define validation and
+conversion routines. These routines are themselves Girder Worker algorithms of a
 particular form, loaded with
-:py:func:`romanesco.format.import_converters`. See that function's documentation
+:py:func:`girder_worker.format.import_converters`. See that function's documentation
 for how to define validators and converters.
 
-The following are the types available in Romanesco core. Plugins may add their own
-types and formats using the ``romanesco.format.import_converters`` function. See
+The following are the types available in Girder Worker core. Plugins may add their own
+types and formats using the ``girder_worker.format.import_converters`` function. See
 the :doc:`plugins` section for details on plugin-specific types and formats.
 
 

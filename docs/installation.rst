@@ -1,7 +1,7 @@
 Installation
 ============
 
-To install the Girder worker on your system, we recommend using ``pip`` to
+To install the Girder Worker on your system, we recommend using ``pip`` to
 install the package. (If you wish to install from source, see the :ref:`install-from-source`
 section of the developer documentation.)
 

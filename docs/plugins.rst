@@ -3,22 +3,22 @@
 Plugins
 =======
 
-The Romanesco plugin system is used to extend the core functionality of Romanesco
+The Girder Worker plugin system is used to extend the core functionality of Girder Worker
 in a number of ways. Plugins can execute any python code when they are loaded at
 runtime, but the most common augmentations they perform are:
 
-  * **Adding new execution modes.** Without any plugins enabled, the core Romanesco
+  * **Adding new execution modes.** Without any plugins enabled, the core Girder Worker
     application can only perform two types of tasks: ``python`` and ``workflow`` modes.
     It's common for plugins to implement other task execution modes.
-  * **Adding new data types or formats.** Plugins can make Romanesco aware of new
+  * **Adding new data types or formats.** Plugins can make Girder Worker aware of new
     data types and formats, and provide implementations for how to validate and
     convert to and from those formats.
-  * **Adding new IO modes.** One of the primary functions of Romanesco is to fetch
+  * **Adding new IO modes.** One of the primary functions of Girder Worker is to fetch
     input data from heterogenous sources and expose it to tasks in a uniform way.
     Plugins can implement novel modes of fetching and pushing input and output
     data for a task.
 
-Below is a list of the plugins that are shipped with the romanesco package. They
+Below is a list of the plugins that are shipped with the girder_worker package. They
 can be enabled via the configuration file (see :ref:`configuration`).
 
 Docker
@@ -54,7 +54,7 @@ an argument can also be expanded, e.g.: ::
 
     "container_args": ["--some-parameter=$input{some_parameter_value}"]
 
-The temporary directory for the romanesco task is mapped into the running container
+The temporary directory for the Girder Worker task is mapped into the running container
 under the directory ``/data``, so any files that were fetched into that temp directory
 will be available inside the running container at that path.
 
@@ -169,7 +169,7 @@ VTK
 * **Plugin ID:** ``vtk``
 * **Description:** This plugin exposes the ``geometry`` type and provides converters
   and validators for several types. This plugin requires that you have the VTK
-  python package exposed in Romanesco's python environment. The ``geometry`` type
+  python package exposed in Girder Worker's python environment. The ``geometry`` type
   represents 3D geometry.
 * **Converters added:**
     * ``geometry/vtkpolydata`` |ba| ``geometry/vtkpolydata.serialized``
@@ -193,7 +193,7 @@ VTK
 
 .. note :: vtkGraphs lose their actual node values as they are represented by their index.
   In addition, nodes and edges are given all metadata attributes with defaults if they do not specify the metadatum themselves.
-  This is noted further in :py:mod:`romanesco.plugins.vtk.converters.graph.networkx_to_vtkgraph`
+  This is noted further in :py:mod:`girder_worker.plugins.vtk.converters.graph.networkx_to_vtkgraph`
 
 .. _vtkGraph: http://www.vtk.org/doc/nightly/html/classvtkGraph.html
 .. _vtkGraphWriter: http://www.vtk.org/doc/nightly/html/classvtkGraphWriter.html

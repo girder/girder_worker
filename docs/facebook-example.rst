@@ -138,7 +138,7 @@ Conceptually, this is what our workflow will look like:
     :align: center
     :alt: Visualize Facebook Data Workflow Diagram
 
-\* The format changes because of Girder worker's auto-conversion functionality.
+\* The format changes because of Girder Worker's auto-conversion functionality.
 
 The entire rectangle is our workflow, and the blue rectangles are our tasks. Black arrows represent inputs and outputs and the red arrows represent connections which we’ll see shortly.
 
@@ -173,7 +173,7 @@ Now we need to add our tasks to the workflow, which is pretty straightforward si
                          'task': find_neighborhood_task}]
 
 Finally, we need to add the red arrows within the workflow, telling the worker how the inputs and outputs are going to flow from each task.
-These are called *connections* in Girder worker parlance.
+These are called *connections* in Girder Worker parlance.
 
 .. testcode::
 
@@ -242,7 +242,7 @@ We now have a complete workflow! Let's run this, and write the final data to a f
 
 Running ``workflow.py`` will produce the JSON in a file called ``data.json``, which we'll pass to d3.js in the next step.
 
-.. note :: More information on Girder worker tasks and workflows can be found in :doc:`api-docs`.
+.. note :: More information on Girder Worker tasks and workflows can be found in :doc:`api-docs`.
 
 
 Visualize the results
@@ -260,7 +260,7 @@ Which should leave us with a visualization similar to the following:
 
 
 This is of course a more verbose than necessary workflow for the purposes of demonstration. This could have easily been done with one task,
-however by following this you should have learned how to do the following with the Girder worker:
+however by following this you should have learned how to do the following with the Girder Worker:
 
  * Create tasks which consume and produce multiple inputs and outputs
  * Run tasks as part of a multi-step workflow

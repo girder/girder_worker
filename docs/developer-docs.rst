@@ -67,7 +67,7 @@ On the client, run a script akin to the following example: ::
     python examples/example_client.py
 
 This section of the documentation is meant for those who wish to contribute to
-the Girder worker platform.
+the Girder Worker platform.
 
 Installing worker plugins from pip
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -119,7 +119,7 @@ an Ubuntu precise 64-bit VM using the following commands: ::
 Creating a new release
 ----------------------
 
-Girder worker releases are uploaded to `PyPI <https://pypi.python.org/pypi/girder-worker>`_
+Girder Worker releases are uploaded to `PyPI <https://pypi.python.org/pypi/girder-worker>`_
 for easy installation via ``pip``. The recommended process for generating a new
 release is described here.
 
