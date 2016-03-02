@@ -56,7 +56,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Girder worker'
+project = 'Girder Worker'
 copyright = '2014, Kitware, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for

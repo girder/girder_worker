@@ -1,7 +1,7 @@
 Image processing
 ----------------
 
-This example will introduce how to use the Girder worker to build some simple image
+This example will introduce how to use the Girder Worker to build some simple image
 processing tasks using Pillow_.  We will learn how to chain several tasks
 together in a workflow and finally how to run these workflows both locally
 and through a remote worker.
