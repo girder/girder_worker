@@ -9,8 +9,8 @@ import unittest
 
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
-_out = six.StringIO('output message')
-_err = six.StringIO('error message')
+_out = six.StringIO('output message\n')
+_err = six.StringIO('error message\n')
 
 
 # Monkey patch select.select in the docker task module
@@ -102,27 +102,32 @@ class TestDockerMode(unittest.TestCase):
             lines = mockedStdOut.getvalue().splitlines()
             self.assertEqual(lines[0],
                              'Pulling docker image: test/test:latest')
-            self.assertEqual(lines[-1], 'output message')
+            self.assertEqual(lines[-2], 'output message')
+            self.assertEqual(
+                lines[-1], 'Garbage collecting old containers and images.')
 
             # We bound _stderr as a task output, so it should be in the output
             self.assertEqual(out, {
                 '_stderr': {
-                    'data': 'error message',
+                    'data': 'error message\n',
                     'format': 'string'
                 }
             })
 
-            self.assertEqual(mockPopen.call_count, 2)
-            cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
+            self.assertEqual(mockPopen.call_count, 3)
+            cmd1, cmd2, cmd3 = [x[1]['args'] for x in mockPopen.call_args_list]
 
             self.assertEqual(cmd1, ('docker', 'pull', 'test/test:latest'))
-            self.assertEqual(cmd2[:6],
-                             ['docker', 'run', '--rm', '-u',
+            self.assertEqual(cmd2[:5],
+                             ['docker', 'run', '-u',
                               str(os.getuid()), '-v'])
-            self.assertRegexpMatches(cmd2[6], _tmp + '/.*:/data')
-            self.assertEqual(cmd2[7:10],
+            self.assertRegexpMatches(cmd2[5], _tmp + '/.*:/data')
+            self.assertEqual(cmd2[6:9],
                              ['test/test:latest', '-f', '/data/file.txt'])
             self.assertEqual(cmd2[-1], '--temp-dir=/data')
+
+            self.assertEqual(len(cmd3), 1)
+            six.assertRegex(self, cmd3[0], 'docker-gc$')
 
             # Make sure we can specify a custom entrypoint to the container
             mockPopen.reset_mock()
@@ -133,11 +138,10 @@ class TestDockerMode(unittest.TestCase):
             }
             out = girder_worker.run(task, inputs=inputs, validate=False,
                                     auto_convert=False)
-            self.assertEqual(mockPopen.call_count, 2)
+            self.assertEqual(mockPopen.call_count, 3)
             cmd2 = mockPopen.call_args_list[1][1]['args']
-            self.assertEqual(cmd2[:6],
-                             ['docker', 'run', '--rm', '-u',
-                              str(os.getuid()), '-v'])
-            self.assertRegexpMatches(cmd2[6], _tmp + '/.*:/data')
-            self.assertEqual(cmd2[7:9], ['--entrypoint', '/bin/bash'])
+            self.assertEqual(cmd2[:5],
+                             ['docker', 'run', '-u', str(os.getuid()), '-v'])
+            six.assertRegex(self, cmd2[5], _tmp + '/.*:/data')
+            self.assertEqual(cmd2[6:8], ['--entrypoint', '/bin/bash'])
             self.assertEqual(cmd2[-1], '--temp-dir=/data')
