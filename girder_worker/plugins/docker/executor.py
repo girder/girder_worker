@@ -2,7 +2,6 @@ import os
 import re
 import girder_worker.utils
 import subprocess
-import sys
 
 
 def _pull_image(image):
@@ -93,8 +92,7 @@ def _docker_gc(tempdir):
     env['FORCE_CONTAINER_REMOVAL'] = '1'
     env['STATE_DIR'] = tempdir
     env['PID_DIR'] = tempdir
-    return subprocess.Popen(args=(script,), env=env, stdout=sys.stdout,
-                            stderr=sys.stderr)
+    return subprocess.Popen(args=(script,), env=env)
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
