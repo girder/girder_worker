@@ -2,6 +2,7 @@ import os
 import re
 import girder_worker.utils
 import subprocess
+import sys
 
 
 def _pull_image(image):
@@ -63,7 +64,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     return newArgs
 
 
-def _docker_gc():
+def _docker_gc(tempdir):
     """
     Garbage collect containers that have not been run in the last hour using the
     https://github.com/spotify/docker-gc project's script, which is copied in
@@ -76,6 +77,11 @@ def _docker_gc():
 
     Standard output and standard error pipes from this subprocess are the same
     as the current process to avoid blocking on a full buffer.
+
+    :param tempdir: Temporary directory where the GC should write files.
+    :type tempdir: str
+    :returns: The process object that was created.
+    :rtype: `subprocess.Popen`
     """
     script = os.path.join(os.path.dirname(__file__), 'docker-gc')
     if not os.path.isfile(script):
@@ -85,7 +91,10 @@ def _docker_gc():
 
     env = os.environ.copy()
     env['FORCE_CONTAINER_REMOVAL'] = '1'
-    return subprocess.Popen(args=(script,), env=env)
+    env['STATE_DIR'] = tempdir
+    env['PID_DIR'] = tempdir
+    return subprocess.Popen(args=(script,), env=env, stdout=sys.stdout,
+                            stderr=sys.stderr)
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -93,8 +102,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     print('Pulling docker image: ' + image)
     _pull_image(image)
 
-    tmpDir = kwargs.get('_tempdir')
-    args = _expand_args(task['container_args'], inputs, task_inputs, tmpDir)
+    tempdir = kwargs.get('_tempdir')
+    args = _expand_args(task['container_args'], inputs, task_inputs, tempdir)
 
     print_stderr, print_stdout = True, True
     for id, to in task_outputs.iteritems():
@@ -107,8 +116,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     command = ['docker', 'run', '-u', str(os.getuid())]
 
-    if tmpDir:
-        command += ['-v', tmpDir + ':/data']
+    if tempdir:
+        command += ['-v', tempdir + ':/data']
 
     if 'entrypoint' in task:
         command += ['--entrypoint', task['entrypoint']]
@@ -124,7 +133,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         raise Exception('Error: docker run returned code %d.' % p.returncode)
 
     print('Garbage collecting old containers and images.')
-    p = _docker_gc()
+    gc_dir = os.path.join(tempdir, 'docker_gc_scratch')
+    os.mkdir(gc_dir)
+    p = _docker_gc(gc_dir)
 
     for name, task_output in task_outputs.iteritems():
         # TODO grab files written inside the container somehow?
