@@ -63,6 +63,31 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     return newArgs
 
 
+def _docker_gc():
+    """
+    Garbage collect containers that have not been run in the last hour using the
+    https://github.com/spotify/docker-gc project's script, which is copied in
+    the same directory as this file. After that, deletes all images that are
+    no longer used by any containers.
+
+    This starts the script in the background and returns the subprocess object.
+    Waiting for the subprocess to complete is left to the caller, in case they
+    wish to do something in parallel with the garbage collection.
+
+    Standard output and standard error pipes from this subprocess are the same
+    as the current process to avoid blocking on a full buffer.
+    """
+    script = os.path.join(os.path.dirname(__file__), 'docker-gc')
+    if not os.path.isfile(script):
+        raise Exception('Docker GC script %s not found.' % script)
+    if not os.access(script, os.X_OK):
+        raise Exception('Docker GC script %s is not executable.' % script)
+
+    env = os.environ.copy()
+    env['FORCE_CONTAINER_REMOVAL'] = '1'
+    return subprocess.Popen(args=(script,), env=env)
+
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
     print('Pulling docker image: ' + image)
@@ -80,7 +105,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             outputs['_stdout']['script_data'] = ''
             print_stdout = False
 
-    command = ['docker', 'run', '--rm', '-u', str(os.getuid())]
+    command = ['docker', 'run', '-u', str(os.getuid())]
 
     if tmpDir:
         command += ['-v', tmpDir + ':/data']
@@ -96,9 +121,16 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
                                         print_stdout, print_stderr)
 
     if p.returncode != 0:
-        raise Exception('Error: docker run returned code {}.'.format(
-                        p.returncode))
+        raise Exception('Error: docker run returned code %d.' % p.returncode)
+
+    print('Garbage collecting old containers and images.')
+    p = _docker_gc()
 
     for name, task_output in task_outputs.iteritems():
         # TODO grab files written inside the container somehow?
         pass
+
+    p.wait()  # Wait for garbage collection subprocess to finish
+
+    if p.returncode != 0:
+        raise Exception('Docker GC returned code %d.' % p.returncode)
