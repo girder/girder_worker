@@ -29,12 +29,10 @@ class Validator(namedtuple('Validator', ['type', 'format'])):
     def is_valid(self):
         """Return whether the type/format combination is valid.
 
-        If rformat is None is_valid just checks for the presense of any
-        valid type/format has that type.
+        If format is None, checks for the presence of any valid type/format with
+        the specified type.
 
-        :param rtype" ``string``
-        :param rformat" ``string`` optional
-        :returns: ``True`` if ``rtype`` and ``rformat`` are a valid, loaded
+        :returns: ``True`` if ``type`` and ``format`` are a valid, loaded
             type/format pair.
         """
         if self.format is None:
