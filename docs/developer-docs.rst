@@ -8,7 +8,7 @@ Installing from source
 
 Clone from git: ::
 
-    git clone https://github.com/Kitware/girder_worker.git
+    git clone https://github.com/girder/girder_worker.git
     cd girder_worker
 
 Install requirements: ::
