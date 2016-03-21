@@ -149,7 +149,7 @@ def has_converter(source, target=Validator(type=None, format=None)):
 
 
 def get_validator_analysis(validator):
-    """Gets a validators analysis from the conversion graph.
+    """Gets a validator's analysis from the conversion graph.
 
     >>> analysis = get_validator_analysis(Validator('string', 'text'))
 

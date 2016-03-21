@@ -35,7 +35,7 @@ def spec_class_generator(class_type, spec):
      'outputs': [{"format": "number", "name": "b", "type": "number"}]}
     """
 
-    # Decorator that adds 'scirpt' and 'mode' keywords from
+    # Decorator that adds 'script' and 'mode' keywords from
     # the spec to the kw argument passed to the decorated function
     def add_spec_to_kw(func):
         def wrapped_f(self, _spec=None, **kwargs):

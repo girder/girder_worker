@@ -45,7 +45,7 @@ class TestPort(TestCase):
         # non-matching formats
         self.assertEqual(2, port.fetch({'data': '2', 'format': 'json'}))
 
-        # not convertable
+        # not convertible
         port.auto_convert = False
         with self.assertRaises(Exception):
             port.fetch({'data': '2', 'format': 'json'})
@@ -64,7 +64,7 @@ class TestPort(TestCase):
         # non-matching formats
         self.assertEqual(2, port.push({'data': '2', 'format': 'json'})['data'])
 
-        # not convertable
+        # not convertible
         port.auto_convert = False
         with self.assertRaises(Exception):
             port.push({'data': '2', 'format': 'json'})

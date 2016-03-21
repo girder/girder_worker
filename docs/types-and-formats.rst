@@ -17,7 +17,7 @@ is a low-level description of data layout. For example, the table type may have
 formats for CSV, database table, R data frame, or JSON. The format may be text,
 serialized binary, or even in-memory data layouts. Just like types, a format is
 specified by a string unique to your Girder Worker environment, such as ``"csv"``
-for the CSV format. Formats under the same type should be convertable
+for the CSV format. Formats under the same type should be convertible
 between each other.
 
 Notice that the above uses the phrases such as "may be defined" and "may have formats".

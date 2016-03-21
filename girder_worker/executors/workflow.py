@@ -59,7 +59,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
                             o = outputs[conn["name"]]
                             o["script_data"] = out[name]["data"]
 
-    # Output visualization paramaters
+    # Output visualization parameters
     outputs["_visualizations"] = []
     for step in task["steps"]:
         if "visualization" not in step or not step["visualization"]:
