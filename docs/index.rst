@@ -1,8 +1,8 @@
 Girder Worker: A simple, flexible execution engine
-==============================================
+==================================================
 
 What is Girder Worker?
-------------------
+----------------------
 
 Girder Worker is a python application for generic task execution. It can be run within a
 `celery <http://docs.celeryproject.org/en/latest/index.html>`_ worker to provide a
