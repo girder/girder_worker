@@ -156,14 +156,17 @@ def get_validator_analysis(validator):
     >>> analysis = get_validator_analysis(Validator('string', 'text'))
 
     Returns an analysis dictionary
+
     >>> type(analysis) == dict
     True
 
     Which contains an inputs key
+
     >>> 'inputs' in analysis
     True
 
     If the validator doesn't exist, an exception will be raised
+
     >>> get_validator_analysis(Validator('foo', 'bar'))
     Traceback (most recent call last):
     ...
