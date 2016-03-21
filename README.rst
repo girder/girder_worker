@@ -1,5 +1,5 @@
 Girder Worker |build-status|
-========================
+============================
 
 A flexible, simple script execution engine that integrates with the
 `Girder <http://girder.readthedocs.org>` data management system to run
