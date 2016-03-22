@@ -29,12 +29,10 @@ class Validator(namedtuple('Validator', ['type', 'format'])):
     def is_valid(self):
         """Return whether the type/format combination is valid.
 
-        If rformat is None is_valid just checks for the presense of any
-        valid type/format has that type.
+        If format is None, checks for the presence of any valid type/format with
+        the specified type.
 
-        :param rtype" ``string``
-        :param rformat" ``string`` optional
-        :returns: ``True`` if ``rtype`` and ``rformat`` are a valid, loaded
+        :returns: ``True`` if ``type`` and ``format`` are a valid, loaded
             type/format pair.
         """
         if self.format is None:
@@ -151,19 +149,22 @@ def has_converter(source, target=Validator(type=None, format=None)):
 
 
 def get_validator_analysis(validator):
-    """Gets a validators analysis from the conversion graph.
+    """Gets a validator's analysis from the conversion graph.
 
     >>> analysis = get_validator_analysis(Validator('string', 'text'))
 
     Returns an analysis dictionary
+
     >>> type(analysis) == dict
     True
 
     Which contains an inputs key
+
     >>> 'inputs' in analysis
     True
 
     If the validator doesn't exist, an exception will be raised
+
     >>> get_validator_analysis(Validator('foo', 'bar'))
     Traceback (most recent call last):
     ...

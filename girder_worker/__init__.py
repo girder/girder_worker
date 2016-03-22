@@ -66,8 +66,8 @@ def load(task_file):
     to by ``"script_uri"`` (see :py:mod:`girder_worker.uri` for URI formats). A
     ``script_fetch_mode`` field may also be set
 
-    :param analysis_file: The path to the JSON file to load.
-    :returns: The analysis as a dictionary.
+    :param task_file: The path to the JSON file to load.
+    :returns: The task as a dictionary.
     """
 
     with open(task_file) as f:

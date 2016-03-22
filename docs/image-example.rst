@@ -181,7 +181,7 @@ Using a workflow to compute image metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Finally, we will create a few more tasks to generate a more complicated
-workflow that returns some number of interest about an image.  First, lets
+workflow that returns some number of interest about an image.  First, let's
 create a task to subtract two images from each other.
 
 .. testcode::
