@@ -3,6 +3,8 @@ import re
 import girder_worker.utils
 import subprocess
 
+from girder_worker import config
+
 
 def _pull_image(image):
     """
@@ -19,6 +21,16 @@ def _pull_image(image):
         print('STDERR: ' + stderr)
 
         raise Exception('Docker pull returned code {}.'.format(p.returncode))
+
+
+def _read_from_config(key, default):
+    """
+    Helper to read docker specific config values from the worker config files.
+    """
+    if config.has_option('docker', key):
+        return config.get('docker', key)
+    else:
+        return default
 
 
 def _transform_path(inputs, taskInputs, inputId, tmpDir):
@@ -92,6 +104,17 @@ def _docker_gc(tempdir):
     env['FORCE_CONTAINER_REMOVAL'] = '1'
     env['STATE_DIR'] = tempdir
     env['PID_DIR'] = tempdir
+    env['GRACE_PERIOD_SECONDS'] = str(_read_from_config('cache_timeout', 3600))
+
+    # Handle excluded images
+    excluded = _read_from_config('exclude_images', '').split(',')
+    excluded = [img for img in excluded if img.strip()]
+    if excluded:
+        exclude_file = os.path.join(tempdir, '.docker-gc-exclude')
+        with open(exclude_file, 'w') as fd:
+            fd.write('\n'.join(excluded) + '\n')
+        env['EXCLUDE_FROM_GC'] = exclude_file
+
     return subprocess.Popen(args=(script,), env=env)
 
 

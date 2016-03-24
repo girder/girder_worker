@@ -147,8 +147,12 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(cmd2[6:8], ['--entrypoint', '/bin/bash'])
             self.assertEqual(cmd2[-1], '--temp-dir=/data')
 
-            # Make sure we can skip pulling the image
             mockPopen.reset_mock()
+            # Make sure custom config settings are respected
+            girder_worker.config.set('docker', 'cache_timeout', '123456')
+            girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
+
+            # Make sure we can skip pulling the image
             task['pull_image'] = False
             inputs['foo'] = {
                 'mode': 'http',
@@ -160,3 +164,7 @@ class TestDockerMode(unittest.TestCase):
             cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
             self.assertEqual(tuple(cmd1[:2]), ('docker', 'run'))
             six.assertRegex(self, cmd2[0], 'docker-gc$')
+            env = mockPopen.call_args_list[1][1]['env']
+            self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
+            six.assertRegex(self, env['EXCLUDE_FROM_GC'],
+                            'docker_gc_scratch/.docker-gc-exclude$')
