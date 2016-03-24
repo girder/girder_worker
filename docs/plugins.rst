@@ -34,6 +34,7 @@ Docker
     <DOCKER_TASK> ::= {
         "mode": "docker",
         "docker_image": <docker image name to run>
+        (, "pull_image": <true (the default) or false>)
         (, "container_args": [<container arguments>])
         (, "entrypoint": <custom override for container entry point>)
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
@@ -57,6 +58,10 @@ an argument can also be expanded, e.g.: ::
 The temporary directory for the Girder Worker task is mapped into the running container
 under the directory ``/data``, so any files that were fetched into that temp directory
 will be available inside the running container at that path.
+
+By default, the image you specify will be pulled using the ``docker pull`` command.
+In some cases, you may not want to perform a pull, and instead want to rely on the
+image already being present on the worker system. If so, set ``pull_image`` to false.
 
 Girder IO
 ---------

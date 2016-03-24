@@ -97,8 +97,10 @@ def _docker_gc(tempdir):
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
-    print('Pulling docker image: ' + image)
-    _pull_image(image)
+
+    if task.get('pull_image', True):
+        print('Pulling docker image: ' + image)
+        _pull_image(image)
 
     tempdir = kwargs.get('_tempdir')
     args = _expand_args(task['container_args'], inputs, task_inputs, tempdir)

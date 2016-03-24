@@ -59,6 +59,7 @@ class TestDockerMode(unittest.TestCase):
             'docker_image': 'test/test:latest',
             'container_args': [
                 '-f', '$input{foo}', '--temp-dir=$input{_tempdir}'],
+            'pull_image': True,
             'inputs': [{
                 'id': 'foo',
                 'name': 'A variable',
@@ -145,3 +146,17 @@ class TestDockerMode(unittest.TestCase):
             six.assertRegex(self, cmd2[5], _tmp + '/.*:/data')
             self.assertEqual(cmd2[6:8], ['--entrypoint', '/bin/bash'])
             self.assertEqual(cmd2[-1], '--temp-dir=/data')
+
+            # Make sure we can skip pulling the image
+            mockPopen.reset_mock()
+            task['pull_image'] = False
+            inputs['foo'] = {
+                'mode': 'http',
+                'url': 'https://foo.com/file.txt'
+            }
+            out = girder_worker.run(task, inputs=inputs, validate=False,
+                                    auto_convert=False)
+            self.assertEqual(mockPopen.call_count, 2)
+            cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
+            self.assertEqual(tuple(cmd1[:2]), ('docker', 'run'))
+            six.assertRegex(self, cmd2[0], 'docker-gc$')
