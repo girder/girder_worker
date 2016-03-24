@@ -1,3 +1,4 @@
+import ConfigParser
 import httmock
 import mock
 import os
@@ -34,6 +35,10 @@ def setUpModule():
     _tmp = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'tmp', 'docker')
     girder_worker.config.set('girder_worker', 'tmp_root', _tmp)
+    try:
+        girder_worker.config.add_section('docker')
+    except ConfigParser.DuplicateSectionError:
+        pass
 
 
 def tearDownModule():
