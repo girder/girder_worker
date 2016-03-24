@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Taken from https://github.com/spotify/docker-gc
+# Git hash: a3b2d2aa111ba
 
 # Copyright (c) 2014 Spotify AB.
 #
