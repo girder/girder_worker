@@ -36,6 +36,7 @@ Docker
         "docker_image": <docker image name to run>
         (, "pull_image": <true (the default) or false>)
         (, "container_args": [<container arguments>])
+        (, "docker_run_args": [<additional arguments to `docker run`>])
         (, "entrypoint": <custom override for container entry point>)
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
@@ -63,11 +64,15 @@ By default, the image you specify will be pulled using the ``docker pull`` comma
 In some cases, you may not want to perform a pull, and instead want to rely on the
 image already being present on the worker system. If so, set ``pull_image`` to false.
 
-Finally, to ensure the execution context is the expected one, it is recommended to
+To ensure the execution context is the expected one, it is recommended to
 specify the ``docker_image`` using the ``Image[@digest]`` format (e.g. ``debian@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf``). This will prevent
 ``docker pull`` from systematically downloading the latest available image. In that case,
 setting ``pull_image`` to false is less relevant since the image will be pulled only if it
 is not already available.
+
+If you want to pass additional command line options to ``docker run`` that should
+come before the container name, pass them as a list via the ``"docker_run_args"``
+key.
 
 Girder IO
 ---------

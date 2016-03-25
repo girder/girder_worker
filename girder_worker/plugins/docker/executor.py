@@ -145,6 +145,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     if 'entrypoint' in task:
         command += ['--entrypoint', task['entrypoint']]
 
+    if 'docker_run_args' in task:
+        command += task['docker_run_args']
+
     command += [image] + args
 
     print('Running container: "%s"' % ' '.join(command))

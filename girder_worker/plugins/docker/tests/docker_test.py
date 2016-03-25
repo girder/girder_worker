@@ -138,6 +138,10 @@ class TestDockerMode(unittest.TestCase):
             # Make sure we can specify a custom entrypoint to the container
             mockPopen.reset_mock()
             task['entrypoint'] = '/bin/bash'
+
+            # Make sure additional docker run args work
+            task['docker_run_args'] = ['--net', 'none']
+
             inputs['foo'] = {
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
@@ -168,6 +172,7 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(mockPopen.call_count, 2)
             cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
             self.assertEqual(tuple(cmd1[:2]), ('docker', 'run'))
+            self.assertEqual(cmd1[8:10], ['--net', 'none'])
             six.assertRegex(self, cmd2[0], 'docker-gc$')
             env = mockPopen.call_args_list[1][1]['env']
             self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
