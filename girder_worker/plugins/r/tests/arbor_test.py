@@ -11,75 +11,75 @@ class TestArbor(unittest.TestCase):
         os.chdir(cur_path)
 
         self.arbor_path = os.path.abspath(
-            cur_path + "/../../../../" + "analysis/arbor")
+            cur_path + '/../../../../' + 'analysis/arbor')
 
     def test_pgls(self):
-        pgls = girder_worker.load(os.path.join(self.arbor_path, "pgls.json"))
-        tree_file = os.path.join("data", "anolis.phy")
-        table_file = os.path.join("data", "anolisDataAppended.csv")
+        pgls = girder_worker.load(os.path.join(self.arbor_path, 'pgls.json'))
+        tree_file = os.path.join('data', 'anolis.phy')
+        table_file = os.path.join('data', 'anolisDataAppended.csv')
         girder_worker.run(
             pgls,
             {
-                "tree": {"format": "newick", "url": "file://" + tree_file},
-                "table": {"format": "csv", "url": "file://" + table_file},
-                "correlation": {"format": "text", "data": "BM"},
-                "ind_variable": {"format": "text", "data": "SVL"},
-                "dep_variable": {"format": "text", "data": "PCI_limbs"}
+                'tree': {'format': 'newick', 'url': 'file://' + tree_file},
+                'table': {'format': 'csv', 'url': 'file://' + table_file},
+                'correlation': {'format': 'text', 'data': 'BM'},
+                'ind_variable': {'format': 'text', 'data': 'SVL'},
+                'dep_variable': {'format': 'text', 'data': 'PCI_limbs'}
             }
         )
         # print outputs
 
     # def test_fit_continuous(self):
     #     fit_continuous = girder_worker.load(
-    #         os.path.join(self.arbor_path, "fit_continuous.json"))
-    #     tree_file = os.path.join("data", "anolis.phy")
-    #     table_file = os.path.join("data", "anolisDataAppended.csv")
+    #         os.path.join(self.arbor_path, 'fit_continuous.json'))
+    #     tree_file = os.path.join('data', 'anolis.phy')
+    #     table_file = os.path.join('data', 'anolisDataAppended.csv')
     #     outputs = girder_worker.run(
     #         fit_continuous,
     #         {
-    #             "tree": {"format": "newick", "url": "file://" + tree_file},
-    #             "table": {"format": "csv", "url": "file://" + table_file},
-    #             "column": {"format": "text", "data": "SVL"},
-    #             "model": {"format": "text", "data": "BM"}
+    #             'tree': {'format': 'newick', 'url': 'file://' + tree_file},
+    #             'table': {'format': 'csv', 'url': 'file://' + table_file},
+    #             'column': {'format': 'text', 'data': 'SVL'},
+    #             'model': {'format': 'text', 'data': 'BM'}
     #         }
     #     )
     #     # print outputs
 
     def test_cont2disc(self):
         cont2disc = girder_worker.load(
-            os.path.join(self.arbor_path, "continuous_to_discrete.json"))
-        table_file = os.path.join("data", "anolisDataAppended.csv")
+            os.path.join(self.arbor_path, 'continuous_to_discrete.json'))
+        table_file = os.path.join('data', 'anolisDataAppended.csv')
         girder_worker.run(
             cont2disc,
             {
-                "table": {"format": "csv", "url": "file://" + table_file},
-                "column": {"format": "text", "data": "SVL"},
-                "thresh": {"format": "number", "data": 3.5}
+                'table': {'format': 'csv', 'url': 'file://' + table_file},
+                'column': {'format': 'text', 'data': 'SVL'},
+                'thresh': {'format': 'number', 'data': 3.5}
             },
             {
-                "newtable": {"format": "rows"}
+                'newtable': {'format': 'rows'}
             }
         )
-        # print outputs["newtable"]
+        # print outputs['newtable']
 
     def test_mammal_tree(self):
         mammal = girder_worker.load(
-            os.path.join("data", "Mammal tree extraction.json"))
+            os.path.join('data', 'Mammal tree extraction.json'))
         girder_worker.run(
             mammal,
             {
-                "table": {
-                    "format": "csv",
-                    "url": "file://" +
-                           os.path.join("data", "mammal_lnMass_tiny.csv")
+                'table': {
+                    'format': 'csv',
+                    'url': 'file://' +
+                           os.path.join('data', 'mammal_lnMass_tiny.csv')
                 },
-                "outRowCount": {"format": "number", "data": 19}
+                'outRowCount': {'format': 'number', 'data': 19}
             },
             {
-                "tree": {"format": "nested"}
+                'tree': {'format': 'nested'}
             }
         )
-        # print json.dumps(outputs["tree"], indent=2)
+        # print json.dumps(outputs['tree'], indent=2)
 
     def tearDown(self):
         os.chdir(self.prevdir)

@@ -11,7 +11,7 @@ def subkeys(path, obj, row):
             if isinstance(k, (str, unicode)):
                 subkeys(path + [k], obj[k], row)
     elif len(path) > 0:
-        field = ".".join(path)
+        field = '.'.join(path)
         field_map[field] = True
         row[field] = obj
 
@@ -22,4 +22,4 @@ for obj in input:
 
 fields = [key for key in field_map]
 
-output = {"fields": fields, "rows": rows}
+output = {'fields': fields, 'rows': rows}

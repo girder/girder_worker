@@ -1,1 +1,1 @@
-output = input["fields"]
+output = input['fields']

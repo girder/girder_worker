@@ -2,6 +2,7 @@ coverage==4.0.3
 coveralls==0.5
 flake8==2.5.2
 flake8-docstrings==0.2.4
+flake8-quotes==0.2.4
 httmock==1.2.4
 lxml==3.4.4
 mccabe==0.4.0

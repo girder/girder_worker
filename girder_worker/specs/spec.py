@@ -73,7 +73,7 @@ class SpecMixin(object):
                                    newvalue=value,
                                    default=self._serializer)
         elif not isinstance(key, six.string_types):
-            raise TypeError("Spec keys must be string typed.")
+            raise TypeError('Spec keys must be string typed.')
 
         if newvalue is not None:
             try:

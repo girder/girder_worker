@@ -6,12 +6,12 @@ import bson
 
 
 def printApeTree(apeTree):
-    print "print overall apeTree:"
+    print 'print overall apeTree:'
     print apeTree
-    print "[0]:", apeTree[0]
-    print "[1]:", apeTree[1]
-    print "[2]:", apeTree[2]
-    print "[3]:", apeTree[3]
+    print '[0]:', apeTree[0]
+    print '[1]:', apeTree[1]
+    print '[2]:', apeTree[2]
+    print '[3]:', apeTree[3]
 
 
 # lookup taxa by name so we don't get the nodes scrambled in the APE tree
@@ -19,10 +19,10 @@ def returnNodeNameFromIndex(apeTree, index):
     if (len(apeTree[1]) == 1):
         leafIndex = 2
     else:
-        # print "alternative ape tree compondent order case"
+        # print 'alternative ape tree compondent order case'
         leafIndex = 1
     leafCount = len(apeTree[leafIndex])
-    # print "lookup for index:",index
+    # print 'lookup for index:',index
     if index < leafCount+1:
         # node is a taxon, return the species name
         nodeName = apeTree[leafIndex][index-1]
@@ -42,14 +42,14 @@ def addApeTreeNodesIntoTreeStore(apeTree, data_coll):
         leafIndex = 2
         countIndex = 1
     else:
-        # print "alternative ape tree compondent order case"
+        # print 'alternative ape tree compondent order case'
         leafIndex = 1
         countIndex = 2
     # calculate how many nodes are here
     leafCount = len(apeTree[leafIndex])
     # printApeTree(apeTree)
-    # print "apeTree[countIndex]:",apeTree[countIndex]
-    # print "apeTree[countIndex][0]:",apeTree[countIndex][0]
+    # print 'apeTree[countIndex]:',apeTree[countIndex]
+    # print 'apeTree[countIndex][0]:',apeTree[countIndex][0]
     totalNodes = leafCount + int(apeTree[countIndex][0])
     # loop through the nodes and create a document for each one
     for index in range(1, totalNodes+1):
@@ -67,8 +67,8 @@ def addApeTreeNodesIntoTreeStore(apeTree, data_coll):
 def addApeTreeEdgesIntoTreeStore(apeTree, data_coll):
     # go through the edge table and add fields to the nodes in the collection
     edgeCount = len(apeTree[0])/2
-    # print "found edge count to be: ",edgeCount
-    # print "edges:",apeTree[3]
+    # print 'found edge count to be: ',edgeCount
+    # print 'edges:',apeTree[3]
     for edgeIndex in range(0, edgeCount):
         startNodeIndex = int(apeTree[0][edgeIndex])
         endNodeIndex = int(apeTree[0][edgeCount+edgeIndex])
@@ -77,14 +77,14 @@ def addApeTreeEdgesIntoTreeStore(apeTree, data_coll):
         endNodeQuery = {'name': returnNodeNameFromIndex(apeTree, endNodeIndex)}
         startNode = data_coll.find_one(startNodeQuery)
         endNode = data_coll.find_one(endNodeQuery)
-        # print "edgeIndex: ",edgeIndex,"endnode:  ", endNode
+        # print 'edgeIndex: ',edgeIndex,'endnode:  ', endNode
         # add branch length to end node
         try:
             endNode['branch_length'] = apeTree[3][edgeIndex]
         except TypeError:
-            print "error on edgeIndex or no branchlength:", edgeIndex
+            print 'error on edgeIndex or no branchlength:', edgeIndex
 
-        # print "edgeIndex: ",edgeIndex,"endnode:  ", endNode
+        # print 'edgeIndex: ',edgeIndex,'endnode:  ', endNode
         data_coll.update(endNodeQuery, endNode)
         # add edge leaving start node and going to endnode
         startNode['clades'].append(endNode['_id'])
@@ -97,7 +97,7 @@ def addHandleNodeIntoTreeStore(apeTree, data_coll):
     if (len(apeTree[1]) == 1):
         leafIndex = 2
     else:
-        # print "alternative ape tree compondent order case"
+        # print 'alternative ape tree compondent order case'
         leafIndex = 1
     leafCount = len(apeTree[leafIndex])
     # add the 'handle node' to the collection.  Find the root of the dataset by
@@ -119,7 +119,7 @@ def clearInternalNodeNames(apeTree, data_coll):
         leafIndex = 2
         countIndex = 1
     else:
-        print "alternative ape tree compondent order case"
+        print 'alternative ape tree compondent order case'
         leafIndex = 1
         countIndex = 2
     leafCount = len(apeTree[leafIndex])
@@ -164,20 +164,20 @@ class InMemoryCollection:
         self.currentId = 0
 
     def insert(self, item):
-        item["_id"] = self.currentId
+        item['_id'] = self.currentId
         self.currentId += 1
         self.items.append(item)
-        if "name" in item:
-            self.nameMap[item["name"]] = item
+        if 'name' in item:
+            self.nameMap[item['name']] = item
 
     def update(self, query, item):
         pass
 
     def find_one(self, query):
-        return self.nameMap[query["name"]]
+        return self.nameMap[query['name']]
 
 
 c = InMemoryCollection()
 importApeTreeToArbor(input, c)
 
-output = "".join([bson.BSON.encode(d) for d in c.items])
+output = ''.join([bson.BSON.encode(d) for d in c.items])

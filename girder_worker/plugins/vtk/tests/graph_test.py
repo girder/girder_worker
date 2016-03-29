@@ -21,7 +21,7 @@ def simpleVtkDiGraph():
     # Create the edge weight array
     weights = vtk.vtkDoubleArray()
     weights.SetNumberOfComponents(1)
-    weights.SetName("Weights")
+    weights.SetName('Weights')
 
     # Set the edge weights
     weights.InsertNextValue(1.0)

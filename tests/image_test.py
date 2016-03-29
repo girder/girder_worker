@@ -41,74 +41,74 @@ class TestImage(unittest.TestCase):
             'Ff8wtn0KzlebrUYwAAAABJRU5ErkJggg==')
 
         self.analysis = {
-            "name": "Image pixels",
-            "inputs": [
+            'name': 'Image pixels',
+            'inputs': [
                 {
-                    "name": "a",
-                    "type": "image",
-                    "format": "pil"
+                    'name': 'a',
+                    'type': 'image',
+                    'format': 'pil'
                 }
             ],
-            "outputs": [
+            'outputs': [
                 {
-                    "name": "pixels",
-                    "type": "number",
-                    "format": "number"
+                    'name': 'pixels',
+                    'type': 'number',
+                    'format': 'number'
                 }
             ],
-            "script": "pixels = a.size[0] * a.size[1]\n",
-            "mode": "python"
+            'script': 'pixels = a.size[0] * a.size[1]\n',
+            'mode': 'python'
         }
 
     def test_base64(self):
         outputs = girder_worker.run(
             self.analysis,
             inputs={
-                "a": {"format": "png.base64", "data": self.image},
+                'a': {'format': 'png.base64', 'data': self.image},
             })
-        self.assertEqual(outputs["pixels"]["format"], "number")
-        self.assertEqual(outputs["pixels"]["data"], 256)
+        self.assertEqual(outputs['pixels']['format'], 'number')
+        self.assertEqual(outputs['pixels']['data'], 256)
 
     def test_convert(self):
         tmp = tempfile.mktemp()
 
-        output = girder_worker.convert("image", {
-            "format": "png.base64",
-            "data": self.image
+        output = girder_worker.convert('image', {
+            'format': 'png.base64',
+            'data': self.image
         }, {
-            "format": "png",
-            "url": "file://" + tmp,
-            "mode": "auto"
+            'format': 'png',
+            'url': 'file://' + tmp,
+            'mode': 'auto'
         })
 
         value = open(tmp).read()
         os.remove(tmp)
-        self.assertEqual(output["format"], "png")
+        self.assertEqual(output['format'], 'png')
         self.assertEqual(base64.b64encode(value), self.image)
 
         output = girder_worker.convert(
-            "image",
-            {"format": "png.base64", "data": self.image},
-            {"format": "pil"})
+            'image',
+            {'format': 'png.base64', 'data': self.image},
+            {'format': 'pil'})
 
         tmp = tempfile.mktemp()
 
         output = girder_worker.convert(
-            "image",
+            'image',
             output,
-            {"format": "png"})
+            {'format': 'png'})
 
         io1 = StringIO(base64.b64decode(self.image))
         im1 = Image.open(io1)
-        io2 = StringIO(output["data"])
+        io2 = StringIO(output['data'])
         im2 = Image.open(io2)
         self.assertEqual(compareImages(im1, im2), 0)
 
-        output = girder_worker.convert("image", {
-            "format": "png.base64",
-            "data": self.image
+        output = girder_worker.convert('image', {
+            'format': 'png.base64',
+            'data': self.image
         }, {
-            "format": "jpeg"
+            'format': 'jpeg'
         })
         data = StringIO(output['data'])
         jpeg = Image.open(data)

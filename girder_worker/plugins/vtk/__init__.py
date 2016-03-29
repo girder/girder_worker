@@ -61,7 +61,7 @@ def dict_to_vtkrow(row, attributes):
                 found = True
                 break
         if not found:
-            raise Exception("[dict_to_vtkrow] Unexpected key: " + key)
+            raise Exception('[dict_to_vtkrow] Unexpected key: ' + key)
 
 
 def load(params):

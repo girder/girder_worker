@@ -39,16 +39,16 @@ class TestFormat(unittest.TestCase):
 
         self.assertEquals(Validator('string', 'json').is_valid(), True)
 
-        self.assertEquals(Validator("invalid_type", None).is_valid(), False)
+        self.assertEquals(Validator('invalid_type', None).is_valid(), False)
 
-        self.assertEquals(Validator("invalid_type",
-                                    "invalid_format").is_valid(), False)
+        self.assertEquals(Validator('invalid_type',
+                                    'invalid_format').is_valid(), False)
 
-        self.assertEquals(Validator("string",
-                                    "invalid_format").is_valid(), False)
+        self.assertEquals(Validator('string',
+                                    'invalid_format').is_valid(), False)
 
-        self.assertEquals(Validator("invalid_type",
-                                    "json").is_valid(), False)
+        self.assertEquals(Validator('invalid_type',
+                                    'json').is_valid(), False)
 
     def test_has_converter(self):
         # There are converters from string type
