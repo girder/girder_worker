@@ -70,30 +70,35 @@ class TestGraph(unittest.TestCase):
             'graph', self.test_input['simpleVtkDiGraph'],
             {'format': 'vtkgraph.serialized'})
 
-        with open(os.path.join('tests', 'data', 'vtkDiGraph.txt'), 'rb') as fixture:
+        with open(os.path.join(
+                'tests', 'data', 'vtkDiGraph.txt'), 'rb') as fixture:
             self.assertEqual(output['data'].splitlines()[1:],
                              fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph.serialized on an undirected
         # graph w/ edge data
         output = girder_worker.convert(
-            'graph', self.test_input['distances'], {'format': 'vtkgraph.serialized'})
+            'graph', self.test_input['distances'],
+            {'format': 'vtkgraph.serialized'})
 
-        with open(os.path.join('tests', 'data', 'vtkDistancesUndirectedGraph.txt'),
-                  'rb') as fixture:
+        with open(os.path.join(
+                'tests', 'data', 'vtkDistancesUndirectedGraph.txt'),
+                'rb') as fixture:
             self.assertEqual(output['data'].splitlines()[1:],
                              fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph with missing edge attributes
         output = girder_worker.convert(
-            'graph', self.test_input['grants'], {'format': 'vtkgraph.serialized'})
+            'graph', self.test_input['grants'],
+            {'format': 'vtkgraph.serialized'})
 
         with open(os.path.join('tests', 'data', 'vtkGrantsDirectedGraph.txt'),
                   'rb') as fixture:
             self.assertEqual(output['data'].splitlines()[1:],
                              fixture.read().splitlines()[1:])
 
-        # Test networkx -> vtkgraph throws errors for different types of metadata
+        # Test networkx -> vtkgraph throws errors for different types
+        # of metadata
         with self.assertRaises(Exception):
             output = girder_worker.convert(
                 'graph', {'format': 'networkx', 'data': nx.Graph([
@@ -103,7 +108,8 @@ class TestGraph(unittest.TestCase):
 
         # Test vtkgraph -> networkx
         output = girder_worker.convert(
-            'graph', self.test_input['simpleVtkDiGraph'], {'format': 'networkx'})
+            'graph', self.test_input['simpleVtkDiGraph'],
+            {'format': 'networkx'})
 
         self.assertIsInstance(output['data'], nx.DiGraph)
 

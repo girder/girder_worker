@@ -1,12 +1,16 @@
 import celery
 
-celeryapp = celery.Celery('girder_worker',
+celeryapp = celery.Celery(
+    'girder_worker',
     backend='amqp://guest@localhost/',
     broker='amqp://guest@localhost/')
 
 task = {
     'name': 'append_tables',
-    'inputs': [{'name': 'a', 'type': 'table', 'format': 'objectlist'}, {'name': 'b', 'type': 'table', 'format': 'objectlist'}],
+    'inputs': [
+        {'name': 'a', 'type': 'table', 'format': 'objectlist'},
+        {'name': 'b', 'type': 'table', 'format': 'objectlist'}
+    ],
     'outputs': [{'name': 'c', 'type': 'table', 'format': 'objectlist'}],
     'script': 'c = a + b',
     'mode': 'python'

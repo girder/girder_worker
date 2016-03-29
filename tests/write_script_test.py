@@ -21,7 +21,9 @@ class TestDebug(unittest.TestCase):
         global _tmpfiles
         _tmpfiles = []
 
-        self.script = "c = {'fields': a['fields'], 'rows': a['rows'] + b['rows']}"
+        self.script = (
+            "c = {'fields': a['fields'], 'rows': a['rows'] + b['rows']}"
+        )
         self.analysis = {
             "name": "append_tables",
             "inputs": [
@@ -78,7 +80,8 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for kwarg debugging"""
         global _tmpfiles
 
-        girder_worker.run(self.analysis, self.inputs, self.outputs, write_script=True)
+        girder_worker.run(
+            self.analysis, self.inputs, self.outputs, write_script=True)
 
         # Should have generated serveral files ()
         self.assertGreater(len(_tmpfiles), 1)

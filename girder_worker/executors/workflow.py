@@ -82,8 +82,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
                     girder_worker.isvalid(vis_input["type"], script_output)):
                 raise Exception(
                     "Output %s (%s) is not in the expected type (%s) and "
-                    "format (%s)." % (name, type(script_output["data"]),
-                                      vis_input["type"], script_output["format"]))
+                    "format (%s)." % (
+                        name, type(script_output["data"]),
+                        vis_input["type"], script_output["format"]))
 
             if auto_convert:
                 vis_bindings[b] = girder_worker.convert(

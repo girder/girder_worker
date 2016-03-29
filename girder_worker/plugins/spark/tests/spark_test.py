@@ -13,8 +13,12 @@ class TestSpark(unittest.TestCase):
     def testJsonToSparkRdd(self):
         analysis = {
             'name': 'reduce',
-            'inputs': [{'name': 'a', 'type': 'collection', 'format': 'spark.rdd'}],
-            'outputs': [{'name': 'b', 'type': 'number', 'format': 'number'}],
+            'inputs': [
+                {'name': 'a', 'type': 'collection', 'format': 'spark.rdd'}
+            ],
+            'outputs': [
+                {'name': 'b', 'type': 'number', 'format': 'number'}
+            ],
             'mode': 'spark.python',
             'spark_conf': {
                 'spark.app.name': 'test_add',
@@ -42,8 +46,12 @@ class TestSpark(unittest.TestCase):
     def testSparkRddToJson(self):
         analysis = {
             'name': 'map',
-            'inputs': [{'name': 'a', 'type': 'collection', 'format': 'spark.rdd'}],
-            'outputs': [{'name': 'b', 'type': 'collection', 'format': 'spark.rdd'}],
+            'inputs': [
+                {'name': 'a', 'type': 'collection', 'format': 'spark.rdd'}
+            ],
+            'outputs': [
+                {'name': 'b', 'type': 'collection', 'format': 'spark.rdd'}
+            ],
             'mode': 'spark.python',
             'spark_conf': {
                 'spark.app.name': 'test_square',
@@ -60,7 +68,12 @@ class TestSpark(unittest.TestCase):
                                            'data': '[1,2,3,4,5,6,7,8,9]'}},
                                     {'b': {'format': 'json'}})
 
-        expected = {'b': {'data': '[1, 4, 9, 16, 25, 36, 49, 64, 81]', 'format': 'json'}}
+        expected = {
+            'b': {
+                'data': '[1, 4, 9, 16, 25, 36, 49, 64, 81]',
+                'format': 'json'
+            }
+        }
         self.assertEqual(outputs, expected)
 
     def tearDown(self):

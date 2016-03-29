@@ -3,7 +3,8 @@ import os
 import girder_worker.events
 import girder_worker.format
 import girder_worker.io
-from girder_worker.format import converter_path, get_validator_analysis, Validator
+from girder_worker.format import (
+    converter_path, get_validator_analysis, Validator)
 from ConfigParser import ConfigParser
 from executors.python import run as python_run
 from executors.workflow import run as workflow_run
@@ -23,8 +24,8 @@ _task_map = {}
 
 def register_executor(name, fn):
     """
-    Register a new executor in the girder_worker runtime. This is used to map the
-    "mode" field of a task to a function that will execute the task.
+    Register a new executor in the girder_worker runtime. This is used to
+    map the "mode" field of a task to a function that will execute the task.
 
     :param name: The value of the mode field that maps to the given function.
     :type name: str
@@ -52,8 +53,9 @@ register_executor('workflow', workflow_run)
 _plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
                           config.get('girder_worker', 'plugins_enabled'))
 _plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
-_paths = os.environ.get('WORKER_PLUGIN_LOAD_PATH',
-                        config.get('girder_worker', 'plugin_load_path')).split(':')
+_paths = os.environ.get(
+    'WORKER_PLUGIN_LOAD_PATH', config.get(
+        'girder_worker', 'plugin_load_path')).split(':')
 _paths = [p for p in _paths if p.strip()]
 _paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
 utils.load_plugins(_plugins, _paths)
@@ -103,7 +105,8 @@ def isvalid(type, binding, fetch=True, **kwargs):
         ``False`` otherwise.
     """
     analysis = get_validator_analysis(Validator(type, binding["format"]))
-    outputs = girder_worker.run(analysis, {"input": binding}, auto_convert=False,
+    outputs = girder_worker.run(analysis, {"input": binding},
+                                auto_convert=False,
                                 validate=False, fetch=fetch, **kwargs)
     return outputs["output"]["data"]
 
@@ -253,10 +256,11 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             # Validate the input
             if validate and not girder_worker.isvalid(
                     task_input["type"], d,
-                    **dict({'task_input': task_input, 'fetch': False}, **kwargs)):
+                    **dict(
+                        {'task_input': task_input, 'fetch': False}, **kwargs)):
                 raise Exception(
-                    "Input %s (Python type %s) is not in the expected type (%s) "
-                    "and format (%s)." % (
+                    "Input %s (Python type %s) is not in the expected type "
+                    "(%s) and format (%s)." % (
                         name, type(d["data"]), task_input["type"], d["format"])
                     )
 
@@ -265,14 +269,16 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                 converted = girder_worker.convert(
                     task_input["type"], d, {"format": task_input["format"]},
                     status=utils.JobStatus.CONVERTING_INPUT,
-                    **dict({'task_input': task_input, 'fetch': False}, **kwargs))
+                    **dict(
+                        {'task_input': task_input, 'fetch': False}, **kwargs))
                 d["script_data"] = converted["data"]
             elif (d.get("format", task_input.get("format")) ==
                   task_input.get("format")):
                 d["script_data"] = d["data"]
             else:
-                raise Exception("Expected exact format match but '%s != %s'." % (
-                    d["format"], task_input["format"])
+                raise Exception(
+                    "Expected exact format match but '%s != %s'." % (
+                        d["format"], task_input["format"])
                 )
 
         # Make sure all outputs are there
@@ -301,8 +307,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                     task_output["type"], script_output,
                     **dict({'task_output': task_output}, **kwargs)):
                 raise Exception(
-                    "Output %s (%s) is not in the expected type (%s) and format "
-                    " (%s)." % (
+                    "Output %s (%s) is not in the expected type (%s) and "
+                    "format (%s)." % (
                         name, type(script_output["data"]), task_output["type"],
                         d["format"])
                     )
