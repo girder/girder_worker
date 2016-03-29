@@ -43,6 +43,14 @@ A true or false value. Formats:
 
 :``"json"``: A JSON string representing a single boolean (``"true"`` or ``"false"``).
 
+``"integer"`` type
+-----------------------
+An integer. Formats:
+
+:``"integer"``: An in-memory Python ``int``.
+
+:``"json"``: A JSON string representing a single integer.
+
 ``"number"`` type
 -----------------------
 A numeric value (integer or real). Formats:
@@ -59,6 +67,30 @@ A sequence of characters.
 
 :``"json"``: A JSON string representing a single string.
     This is a quoted string with certain characters escaped.
+
+``"integer_list"`` type
+-----------------------
+A list of integers. Formats:
+
+:``"integer_list"``: An in-memory list of Python ``int``.
+
+:``"json"``: A JSON string representing a list of integers.
+
+``"number_list"`` type
+-----------------------
+A list of numbers (integer or real). Formats:
+
+:``"number_list"``: An in-memory list of Python ``int`` or ``float``.
+
+:``"json"``: A JSON string representing a list of numbers.
+
+``"string_list"`` type
+-----------------------
+A list of strings. Formats:
+
+:``"string_list"``: An in-memory list of Python ``str``.
+
+:``"json"``: A JSON string representing a list of strings.
 
 ``"table"`` type
 -----------------------
