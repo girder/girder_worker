@@ -80,8 +80,10 @@ class TestTaskSpec(TestCase):
     """Tests edge cases of the anonymous task spec."""
 
     def test_task_inputs_outputs_equality(self):
-        """Test input and output equality through specs, task __getitem__
-        interface and task __getattr__ interface."""
+        """
+        Test input and output equality through specs, task __getitem__
+        interface and task __getattr__ interface.
+        """
         inputs = sorted([
             {'name': 'a', 'type': 'string', 'format': 'text'},
             {'name': 'b', 'type': 'number', 'format': 'number'},
@@ -193,9 +195,11 @@ class TestTask(TestCase):
 class TestWorkflow(TestCase):
 
     def assertConsistent(self, system, ground, type_spec=None):
-        """Assert that the system and ground are consistent i.e., they
+        """
+        Assert that the system and ground are consistent i.e., they
         have the same order-variant dicts. We test raw dicts,
-        and Spec dicts and if present type specific dicts"""
+        and Spec dicts and if present type specific dicts.
+        """
 
         # Test dicts
         self.assertEquals(to_frozenset(system),
@@ -282,8 +286,10 @@ class TestWorkflow(TestCase):
         }
 
     def test_spec_class_generator(self):
-        """Instantiated classes from spec_class_generator should equal
-           their spec"""
+        """
+        Instantiated classes from spec_class_generator should equal
+        their spec.
+        """
         for spec in [self.add, self.add_three, self.add_two, self.multiply]:
             cls = spec_class_generator('cls', spec)
             self.assertEqual(cls(), spec)
