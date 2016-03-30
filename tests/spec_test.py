@@ -145,7 +145,8 @@ class TestTask(TestCase):
             __outputs__ = specs.PortList(self.outputs)
 
         t = specs.Task(self.spec)
-        self.assertEquals(set(t.keys()), {'inputs', 'outputs', 'mode', 'script'})
+        self.assertEquals(
+            set(t.keys()), {'inputs', 'outputs', 'mode', 'script'})
 
         self.assertEquals(t['inputs'], specs.PortList())
         self.assertEquals(t['outputs'], specs.PortList())
@@ -281,7 +282,8 @@ class TestWorkflow(TestCase):
         }
 
     def test_spec_class_generator(self):
-        """Instantiated classes from spec_class_generator should equal their spec"""
+        """Instantiated classes from spec_class_generator should equal
+           their spec"""
         for spec in [self.add, self.add_three, self.add_two, self.multiply]:
             cls = spec_class_generator("cls", spec)
             self.assertEqual(cls(), spec)
@@ -384,7 +386,8 @@ class TestWorkflow(TestCase):
         self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
 
         self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
-        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(
+            wf['outputs'], outputs_ground, type_spec=specs.Port)
 
         self.assertConsistent(wf.steps, steps_ground)
         self.assertConsistent(wf['steps'], steps_ground)
@@ -405,7 +408,8 @@ class TestWorkflow(TestCase):
         self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
 
         self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
-        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(
+            wf['outputs'], outputs_ground, type_spec=specs.Port)
 
         self.assertConsistent(wf.steps, steps_ground)
         self.assertConsistent(wf['steps'], steps_ground)
@@ -442,7 +446,8 @@ class TestWorkflow(TestCase):
         self.assertConsistent(wf['inputs'], inputs_ground, type_spec=specs.Port)
 
         self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
-        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(
+            wf['outputs'], outputs_ground, type_spec=specs.Port)
 
         self.assertConsistent(wf.steps, steps_ground)
         self.assertConsistent(wf['steps'], steps_ground)
@@ -514,18 +519,20 @@ class TestWorkflow(TestCase):
         wf.connect_tasks("a1", "m2", {"c": "in2"})
         wf.connect_tasks("m2", "a2", {"out": "a"})
 
-        connections_ground = [{"input": "a", "input_step": "a1", "name": "a"},
-                              {"input": "b", "input_step": "a1", "name": "a1.b"},
-                              {"input": "b", "input_step": "a2", "name": "a2.b"},
-                              {"input": "in1", "input_step": "m1", "name": "in1"},
-                              {"input": "in2", "input_step": "m1", "name": "in2"},
-                              {"input": "in2", "input_step": "m2",
-                               "output": "c", "output_step": "a1"},
-                              {"input": "in1", "input_step": "m2",
-                               "output": "out", "output_step": "m1"},
-                              {"input": "a", "input_step": "a2",
-                               "output": "out", "output_step": "m2"},
-                              {"name": "c", "output": "c", "output_step": "a2"}]
+        connections_ground = [
+            {"input": "a", "input_step": "a1", "name": "a"},
+            {"input": "b", "input_step": "a1", "name": "a1.b"},
+            {"input": "b", "input_step": "a2", "name": "a2.b"},
+            {"input": "in1", "input_step": "m1", "name": "in1"},
+            {"input": "in2", "input_step": "m1", "name": "in2"},
+            {"input": "in2", "input_step": "m2",
+             "output": "c", "output_step": "a1"},
+            {"input": "in1", "input_step": "m2",
+             "output": "out", "output_step": "m1"},
+            {"input": "a", "input_step": "a2",
+             "output": "out", "output_step": "m2"},
+            {"name": "c", "output": "c", "output_step": "a2"}
+        ]
 
         inputs_ground = [{"format": "number", "name": "a", "type": "number"},
                          {"format": "number", "name": "a1.b", "type": "number"},
@@ -545,7 +552,8 @@ class TestWorkflow(TestCase):
 
         # Outputs
         self.assertConsistent(wf.outputs, outputs_ground, type_spec=specs.Port)
-        self.assertConsistent(wf['outputs'], outputs_ground, type_spec=specs.Port)
+        self.assertConsistent(
+            wf['outputs'], outputs_ground, type_spec=specs.Port)
 
     def test_workflow(self):
         #                     Task Graph 2

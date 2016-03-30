@@ -25,7 +25,8 @@ class TestGraph(unittest.TestCase):
             }
         }
 
-        with open(os.path.join('tests', 'data', 'clique.json'), 'rb') as fixture:
+        with open(os.path.join(
+                'tests', 'data', 'clique.json'), 'rb') as fixture:
             self.test_input['alphabetGraph']['data'] = fixture.read()
 
     def test_clique(self):
@@ -33,8 +34,9 @@ class TestGraph(unittest.TestCase):
         output = girder_worker.convert(
             'graph', self.test_input['alphabetGraph'], {'format': 'networkx'})
 
-        self.assertEqual(set([n[1]['name'] for n in output['data'].nodes(data=True)]),
-                         set(['a', 'b', 'c', 'd']))
+        self.assertEqual(
+            set([n[1]['name'] for n in output['data'].nodes(data=True)]),
+            set(['a', 'b', 'c', 'd']))
         self.assertEqual(len(output['data'].edges()), 3)
         self.assertEqual(output['data'].degree('55ba5019f8883b5bf35f3e30'), 0)
 

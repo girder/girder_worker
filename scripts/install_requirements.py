@@ -4,7 +4,6 @@ from ConfigParser import ConfigParser
 import argparse
 import os
 import pip
-import subprocess
 import sys
 
 
@@ -35,8 +34,9 @@ def main(args):
     config.read([os.path.join(basePath, 'girder_worker', f) for f in files])
     os.chdir(basePath)
     isDevMode = args.mode in ('dev', 'devel', 'development')
-    plugins = os.environ.get('GIRDER_WORKER_PLUGINS_ENABLED',
-                              config.get('girder_worker', 'plugins_enabled'))
+    plugins = os.environ.get(
+        'GIRDER_WORKER_PLUGINS_ENABLED',
+        config.get('girder_worker', 'plugins_enabled'))
     plugins = [p.strip() for p in plugins.split(',') if p.strip()]
 
     # Install core requirements files

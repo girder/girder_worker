@@ -159,7 +159,8 @@ class TestDockerMode(unittest.TestCase):
             mockPopen.reset_mock()
             # Make sure custom config settings are respected
             girder_worker.config.set('docker', 'cache_timeout', '123456')
-            girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
+            girder_worker.config.set(
+                'docker', 'exclude_images', 'test/test:latest')
 
             # Make sure we can skip pulling the image
             task['pull_image'] = False

@@ -29,7 +29,8 @@ class ConnectionSpec(Spec):
     def __init__(self, *args, **kwargs):
         super(ConnectionSpec, self).__init__(*args, **kwargs)
 
-ConnectionSpec.make_property("name", "Workflow external facing input or output name")
+ConnectionSpec.make_property(
+    "name", "Workflow external facing input or output name")
 ConnectionSpec.make_property("input", "Name of input Port")
 ConnectionSpec.make_property("input_step", "Name of input step")
 ConnectionSpec.make_property("output", "Name of input Port")
@@ -108,8 +109,9 @@ class Workflow(MutableMapping):
 
             self._add_edge(*args)
         else:
-            raise TypeError("connect_tasks() takes either 3 arguments or an "
-                            "iterable of 3 argument tuples. (%s given)" % len(args))
+            raise TypeError(
+                "connect_tasks() takes either 3 arguments or an "
+                "iterable of 3 argument tuples. (%s given)" % len(args))
     ##
     # Dict-like API
     #
@@ -134,10 +136,12 @@ class Workflow(MutableMapping):
         output_ports = {}
         for name, data in self.__graph__.nodes(data=True):
             input_ports[name] = set([d['name'] for d in data['task']['inputs']])
-            output_ports[name] = set([d['name'] for d in data['task']['outputs']])
+            output_ports[name] = set(
+                [d['name'] for d in data['task']['outputs']])
 
         internal_connections = []
-        for output_node, input_node, connections in self.__graph__.edges(data=True):
+        for output_node, input_node, connections in self.__graph__.edges(
+                data=True):
             for output_port, input_port in connections.items():
 
                 # Add to internal connections set
@@ -161,14 +165,16 @@ class Workflow(MutableMapping):
 
     @property
     def connections(self):
-        internal, input_ports, output_ports = self._get_connections_and_open_ports()
+        internal, input_ports, output_ports = (
+            self._get_connections_and_open_ports())
         connections = []
 
         for node, inputs in input_ports.items():
             for input_port in inputs:
                 connections.append(
                     ConnectionSpec({
-                        "name": self._get_node_name(node, input_port, input_ports),
+                        "name": self._get_node_name(
+                            node, input_port, input_ports),
                         "input_step": node,
                         "input": input_port
                     }))
@@ -186,7 +192,8 @@ class Workflow(MutableMapping):
             for output_port in outputs:
                 connections.append(
                     ConnectionSpec({
-                        "name": self._get_node_name(node, output_port, output_ports),
+                        "name": self._get_node_name(
+                            node, output_port, output_ports),
                         "output_step": node,
                         "output": output_port
                     }))
@@ -210,8 +217,10 @@ class Workflow(MutableMapping):
                 # Copy the actual analysis port
                 port = copy.deepcopy(input_ports[port_name])
 
-                # Set the port name (handles conflicts by prefixing with node name)
-                port['name'] = self._get_node_name(node, port_name, open_port_names)
+                # Set the port name (handles conflicts by prefixing with
+                # node name)
+                port['name'] = self._get_node_name(
+                    node, port_name, open_port_names)
 
                 # Check defaults
                 if self.has_default(port['name']):
@@ -238,8 +247,10 @@ class Workflow(MutableMapping):
                 # Copy the actual analysis port
                 port = copy.deepcopy(output_ports[port_name])
 
-                # Set the port name (handles conflicts by prefixing with node name)
-                port['name'] = self._get_node_name(node, port_name, open_port_names)
+                # Set the port name (handles conflicts by prefixing with
+                # node name)
+                port['name'] = self._get_node_name(
+                    node, port_name, open_port_names)
 
                 # Check defaults
                 if self.has_default(port['name']):
@@ -258,14 +269,16 @@ class Workflow(MutableMapping):
 
     def __setitem__(self, key, value):
         if key in self.__interface:
-            raise ReadOnlyAttributeException("%s should not be directly assigned")
+            raise ReadOnlyAttributeException(
+                "%s should not be directly assigned")
 
         raise KeyError("Workflow keys must be one of %s" %
                        ", ".join(self.__interface))
 
     def __delitem__(self, key):
         if key in self.__interface:
-            raise ReadOnlyAttributeException("%s should not be directly removed")
+            raise ReadOnlyAttributeException(
+                "%s should not be directly removed")
         raise KeyError(key)
 
     def __len__(self):

@@ -8,7 +8,9 @@ import networkx as nx
 from collections import namedtuple
 from networkx.exception import NetworkXNoPath
 from networkx.algorithms.shortest_paths.generic import all_shortest_paths
-from networkx.algorithms.shortest_paths.unweighted import single_source_shortest_path
+from networkx.algorithms.shortest_paths.unweighted import (
+    single_source_shortest_path
+)
 
 
 conv_graph = nx.DiGraph()
@@ -96,10 +98,12 @@ def converter_path(source, target):
 
     Throws a ``NetworkXNoPath`` exception if it can not find a path.
 
-    :param source: Validator tuple indicating the type/format being converted `from`.
-    :param target: ``Validator`` tuple indicating the type/format being converted `to`.
-    :returns: An ordered list of the analyses that need to be run to convert from
-        ``source`` to ``target``.
+    :param source: Validator tuple indicating the type/format being converted
+        `from`.
+    :param target: ``Validator`` tuple indicating the type/format being
+        converted `to`.
+    :returns: An ordered list of the analyses that need to be run to convert
+        from ``source`` to ``target``.
     """
     # Ensure an exception gets thrown if source/target don't exist
     try:
@@ -109,8 +113,8 @@ def converter_path(source, target):
         raise NetworkXNoPath
 
     # We sort and pick the first of the shortest paths just to produce a stable
-    # conversion path. This is stable in regards to which plugins are loaded at the
-    # time.
+    # conversion path. This is stable in regards to which plugins are loaded at
+    # the time.
     paths = all_shortest_paths(conv_graph, source, target)
     path = sorted(paths)[0]
     path = zip(path[:-1], path[1:])
@@ -121,13 +125,15 @@ def converter_path(source, target):
 def has_converter(source, target=Validator(type=None, format=None)):
     """Determines if any converters exist from a given type, and optionally format.
 
-    Underneath, this just traverses the edges until it finds one which matches the
-    arguments.
+    Underneath, this just traverses the edges until it finds one which matches
+    the arguments.
 
-    :param source: ``Validator`` tuple indicating the type/format being converted `from`.
-    :param target: ``Validator`` tuple indicating the type/format being converted `to`.
-    :returns: ``True`` if it can converter from ``source`` to ``target``, ``False``
-        otherwise.
+    :param source: ``Validator`` tuple indicating the type/format being
+        converted `from`.
+    :param target: ``Validator`` tuple indicating the type/format being
+        converted `to`.
+    :returns: ``True`` if it can converter from ``source`` to ``target``,
+        ``False`` otherwise.
     """
     sources = []
 
@@ -138,7 +144,7 @@ def has_converter(source, target=Validator(type=None, format=None)):
 
     for u in sources:
         reachable = single_source_shortest_path(conv_graph, u)
-        del reachable[u]  # Ignore the path to ourself, since there are no self loops
+        del reachable[u]  # Ignore path to self, since there are no self loops
 
         for v in reachable:
             if ((target.type is None) or (target.type == v.type)) and \
@@ -176,7 +182,8 @@ def get_validator_analysis(validator):
     try:
         return conv_graph.node[validator]
     except KeyError:
-        raise Exception('No such validator %s/%s' % (validator.type, validator.format))
+        raise Exception(
+            'No such validator %s/%s' % (validator.type, validator.format))
 
 
 def import_converters(search_paths):
@@ -222,8 +229,8 @@ def import_converters(search_paths):
     for path in search_paths:
         os.chdir(path)
         validator_files = set(glob.glob(os.path.join(path, "validate_*.json")))
-        converter_files = set(glob.glob(os.path.join(path,
-                                                     "*_to_*.json"))) - validator_files
+        converter_files = set(glob.glob(os.path.join(
+            path, "*_to_*.json"))) - validator_files
 
         for filename in validator_files:
             analysis = get_analysis(filename)

@@ -10,7 +10,8 @@ class TestArbor(unittest.TestCase):
         cur_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(cur_path)
 
-        self.arbor_path = os.path.abspath(cur_path + "/../../../../" + "analysis/arbor")
+        self.arbor_path = os.path.abspath(
+            cur_path + "/../../../../" + "analysis/arbor")
 
     def test_pgls(self):
         pgls = girder_worker.load(os.path.join(self.arbor_path, "pgls.json"))

@@ -7,16 +7,17 @@ NetworkX to vtkGraph
 
 This creates a vtkMutableDirectedGraph or vtkMutableUndirectedGraph.
 
-It creates nodes which lose their actual value since nodes in vtkGraph are referenced
-strictly by their index. These nodes do retain metadata in the same way edges do
-(see below).
+It creates nodes which lose their actual value since nodes in vtkGraph
+are referenced strictly by their index. These nodes do retain metadata
+in the same way edges do (see below).
 
-It creates edges which maintain the proper association and any metadata, the caveat
-is that all edges are given all metadata attributes with default values.
+It creates edges which maintain the proper association and any metadata,
+the caveat is that all edges are given all metadata attributes with
+default values.
 
 So if an edge has an integer 'distance' attribute, and another does not - the
-non-distanced edge will have a distance of 0. This follows suit for all of pythons
-defaults, bool(), str(), float(), etc.
+non-distanced edge will have a distance of 0. This follows suit for
+all of python's defaults, bool(), str(), float(), etc.
 
 As such it requires that all keys have the same type.
 """
@@ -64,7 +65,8 @@ for (_, _, data) in edges:
             data[field] = field_type()
 
 # Add vtkArrays to the output data for nodes and edges
-# We can just use the first node and edge since they all have same attr name/types
+# We can just use the first node and edge since they all have same
+# attr name/types
 if nodes:
     dict_to_vtkarrays(nodes[0][1],
                       node_field_types.keys(),

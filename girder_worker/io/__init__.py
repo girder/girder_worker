@@ -22,7 +22,8 @@ def _inline_fetch(spec, **kwargs):
             with open(path, 'wb') as out:
                 out.write(spec['data'])
         else:
-            with tempfile.NamedTemporaryFile('wb', prefix=tmpDir, delete=False) as out:
+            with tempfile.NamedTemporaryFile(
+                    'wb', prefix=tmpDir, delete=False) as out:
                 out.write(spec['data'])
                 path = out.name
 

@@ -101,7 +101,8 @@ class Task(MutableMapping):
         """Extend spec setitem to call PortList for input/output properties."""
 
         if key in ('inputs', 'outputs'):
-            raise ReadOnlyAttributeException('%s is a read only attribute.' % key)
+            raise ReadOnlyAttributeException(
+                '%s is a read only attribute.' % key)
         else:
             self.__spec__.__setitem__(key, value)
 

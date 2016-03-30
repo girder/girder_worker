@@ -55,7 +55,8 @@ class TestFormat(unittest.TestCase):
         self.assertTrue(has_converter(Validator('string', None)))
 
         # There are no converters from string/non-existent-format
-        self.assertFalse(has_converter(Validator('string', 'non-existent-format')))
+        self.assertFalse(has_converter(Validator(
+            'string', 'non-existent-format')))
 
         # There are converters from string/text
         self.assertTrue(has_converter(self.stringTextValidator))
@@ -77,8 +78,9 @@ class TestFormat(unittest.TestCase):
                                        Validator('number', format=None)))
 
         # This only has a converter which is multiple hops away
-        self.assertTrue(has_converter(Validator('table', format='rows'),
-                                      Validator('table', format='objectlist.json')))
+        self.assertTrue(has_converter(
+            Validator('table', format='rows'),
+            Validator('table', format='objectlist.json')))
 
     def test_conversion_graph(self):
         print_conversion_graph()

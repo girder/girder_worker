@@ -30,7 +30,8 @@ close(outfile)
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     tmp_dir = kwargs.get('_tempdir')
 
-    script_fname = _write_julia_script(task['script'], inputs, task_outputs, tmp_dir)
+    script_fname = _write_julia_script(
+        task['script'], inputs, task_outputs, tmp_dir)
 
     print_stderr, print_stdout = True, True
     for id, to in task_outputs.iteritems():
@@ -60,4 +61,5 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
             # Deal with converting from string - assume JSON
             if task_output['type'] in ('number', 'boolean'):
-                outputs[name]['script_data'] = json.loads(outputs[name]['script_data'])
+                outputs[name]['script_data'] = json.loads(
+                    outputs[name]['script_data'])
