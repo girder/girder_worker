@@ -1,4 +1,4 @@
-'''Tests for core spec objects.'''
+"""Tests for core spec objects."""
 import unittest
 from unittest import TestCase
 from girder_worker import specs
@@ -7,16 +7,16 @@ import girder_worker
 
 
 class TestSpec(TestCase):
-    '''Tests edge cases of the base spec.'''
+    """Tests edge cases of the base spec."""
 
     def test_key_not_str(self):
-        '''Raise a TypeError for invalid keys.'''
+        """Raise a TypeError for invalid keys."""
         s = specs.Spec()
         with self.assertRaises(TypeError):
             s.update({0: 'value'})
 
     def test_delete_required_exception(self):
-        '''Raise an exception during a key deletion.'''
+        """Raise an exception during a key deletion."""
         def has_required(self, *a, **kw):
             assert 'required' in self
 
@@ -29,10 +29,10 @@ class TestSpec(TestCase):
 
 
 class TestPort(TestCase):
-    '''Tests edge cases of the port spec.'''
+    """Tests edge cases of the port spec."""
 
     def test_port_fetch(self):
-        '''Test edge cases in Port.fetch not testing in doctests.'''
+        """Test edge cases in Port.fetch not testing in doctests."""
         port = specs.Port(name='a', type='number', format='number')
 
         # matching formats
@@ -51,7 +51,7 @@ class TestPort(TestCase):
             port.fetch({'data': '2', 'format': 'json'})
 
     def test_port_push(self):
-        '''Test edge cases in Port.push not testing in doctests.'''
+        """Test edge cases in Port.push not testing in doctests."""
         port = specs.Port(name='a', type='number', format='number')
 
         # matching formats
@@ -70,18 +70,18 @@ class TestPort(TestCase):
             port.push({'data': '2', 'format': 'json'})
 
     def test_port_init(self):
-        '''Test edge cases in Port not testing in doctests.'''
+        """Test edge cases in Port not testing in doctests."""
         p = specs.Port(name='a')
         with self.assertRaises(ValueError):
             p.type = 'notatype'
 
 
 class TestTaskSpec(TestCase):
-    '''Tests edge cases of the anonymous task spec.'''
+    """Tests edge cases of the anonymous task spec."""
 
     def test_task_inputs_outputs_equality(self):
-        '''Test input and output equality through specs, task __getitem__
-        interface and task __getattr__ interface.'''
+        """Test input and output equality through specs, task __getitem__
+        interface and task __getattr__ interface."""
         inputs = sorted([
             {'name': 'a', 'type': 'string', 'format': 'text'},
             {'name': 'b', 'type': 'number', 'format': 'number'},
@@ -109,7 +109,7 @@ class TestTaskSpec(TestCase):
 
 
 class TestTask(TestCase):
-    '''Tests edge cases of the task spec.'''
+    """Tests edge cases of the task spec."""
 
     def setUp(self):
         self.inputs = sorted([
@@ -138,7 +138,7 @@ class TestTask(TestCase):
 
     def test_class_level_set_of_inputs_outputs(self):
 
-        '''Test task input/output attributes are set from class vars'''
+        """Test task input/output attributes are set from class vars"""
 
         class TempTask(specs.Task):
             __inputs__ = specs.PortList(self.inputs)
@@ -157,7 +157,7 @@ class TestTask(TestCase):
 
     def test_read_only_attributes(self):
 
-        '''Raise exception if task input/output are assigned'''
+        """Raise exception if task input/output are assigned"""
 
         class TempTask(specs.Task):
             __inputs__ = specs.PortList(self.inputs)
@@ -193,9 +193,9 @@ class TestTask(TestCase):
 class TestWorkflow(TestCase):
 
     def assertConsistent(self, system, ground, type_spec=None):
-        '''Assert that the system and ground are consistent i.e., they
+        """Assert that the system and ground are consistent i.e., they
         have the same order-variant dicts. We test raw dicts,
-        and Spec dicts and if present type specific dicts'''
+        and Spec dicts and if present type specific dicts"""
 
         # Test dicts
         self.assertEquals(to_frozenset(system),
@@ -282,14 +282,14 @@ class TestWorkflow(TestCase):
         }
 
     def test_spec_class_generator(self):
-        '''Instantiated classes from spec_class_generator should equal
-           their spec'''
+        """Instantiated classes from spec_class_generator should equal
+           their spec"""
         for spec in [self.add, self.add_three, self.add_two, self.multiply]:
             cls = spec_class_generator('cls', spec)
             self.assertEqual(cls(), spec)
 
     def test_empty_workflow(self):
-        '''Empty Workflow objects should have certain properties'''
+        """Empty Workflow objects should have certain properties"""
         wf = specs.Workflow()
 
         self.assertEquals(len(wf), 5)
@@ -324,7 +324,7 @@ class TestWorkflow(TestCase):
             wf['foo'] = 'foo'
 
     def test_workflow_add_task_dict(self):
-        '''Adding task dicts should show up in Workflow.steps'''
+        """Adding task dicts should show up in Workflow.steps"""
         wf = specs.Workflow()
 
         wf.add_task(self.add, 'add')
@@ -364,7 +364,7 @@ class TestWorkflow(TestCase):
                           to_frozenset([specs.StepSpec(t) for t in task_list]))
 
     def test_workflow_connect_tasks(self):
-        '''Verify connections is correct given a known task graph'''
+        """Verify connections is correct given a known task graph"""
 
         # * Test connect_tasks(t1, t2, {'output': input})
         inputs_ground = [{'format': 'number', 'name': 'a', 'type': 'number'}]

@@ -52,10 +52,10 @@ class TestPickle(unittest.TestCase):
 
     def run_basic_task(self, inputs):
         """Run a basic task with pickle types."""
-        script = '''
+        script = """
 c = a * b
 d = b + b
-'''
+"""
         task = {
             'inputs': [
                 {'name': 'a', 'type': 'python', 'format': 'object'},
