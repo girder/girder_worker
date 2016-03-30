@@ -10,7 +10,7 @@ def set_nested(obj, path, v):
     set_nested(obj[key], path, v)
 
 output = []
-for row in input["rows"]:
+for row in input['rows']:
     item = {}
     for k, v in row.iteritems():
         path = k.split('.')

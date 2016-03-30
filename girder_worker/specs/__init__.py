@@ -7,5 +7,5 @@ from .workflow import WorkflowException, DuplicateTaskException
 
 __all__ = ('Spec', 'Port', 'PortList', 'ValidationError',
            'TaskSpec', 'Task', 'ReadOnlyAttributeException',
-           "Workflow", "StepSpec", "ConnectionSpec",
-           "WorkflowException", "DuplicateTaskException")
+           'Workflow', 'StepSpec', 'ConnectionSpec',
+           'WorkflowException', 'DuplicateTaskException')

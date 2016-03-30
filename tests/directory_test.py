@@ -13,25 +13,25 @@ class TestDirectory(unittest.TestCase):
     Tests the conversions for the directory type formats.
     """
     extractTask = {
-        "inputs": [{
-            "id": "myDir",
-            "type": "directory",
-            "format": "path"
+        'inputs': [{
+            'id': 'myDir',
+            'type': 'directory',
+            'format': 'path'
         }],
-        "outputs": [{
-            "id": "myDir",
-            "type": "string",
-            "format": "text"
+        'outputs': [{
+            'id': 'myDir',
+            'type': 'string',
+            'format': 'text'
         }, {
-            "name": "files",
-            "type": "python",
-            "format": "object"
+            'name': 'files',
+            'type': 'python',
+            'format': 'object'
         }],
-        "script": "\n".join([
-            "import os",
-            "files = list(os.listdir(myDir))"
+        'script': '\n'.join([
+            'import os',
+            'files = list(os.listdir(myDir))'
         ]),
-        "mode": "python"
+        'mode': 'python'
     }
 
     zipFile = os.path.join(DATA_DIR, 'testZip.zip')
@@ -60,9 +60,9 @@ class TestDirectory(unittest.TestCase):
         outputs = girder_worker.run(
             self.extractTask,
             inputs={
-                "myDir": {
-                    "format": "zip",
-                    "data": self.zipFile
+                'myDir': {
+                    'format': 'zip',
+                    'data': self.zipFile
                 }
             })
 
@@ -79,9 +79,9 @@ class TestDirectory(unittest.TestCase):
         outputs = girder_worker.run(
             self.extractTask,
             inputs={
-                "myDir": {
-                    "format": "tgz",
-                    "data": self.tarFile
+                'myDir': {
+                    'format': 'tgz',
+                    'data': self.tarFile
                 }
             })
 
@@ -96,24 +96,24 @@ class TestDirectory(unittest.TestCase):
 
     def testCreateZip(self):
         task = {
-            "inputs": [{
-                "id": "myArchive",
-                "type": "directory",
-                "format": "zip"
+            'inputs': [{
+                'id': 'myArchive',
+                'type': 'directory',
+                'format': 'zip'
             }],
-            "outputs": [{
-                "id": "output",
-                "type": "string",
-                "format": "text"
+            'outputs': [{
+                'id': 'output',
+                'type': 'string',
+                'format': 'text'
             }],
-            "script": "output = myArchive",
-            "mode": "python"
+            'script': 'output = myArchive',
+            'mode': 'python'
         }
 
         outputs = girder_worker.run(task, inputs={
-            "myArchive": {
-                "format": "path",
-                "data": self.createFromDir
+            'myArchive': {
+                'format': 'path',
+                'data': self.createFromDir
             }
         })
 
@@ -127,24 +127,24 @@ class TestDirectory(unittest.TestCase):
 
     def testCreateTgz(self):
         task = {
-            "inputs": [{
-                "id": "myArchive",
-                "type": "directory",
-                "format": "tgz"
+            'inputs': [{
+                'id': 'myArchive',
+                'type': 'directory',
+                'format': 'tgz'
             }],
-            "outputs": [{
-                "id": "output",
-                "type": "string",
-                "format": "text"
+            'outputs': [{
+                'id': 'output',
+                'type': 'string',
+                'format': 'text'
             }],
-            "script": "output = myArchive",
-            "mode": "python"
+            'script': 'output = myArchive',
+            'mode': 'python'
         }
 
         outputs = girder_worker.run(task, inputs={
-            "myArchive": {
-                "format": "path",
-                "data": self.createFromDir
+            'myArchive': {
+                'format': 'path',
+                'data': self.createFromDir
             }
         })
 

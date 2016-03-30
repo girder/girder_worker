@@ -6,67 +6,67 @@ class TestNumber(unittest.TestCase):
 
     def setUp(self):
         self.analysis = {
-            "name": "add",
-            "inputs": [
+            'name': 'add',
+            'inputs': [
                 {
-                    "name": "a",
-                    "type": "string",
-                    "format": "text",
-                    "default": {
-                        "format": "json",
-                        "data": "hi"
+                    'name': 'a',
+                    'type': 'string',
+                    'format': 'text',
+                    'default': {
+                        'format': 'json',
+                        'data': 'hi'
                     }
                 },
                 {
-                    "name": "b",
-                    "type": "string",
-                    "format": "text"
+                    'name': 'b',
+                    'type': 'string',
+                    'format': 'text'
                 }
             ],
-            "outputs": [{"name": "c", "type": "string", "format": "text"}],
-            "script": "c = a + b",
-            "mode": "python"
+            'outputs': [{'name': 'c', 'type': 'string', 'format': 'text'}],
+            'script': 'c = a + b',
+            'mode': 'python'
         }
 
     def test_text(self):
         outputs = girder_worker.run(
             self.analysis,
             inputs={
-                "a": {"format": "text", "data": "hi, "},
-                "b": {"format": "text", "data": "there"}
+                'a': {'format': 'text', 'data': 'hi, '},
+                'b': {'format': 'text', 'data': 'there'}
             },
             outputs={
-                "c": {"format": "text"}
+                'c': {'format': 'text'}
             })
-        self.assertEqual(outputs["c"]["format"], "text")
-        self.assertEqual(outputs["c"]["data"], "hi, there")
+        self.assertEqual(outputs['c']['format'], 'text')
+        self.assertEqual(outputs['c']['data'], 'hi, there')
 
     def test_json(self):
         outputs = girder_worker.run(
             self.analysis,
             inputs={
-                "a": {"format": "json", "data": '"hi, "'},
-                "b": {"format": "json", "data": '"there"'}
+                'a': {'format': 'json', 'data': '"hi, "'},
+                'b': {'format': 'json', 'data': '"there"'}
             },
             outputs={
-                "c": {"format": "json"}
+                'c': {'format': 'json'}
             })
-        self.assertEqual(outputs["c"]["format"], "json")
-        self.assertEqual(outputs["c"]["data"], '"hi, there"')
+        self.assertEqual(outputs['c']['format'], 'json')
+        self.assertEqual(outputs['c']['data'], '"hi, there"')
 
     def test_unicode(self):
         outputs = girder_worker.run(
             self.analysis,
             inputs={
-                "a": {"format": "text", "data": u"hi, "},
-                "b": {"format": "text", "data": u"there"}
+                'a': {'format': 'text', 'data': u'hi, '},
+                'b': {'format': 'text', 'data': u'there'}
             },
             outputs={
-                "c": {"format": "text"}
+                'c': {'format': 'text'}
             })
-        self.assertEqual(outputs["c"]["format"], "text")
-        self.assertEqual(outputs["c"]["data"], u"hi, there")
-        self.assertIsInstance(outputs["c"]["data"], unicode)
+        self.assertEqual(outputs['c']['format'], 'text')
+        self.assertEqual(outputs['c']['data'], u'hi, there')
+        self.assertIsInstance(outputs['c']['data'], unicode)
 
 if __name__ == '__main__':
     unittest.main()

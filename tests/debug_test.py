@@ -25,38 +25,38 @@ class TestDebug(unittest.TestCase):
             "c = {'fields': a['fields'], 'rows': a['rows'] + b['rows']}"
         )
         self.analysis = {
-            "name": "append_tables",
-            "inputs": [
-                {"name": "a", "type": "table", "format": "rows"},
-                {"name": "b", "type": "table", "format": "rows"}
+            'name': 'append_tables',
+            'inputs': [
+                {'name': 'a', 'type': 'table', 'format': 'rows'},
+                {'name': 'b', 'type': 'table', 'format': 'rows'}
             ],
-            "outputs": [{"name": "c", "type": "table", "format": "rows"}],
-            "script": self.script,
-            "mode": "python"
+            'outputs': [{'name': 'c', 'type': 'table', 'format': 'rows'}],
+            'script': self.script,
+            'mode': 'python'
         }
 
         self.inputs = {
-            "a": {
-                "format": "rows.json",
-                "data": ('{"fields": ["aa", "bb"], '
+            'a': {
+                'format': 'rows.json',
+                'data': ('{"fields": ["aa", "bb"], '
                          '"rows": [{"aa": 1, "bb": 2}]}')
             },
-            "b": {
-                "format": "rows.json",
-                "data": ('{"fields": ["aa", "bb"],'
+            'b': {
+                'format': 'rows.json',
+                'data': ('{"fields": ["aa", "bb"],'
                          '"rows": [{"aa": 3, "bb": 4}]}')
             }
         }
 
         self.outputs = {
-            "c": {"format": "rows.json"}
+            'c': {'format': 'rows.json'}
         }
 
         # Change dir for loading analyses
         self.prevdir = os.getcwd()
         cur_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(cur_path)
-        self.analysis_path = os.path.join(cur_path, "..", "analysis")
+        self.analysis_path = os.path.join(cur_path, '..', 'analysis')
 
     def tearDown(self):
         os.chdir(self.prevdir)
@@ -65,7 +65,7 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for analysis debugging"""
         global _tmpfiles
 
-        girder_worker.run(dict(self.analysis.items() + [("debug", 1)]),
+        girder_worker.run(dict(self.analysis.items() + [('debug', 1)]),
                           inputs=self.inputs,
                           outputs=self.outputs)
 
@@ -73,7 +73,7 @@ class TestDebug(unittest.TestCase):
         self.assertEquals(len(_tmpfiles), 1)
 
         # File contents equals script
-        with open(_tmpfiles[0], "r") as fh:
+        with open(_tmpfiles[0], 'r') as fh:
             self.assertEquals(fh.read(), self.script)
 
     def test_kwargs_debug(self):

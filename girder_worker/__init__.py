@@ -25,7 +25,7 @@ _task_map = {}
 def register_executor(name, fn):
     """
     Register a new executor in the girder_worker runtime. This is used to
-    map the "mode" field of a task to a function that will execute the task.
+    map the 'mode' field of a task to a function that will execute the task.
 
     :param name: The value of the mode field that maps to the given function.
     :type name: str
@@ -63,9 +63,9 @@ utils.load_plugins(_plugins, _paths)
 
 def load(task_file):
     """
-    Load a task JSON into memory, resolving any ``"script_uri"`` fields
-    by replacing it with a ``"script"`` field containing the contents pointed
-    to by ``"script_uri"`` (see :py:mod:`girder_worker.uri` for URI formats). A
+    Load a task JSON into memory, resolving any ``'script_uri'`` fields
+    by replacing it with a ``'script'`` field containing the contents pointed
+    to by ``'script_uri'`` (see :py:mod:`girder_worker.uri` for URI formats). A
     ``script_fetch_mode`` field may also be set
 
     :param task_file: The path to the JSON file to load.
@@ -75,13 +75,13 @@ def load(task_file):
     with open(task_file) as f:
         task = json.load(f)
 
-    if "script" not in task and task.get("mode") != "workflow":
+    if 'script' not in task and task.get('mode') != 'workflow':
         prevdir = os.getcwd()
         parent = os.path.dirname(task_file)
-        if parent != "":
+        if parent != '':
             os.chdir(os.path.dirname(task_file))
-        task["script"] = girder_worker.io.fetch({
-            "url": task["script_uri"]
+        task['script'] = girder_worker.io.fetch({
+            'url': task['script_uri']
         })
         os.chdir(prevdir)
 
@@ -94,21 +94,21 @@ def isvalid(type, binding, fetch=True, **kwargs):
 
     :param type: The expected type specifier string of the binding.
     :param binding: A binding dict of the form
-        ``{"format": format, "data", data}``, where ``format`` is the format
+        ``{'format': format, 'data', data}``, where ``format`` is the format
         specifier string, and ``data`` is the raw data to test.
         The dict may also be of the form
-        ``{"format": format, "uri", uri}``, where ``uri`` is the location of
+        ``{'format': format, 'uri', uri}``, where ``uri`` is the location of
         the data (see :py:mod:`girder_worker.uri` for URI formats).
     :param fetch: Whether to do an initial data fetch before conversion
         (default ``True``).
     :returns: ``True`` if the binding matches the type and format,
         ``False`` otherwise.
     """
-    analysis = get_validator_analysis(Validator(type, binding["format"]))
-    outputs = girder_worker.run(analysis, {"input": binding},
+    analysis = get_validator_analysis(Validator(type, binding['format']))
+    outputs = girder_worker.run(analysis, {'input': binding},
                                 auto_convert=False,
                                 validate=False, fetch=fetch, **kwargs)
-    return outputs["output"]["data"]
+    return outputs['output']['data']
 
 
 def convert(type, input, output, fetch=True, status=None, **kwargs):
@@ -117,39 +117,39 @@ def convert(type, input, output, fetch=True, status=None, **kwargs):
 
     :param type: The type specifier string of the input data.
     :param input: A binding dict of the form
-        ``{"format": format, "data", data}``, where ``format`` is the format
+        ``{'format': format, 'data', data}``, where ``format`` is the format
         specifier string, and ``data`` is the raw data to convert.
         The dict may also be of the form
-        ``{"format": format, "uri", uri}``, where ``uri`` is the location of
+        ``{'format': format, 'uri', uri}``, where ``uri`` is the location of
         the data (see :py:mod:`girder_worker.uri` for URI formats).
     :param output: A binding of the form
-        ``{"format": format}``, where ``format`` is the format
+        ``{'format': format}``, where ``format`` is the format
         specifier string to convert the data to.
         The binding may also be in the form
-        ``{"format": format, "uri", uri}``, where ``uri`` specifies
+        ``{'format': format, 'uri', uri}``, where ``uri`` specifies
         where to place the converted data.
     :param fetch: Whether to do an initial data fetch before conversion
         (default ``True``).
     :returns: The output binding
-        dict with an additional field ``"data"`` containing the converted data.
-        If ``"uri"`` is present in the output binding, instead saves the data
+        dict with an additional field ``'data'`` containing the converted data.
+        If ``'uri'`` is present in the output binding, instead saves the data
         to the specified URI and
         returns the output binding unchanged.
     """
     if fetch:
-        input["data"] = girder_worker.io.fetch(input, **kwargs)
+        input['data'] = girder_worker.io.fetch(input, **kwargs)
 
-    if input["format"] == output["format"]:
-        data = input["data"]
+    if input['format'] == output['format']:
+        data = input['data']
     else:
         data_descriptor = input
         for c in converter_path(Validator(type, input['format']),
                                 Validator(type, output['format'])):
             result = girder_worker.run(
-                c, {"input": data_descriptor}, auto_convert=False,
+                c, {'input': data_descriptor}, auto_convert=False,
                 status=status, **kwargs)
-            data_descriptor = result["output"]
-        data = data_descriptor["data"]
+            data_descriptor = result['output']
+        data = data_descriptor['data']
 
     if status == utils.JobStatus.CONVERTING_OUTPUT:
         job_mgr = kwargs.get('_job_manager')
@@ -200,24 +200,24 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
     :type status: girder_worker.utils.JobStatus
     :returns: A dictionary of the form ``name: binding`` where ``name`` is
         the name of the output and ``binding`` is an output binding of the form
-        ``{"format": format, "data": data}``. If the `outputs` param
+        ``{'format': format, 'data': data}``. If the `outputs` param
         is specified, the formats of these bindings will match those given in
-        `outputs`. Additionally, ``"data"`` may be absent if an output URI
+        `outputs`. Additionally, ``'data'`` may be absent if an output URI
         was provided. Instead, those outputs will be saved to that URI and
-        the output binding will contain the location in the ``"uri"`` field.
+        the output binding will contain the location in the ``'uri'`` field.
     """
     def extractId(spec):
-        return spec["id"] if "id" in spec else spec["name"]
+        return spec['id'] if 'id' in spec else spec['name']
 
     if inputs is None:
         inputs = {}
 
-    task_inputs = {extractId(d): d for d in task.get("inputs", ())}
-    task_outputs = {extractId(d): d for d in task.get("outputs", ())}
-    mode = task.get("mode", "python")
+    task_inputs = {extractId(d): d for d in task.get('inputs', ())}
+    task_outputs = {extractId(d): d for d in task.get('outputs', ())}
+    mode = task.get('mode', 'python')
 
     if mode not in _task_map:
-        raise Exception("Invalid mode: %s" % mode)
+        raise Exception('Invalid mode: %s' % mode)
 
     job_mgr = kwargs.get('_job_manager')
 
@@ -238,10 +238,11 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         # If some inputs are not there, fill in with defaults
         for name, task_input in task_inputs.iteritems():
             if name not in inputs:
-                if "default" in task_input:
-                    inputs[name] = task_input["default"]
+                if 'default' in task_input:
+                    inputs[name] = task_input['default']
                 else:
-                    raise Exception("Required input '%s' not provided." % name)
+                    raise Exception(
+                        'Required input \'%s\' not provided.' % name)
 
         for name, d in inputs.iteritems():
             task_input = task_inputs[name]
@@ -250,35 +251,35 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             if fetch:
                 if status == utils.JobStatus.RUNNING and 'data' not in d:
                     _job_status(job_mgr, utils.JobStatus.FETCHING_INPUT)
-                d["data"] = girder_worker.io.fetch(
+                d['data'] = girder_worker.io.fetch(
                     d, **dict({'task_input': task_input}, **kwargs))
 
             # Validate the input
             if validate and not girder_worker.isvalid(
-                    task_input["type"], d,
+                    task_input['type'], d,
                     **dict(
                         {'task_input': task_input, 'fetch': False}, **kwargs)):
                 raise Exception(
-                    "Input %s (Python type %s) is not in the expected type "
-                    "(%s) and format (%s)." % (
-                        name, type(d["data"]), task_input["type"], d["format"])
+                    'Input %s (Python type %s) is not in the expected type '
+                    '(%s) and format (%s).' % (
+                        name, type(d['data']), task_input['type'], d['format'])
                     )
 
             # Convert data
             if auto_convert:
                 converted = girder_worker.convert(
-                    task_input["type"], d, {"format": task_input["format"]},
+                    task_input['type'], d, {'format': task_input['format']},
                     status=utils.JobStatus.CONVERTING_INPUT,
                     **dict(
                         {'task_input': task_input, 'fetch': False}, **kwargs))
-                d["script_data"] = converted["data"]
-            elif (d.get("format", task_input.get("format")) ==
-                  task_input.get("format")):
-                d["script_data"] = d["data"]
+                d['script_data'] = converted['data']
+            elif (d.get('format', task_input.get('format')) ==
+                  task_input.get('format')):
+                d['script_data'] = d['data']
             else:
                 raise Exception(
-                    "Expected exact format match but '%s != %s'." % (
-                        d["format"], task_input["format"])
+                    'Expected exact format match but \'%s != %s\'.' % (
+                        d['format'], task_input['format'])
                 )
 
         # Make sure all outputs are there
@@ -287,7 +288,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
         for name, task_output in task_outputs.iteritems():
             if name not in outputs:
-                outputs[name] = {"format": task_output["format"]}
+                outputs[name] = {'format': task_output['format']}
 
         # Set the appropriate job status flag
         _job_status(job_mgr, status)
@@ -299,41 +300,41 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
         for name, task_output in task_outputs.iteritems():
             d = outputs[name]
-            script_output = {"data": d["script_data"],
-                             "format": task_output["format"]}
+            script_output = {'data': d['script_data'],
+                             'format': task_output['format']}
 
             # Validate the output
             if validate and not girder_worker.isvalid(
-                    task_output["type"], script_output,
+                    task_output['type'], script_output,
                     **dict({'task_output': task_output}, **kwargs)):
                 raise Exception(
-                    "Output %s (%s) is not in the expected type (%s) and "
-                    "format (%s)." % (
-                        name, type(script_output["data"]), task_output["type"],
-                        d["format"])
+                    'Output %s (%s) is not in the expected type (%s) and '
+                    'format (%s).' % (
+                        name, type(script_output['data']), task_output['type'],
+                        d['format'])
                     )
 
             # We should consider refactoring the logic below, reasoning about
             # the paths through this code is difficult, since this logic is
-            # entered by "run", "isvalid", and "convert".
+            # entered by 'run', 'isvalid', and 'convert'.
             if auto_convert:
                 outputs[name] = girder_worker.convert(
-                    task_output["type"], script_output, d,
+                    task_output['type'], script_output, d,
                     status=utils.JobStatus.CONVERTING_OUTPUT,
                     **dict({'task_output': task_output}, **kwargs))
-            elif d["format"] == task_output["format"]:
-                data = d["script_data"]
+            elif d['format'] == task_output['format']:
+                data = d['script_data']
 
                 if status == utils.JobStatus.RUNNING:
                     _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
                 girder_worker.io.push(
                     data, d, **dict({'task_output': task_output}, **kwargs))
             else:
-                raise Exception("Expected exact format match but %s != %s.'" % (
-                    d["format"], task_output["format"]))
+                raise Exception('Expected exact format match but %s != %s.' % (
+                    d['format'], task_output['format']))
 
-            if "script_data" in outputs[name]:
-                del outputs[name]["script_data"]
+            if 'script_data' in outputs[name]:
+                del outputs[name]['script_data']
 
         girder_worker.events.trigger('run.after', info)
 

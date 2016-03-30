@@ -79,12 +79,12 @@ Defining our task, we can embed this script:
             'format': 'networkx'}
        ],
        'script':
-       '''
+       """
    from networkx import degree
 
    degrees = degree(G)
    most_popular_person = max(degrees, key=degrees.get)
-       '''
+       """
    }
 
 .. note :: As we saw with our last script assuming ``G`` would in be scope, this task explicitly states that both ``most_popular_person`` and ``G`` will be in scope (as its outputs) when it's done.
@@ -122,11 +122,11 @@ Again, we can create a task using our new script, like so:
             'format': 'networkx'}
        ],
        'script':
-       '''
+       """
    from networkx import ego_graph
 
    subgraph = ego_graph(G, most_popular_person)
-       '''
+       """
     }
 
 

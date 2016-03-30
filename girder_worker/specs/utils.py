@@ -59,9 +59,9 @@ def spec_class_generator(class_type, spec):
 
     # Define __inputs__ and __outputs__ variables on the class.
     cls_vars = {
-        "__inputs__": specs.PortList(spec['inputs']),
-        "__outputs__": specs.PortList(spec['outputs']),
-        "__init__": __init__}
+        '__inputs__': specs.PortList(spec['inputs']),
+        '__outputs__': specs.PortList(spec['outputs']),
+        '__init__': __init__}
 
     return type(class_type, (specs.Task,), cls_vars)
 

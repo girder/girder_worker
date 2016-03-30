@@ -108,10 +108,10 @@ look like the following:
          {'name': 'blur_radius', 'type': 'number', 'format': 'number'}
       ],
       'outputs': [{'name': 'blur_output', 'type': 'image', 'format': 'pil'}],
-      'script': '''
+      'script': """
    from PIL import ImageFilter
    blur_output = blur_input.filter(ImageFilter.GaussianBlur(blur_radius))
-   '''
+   """
    }
 
 Notice that this task takes an additional numeric input that acts as
@@ -194,10 +194,10 @@ create a task to subtract two images from each other.
        'outputs': [
            {'name': 'diff', 'type': 'image', 'format': 'pil'},
        ],
-       'script': '''
+       'script': """
    from PIL import ImageMath
    diff = ImageMath.eval('abs(int(a) - int(b))', a=sub_input1, b=sub_input2)
-   '''
+   """
    }
 
 Now another task will compute the average pixel value of the input image.
@@ -211,10 +211,10 @@ Now another task will compute the average pixel value of the input image.
        'outputs': [
            {'name': 'mean_value', 'type': 'number', 'format': 'number'},
        ],
-       'script': '''
+       'script': """
    from PIL import ImageStat
    mean_value = ImageStat.Stat(mean_input).mean[0]
-   '''
+   """
    }
 
 Finally, let's add all of the tasks to a new workflow and make the appropriate connections.

@@ -34,7 +34,7 @@ def recursive_clade(obj, data_coll, tree_coll=None):
         attr = getattr(obj, key)
         if attr and attr is not None:
             # debugging
-            print "key = %s, attr = %s" % (key, attr)
+            print 'key = %s, attr = %s' % (key, attr)
 
             # get all non-recursive clade attributes first
             # do we need to even do this first? SZ -Aug 16, 2012
@@ -49,7 +49,7 @@ def recursive_clade(obj, data_coll, tree_coll=None):
                     # if it's a complex phyloxml TreeElement attribute, parse
                     # it using recurisve_attr
                     else:
-                        print("  elem3, attr = %s, type = %s"
+                        print('  elem3, attr = %s, type = %s'
                               % (attr, type(elem)))
                         tempDictList.append(recursive_attr(elem))
                 tempDict[key] = tempDictList
@@ -71,7 +71,7 @@ def recursive_clade(obj, data_coll, tree_coll=None):
                 #                              'dataLink':child_id['dataId']})
                 treeDict['clades'].append(child_id['treeId'])
     # if args.debug_level >= 1:
-    # print "object name: ", obj.name, tempDict
+    # print 'object name: ', obj.name, tempDict
     # insert into mongodb here
 
     # add mongodb id

@@ -70,10 +70,10 @@ def csv_to_rows(input):
     rows = [d for d in reader]
     fields = reader.fieldnames
 
-    output = {"fields": fields, "rows": rows}
+    output = {'fields': fields, 'rows': rows}
 
     # Attempt numeric conversion
-    for row in output["rows"]:
+    for row in output['rows']:
         for col in row:
             try:
                 row[col] = int(row[col])
@@ -217,10 +217,10 @@ def import_converters(search_paths):
         with open(filename) as f:
             analysis = json.load(f)
 
-            if "script" not in analysis:
-                analysis["script"] = girder_worker.io.fetch({
-                    "mode": analysis.get("script_fetch_mode", "auto"),
-                    "url": analysis["script_uri"]
+            if 'script' not in analysis:
+                analysis['script'] = girder_worker.io.fetch({
+                    'mode': analysis.get('script_fetch_mode', 'auto'),
+                    'url': analysis['script_uri']
                 })
 
         return analysis
@@ -228,24 +228,24 @@ def import_converters(search_paths):
     prevdir = os.getcwd()
     for path in search_paths:
         os.chdir(path)
-        validator_files = set(glob.glob(os.path.join(path, "validate_*.json")))
+        validator_files = set(glob.glob(os.path.join(path, 'validate_*.json')))
         converter_files = set(glob.glob(os.path.join(
-            path, "*_to_*.json"))) - validator_files
+            path, '*_to_*.json'))) - validator_files
 
         for filename in validator_files:
             analysis = get_analysis(filename)
 
             # Validators only contain 1 input and output, so the type/format of
             # it can be gleaned from the first input.
-            conv_graph.add_node(Validator(analysis["inputs"][0]["type"],
-                                          analysis["inputs"][0]["format"]),
+            conv_graph.add_node(Validator(analysis['inputs'][0]['type'],
+                                          analysis['inputs'][0]['format']),
                                 analysis)
 
         for filename in converter_files:
             analysis = get_analysis(filename)
-            in_type = analysis["inputs"][0]["type"]
-            in_format = analysis["inputs"][0]["format"]
-            out_format = analysis["outputs"][0]["format"]
+            in_type = analysis['inputs'][0]['type']
+            in_format = analysis['inputs'][0]['format']
+            out_format = analysis['outputs'][0]['format']
 
             conv_graph.add_edge(Validator(in_type, in_format),
                                 Validator(in_type, out_format),
@@ -260,7 +260,7 @@ def print_conversion_graph():
     output.
     """
 
-    print "digraph g {"
+    print 'digraph g {'
 
     for node in conv_graph.nodes():
         paths = single_source_shortest_path(conv_graph, node)
@@ -269,16 +269,16 @@ def print_conversion_graph():
         for dest in reachable_conversions:
             print '"%s:%s" -> "%s:%s"' % (node[0], node[1], dest[0], dest[1])
 
-    print "}"
+    print '}'
 
 
 def print_conversion_table():
     """
-    Print a table of supported conversion paths in CSV format with ``"from"``
-    and ``"to"`` columns to standard output.
+    Print a table of supported conversion paths in CSV format with ``'from'``
+    and ``'to'`` columns to standard output.
     """
 
-    print "from,to"
+    print 'from,to'
 
     for node in conv_graph.nodes():
         paths = single_source_shortest_path(conv_graph, node)
@@ -296,19 +296,19 @@ def import_default_converters():
 
     cur_path = os.path.dirname(os.path.realpath(__file__))
     import_converters([os.path.join(cur_path, t) for t in [
-        "boolean",
-        "directory",
-        "graph",
-        "image",
-        "integer",
-        "integer_list",
-        "netcdf",
-        "number",
-        "number_list",
-        "python",
-        "string",
-        "string_list",
-        "table",
-        "tree"]])
+        'boolean',
+        'directory',
+        'graph',
+        'image',
+        'integer',
+        'integer_list',
+        'netcdf',
+        'number',
+        'number_list',
+        'python',
+        'string',
+        'string_list',
+        'table',
+        'tree']])
 
 import_default_converters()
