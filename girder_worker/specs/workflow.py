@@ -80,14 +80,16 @@ class Workflow(MutableMapping):
         self.__graph__.add_edge(t1, t2, metadata)
 
     def connect_tasks(self, *args, **kwargs):
-        """Connect two tasks together specifying which input ports connect
+        """
+        Connect two tasks together specifying which input ports connect
         to which output ports. This function takes either 1, 2 or 3 arguments.
         In the case of one argument it expects a list of tuples where the tuples
         are the first, second and third arguments to connect_tasks. If there are
         two arguments given they must be nodes in the workflow and ports must
         be specified as key word arguments.  If three arguments are supplied
         they should be node1, node2 and a dict of port connections where keys
-        are the output ports on node1 and value are the input ports on node2."""
+        are the output ports on node1 and value are the input ports on node2.
+        """
 
         # Single iterable argument - apply connect_tasks() to
         # each element in the iterable
@@ -157,8 +159,10 @@ class Workflow(MutableMapping):
         return internal_connections, input_ports, output_ports
 
     def _get_node_name(self, node, port, ports):
-        """Return 'node.port' if there is any other port under a different node
-        with the same name. Otherwise return 'port'"""
+        """
+        Return 'node.port' if there is any other port under a different node
+        with the same name. Otherwise return 'port'.
+        """
         if any(port in S for k, S in ports.items() if k != node):
             return '%s.%s' % (node, port)
         return port
