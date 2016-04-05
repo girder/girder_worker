@@ -62,25 +62,6 @@ class TestArbor(unittest.TestCase):
         )
         # print outputs['newtable']
 
-    def test_mammal_tree(self):
-        mammal = girder_worker.load(
-            os.path.join('data', 'Mammal tree extraction.json'))
-        girder_worker.run(
-            mammal,
-            {
-                'table': {
-                    'format': 'csv',
-                    'url': 'file://' +
-                           os.path.join('data', 'mammal_lnMass_tiny.csv')
-                },
-                'outRowCount': {'format': 'number', 'data': 19}
-            },
-            {
-                'tree': {'format': 'nested'}
-            }
-        )
-        # print json.dumps(outputs['tree'], indent=2)
-
     def tearDown(self):
         os.chdir(self.prevdir)
 
