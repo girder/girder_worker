@@ -3,7 +3,7 @@ import re
 import girder_worker.utils
 import subprocess
 
-from girder_worker import config
+from girder_worker import config, TaskSpecValidationError
 
 
 def _pull_image(image):
@@ -118,6 +118,26 @@ def _docker_gc(tempdir):
     return subprocess.Popen(args=(script,), env=env)
 
 
+def validate_task_outputs(task_outputs):
+    """
+    This is called prior to fetching inputs to make sure the output specs are
+    valid. Outputs in docker mode can result in side effects, so it's best to
+    make sure the specs are valid prior to fetching.
+    """
+    for name, spec in task_outputs.iteritems():
+        if spec.get('target') == 'filepath':
+            if 'path' not in spec:
+                raise TaskSpecValidationError(
+                    'Docker filepath outputs must specify a "path" field.')
+            if not spec['path'].startswith('/data/'):
+                raise TaskSpecValidationError(
+                    'Docker filepath outputs must be under "/data/".')
+        elif name not in ('_stdout', '_stderr'):
+            raise TaskSpecValidationError(
+                'Docker outputs must be either "_stdout", "_stderr", or '
+                'filepath-target outputs.')
+
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
 
@@ -164,8 +184,12 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     p = _docker_gc(gc_dir)
 
     for name, task_output in task_outputs.iteritems():
-        # TODO grab files written inside the container somehow?
-        pass
+        if task_output.get('target') == 'filepath':
+            # Convert "/data/" to the temp dir
+            path = task_output['path'].replace('/data', tempdir, 1)
+            if not os.path.exists(path):
+                raise Exception('Output filepath %s does not exist.' % path)
+            outputs[name]['script_data'] = path
 
     p.wait()  # Wait for garbage collection subprocess to finish
 

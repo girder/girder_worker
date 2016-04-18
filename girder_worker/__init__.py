@@ -10,7 +10,6 @@ from executors.python import run as python_run
 from executors.workflow import run as workflow_run
 from . import utils
 
-
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Read the configuration files
@@ -20,6 +19,10 @@ config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Maps task modes to their implementation
 _task_map = {}
+
+
+class TaskSpecValidationError(Exception):
+    pass
 
 
 def register_executor(name, fn):
