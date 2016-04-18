@@ -146,7 +146,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         _pull_image(image)
 
     tempdir = kwargs.get('_tempdir')
-    args = _expand_args(task['container_args'], inputs, task_inputs, tempdir)
+    args = _expand_args(task.get('container_args', []), inputs, task_inputs,
+                        tempdir)
 
     print_stderr, print_stdout = True, True
     for id, to in task_outputs.iteritems():
