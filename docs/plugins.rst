@@ -74,6 +74,64 @@ If you want to pass additional command line options to ``docker run`` that shoul
 come before the container name, pass them as a list via the ``"docker_run_args"``
 key.
 
+Outputs from docker tasks
+*************************
+
+Docker tasks can have two types of outputs: streams (i.e. standard output and standard
+error) and files written by the container. If you want the contents of standard output
+or standard error to become a task output, use the special output IDs ``_stdout`` or
+``_stderr``, as in the following example:
+
+.. code-block :: none
+
+    "task": {
+        "mode": "docker",
+        "outputs": [{
+            "id": "_stdout",
+            "type": "string",
+            "format": "text"
+        }],
+        ...
+
+If you want to have your container write files that will be treated as outputs,
+write them into the ``/data`` directory inside the container, then declare them
+in the task output specification with ``"target": "filepath"``. The following
+example shows how to specify a file written under ``/data/my_image.png`` as a
+task output:
+
+.. code-block :: none
+
+    "task": {
+        "mode": "docker",
+        "outputs": [{
+            "id": "my_image.png",
+            "target": "filepath",
+            "type": "string",
+            "format": "text"
+        }],
+        ...
+
+You don't have to use the output ID to specify the path; you can instead pass a
+``path`` field in the output spec:
+
+.. code-block :: none
+
+    "task": {
+        "mode": "docker",
+        "outputs": [{
+            "id": "some_output",
+            "target": "filepath",
+            "type": "string",
+            "format": "text",
+            "path": "/data/some_subdirectory/my_image.png"
+        }],
+        ...
+
+Paths that are specified as relative paths are assumed to be relative to ``/data``.
+If you specify an absolute path, it must start with ``/data/``, otherwise an exception
+will be thrown before the task is run. These conventions apply whether the path
+is specified in the ``id`` or ``path`` field.
+
 Girder IO
 ---------
 

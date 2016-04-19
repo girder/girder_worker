@@ -8,10 +8,21 @@ import six
 import sys
 import unittest
 
+from girder_worker import TaskSpecValidationError
+
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
 _out = six.StringIO('output message\n')
 _err = six.StringIO('error message\n')
+
+processMock = mock.Mock()
+processMock.configure_mock(**{
+    'communicate.return_value': ('', ''),
+    'poll.return_value': 0,
+    'stdout.fileno.return_value': OUT_FD,
+    'stderr.fileno.return_value': ERR_FD,
+    'returncode': 0
+})
 
 
 # Monkey patch select.select in the docker task module
@@ -49,14 +60,6 @@ def tearDownModule():
 class TestDockerMode(unittest.TestCase):
     @mock.patch('subprocess.Popen')
     def testDockerMode(self, mockPopen):
-        processMock = mock.Mock()
-        processMock.configure_mock(**{
-            'communicate.return_value': ('', ''),
-            'poll.return_value': 0,
-            'stdout.fileno.return_value': OUT_FD,
-            'stderr.fileno.return_value': ERR_FD,
-            'returncode': 0
-        })
         mockPopen.return_value = processMock
 
         task = {
@@ -179,3 +182,69 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
             six.assertRegex(self, env['EXCLUDE_FROM_GC'],
                             'docker_gc_scratch/.docker-gc-exclude$')
+
+    def testOutputValidation(self):
+        task = {
+            'mode': 'docker',
+            'docker_image': 'test/test',
+            'pull_image': True,
+            'inputs': [],
+            'outputs': [{
+                'id': 'file_output_1',
+                'format': 'text',
+                'type': 'string'
+            }]
+        }
+
+        outputs = {
+            'file_output_1': {
+                'mode': 'http',
+                'method': 'POST',
+                'url': 'https://foo.com/file.txt'
+            }
+        }
+
+        msg = (r'^Docker outputs must be either "_stdout", "_stderr", or '
+               'filepath-target outputs\.$')
+        with self.assertRaisesRegexp(TaskSpecValidationError, msg):
+            girder_worker.run(task)
+
+        task['outputs'][0]['target'] = 'filepath'
+        task['outputs'][0]['path'] = '/tmp/some/invalid/path'
+        msg = (r'^Docker filepath output paths must either start with "/data/" '
+               'or be specified relative to the /data dir\.$')
+        with self.assertRaisesRegexp(TaskSpecValidationError, msg):
+            girder_worker.run(task)
+
+        with mock.patch('subprocess.Popen') as p:
+            p.return_value = processMock
+
+            task['outputs'][0]['path'] = '/data/valid_path.txt'
+            path = os.path.join(_tmp, '.*', 'valid_path\.txt')
+            msg = r'^Output filepath %s does not exist\.$' % path
+            with self.assertRaisesRegexp(Exception, msg):
+                girder_worker.run(task)
+            # Make sure docker stuff actually got called in this case.
+            self.assertEqual(p.call_count, 3)
+
+            # Simulate a task that has written into the temp dir
+            tmp = os.path.join(_tmp, 'simulated_output')
+            if not os.path.isdir(tmp):
+                os.makedirs(tmp)
+            path = os.path.join(tmp, 'valid_path.txt')
+            with open(path, 'w') as f:
+                f.write('simulated output')
+            outputs = girder_worker.run(task, _tempdir=tmp)
+            self.assertEqual(outputs, {
+                'file_output_1': {
+                    'data': path,
+                    'format': 'text'
+                }
+            })
+
+            # If no path is specified, we should fall back to the input name
+            del task['outputs'][0]['path']
+            path = os.path.join(_tmp, '.*', 'file_output_1')
+            msg = r'^Output filepath %s does not exist\.$' % path
+            with self.assertRaisesRegexp(Exception, msg):
+                girder_worker.run(task)
