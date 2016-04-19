@@ -7,6 +7,8 @@ _cwd = _tmp = None
 
 
 def setUpModule():
+    girder_worker.load_plugins()
+
     global _tmp
     global _cwd
     _cwd = os.getcwd()

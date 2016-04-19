@@ -3,6 +3,10 @@ import unittest
 import os
 
 
+def setUpModule():
+    girder_worker.load_plugins()
+
+
 class TestSpark(unittest.TestCase):
 
     def setUp(self):

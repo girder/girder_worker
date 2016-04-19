@@ -8,6 +8,7 @@ app = None
 
 
 def main():
+    girder_worker.load_plugins()
     global app
     app = Celery(
         main=girder_worker.config.get('celery', 'app_main'),

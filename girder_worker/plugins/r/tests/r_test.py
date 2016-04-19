@@ -2,6 +2,10 @@ import girder_worker
 import unittest
 
 
+def setUpModule():
+    girder_worker.load_plugins()
+
+
 class TestR(unittest.TestCase):
 
     def setUp(self):
