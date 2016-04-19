@@ -126,12 +126,11 @@ def validate_task_outputs(task_outputs):
     """
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath':
-            if 'path' not in spec:
+            path = spec.get('path', name)
+            if path.startswith('/') and not path.startswith('/data/'):
                 raise TaskSpecValidationError(
-                    'Docker filepath outputs must specify a "path" field.')
-            if not spec['path'].startswith('/data/'):
-                raise TaskSpecValidationError(
-                    'Docker filepath outputs must be under "/data/".')
+                    'Docker filepath output paths must either start with '
+                    '"/data/" or be specified relative to the /data dir.')
         elif name not in ('_stdout', '_stderr'):
             raise TaskSpecValidationError(
                 'Docker outputs must be either "_stdout", "_stderr", or '
@@ -186,8 +185,13 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     for name, task_output in task_outputs.iteritems():
         if task_output.get('target') == 'filepath':
+            path = task_output.get('path', name)
+            if not path.startswith('/'):
+                # Assume relative paths are relative to /data
+                path = '/data/' + path
+
             # Convert "/data/" to the temp dir
-            path = task_output['path'].replace('/data', tempdir, 1)
+            path = path.replace('/data', tempdir, 1)
             if not os.path.exists(path):
                 raise Exception('Output filepath %s does not exist.' % path)
             outputs[name]['script_data'] = path

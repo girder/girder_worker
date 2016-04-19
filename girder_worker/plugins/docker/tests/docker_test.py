@@ -210,21 +210,18 @@ class TestDockerMode(unittest.TestCase):
             girder_worker.run(task)
 
         task['outputs'][0]['target'] = 'filepath'
-        msg = r'^Docker filepath outputs must specify a "path" field\.$'
-        with self.assertRaisesRegexp(TaskSpecValidationError, msg):
-            girder_worker.run(task)
-
         task['outputs'][0]['path'] = '/tmp/some/invalid/path'
-        msg = r'^Docker filepath outputs must be under "/data/"\.$'
+        msg = (r'^Docker filepath output paths must either start with "/data/" '
+               'or be specified relative to the /data dir\.$')
         with self.assertRaisesRegexp(TaskSpecValidationError, msg):
             girder_worker.run(task)
-
-        task['outputs'][0]['path'] = '/data/valid_path.txt'
-        path = os.path.join(_tmp, '.*', 'valid_path\.txt')
-        msg = r'^Output filepath %s does not exist\.$' % path
 
         with mock.patch('subprocess.Popen') as p:
             p.return_value = processMock
+
+            task['outputs'][0]['path'] = '/data/valid_path.txt'
+            path = os.path.join(_tmp, '.*', 'valid_path\.txt')
+            msg = r'^Output filepath %s does not exist\.$' % path
             with self.assertRaisesRegexp(Exception, msg):
                 girder_worker.run(task)
             # Make sure docker stuff actually got called in this case.
@@ -244,3 +241,10 @@ class TestDockerMode(unittest.TestCase):
                     'format': 'text'
                 }
             })
+
+            # If no path is specified, we should fall back to the input name
+            del task['outputs'][0]['path']
+            path = os.path.join(_tmp, '.*', 'file_output_1')
+            msg = r'^Output filepath %s does not exist\.$' % path
+            with self.assertRaisesRegexp(Exception, msg):
+                girder_worker.run(task)
