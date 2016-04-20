@@ -66,4 +66,4 @@ def main():
         rm_config(args.section, args.option)
 
 if __name__ == '__main__':
-    main()
+    main()  # pragma: no cover
