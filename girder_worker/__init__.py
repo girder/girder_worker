@@ -20,7 +20,6 @@ config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Maps task modes to their implementation
 _task_map = {}
-_plugins_loaded = False
 
 
 class TaskSpecValidationError(Exception):
@@ -54,24 +53,16 @@ def unregister_executor(name):
 register_executor('python', python_run)
 register_executor('workflow', workflow_run)
 
-
-def load_plugins(quiet=False, ignore_errors=False):
-    global _plugins_loaded
-    if _plugins_loaded:
-        return
-
-    _plugins_loaded = True
-    # Load plugins that are enabled in the config file
-    _plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
-                              config.get('girder_worker', 'plugins_enabled'))
-    _plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
-    _paths = os.environ.get(
-        'WORKER_PLUGIN_LOAD_PATH', config.get(
-            'girder_worker', 'plugin_load_path')).split(':')
-    _paths = [p for p in _paths if p.strip()]
-    _paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
-    utils.load_plugins(
-        _plugins, _paths, quiet=quiet, ignore_errors=ignore_errors)
+# Load plugins that are enabled in the config file or env var
+_plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
+                          config.get('girder_worker', 'plugins_enabled'))
+_plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
+_paths = os.environ.get(
+    'WORKER_PLUGIN_LOAD_PATH', config.get(
+        'girder_worker', 'plugin_load_path')).split(':')
+_paths = [p for p in _paths if p.strip()]
+_paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
+utils.load_plugins(_plugins, _paths, quiet=True)
 
 
 def load(task_file):
@@ -219,8 +210,6 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         was provided. Instead, those outputs will be saved to that URI and
         the output binding will contain the location in the ``'uri'`` field.
     """
-    load_plugins()
-
     def extractId(spec):
         return spec['id'] if 'id' in spec else spec['name']
 

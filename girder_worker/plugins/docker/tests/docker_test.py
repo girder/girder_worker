@@ -42,8 +42,6 @@ girder_worker.plugins.docker.executor.os.read = _mockOsRead
 
 
 def setUpModule():
-    girder_worker.load_plugins()
-
     global _tmp
     _tmp = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'tmp', 'docker')

@@ -7,10 +7,6 @@ import shutil
 import unittest
 
 
-def setUpModule():
-    girder_worker.load_plugins()
-
-
 class TestGirderIo(unittest.TestCase):
 
     def setUp(self):

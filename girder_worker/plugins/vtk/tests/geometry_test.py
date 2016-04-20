@@ -3,10 +3,6 @@ import unittest
 import vtk
 
 
-def setUpModule():
-    girder_worker.load_plugins()
-
-
 class TestGeometry(unittest.TestCase):
 
     def setUp(self):

@@ -5,10 +5,6 @@ import networkx as nx
 import unittest
 
 
-def setUpModule():
-    girder_worker.load_plugins()
-
-
 def simpleVtkDiGraph():
     g = vtk.vtkMutableDirectedGraph()
 

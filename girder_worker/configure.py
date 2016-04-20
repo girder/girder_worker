@@ -30,8 +30,6 @@ def rm_config(section, option):
 
 
 def main():
-    girder_worker.load_plugins(ignore_errors=True, quiet=True)
-
     parser = argparse.ArgumentParser(
         description='Get and set configuration values for the worker')
     subparsers = parser.add_subparsers(help='sub-command help', dest='cmd')
