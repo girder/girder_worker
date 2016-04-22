@@ -1,5 +1,6 @@
 import ConfigParser
 import httmock
+import json
 import mock
 import os
 import girder_worker
@@ -9,6 +10,7 @@ import sys
 import unittest
 
 from girder_worker import TaskSpecValidationError
+from girder_worker.plugins.docker.executor import DATA_VOLUME, SCRIPTS_VOLUME
 
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
@@ -23,6 +25,12 @@ processMock.configure_mock(**{
     'stderr.fileno.return_value': ERR_FD,
     'returncode': 0
 })
+
+inspectOutput = json.dumps([{
+    'Config': {
+        'Entrypoint': ['/usr/bin/foo', '--flag']
+    }
+}], indent=4)
 
 
 # Monkey patch select.select in the docker task module
@@ -58,9 +66,11 @@ def tearDownModule():
 
 
 class TestDockerMode(unittest.TestCase):
+    @mock.patch('subprocess.check_output')
     @mock.patch('subprocess.Popen')
-    def testDockerMode(self, mockPopen):
+    def testDockerMode(self, mockPopen, checkOutput):
         mockPopen.return_value = processMock
+        checkOutput.return_value = inspectOutput
 
         task = {
             'mode': 'docker',
@@ -183,7 +193,12 @@ class TestDockerMode(unittest.TestCase):
             six.assertRegex(self, env['EXCLUDE_FROM_GC'],
                             'docker_gc_scratch/.docker-gc-exclude$')
 
-    def testOutputValidation(self):
+    @mock.patch('subprocess.check_output')
+    @mock.patch('subprocess.Popen')
+    def testOutputValidation(self, mockPopen, checkOutput):
+        mockPopen.return_value = processMock
+        checkOutput.return_value = inspectOutput
+
         task = {
             'mode': 'docker',
             'docker_image': 'test/test',
@@ -216,35 +231,32 @@ class TestDockerMode(unittest.TestCase):
         with self.assertRaisesRegexp(TaskSpecValidationError, msg):
             girder_worker.run(task)
 
-        with mock.patch('subprocess.Popen') as p:
-            p.return_value = processMock
+        task['outputs'][0]['path'] = '/data/valid_path.txt'
+        path = os.path.join(_tmp, '.*', 'valid_path\.txt')
+        msg = r'^Output filepath %s does not exist\.$' % path
+        with self.assertRaisesRegexp(Exception, msg):
+            girder_worker.run(task)
+        # Make sure docker stuff actually got called in this case.
+        self.assertEqual(mockPopen.call_count, 3)
 
-            task['outputs'][0]['path'] = '/data/valid_path.txt'
-            path = os.path.join(_tmp, '.*', 'valid_path\.txt')
-            msg = r'^Output filepath %s does not exist\.$' % path
-            with self.assertRaisesRegexp(Exception, msg):
-                girder_worker.run(task)
-            # Make sure docker stuff actually got called in this case.
-            self.assertEqual(p.call_count, 3)
+        # Simulate a task that has written into the temp dir
+        tmp = os.path.join(_tmp, 'simulated_output')
+        if not os.path.isdir(tmp):
+            os.makedirs(tmp)
+        path = os.path.join(tmp, 'valid_path.txt')
+        with open(path, 'w') as f:
+            f.write('simulated output')
+        outputs = girder_worker.run(task, _tempdir=tmp)
+        self.assertEqual(outputs, {
+            'file_output_1': {
+                'data': path,
+                'format': 'text'
+            }
+        })
 
-            # Simulate a task that has written into the temp dir
-            tmp = os.path.join(_tmp, 'simulated_output')
-            if not os.path.isdir(tmp):
-                os.makedirs(tmp)
-            path = os.path.join(tmp, 'valid_path.txt')
-            with open(path, 'w') as f:
-                f.write('simulated output')
-            outputs = girder_worker.run(task, _tempdir=tmp)
-            self.assertEqual(outputs, {
-                'file_output_1': {
-                    'data': path,
-                    'format': 'text'
-                }
-            })
-
-            # If no path is specified, we should fall back to the input name
-            del task['outputs'][0]['path']
-            path = os.path.join(_tmp, '.*', 'file_output_1')
-            msg = r'^Output filepath %s does not exist\.$' % path
-            with self.assertRaisesRegexp(Exception, msg):
-                girder_worker.run(task)
+        # If no path is specified, we should fall back to the input name
+        del task['outputs'][0]['path']
+        path = os.path.join(_tmp, '.*', 'file_output_1')
+        msg = r'^Output filepath %s does not exist\.$' % path
+        with self.assertRaisesRegexp(Exception, msg):
+            girder_worker.run(task)

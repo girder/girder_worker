@@ -6,6 +6,9 @@ import subprocess
 
 from girder_worker import config, TaskSpecValidationError
 
+DATA_VOLUME = '/mnt/girder_worker/data'
+SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
+
 
 def _pull_image(image):
     """
@@ -37,14 +40,14 @@ def _read_from_config(key, default):
 def _transform_path(inputs, taskInputs, inputId, tmpDir):
     """
     If the input specified by inputId is a filepath target, we transform it to
-    its absolute path within the docker container (underneath /data).
+    its absolute path within the docker container (underneath the data mount).
     """
     for ti in taskInputs.itervalues():
         tiId = ti['id'] if 'id' in ti else ti['name']
         if tiId == inputId:
             if ti.get('target') == 'filepath':
                 rel = os.path.relpath(inputs[inputId]['script_data'], tmpDir)
-                return os.path.join('/data', rel)
+                return os.path.join(DATA_VOLUME, rel)
             else:
                 return inputs[inputId]['script_data']
 
@@ -69,7 +72,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
                                               tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, transformed)
             elif inputId == '_tempdir':
-                arg = arg.replace('$input{_tempdir}', '/data')
+                arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
 
         newArgs.append(arg)
 
@@ -128,10 +131,11 @@ def validate_task_outputs(task_outputs):
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath':
             path = spec.get('path', name)
-            if path.startswith('/') and not path.startswith('/data/'):
+            if path.startswith('/') and not path.startswith(DATA_VOLUME + '/'):
                 raise TaskSpecValidationError(
                     'Docker filepath output paths must either start with '
-                    '"/data/" or be specified relative to the /data dir.')
+                    '"%s/" or be specified relative to that directory.' %
+                    DATA_VOLUME)
         elif name not in ('_stdout', '_stderr'):
             raise TaskSpecValidationError(
                 'Docker outputs must be either "_stdout", "_stderr", or '
@@ -147,7 +151,7 @@ def _get_entrypoint(task, uid, gid):
             args=['docker', 'inspect', '--type=image', task['docker_image']]))
         ep = info[0]['Config']['Entrypoint']
 
-    ep = ['/worker_scripts/entrypoint.sh', uid, gid] + ep
+    ep = [os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh'), uid, gid] + ep
     return ['--entrypoint', ' '.join(ep)]
 
 
@@ -173,14 +177,14 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     uid = str(os.getuid())
     gid = str(os.getgid())
-    command = ['docker', 'run', '-u', uid]
+    command = ['docker', 'run', '-u', '%s:%s' % (uid, gid)]
 
     if tempdir:
-        command += ['-v', tempdir + ':/data']
+        command += ['-v', '%s:%s' % (tempdir, DATA_VOLUME)]
 
     scripts_dir = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), 'scripts')
-    command += ['-v', scripts_dir + ':/worker_scripts:ro']
+    command += ['-v', '%s:%s:%s' % (scripts_dir, SCRIPTS_VOLUME, 'ro')]
     command += _get_entrypoint(task, uid, gid)
 
     if 'docker_run_args' in task:
@@ -205,11 +209,11 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         if task_output.get('target') == 'filepath':
             path = task_output.get('path', name)
             if not path.startswith('/'):
-                # Assume relative paths are relative to /data
-                path = '/data/' + path
+                # Assume relative paths are relative to the data volume
+                path = os.path.join(DATA_VOLUME, path)
 
-            # Convert "/data/" to the temp dir
-            path = path.replace('/data', tempdir, 1)
+            # Convert data volume refs to the temp dir on the host
+            path = path.replace(DATA_VOLUME, tempdir, 1)
             if not os.path.exists(path):
                 raise Exception('Output filepath %s does not exist.' % path)
             outputs[name]['script_data'] = path
