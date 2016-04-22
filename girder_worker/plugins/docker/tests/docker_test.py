@@ -10,7 +10,8 @@ import sys
 import unittest
 
 from girder_worker import TaskSpecValidationError
-from girder_worker.plugins.docker.executor import DATA_VOLUME, SCRIPTS_VOLUME
+from girder_worker.plugins.docker.executor import DATA_VOLUME, SCRIPTS_VOLUME,\
+    SCRIPTS_DIR
 
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
@@ -137,13 +138,22 @@ class TestDockerMode(unittest.TestCase):
             cmd1, cmd2, cmd3 = [x[1]['args'] for x in mockPopen.call_args_list]
 
             self.assertEqual(cmd1, ('docker', 'pull', 'test/test:latest'))
-            self.assertEqual(cmd2[:5],
-                             ['docker', 'run', '-u',
-                              str(os.getuid()), '-v'])
-            self.assertRegexpMatches(cmd2[5], _tmp + '/.*:/data')
-            self.assertEqual(cmd2[6:9],
-                             ['test/test:latest', '-f', '/data/file.txt'])
-            self.assertEqual(cmd2[-1], '--temp-dir=/data')
+            self.assertEqual(cmd2[:3],
+                             ['docker', 'run', '-v'])
+            six.assertRegex(self, cmd2[3], _tmp + '/.*:%s' % DATA_VOLUME)
+            self.assertEqual(cmd2[4], '-v')
+            six.assertRegex(self, cmd2[5],
+                            '%s:%s:ro' % (SCRIPTS_DIR, SCRIPTS_VOLUME))
+            self.assertEqual(cmd2[6:9], [
+                '--entrypoint',
+                '%s/entrypoint.sh' % SCRIPTS_VOLUME,
+                'test/test:latest'
+            ])
+            self.assertEqual(cmd2[9:15], [
+                str(os.getuid()), str(os.getgid()),
+                '/usr/bin/foo', '--flag', '-f', '%s/file.txt' % DATA_VOLUME])
+            self.assertEqual(cmd2[-1], '--temp-dir=%s' % DATA_VOLUME)
+            self.assertEqual(len(cmd2), 16)
 
             self.assertEqual(len(cmd3), 1)
             six.assertRegex(self, cmd3[0], 'docker-gc$')
@@ -163,11 +173,16 @@ class TestDockerMode(unittest.TestCase):
                                     auto_convert=False)
             self.assertEqual(mockPopen.call_count, 3)
             cmd2 = mockPopen.call_args_list[1][1]['args']
-            self.assertEqual(cmd2[:5],
-                             ['docker', 'run', '-u', str(os.getuid()), '-v'])
-            six.assertRegex(self, cmd2[5], _tmp + '/.*:/data')
-            self.assertEqual(cmd2[6:8], ['--entrypoint', '/bin/bash'])
-            self.assertEqual(cmd2[-1], '--temp-dir=/data')
+            self.assertEqual(cmd2[6:11], [
+                '--entrypoint',
+                '%s/entrypoint.sh' % SCRIPTS_VOLUME,
+                '--net',
+                'none',
+                'test/test:latest'
+            ])
+            self.assertEqual(cmd2[11:16], [
+                str(os.getuid()), str(os.getgid()),
+                '/bin/bash', '-f', '%s/file.txt' % DATA_VOLUME])
 
             mockPopen.reset_mock()
             # Make sure custom config settings are respected
@@ -226,12 +241,12 @@ class TestDockerMode(unittest.TestCase):
 
         task['outputs'][0]['target'] = 'filepath'
         task['outputs'][0]['path'] = '/tmp/some/invalid/path'
-        msg = (r'^Docker filepath output paths must either start with "/data/" '
-               'or be specified relative to the /data dir\.$')
+        msg = (r'^Docker filepath output paths must either start with "%s/" '
+               'or be specified relative to that directory\.$' % DATA_VOLUME)
         with self.assertRaisesRegexp(TaskSpecValidationError, msg):
             girder_worker.run(task)
 
-        task['outputs'][0]['path'] = '/data/valid_path.txt'
+        task['outputs'][0]['path'] = '%s/valid_path.txt' % DATA_VOLUME
         path = os.path.join(_tmp, '.*', 'valid_path\.txt')
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
