@@ -29,11 +29,28 @@ the girder worker is already installed.
 Configuration
 -------------
 
-Several aspects of the worker's behavior are controlled via its configuration file. This
-file is found within the installed package directory as ``worker.local.cfg``. If this
-file does not exist, simply run: ::
+Several aspects of the worker's behavior are controlled via its configuration file. The easiest
+way to manage configuration is using the ``girder-worker-config`` command that is installed
+with the package. After installation, run  ::
 
-    cd girder_worker ; cp worker.dist.cfg worker.local.cfg
+    $ girder-worker-config --help
+
+You should see the list of available sub-commands for reading and writing config values.
+To show all configuration options, run ::
+
+    $ girder-worker-config list
+
+To set a specific option, use ::
+
+    $ girder-worker-config set <section_name> <option_name> <value>
+
+For example: ::
+
+    $ girder-worker-config set celery broker amqp://me@localhost/
+
+To change a setting back to its default value, use the ``rm`` subcommand ::
+
+    $ girder-worker-config rm celery broker
 
 The core configuration parameters are outlined below.
 
