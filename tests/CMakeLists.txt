@@ -38,6 +38,7 @@ if(PYTHON_STYLE_TESTS)
   add_python_flake8_test(flake8_style_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
+add_python_test(config)
 add_python_test(format)
 add_python_test(graph)
 add_python_test(image)

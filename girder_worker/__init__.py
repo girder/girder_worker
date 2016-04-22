@@ -1,8 +1,9 @@
-import json
-import os
 import girder_worker.events
 import girder_worker.format
 import girder_worker.io
+import json
+import os
+
 from girder_worker.format import (
     converter_path, get_validator_analysis, Validator)
 from ConfigParser import ConfigParser
@@ -52,7 +53,7 @@ def unregister_executor(name):
 register_executor('python', python_run)
 register_executor('workflow', workflow_run)
 
-# Load plugins that are enabled in the config file
+# Load plugins that are enabled in the config file or env var
 _plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
                           config.get('girder_worker', 'plugins_enabled'))
 _plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
@@ -61,7 +62,7 @@ _paths = os.environ.get(
         'girder_worker', 'plugin_load_path')).split(':')
 _paths = [p for p in _paths if p.strip()]
 _paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
-utils.load_plugins(_plugins, _paths)
+utils.load_plugins(_plugins, _paths, quiet=True)
 
 
 def load(task_file):

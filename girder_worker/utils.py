@@ -4,6 +4,7 @@ import imp
 import os
 import requests
 import girder_worker
+import girder_worker.plugins
 import select
 import shutil
 import subprocess
@@ -344,25 +345,23 @@ def load_plugin(name, paths):
     :param paths: Plugin search paths.
     :type paths: list or tuple of str
     """
-    if 'girder_worker.plugins' not in sys.modules:
-        module = imp.new_module('girder_worker.plugins')
-        girder_worker.plugins = module
-        sys.modules['girder_worker.plugins'] = module
-
     for path in paths:
         plugin_dir = os.path.join(path, name)
         if os.path.isdir(plugin_dir):
-            moduleName = 'girder_worker.plugins.' + name
+            module_name = 'girder_worker.plugins.' + name
 
-            if moduleName not in sys.modules:
+            if module_name not in sys.modules:
                 fp, pathname, description = imp.find_module(name, [path])
-                module = imp.load_module(moduleName, fp, pathname, description)
+                module = imp.load_module(module_name, fp, pathname, description)
                 setattr(girder_worker.plugins, name, module)
+            else:
+                module = sys.modules[module_name]
 
-                if hasattr(module, 'load'):
-                    module.load({
-                        'plugin_dir': plugin_dir
-                    })
+            if hasattr(module, 'load'):
+                module.load({
+                    'plugin_dir': plugin_dir
+                })
+
             break
     else:
         raise PluginNotFoundException(

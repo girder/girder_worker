@@ -110,7 +110,8 @@ setuptools.setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'girder-worker = girder_worker.__main__:main'
+            'girder-worker = girder_worker.__main__:main',
+            'girder-worker-config = girder_worker.configure:main'
         ]
     }
 )
