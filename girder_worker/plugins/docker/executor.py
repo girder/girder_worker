@@ -8,6 +8,8 @@ from girder_worker import config, TaskSpecValidationError
 
 DATA_VOLUME = '/mnt/girder_worker/data'
 SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
+SCRIPTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                           'scripts')
 
 
 def _pull_image(image):
@@ -148,7 +150,7 @@ def _get_pre_args(task, uid, gid):
     point and munge the args to make the behavior equivalent. This returns
     the list of arguments that should go prior to the client-specified args.
     """
-    args = [uid, gid]
+    args = [str(uid), str(gid)]
 
     if 'entrypoint' in task:
         if isinstance(task['entrypoint'], (list, tuple)):
@@ -184,22 +186,13 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             outputs['_stdout']['script_data'] = ''
             print_stdout = False
 
-    uid = str(os.getuid())
-    gid = str(os.getgid())
-    command = ['docker', 'run', '-u', '%s:%s' % (uid, gid)]
-
-    if tempdir:
-        command += ['-v', '%s:%s' % (tempdir, DATA_VOLUME)]
-
-    scripts_dir = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), 'scripts')
-    command += ['-v', '%s:%s:%s' % (scripts_dir, SCRIPTS_VOLUME, 'ro')]
-    command += ['--entrypoint', os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh')]
-
-    if 'docker_run_args' in task:
-        command += task['docker_run_args']
-
-    command += [image] + _get_pre_args(task, uid, gid) + args
+    pre_args = _get_pre_args(task, os.getuid(), os.getgid())
+    command = [
+        'docker', 'run',
+        '-v', '%s:%s' % (tempdir, DATA_VOLUME),
+        '-v', '%s:%s:%s' % (SCRIPTS_DIR, SCRIPTS_VOLUME, 'ro'),
+        '--entrypoint', os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh')
+    ] + task.get('docker_run_args', []) + [image] + pre_args + args
 
     print('Running container: %s' % repr(command))
 
