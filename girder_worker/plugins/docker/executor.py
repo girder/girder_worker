@@ -142,17 +142,26 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
-def _get_entrypoint(task, uid, gid):
+def _get_pre_args(task, uid, gid):
+    """
+    When using our entrypoint.sh script, we have to detect the existing entry
+    point and munge the args to make the behavior equivalent. This returns
+    the list of arguments that should go prior to the client-specified args.
+    """
+    args = [uid, gid]
+
     if 'entrypoint' in task:
-        ep = task['entrypoint']
+        if isinstance(task['entrypoint'], (list, tuple)):
+            args.extend(task['entrypoint'])
+        else:
+            args.append(task['entrypoint'])
     else:
         # Read entrypoint from container if default is used
         info = json.loads(subprocess.check_output(
             args=['docker', 'inspect', '--type=image', task['docker_image']]))
-        ep = info[0]['Config']['Entrypoint']
+        args.extend(info[0]['Config']['Entrypoint'])
 
-    ep = [os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh'), uid, gid] + ep
-    return ['--entrypoint', ' '.join(ep)]
+    return args
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -185,12 +194,12 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     scripts_dir = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), 'scripts')
     command += ['-v', '%s:%s:%s' % (scripts_dir, SCRIPTS_VOLUME, 'ro')]
-    command += _get_entrypoint(task, uid, gid)
+    command += ['--entrypoint', os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh')]
 
     if 'docker_run_args' in task:
         command += task['docker_run_args']
 
-    command += [image] + args
+    command += [image] + _get_pre_args(task, uid, gid) + args
 
     print('Running container: %s' % repr(command))
 
