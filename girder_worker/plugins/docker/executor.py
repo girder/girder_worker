@@ -1,6 +1,7 @@
+import json
+import girder_worker.utils
 import os
 import re
-import girder_worker.utils
 import subprocess
 
 from girder_worker import config, TaskSpecValidationError
@@ -137,6 +138,19 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
+def _get_entrypoint(task, uid, gid):
+    if 'entrypoint' in task:
+        ep = task['entrypoint']
+    else:
+        # Read entrypoint from container if default is used
+        info = json.loads(subprocess.check_output(
+            args=['docker', 'inspect', '--type=image', task['docker_image']]))
+        ep = info[0]['Config']['Entrypoint']
+
+    ep = ['/worker_scripts/entrypoint.sh', uid, gid] + ep
+    return ['--entrypoint', ' '.join(ep)]
+
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
 
@@ -157,20 +171,24 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             outputs['_stdout']['script_data'] = ''
             print_stdout = False
 
-    command = ['docker', 'run', '-u', str(os.getuid())]
+    uid = str(os.getuid())
+    gid = str(os.getgid())
+    command = ['docker', 'run', '-u', uid]
 
     if tempdir:
         command += ['-v', tempdir + ':/data']
 
-    if 'entrypoint' in task:
-        command += ['--entrypoint', task['entrypoint']]
+    scripts_dir = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), 'scripts')
+    command += ['-v', scripts_dir + ':/worker_scripts:ro']
+    command += _get_entrypoint(task, uid, gid)
 
     if 'docker_run_args' in task:
         command += task['docker_run_args']
 
     command += [image] + args
 
-    print('Running container: "%s"' % ' '.join(command))
+    print('Running container: %s' % repr(command))
 
     p = girder_worker.utils.run_process(command, outputs,
                                         print_stdout, print_stderr)
