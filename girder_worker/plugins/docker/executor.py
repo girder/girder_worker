@@ -190,7 +190,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     command = [
         'docker', 'run',
         '-v', '%s:%s' % (tempdir, DATA_VOLUME),
-        '-v', '%s:%s:%s' % (SCRIPTS_DIR, SCRIPTS_VOLUME, 'ro'),
+        '-v', '%s:%s:ro' % (SCRIPTS_DIR, SCRIPTS_VOLUME),
         '--entrypoint', os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh')
     ] + task.get('docker_run_args', []) + [image] + pre_args + args
 
