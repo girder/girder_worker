@@ -1,0 +1,7 @@
+{
+    "name": "Nested to Newick",
+    "inputs": [{"name": "input", "type": "tree", "format": "nested"}],
+    "outputs": [{"name": "output", "type": "tree", "format": "newick"}],
+    "script_uri": "file://nested_to_newick.py",
+    "mode": "python"
+}
