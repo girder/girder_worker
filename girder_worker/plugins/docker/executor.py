@@ -1,9 +1,15 @@
+import json
+import girder_worker.utils
 import os
 import re
-import girder_worker.utils
 import subprocess
 
 from girder_worker import config, TaskSpecValidationError
+
+DATA_VOLUME = '/mnt/girder_worker/data'
+SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
+SCRIPTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                           'scripts')
 
 
 def _pull_image(image):
@@ -36,14 +42,14 @@ def _read_from_config(key, default):
 def _transform_path(inputs, taskInputs, inputId, tmpDir):
     """
     If the input specified by inputId is a filepath target, we transform it to
-    its absolute path within the docker container (underneath /data).
+    its absolute path within the docker container (underneath the data mount).
     """
     for ti in taskInputs.itervalues():
         tiId = ti['id'] if 'id' in ti else ti['name']
         if tiId == inputId:
             if ti.get('target') == 'filepath':
                 rel = os.path.relpath(inputs[inputId]['script_data'], tmpDir)
-                return os.path.join('/data', rel)
+                return os.path.join(DATA_VOLUME, rel)
             else:
                 return inputs[inputId]['script_data']
 
@@ -68,7 +74,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
                                               tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, transformed)
             elif inputId == '_tempdir':
-                arg = arg.replace('$input{_tempdir}', '/data')
+                arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
 
         newArgs.append(arg)
 
@@ -127,14 +133,37 @@ def validate_task_outputs(task_outputs):
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath':
             path = spec.get('path', name)
-            if path.startswith('/') and not path.startswith('/data/'):
+            if path.startswith('/') and not path.startswith(DATA_VOLUME + '/'):
                 raise TaskSpecValidationError(
                     'Docker filepath output paths must either start with '
-                    '"/data/" or be specified relative to the /data dir.')
+                    '"%s/" or be specified relative to that directory.' %
+                    DATA_VOLUME)
         elif name not in ('_stdout', '_stderr'):
             raise TaskSpecValidationError(
                 'Docker outputs must be either "_stdout", "_stderr", or '
                 'filepath-target outputs.')
+
+
+def _get_pre_args(task, uid, gid):
+    """
+    When using our entrypoint.sh script, we have to detect the existing entry
+    point and munge the args to make the behavior equivalent. This returns
+    the list of arguments that should go prior to the client-specified args.
+    """
+    args = [str(uid), str(gid)]
+
+    if 'entrypoint' in task:
+        if isinstance(task['entrypoint'], (list, tuple)):
+            args.extend(task['entrypoint'])
+        else:
+            args.append(task['entrypoint'])
+    else:
+        # Read entrypoint from container if default is used
+        info = json.loads(subprocess.check_output(
+            args=['docker', 'inspect', '--type=image', task['docker_image']]))
+        args.extend(info[0]['Config']['Entrypoint'])
+
+    return args
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -157,20 +186,15 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             outputs['_stdout']['script_data'] = ''
             print_stdout = False
 
-    command = ['docker', 'run', '-u', str(os.getuid())]
+    pre_args = _get_pre_args(task, os.getuid(), os.getgid())
+    command = [
+        'docker', 'run',
+        '-v', '%s:%s' % (tempdir, DATA_VOLUME),
+        '-v', '%s:%s:ro' % (SCRIPTS_DIR, SCRIPTS_VOLUME),
+        '--entrypoint', os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh')
+    ] + task.get('docker_run_args', []) + [image] + pre_args + args
 
-    if tempdir:
-        command += ['-v', tempdir + ':/data']
-
-    if 'entrypoint' in task:
-        command += ['--entrypoint', task['entrypoint']]
-
-    if 'docker_run_args' in task:
-        command += task['docker_run_args']
-
-    command += [image] + args
-
-    print('Running container: "%s"' % ' '.join(command))
+    print('Running container: %s' % repr(command))
 
     p = girder_worker.utils.run_process(command, outputs,
                                         print_stdout, print_stderr)
@@ -187,11 +211,11 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         if task_output.get('target') == 'filepath':
             path = task_output.get('path', name)
             if not path.startswith('/'):
-                # Assume relative paths are relative to /data
-                path = '/data/' + path
+                # Assume relative paths are relative to the data volume
+                path = os.path.join(DATA_VOLUME, path)
 
-            # Convert "/data/" to the temp dir
-            path = path.replace('/data', tempdir, 1)
+            # Convert data volume refs to the temp dir on the host
+            path = path.replace(DATA_VOLUME, tempdir, 1)
             if not os.path.exists(path):
                 raise Exception('Output filepath %s does not exist.' % path)
             outputs[name]['script_data'] = path
