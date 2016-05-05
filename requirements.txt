@@ -2,6 +2,7 @@ amqp==1.4.9
 anyjson==0.3.3
 billiard==3.3.0.22
 celery==3.1.20
+ete3==3.0.0b35
 kombu==3.0.33
 networkx==1.10
 Pillow==3.1.2
