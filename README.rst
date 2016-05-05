@@ -2,7 +2,7 @@ Girder Worker |build-status|
 ============================
 
 A flexible, simple script execution engine that integrates with the
-`Girder <http://girder.readthedocs.org>` data management system to run
+`Girder <http://girder.readthedocs.org>`_ data management system to run
 distributed batch jobs.
 
 The worker supports running tasks in many environments including python, R,
