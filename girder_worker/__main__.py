@@ -2,7 +2,7 @@ import pkg_resources as pr
 from girder_worker import app
 
 
-def main(app):
+def main():
     includes = []
     for ep in pr.iter_entry_points(group='girder_worker.tasks'):
         module = ep.load()
@@ -15,4 +15,4 @@ def main(app):
 
 
 if __name__ == '__main__':
-    main(app)
+    main()
