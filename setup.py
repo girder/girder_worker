@@ -112,6 +112,9 @@ setuptools.setup(
         'console_scripts': [
             'girder-worker = girder_worker.__main__:main',
             'girder-worker-config = girder_worker.configure:main'
+        ],
+        'girder_worker.tasks': [
+            "module = girder_worker"
         ]
     }
 )
