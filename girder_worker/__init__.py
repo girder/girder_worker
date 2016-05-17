@@ -1,3 +1,5 @@
+from .format import conv_graph
+from celery import Celery
 import girder_worker.events
 import girder_worker.format
 import girder_worker.io
@@ -346,20 +348,6 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
     finally:
         girder_worker.events.trigger('run.finally', info)
 
-
-
-
-
-
-
-
-from .format import conv_graph
-from celery import Celery
-
-def task_includes():
-    return ['girder_worker']
-
-
 app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
     backend=girder_worker.config.get('celery', 'broker'),
@@ -378,16 +366,17 @@ def run_task(*pargs, **kwargs):
                           reference=jobInfo.get('reference')) as jm:
         kwargs['_job_manager'] = jm
         kwargs['status'] = utils.JobStatus.RUNNING
-        retval = girder_worker.run(*pargs, **kwargs)
+        retval = run(*pargs, **kwargs)
     return retval
 
-@app.task
-def convert(*pargs, **kwargs):
-    return girder_worker.convert(*pargs, **kwargs)
+
+@app.task(name='girder_worker.convert')
+def run_convert(*pargs, **kwargs):
+    return convert(*pargs, **kwargs)
 
 
-@app.task
-def validators(*pargs, **kwargs):
+@app.task(name='girder_worker.validators')
+def run_validators(*pargs, **kwargs):
     _type, _format = pargs
     nodes = []
 
