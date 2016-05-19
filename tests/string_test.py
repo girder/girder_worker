@@ -41,6 +41,19 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs['c']['format'], 'text')
         self.assertEqual(outputs['c']['data'], 'hi, there')
 
+    def test_string(self):
+        outputs = girder_worker.run(
+            self.analysis,
+            inputs={
+                'a': {'format': 'string', 'data': 'hi, '},
+                'b': {'format': 'text', 'data': 'there'}
+            },
+            outputs={
+                'c': {'format': 'text'}
+            })
+        self.assertEqual(outputs['c']['format'], 'text')
+        self.assertEqual(outputs['c']['data'], 'hi, there')
+
     def test_json(self):
         outputs = girder_worker.run(
             self.analysis,
