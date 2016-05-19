@@ -6,7 +6,6 @@ import math
 import girder_worker.io
 import networkx as nx
 from collections import namedtuple
-from networkx.exception import NetworkXNoPath
 from networkx.algorithms.shortest_paths.generic import all_shortest_paths
 from networkx.algorithms.shortest_paths.unweighted import (
     single_source_shortest_path
@@ -105,12 +104,9 @@ def converter_path(source, target):
     :returns: An ordered list of the analyses that need to be run to convert
         from ``source`` to ``target``.
     """
-    # Ensure an exception gets thrown if source/target don't exist
-    try:
-        get_validator_analysis(source)
-        get_validator_analysis(target)
-    except Exception:
-        raise NetworkXNoPath
+    # These are to ensure an exception gets thrown if source/target don't exist
+    get_validator_analysis(source)
+    get_validator_analysis(target)
 
     # We sort and pick the first of the shortest paths just to produce a stable
     # conversion path. This is stable in regards to which plugins are loaded at

@@ -3,7 +3,7 @@ import unittest
 from girder_worker.format import converter_path, has_converter, Validator, \
     print_conversion_graph, print_conversion_table
 from six import StringIO
-from networkx.exception import NetworkXNoPath
+from networkx import NetworkXNoPath
 
 
 class TestFormat(unittest.TestCase):
@@ -17,8 +17,8 @@ class TestFormat(unittest.TestCase):
         sys.stdout = self.prev_stdout
 
     def test_converter_path(self):
-        # There is no path from validators that don't exist
-        with self.assertRaises(NetworkXNoPath):
+        with self.assertRaisesRegexp(Exception,
+                                     'No such validator foo/bar'):
             converter_path(Validator('foo', 'bar'),
                            Validator('foo', 'baz'))
 
