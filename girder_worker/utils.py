@@ -369,34 +369,73 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def run_process(command, outputs, print_stdout, print_stderr):
+def run_process(command, outputs, print_stdout, print_stderr,
+                output_pipes=None):
+    output_pipes = output_pipes or {}
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    fds = [p.stdout, p.stderr]
+    fds = [p.stdout.fileno(), p.stderr.fileno()]
+    fds += [pipe for pipe in output_pipes.keys()]
+
     while True:
         ready = select.select(fds, (), fds, 1)[0]
 
-        if p.stdout in ready:
-            buf = os.read(p.stdout.fileno(), 1024)
-            if buf:
-                if print_stdout:
-                    sys.stdout.write(buf)
+        for ready_pipe in ready:
+            buf = os.read(ready_pipe, 65536)
+
+            if ready_pipe == p.stdout.fileno():
+                if buf:
+                    if print_stdout:
+                        sys.stdout.write(buf)
+                    else:
+                        outputs['_stdout']['script_data'] += buf
                 else:
-                    outputs['_stdout']['script_data'] += buf
-            else:
-                fds.remove(p.stdout)
-        if p.stderr in ready:
-            buf = os.read(p.stderr.fileno(), 1024)
-            if buf:
-                if print_stderr:
-                    sys.stderr.write(buf)
+                    fds.remove(p.stdout.fileno())
+            elif ready_pipe == p.stderr.fileno():
+                if buf:
+                    if print_stderr:
+                        sys.stderr.write(buf)
+                    else:
+                        outputs['_stderr']['script_data'] += buf
                 else:
-                    outputs['_stderr']['script_data'] += buf
-            else:
-                fds.remove(p.stderr)
+                    fds.remove(p.stderr.fileno())
+            else:  # one of the named pipes has data, call the adapter
+                if buf:
+                    output_pipes[ready_pipe].write(buf)
+                else:
+                    output_pipes[ready_pipe].close()
+                    fds.remove(ready_pipe)
         if (not fds or not ready) and p.poll() is not None:
             break
         elif not fds and p.poll() is None:
             p.wait()
 
+    # close any remaining output adapters
+    for fd in fds:
+        if fd in output_pipes:
+            output_pipes[fd].close()
     return p
+
+
+class StreamPushAdapter(object):
+    """
+    This represents the interface that must be implemented by push adapters for
+    IO modes that want to implement streaming output.
+    """
+    def __init__(self, output_spec):
+        """
+        Initialize the adpater based on the output spec.
+        """
+        self.output_spec = output_spec
+
+    def write(self, buf):
+        """
+        Write a chunk of data to the output stream.
+        """
+        raise NotImplemented
+
+    def close(self):
+        """
+        Close the output stream. Called after the last data is sent.
+        """
+        raise NotImplemented

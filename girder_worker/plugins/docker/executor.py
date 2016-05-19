@@ -1,4 +1,5 @@
 import json
+import girder_worker.io
 import girder_worker.utils
 import os
 import re
@@ -166,6 +167,29 @@ def _get_pre_args(task, uid, gid):
     return args
 
 
+def _create_named_output_pipes(task_outputs, outputs, tempdir):
+    """
+    Returns a map of output IDs to their named pipes, which are file descriptors
+    opened in read-only, non-blocking mode.
+    """
+    pipes = {}
+    for id, spec in task_outputs.iteritems():
+        if spec.get('stream') and spec.get('target') == 'filepath':
+            if id not in outputs:
+                raise Exception(
+                    'Streaming task outputs must have output bindings.')
+            path = spec.get('path', id)
+            if path.startswith('/'):
+                raise Exception('Streaming filepaths must be relative.')
+            path = os.path.join(tempdir, path)
+            os.mkfifo(path)
+
+            # Map pipe's file descriptor to its output stream adapter
+            pipes[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = \
+                girder_worker.io.make_stream_push_adapter(outputs[id])
+    return pipes
+
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
 
@@ -186,6 +210,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             outputs['_stdout']['script_data'] = ''
             print_stdout = False
 
+    pipes = _create_named_output_pipes(task_outputs, outputs, tempdir)
+
     pre_args = _get_pre_args(task, os.getuid(), os.getgid())
     command = [
         'docker', 'run',
@@ -197,7 +223,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     print('Running container: %s' % repr(command))
 
     p = girder_worker.utils.run_process(command, outputs,
-                                        print_stdout, print_stderr)
+                                        print_stdout, print_stderr,
+                                        output_pipes=pipes)
 
     if p.returncode != 0:
         raise Exception('Error: docker run returned code %d.' % p.returncode)
@@ -207,9 +234,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     os.mkdir(gc_dir)
     p = _docker_gc(gc_dir)
 
-    for name, task_output in task_outputs.iteritems():
-        if task_output.get('target') == 'filepath':
-            path = task_output.get('path', name)
+    for name, spec in task_outputs.iteritems():
+        if spec.get('target') == 'filepath' and not spec.get('stream'):
+            path = spec.get('path', name)
             if not path.startswith('/'):
                 # Assume relative paths are relative to the data volume
                 path = os.path.join(DATA_VOLUME, path)

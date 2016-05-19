@@ -101,6 +101,7 @@ specified to :py:func:`girder_worker.run`.
         "type": <data type>,
         "format": <data format>
         (, "target": <INPUT_TARGET_TYPE>)   ; default is "memory"
+        (, "stream": <set to true to indicate a streaming output>)
     }
 
 .. _input-spec:
@@ -132,6 +133,7 @@ each task input) to its data binding for this execution.
         "mode": "http",
         "format": <data format>,
         "url": <url of data to download>
+        (, "params": <dict of URL parameters to encode>)
         (, "headers": <dict of HTTP headers to send when fetching>)
         (, "method": <http method to use, default is "GET">)
         (, "maxSize": <integer, max size of download in bytes>)
