@@ -377,44 +377,50 @@ def run_process(command, outputs, print_stdout, print_stderr,
     fds = [p.stdout.fileno(), p.stderr.fileno()]
     fds += output_pipes.keys()
 
-    while True:
-        # get ready readable pipes, or timeout after 1 second
-        ready = select.select(fds, (), fds, 1)[0]
+    try:
+        while True:
+            # get ready readable pipes, or timeout after 1 second
+            ready = select.select(fds, (), fds, 1)[0]
 
-        for ready_pipe in ready:
-            buf = os.read(ready_pipe, 65536)
+            for ready_pipe in ready:
+                buf = os.read(ready_pipe, 65536)
 
-            if ready_pipe == p.stdout.fileno():
-                if buf:
-                    if print_stdout:
-                        sys.stdout.write(buf)
+                if ready_pipe == p.stdout.fileno():
+                    if buf:
+                        if print_stdout:
+                            sys.stdout.write(buf)
+                        else:
+                            outputs['_stdout']['script_data'] += buf
                     else:
-                        outputs['_stdout']['script_data'] += buf
-                else:
-                    fds.remove(p.stdout.fileno())
-            elif ready_pipe == p.stderr.fileno():
-                if buf:
-                    if print_stderr:
-                        sys.stderr.write(buf)
+                        fds.remove(p.stdout.fileno())
+                elif ready_pipe == p.stderr.fileno():
+                    if buf:
+                        if print_stderr:
+                            sys.stderr.write(buf)
+                        else:
+                            outputs['_stderr']['script_data'] += buf
                     else:
-                        outputs['_stderr']['script_data'] += buf
-                else:
-                    fds.remove(p.stderr.fileno())
-            else:  # one of the named pipes has data, call the adapter
-                if buf:
-                    output_pipes[ready_pipe].write(buf)
-                else:
-                    output_pipes[ready_pipe].close()
-                    fds.remove(ready_pipe)
-        if (not fds or not ready) and p.poll() is not None:
-            break
-        elif not fds and p.poll() is None:
-            p.wait()
-
-    # close any remaining output adapters
-    for fd in fds:
-        if fd in output_pipes:
-            output_pipes[fd].close()
+                        fds.remove(p.stderr.fileno())
+                else:  # one of the named pipes has data, call the adapter
+                    if buf:
+                        output_pipes[ready_pipe].write(buf)
+                    else:
+                        output_pipes[ready_pipe].close()
+                        os.close(ready_pipe)
+                        fds.remove(ready_pipe)
+            if (not fds or not ready) and p.poll() is not None:
+                break
+            elif not fds and p.poll() is None:
+                p.wait()
+    except Exception:
+        p.kill()  # kill child process if something went wrong on our end
+        raise
+    finally:
+        # close any remaining output adapters
+        for fd in fds:
+            if fd in output_pipes:
+                output_pipes[fd].close()
+                os.close(fd)
 
     return p
 

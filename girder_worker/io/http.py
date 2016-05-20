@@ -24,14 +24,19 @@ class HttpStreamPushAdapter(StreamPushAdapter):
         else:
             conn = httplib.HTTPConnection(parts.netloc)
 
-        conn.putrequest(output_spec.get('method', 'POST').upper(),
-                        parts.path, skip_accept_encoding=True)
+        try:
+            conn.putrequest(output_spec.get('method', 'POST').upper(),
+                            parts.path, skip_accept_encoding=True)
 
-        for header, value in output_spec.get('headers', {}).items():
-            conn.putheader(header, value)
+            for header, value in output_spec.get('headers', {}).items():
+                conn.putheader(header, value)
 
-        conn.putheader('Transfer-Encoding', 'chunked')
-        conn.endheaders()  # This actually flushes the headers to the server
+            conn.putheader('Transfer-Encoding', 'chunked')
+            conn.endheaders()  # This actually flushes the headers to the server
+        except Exception:
+            print('HTTP connection to "%s" failed.' % output_spec['url'])
+            conn.close()
+            raise
 
         self.conn = conn
 

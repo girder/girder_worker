@@ -174,7 +174,7 @@ def _create_named_output_pipes(task_outputs, outputs, tempdir):
     """
     pipes = {}
     for id, spec in task_outputs.iteritems():
-        if (spec.get('stream') and id in outputs and 
+        if (spec.get('stream') and id in outputs and
                 spec.get('target') == 'filepath'):
             path = spec.get('path', id)
             if path.startswith('/'):
