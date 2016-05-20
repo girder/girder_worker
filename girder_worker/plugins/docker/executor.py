@@ -174,10 +174,8 @@ def _create_named_output_pipes(task_outputs, outputs, tempdir):
     """
     pipes = {}
     for id, spec in task_outputs.iteritems():
-        if spec.get('stream') and spec.get('target') == 'filepath':
-            if id not in outputs:
-                raise Exception(
-                    'Streaming task outputs must have output bindings.')
+        if (spec.get('stream') and id in outputs and 
+                spec.get('target') == 'filepath'):
             path = spec.get('path', id)
             if path.startswith('/'):
                 raise Exception('Streaming filepaths must be relative.')

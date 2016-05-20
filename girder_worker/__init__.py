@@ -303,6 +303,9 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                         auto_convert=auto_convert, validate=validate, **kwargs)
 
         for name, task_output in task_outputs.iteritems():
+            if task_output.get('stream'):
+                continue  # this output has already been sent as a stream
+
             d = outputs[name]
             script_output = {'data': d['script_data'],
                              'format': task_output['format']}

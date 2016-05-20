@@ -375,9 +375,10 @@ def run_process(command, outputs, print_stdout, print_stderr,
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     fds = [p.stdout.fileno(), p.stderr.fileno()]
-    fds += [pipe for pipe in output_pipes.keys()]
+    fds += output_pipes.keys()
 
     while True:
+        # get ready readable pipes, or timeout after 1 second
         ready = select.select(fds, (), fds, 1)[0]
 
         for ready_pipe in ready:
@@ -414,6 +415,7 @@ def run_process(command, outputs, print_stdout, print_stderr,
     for fd in fds:
         if fd in output_pipes:
             output_pipes[fd].close()
+
     return p
 
 
