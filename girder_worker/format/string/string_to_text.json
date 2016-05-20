@@ -1,0 +1,7 @@
+{
+    "name": "String to Text",
+    "inputs": [{"name": "input", "type": "string", "format": "string"}],
+    "outputs": [{"name": "output", "type": "string", "format": "text"}],
+    "script_uri": "file://string_to_text.py",
+    "mode": "python"
+}
