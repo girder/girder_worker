@@ -51,10 +51,10 @@ class HttpStreamPushAdapter(StreamPushAdapter):
             self.conn.send(buf)
             self.conn.send(b'\r\n')
         except Exception:
-            # TODO this might happen because the server closed the connection,
-            # in which case it may have sent a response. We should try to
-            # read a response in a non-blocking manner so we can provide
-            # that output to the user for debugging purposes.
+            resp = self.conn.getresponse()
+            print('Exception while sending HTTP chunk to %s, status was %s, '
+                  'message was:\n%s' % (self.output_spec['url'], resp.status,
+                                        resp.read()))
             self.conn.close()
             raise
 
