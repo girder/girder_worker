@@ -64,7 +64,7 @@ class HttpStreamPushAdapter(StreamPushAdapter):
         """
         try:
             self.conn.send(b'0\r\n\r\n')
-            resp = self.conn.getresponse(buffering=True)
+            resp = self.conn.getresponse()
             if resp.status >= 300 and resp.status < 400:
                 raise Exception('Redirects are not supported for streaming '
                                 'requests at this time. %d to Location: %s' % (
