@@ -8,6 +8,7 @@ from girder_worker.format import (
 from ConfigParser import ConfigParser
 from executors.python import run as python_run
 from executors.workflow import run as workflow_run
+from networkx import NetworkXNoPath
 from . import utils
 
 
@@ -143,11 +144,18 @@ def convert(type, input, output, fetch=True, status=None, **kwargs):
         data = input['data']
     else:
         data_descriptor = input
-        for c in converter_path(Validator(type, input['format']),
-                                Validator(type, output['format'])):
-            result = girder_worker.run(
-                c, {'input': data_descriptor}, auto_convert=False,
-                status=status, **kwargs)
+        try:
+            conversion_path = converter_path(Validator(type, input['format']),
+                                             Validator(type, output['format']))
+        except NetworkXNoPath:
+            raise Exception('No conversion path from %s/%s to %s/%s' %
+                            (type, input['format'], type, output['format']))
+
+        # Run data_descriptor through each conversion in the path
+        for conversion in conversion_path:
+            result = girder_worker.run(conversion, {'input': data_descriptor},
+                                       auto_convert=False, status=status,
+                                       **kwargs)
             data_descriptor = result['output']
         data = data_descriptor['data']
 
