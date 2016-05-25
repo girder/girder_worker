@@ -50,19 +50,26 @@ class TestFormat(unittest.TestCase):
             'script': 'some_number = some_number'
         }
 
-        # If an input has an invalid format, it should throw an exception with the name
+        # If an input has an invalid format, it should throw an exception
+        # with the name
         number_copy['inputs'][0]['format'] = 'invalidformat'
-        with self.assertRaisesRegexp(Exception,
-                                     'some_number: No such validator number/invalidformat'):
-            girder_worker.run(number_copy, inputs={'some_number': {'format': 'json', 'data': '5'}})
+        with self.assertRaisesRegexp(
+                Exception,
+                'some_number: No such validator number/invalidformat'):
+            girder_worker.run(number_copy, inputs={'some_number':
+                                                   {'format': 'json',
+                                                    'data': '5'}})
 
         # If the input is valid, but there is no conversion path
         number_copy['inputs'][0]['format'] = 'validformat'
         conv_graph.add_node(Validator('number', 'validformat'))
         with self.assertRaisesRegexp(
                 Exception,
-                'some_number: No conversion path from number/json to number/validformat'):
-            girder_worker.run(number_copy, inputs={'some_number': {'format': 'json', 'data': '5'}})
+                ('some_number: No conversion path from number/json '
+                 'to number/validformat')):
+            girder_worker.run(number_copy, inputs={'some_number':
+                                                   {'format': 'json',
+                                                    'data': '5'}})
         conv_graph.remove_node(Validator('number', 'validformat'))
 
     def test_is_valid(self):
