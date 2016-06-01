@@ -61,10 +61,15 @@ def fetch_handler(spec, **kwargs):
 
 
 def push_handler(data, spec, **kwargs):
-    reference = getattr(kwargs.get('_job_manager'), 'reference', None)
+    reference = spec.get('reference')
+
+    if reference is None:
+        # Check for reference in the job manager if none in the output spec
+        reference = getattr(kwargs.get('_job_manager'), 'reference', None)
+
     parent_type = spec.get('parent_type', 'folder')
-    taskOutput = kwargs.get('task_output', {})
-    target = taskOutput.get('target', 'filepath')
+    task_output = kwargs.get('task_output', {})
+    target = task_output.get('target', 'filepath')
 
     if 'parent_id' not in spec:
         raise Exception('Must pass parent ID for girder outputs.')

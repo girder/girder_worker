@@ -193,6 +193,7 @@ new item with the same name as the file), or into an existing item.
         (, "api_root": <path to the girder REST API, default is "/api/v1")
         (, "scheme": <"http" or "https", default is "http">)
         (, "parent_type": <"folder" or "item", default is "folder">)
+        (, "reference": <arbitrary reference string to pass to the server>)
     }
 
 R
