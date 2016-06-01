@@ -30,9 +30,9 @@ class TestFormat(unittest.TestCase):
         self.assertEquals(converter_path(self.stringTextValidator,
                                          self.stringTextValidator), [])
 
-        # There is a direct path from converting between these types
+        # There is a two-step path converting between these types
         self.assertEquals(len(converter_path(self.stringTextValidator,
-                                             Validator('string', 'json'))), 1)
+                                             Validator('string', 'json'))), 2)
 
     def test_is_valid(self):
         self.assertEquals(Validator('string', None).is_valid(), True)

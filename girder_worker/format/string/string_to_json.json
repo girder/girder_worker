@@ -1,0 +1,7 @@
+{
+    "name": "String to JSON",
+    "inputs": [{"name": "input", "type": "string", "format": "string"}],
+    "outputs": [{"name": "output", "type": "string", "format": "json"}],
+    "script_uri": "file://string_to_json.py",
+    "mode": "python"
+}
