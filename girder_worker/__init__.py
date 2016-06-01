@@ -9,6 +9,7 @@ from girder_worker.format import (
 from ConfigParser import ConfigParser
 from executors.python import run as python_run
 from executors.workflow import run as workflow_run
+from networkx import NetworkXNoPath
 from . import utils
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,11 +148,18 @@ def convert(type, input, output, fetch=True, status=None, **kwargs):
         data = input['data']
     else:
         data_descriptor = input
-        for c in converter_path(Validator(type, input['format']),
-                                Validator(type, output['format'])):
-            result = girder_worker.run(
-                c, {'input': data_descriptor}, auto_convert=False,
-                status=status, **kwargs)
+        try:
+            conversion_path = converter_path(Validator(type, input['format']),
+                                             Validator(type, output['format']))
+        except NetworkXNoPath:
+            raise Exception('No conversion path from %s/%s to %s/%s' %
+                            (type, input['format'], type, output['format']))
+
+        # Run data_descriptor through each conversion in the path
+        for conversion in conversion_path:
+            result = girder_worker.run(conversion, {'input': data_descriptor},
+                                       auto_convert=False, status=status,
+                                       **kwargs)
             data_descriptor = result['output']
         data = data_descriptor['data']
 
@@ -271,11 +279,16 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             # Convert data
             if auto_convert:
-                converted = girder_worker.convert(
-                    task_input['type'], d, {'format': task_input['format']},
-                    status=utils.JobStatus.CONVERTING_INPUT,
-                    **dict(
-                        {'task_input': task_input, 'fetch': False}, **kwargs))
+                try:
+                    converted = girder_worker.convert(
+                        task_input['type'], d, {'format': task_input['format']},
+                        status=utils.JobStatus.CONVERTING_INPUT,
+                        **dict(
+                            {'task_input': task_input, 'fetch': False},
+                            **kwargs))
+                except Exception, e:
+                    raise Exception('%s: %s' % (name, str(e)))
+
                 d['script_data'] = converted['data']
             elif (d.get('format', task_input.get('format')) ==
                   task_input.get('format')):
