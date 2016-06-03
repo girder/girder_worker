@@ -1,6 +1,6 @@
 celery==3.1.23
 ete3==3.0.0b35
-networkx==1.10
+networkx==1.11
 Pillow==3.2.0
 pymongo==3.2.2
 pytz==2016.4
