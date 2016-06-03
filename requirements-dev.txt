@@ -1,11 +1,11 @@
 coverage==4.1.0
-coveralls==0.5
+coveralls==1.1
 flake8==2.5.4
 flake8-docstrings==0.2.6
-flake8-quotes==0.2.4
+flake8-quotes==0.3.0
 httmock==1.2.5
-lxml==3.4.4
+lxml==3.6.0
 mock==2.0.0
-pep8-naming==0.2.2
+pep8-naming==0.3.3
 Sphinx==1.4.2
 sphinx-rtd-theme==0.1.9
