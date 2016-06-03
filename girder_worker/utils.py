@@ -446,4 +446,4 @@ class StreamPushAdapter(object):
         """
         Close the output stream. Called after the last data is sent.
         """
-        raise NotImplemented
+        pass
