@@ -6,8 +6,6 @@ flake8-quotes==0.2.4
 httmock==1.2.5
 lxml==3.4.4
 mock==2.0.0
-mccabe==0.4.0
-pep257==0.7.0
 pep8-naming==0.2.2
 Sphinx==1.4.2
 sphinx-rtd-theme==0.1.9
