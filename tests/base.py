@@ -1,4 +1,4 @@
-"""Module defining python testing infrastructure."""
+"""Module defining Python testing infrastructure."""
 
 import os
 import shutil

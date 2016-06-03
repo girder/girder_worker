@@ -135,7 +135,7 @@ release is described here.
 4.  Run ``python setup.py sdist --dist-dir .`` to generate the distribution
     tarball in the project directory, which looks like ``girder-worker-x.y.z.tar.gz``.
 
-5.  Create a new virtual environment and install the python package into
+5.  Create a new virtual environment and install the Python package into
     it. This should not be done in the repository directory because the wrong package
     will be imported.  ::
 

@@ -23,13 +23,13 @@ a single image object and call its ``show`` method.
 
 A task is a special kind of dictionary with keys ``inputs`` and
 ``outputs`` as well as other metadata describing how these objects will be
-used.  In the case of simple python scripts, they can be provided inline as
+used.  In the case of simple Python scripts, they can be provided inline as
 we have done in this example.  Each input and output spec in a task is a dict
 with the following keys:
 
 ``name``
    The name designated to the datum.  This is used both for connecting tasks
-   together in a workflow and, in the case of python tasks, the name of the
+   together in a workflow and, in the case of Python tasks, the name of the
    variable injected into/extracted from the tasks scope.
 
 ``type``
