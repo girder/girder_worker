@@ -1,11 +1,9 @@
 import os
-import subprocess
 import sys
 import threading
 import unittest
 from . import captureOutput
 from girder_worker.io import make_stream_push_adapter
-from girder_worker.io.http import HttpStreamPushAdapter
 from girder_worker.utils import run_process
 from six.moves import BaseHTTPServer, socketserver
 
@@ -55,9 +53,11 @@ def setUpModule():
     global _server
     _server = ServerThread(_socket_port)
 
+
 def tearDownModule():
     if _server:
         _server.stop()
+
 
 class TestStream(unittest.TestCase):
     def setUp(self):

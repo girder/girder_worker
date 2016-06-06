@@ -11,7 +11,7 @@ def before_run(e):
 
 def load(params):
     if platform.system() != 'Linux':
-        raise Exception('The docker plugin only works on Linux hosts due to
+        raise Exception('The docker plugin only works on Linux hosts due to '
                         'mapping of shared volumes and pipes between host and '
                         'container.')
     girder_worker.events.bind('run.before', 'docker', before_run)

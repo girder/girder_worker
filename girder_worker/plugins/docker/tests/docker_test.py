@@ -275,3 +275,6 @@ class TestDockerMode(unittest.TestCase):
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
             girder_worker.run(task)
+
+    def testNamedPipes(self):
+        pass  # TODO
