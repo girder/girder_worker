@@ -474,3 +474,31 @@ class WritePipeAdapter(StreamPushAdapter):
 
     def write(self, buf):
         self.pipe.write(buf)
+
+
+class AccumulateDictAdapter(StreamPushAdapter):
+    def __init__(self, output_spec, key, dictionary=None):
+        """
+        Appends all data from a stream under a key inside a dict.
+
+        :param output_spec: The output specification.
+        :type output_spec: dict
+        :param key: The key to accumulate the data under.
+        :type key: hashable
+        :param dictionary: Dictionary to write into. If not specified, uses the
+            output_spec.
+        :type dictionary: dict
+        """
+        super(AccumulateDictAdapter, self).__init__(output_spec)
+
+        if dictionary is None:
+            dictionary = output_spec
+
+        if key not in dictionary:
+            dictionary[key] = ''
+
+        self.dictionary = dictionary
+        self.key = key
+
+    def write(self, buf):
+        self.dictionary[self.key] += buf

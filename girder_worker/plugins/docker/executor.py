@@ -1,11 +1,10 @@
 import json
 import girder_worker.io
-import girder_worker.utils
 import os
 import re
 import subprocess
 
-from girder_worker import config, TaskSpecValidationError
+from girder_worker import config, TaskSpecValidationError, utils
 
 DATA_VOLUME = '/mnt/girder_worker/data'
 SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
@@ -199,16 +198,10 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     args = _expand_args(task.get('container_args', []), inputs, task_inputs,
                         tempdir)
 
-    print_stderr, print_stdout = True, True
-    for id, to in task_outputs.iteritems():
-        if id == '_stderr':
-            outputs['_stderr']['script_data'] = ''
-            print_stderr = False
-        elif id == '_stdout':
-            outputs['_stdout']['script_data'] = ''
-            print_stdout = False
-
     pipes = _create_named_output_pipes(task_outputs, outputs, tempdir)
+    for id in ('_stdout', '_stderr'):
+        if id in task_outputs and id in outputs:
+            pipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
     pre_args = _get_pre_args(task, os.getuid(), os.getgid())
     command = [
@@ -220,9 +213,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     print('Running container: %s' % repr(command))
 
-    p = girder_worker.utils.run_process(command, outputs,
-                                        print_stdout, print_stderr,
-                                        output_pipes=pipes)
+    p = utils.run_process(command, output_pipes=pipes)
 
     if p.returncode != 0:
         raise Exception('Error: docker run returned code %d.' % p.returncode)
