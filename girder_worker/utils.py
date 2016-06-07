@@ -369,13 +369,36 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def run_process(command, outputs, print_stdout, print_stderr,
-                output_pipes=None):
+def run_process(command, output_pipes=None):
+    """
+    Run a subprocess, and listen for its outputs on various pipes.
+
+    :param command: The command to run.
+    :type command: list of str
+    :param output_pipes: This should be a dictionary mapping pipe descriptors
+        to instances of ``StreamPushAdapter`` that should handle the data from
+        the stream. Normally, keys of this dictionary are open file descriptors,
+        which are integers. There are two special cases where they are not,
+        which are the keys ``'_stdout'`` and ``'_stderr'``. These special keys
+        correspond to the stdout and stderr pipes that will be created for the
+        subprocess. If these are not set in the ``output_pipes`` map, the
+        default behavior is to direct them to the stdout and stderr of the
+        current process.
+    :type output_pipes: dict
+    """
     output_pipes = output_pipes or {}
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    fds = [p.stdout.fileno(), p.stderr.fileno()]
-    fds += output_pipes.keys()
+
+    # we now know subprocess stdout and stderr filenos, so bind the adapters
+    stdout = p.stdout.fileno()
+    stderr = p.stderr.fileno()
+    output_pipes[stdout] = output_pipes.get(
+        '_stdout', WritePipeAdapter({}, sys.stdout))
+    output_pipes[stderr] = output_pipes.get(
+        '_stderr', WritePipeAdapter({}, sys.stdout))
+
+    fds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
 
     try:
         while True:
@@ -385,32 +408,19 @@ def run_process(command, outputs, print_stdout, print_stderr,
             for ready_pipe in ready:
                 buf = os.read(ready_pipe, 65536)
 
-                if ready_pipe == p.stdout.fileno():
-                    if buf:
-                        if print_stdout:
-                            sys.stdout.write(buf)
-                        else:
-                            outputs['_stdout']['script_data'] += buf
-                    else:
-                        fds.remove(p.stdout.fileno())
-                elif ready_pipe == p.stderr.fileno():
-                    if buf:
-                        if print_stderr:
-                            sys.stderr.write(buf)
-                        else:
-                            outputs['_stderr']['script_data'] += buf
-                    else:
-                        fds.remove(p.stderr.fileno())
-                else:  # one of the named pipes has data, call the adapter
-                    if buf:
-                        output_pipes[ready_pipe].write(buf)
-                    else:
-                        output_pipes[ready_pipe].close()
+                if buf:
+                    output_pipes[ready_pipe].write(buf)
+                else:
+                    output_pipes[ready_pipe].close()
+                    if ready_pipe not in (stdout, stderr):
+                        # bad things happen if parent closes stdout or stderr
                         os.close(ready_pipe)
-                        fds.remove(ready_pipe)
+                    fds.remove(ready_pipe)
             if (not fds or not ready) and p.poll() is not None:
+                # all pipes are empty and the process has returned, we are done
                 break
             elif not fds and p.poll() is None:
+                # all pipes are closed but the process is still running
                 p.wait()
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
@@ -447,3 +457,20 @@ class StreamPushAdapter(object):
         Close the output stream. Called after the last data is sent.
         """
         pass
+
+
+class WritePipeAdapter(StreamPushAdapter):
+    """
+    Simply wraps another pipe that contains a ``write`` method. This is useful
+    for wrapping ``sys.stdout`` and ``sys.stderr``, where we want to call
+    ``write`` but not ``close`` on them.
+    """
+    def __init__(self, output_spec, pipe):
+        """
+        :param pipe: An object containing a ``write`` method, e.g. sys.stdout.
+        """
+        super(WritePipeAdapter, self).__init__(output_spec)
+        self.pipe = pipe
+
+    def write(self, buf):
+        self.pipe.write(buf)

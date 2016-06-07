@@ -85,7 +85,7 @@ class TestStream(unittest.TestCase):
         cmd = [sys.executable, _script, _pipepath]
         try:
             with captureOutput() as stdpipes:
-                run_process(cmd, {}, True, True, adapters)
+                run_process(cmd, adapters)
         except Exception:
             print('Stdout/stderr from exception: ')
             print(stdpipes)
