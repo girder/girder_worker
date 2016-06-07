@@ -14,7 +14,7 @@ SCRIPTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)),
 
 def _pull_image(image):
     """
-    Pulls the specified docker image onto this worker.
+    Pulls the specified Docker image onto this worker.
     """
     command = ('docker', 'pull', image)
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
@@ -22,7 +22,7 @@ def _pull_image(image):
     stdout, stderr = p.communicate()
 
     if p.returncode != 0:
-        print('Error pulling docker image %s:' % image)
+        print('Error pulling Docker image %s:' % image)
         print('STDOUT: ' + stdout)
         print('STDERR: ' + stderr)
 
@@ -31,7 +31,7 @@ def _pull_image(image):
 
 def _read_from_config(key, default):
     """
-    Helper to read docker specific config values from the worker config files.
+    Helper to read Docker specific config values from the worker config files.
     """
     if config.has_option('docker', key):
         return config.get('docker', key)
@@ -42,7 +42,7 @@ def _read_from_config(key, default):
 def _transform_path(inputs, taskInputs, inputId, tmpDir):
     """
     If the input specified by inputId is a filepath target, we transform it to
-    its absolute path within the docker container (underneath the data mount).
+    its absolute path within the Docker container (underneath the data mount).
     """
     for ti in taskInputs.itervalues():
         tiId = ti['id'] if 'id' in ti else ti['name']
@@ -170,7 +170,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
 
     if task.get('pull_image', True):
-        print('Pulling docker image: ' + image)
+        print('Pulling Docker image: ' + image)
         _pull_image(image)
 
     tempdir = kwargs.get('_tempdir')

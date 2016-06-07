@@ -28,7 +28,7 @@ class TestPickle(unittest.TestCase):
         self.assertEqual(obj, self.round_trip(obj), descr)
 
     def test_pickle_basic(self):
-        """Test pickling basic python types."""
+        """Test pickling basic Python types."""
         self.assertRoundTrip(0, 'int')
         self.assertRoundTrip(1.0, 'float')
         self.assertRoundTrip('a', 'str')

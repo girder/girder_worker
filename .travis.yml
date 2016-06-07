@@ -1,4 +1,4 @@
-# it is not really python, but there is no R support on Travis CI yet
+# it is not really Python, but there is no R support on Travis CI yet
 language: python
 
 sudo: false

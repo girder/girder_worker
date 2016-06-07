@@ -1,3 +1,3 @@
-# Configuration for python coverage
+# Configuration for Python coverage
 [run]
 branch = @_py_branch_cov@

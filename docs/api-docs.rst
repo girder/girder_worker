@@ -10,7 +10,7 @@ function, which is responsible for fetching the inputs as necessary and executin
 the task, and finally populating any output variables and sending them to their
 destination.
 
-The task, its inputs, and its outputs are each passed into the function as python dictionaries.
+The task, its inputs, and its outputs are each passed into the function as Python dictionaries.
 In this section, we describe the structure of each of those dictionaries.
 
 The task specification
@@ -22,7 +22,7 @@ important field of the task is the ``mode``, which describes what type of task
 it is. The structure for the task dictionary is described below. Uppercase names
 within angle braces represent symbols defined in the specification. Optional parts
 of the specification are surrounded by parentheses to avoid ambiguity with the
-square braces, which represent lists in python or Arrays in JSON. The Python task
+square braces, which represent lists in Python or Arrays in JSON. The Python task
 also accepts a ``write_script`` parameter that when set to 1 will write task scripts to
 disk before executing them.  This aids in readability for interactive debuggers
 such as ``pdb``.
@@ -33,7 +33,7 @@ such as ``pdb``.
 
     <PYTHON_TASK> ::= {
         "mode": "python",
-        "script": <python code to run as a string>
+        "script": <Python code to run as a string>
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
         (, "write_script": 1)
@@ -41,14 +41,14 @@ such as ``pdb``.
 
     <R_TASK> ::= {
         "mode": "r",
-        "script": <r code to run (as a string)>
+        "script": <R code to run (as a string)>
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
     }
 
     <DOCKER_TASK> ::= {
         "mode": "docker",
-        "docker_image": <docker image name to run>
+        "docker_image": <Docker image name to run>
         (, "container_args": [<container arguments>])
         (, "entrypoint": <custom override for container entry point>)
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])

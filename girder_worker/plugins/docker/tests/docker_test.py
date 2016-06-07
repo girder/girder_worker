@@ -121,7 +121,7 @@ class TestDockerMode(unittest.TestCase):
             # printed to sys.stdout (which we mocked)
             lines = mockedStdOut.getvalue().splitlines()
             self.assertEqual(lines[0],
-                             'Pulling docker image: test/test:latest')
+                             'Pulling Docker image: test/test:latest')
             self.assertEqual(lines[-2], 'output message')
             self.assertEqual(
                 lines[-1], 'Garbage collecting old containers and images.')

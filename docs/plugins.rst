@@ -4,7 +4,7 @@ Plugins
 =======
 
 The Girder Worker plugin system is used to extend the core functionality of Girder Worker
-in a number of ways. Plugins can execute any python code when they are loaded at
+in a number of ways. Plugins can execute any Python code when they are loaded at
 runtime, but the most common augmentations they perform are:
 
   * **Adding new execution modes.** Without any plugins enabled, the core Girder Worker
@@ -26,14 +26,14 @@ Docker
 
 * **Plugin ID:** ``docker``
 * **Description:** This plugin exposes a new task execution mode, ``docker``. These
-  tasks pull a docker image and run a container using that image, with optional
+  tasks pull a Docker image and run a container using that image, with optional
   command line arguments. Docker tasks look like:
 
 .. code-block :: none
 
     <DOCKER_TASK> ::= {
         "mode": "docker",
-        "docker_image": <docker image name to run>
+        "docker_image": <Docker image name to run>
         (, "pull_image": <true (the default) or false>)
         (, "container_args": [<container arguments>])
         (, "docker_run_args": [<additional arguments to `docker run`>])
@@ -74,7 +74,7 @@ If you want to pass additional command line options to ``docker run`` that shoul
 come before the container name, pass them as a list via the ``"docker_run_args"``
 key.
 
-Outputs from docker tasks
+Outputs from Docker tasks
 *************************
 
 Docker tasks can have two types of outputs: streams (i.e. standard output and standard
@@ -227,7 +227,7 @@ Spark
   run inside a pyspark environment with a
   `SparkContext <http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext>`_
   variable automatically exposed. That is, each task will have a variable exposed
-  in its python runtime called ``sc`` that is a valid SparkContext. This plugin exposes
+  in its Python runtime called ``sc`` that is a valid SparkContext. This plugin exposes
   a new type, ``collection``, referring to something that can be represented by
   a Spark `RDD <http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD>`_.
 * **Converters added:**
@@ -244,7 +244,7 @@ VTK
 * **Plugin ID:** ``vtk``
 * **Description:** This plugin exposes the ``geometry`` type and provides converters
   and validators for several types. This plugin requires that you have the VTK
-  python package exposed in Girder Worker's python environment. The ``geometry`` type
+  Python package exposed in Girder Worker's Python environment. The ``geometry`` type
   represents 3D geometry.
 * **Converters added:**
     * ``geometry/vtkpolydata`` |ba| ``geometry/vtkpolydata.serialized``
