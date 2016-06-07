@@ -1,6 +1,7 @@
-import girder_worker.utils
 import os
 import json
+
+from girder_worker import utils
 
 
 def _write_scala_script(script, inputs, task_outputs, tmp_dir):
@@ -40,14 +41,10 @@ def _run(spark, task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     script_fname = _write_scala_script(
         task['script'], inputs, task_outputs, tmp_dir)
 
-    print_stderr, print_stdout = True, True
-    for id, to in task_outputs.iteritems():
-        if id == '_stderr':
-            outputs['_stderr']['script_data'] = ''
-            print_stderr = False
-        elif id == '_stdout':
-            outputs['_stdout']['script_data'] = ''
-            print_stdout = False
+    pipes = {}
+    for id in ('_stdout', '_stderr'):
+        if id in task_outputs and id in outputs:
+            pipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
     if spark:
         command = ['spark-shell', '-i', script_fname]
@@ -56,8 +53,7 @@ def _run(spark, task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     print('Running scala: "%s"' % ' '.join(command))
 
-    p = girder_worker.utils.run_process(command, outputs,
-                                        print_stdout, print_stderr)
+    p = utils.run_process(command, output_pipes=pipes)
 
     if p.returncode != 0:
         raise Exception('Error: scala run returned code {}.'.format(
