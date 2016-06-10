@@ -180,6 +180,49 @@ variable.
 The inline input mode simply passes the data directly in the input binding dictionary
 as the value of the "data" key. Do not use this for any data that could be large.
 
+*Note:* The ``type`` field is not required when sending an input to a task.
+Any supplied ``type`` will be ignored, since the task specification declares the type of
+each input. However, the ``format`` field is required because the format is allowed
+to differ from the task specification. If a different format is supplied, the data
+will be auto-converted before running the task.
+
+*Note:* The ``mode`` field is inferred in a few special cases. If there is a ``url`` field,
+the ``mode`` is assumed to be ``"http"``, and if there is a ``data`` field, the ``mode``
+is assumed to be ``"inline"``. For example, the following input specifications
+are equivalent:
+
+.. code-block:: none
+
+    {
+        'format': 'png',
+        'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
+    }
+
+.. code-block:: none
+
+    {
+        'mode': 'http',
+        'format': 'png',
+        'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
+    }
+
+The following two specifications are also equivalent:
+
+.. code-block:: none
+
+    {
+        'format': 'text',
+        'data': 'hello'
+    }
+
+.. code-block:: none
+
+    {
+        'mode': 'inline',
+        'format': 'text',
+        'data': 'hello'
+    }
+
 The output specification
 ************************
 
