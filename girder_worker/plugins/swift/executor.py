@@ -1,6 +1,7 @@
 import re
-import girder_worker.utils
 import tempfile
+
+from girder_worker import utils
 
 
 def _expand_args(args, inputs, taskInputs, tmpDir):
@@ -34,21 +35,16 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     tmpDir = kwargs.get('_tempdir')
     args = _expand_args(task['swift_args'], inputs, task_inputs, tmpDir)
 
-    print_stderr, print_stdout = True, True
-    for id, to in task_outputs.iteritems():
-        if id == '_stderr':
-            outputs['_stderr']['script_data'] = ''
-            print_stderr = False
-        elif id == '_stdout':
-            outputs['_stdout']['script_data'] = ''
-            print_stdout = False
+    pipes = {}
+    for id in ('_stdout', '_stderr'):
+        if id in task_outputs and id in outputs:
+            pipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
     command = ['swift', script_fname] + args
 
     print('Running swift: "%s"' % ' '.join(command))
 
-    p = girder_worker.utils.run_process(command, outputs,
-                                        print_stdout, print_stderr)
+    p = utils.run_process(command, output_pipes=pipes)
 
     if p.returncode != 0:
         raise Exception('Error: swift run returned code {}.'.format(

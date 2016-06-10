@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 from . import http, local, mongodb
 
 import os
@@ -7,6 +6,7 @@ import tempfile
 
 _fetch_map = {}
 _push_map = {}
+_stream_push_map = {}
 
 
 def _inline_fetch(spec, **kwargs):
@@ -65,7 +65,20 @@ def register_push_handler(mode, handler):
     _push_map[mode] = handler
 
 
-def _detectMode(spec):
+def register_stream_push_adapter(mode, adapter_cls):
+    """
+    Register an adapter class to handle stream pushing for a given mode.
+
+    :param mode: The mode to bind this adapter to.
+    :type mode: str
+    :param adapter_cls: The adapter class that will be instantiated to handle
+        stream pushing for the given mode.
+    :type adapter_cls: :py:class:`StreamPushAdapter`
+    """
+    _stream_push_map[mode] = adapter_cls
+
+
+def _detect_mode(spec):
     mode = spec.get('mode', 'auto')
 
     if mode == 'auto':
@@ -97,7 +110,7 @@ def fetch(spec, **kwargs):
         LOCATION_SPEC type in the grammar.
     :type input_spec: dict
     """
-    mode = _detectMode(spec)
+    mode = _detect_mode(spec)
 
     if mode not in _fetch_map:
         raise Exception('Unknown input fetch mode: ' + mode)
@@ -115,12 +128,24 @@ def push(data, spec, **kwargs):
     :param spec: The output spec
     :type spec: dict
     """
-    mode = _detectMode(spec)
+    mode = _detect_mode(spec)
 
     if mode not in _push_map:
         raise Exception('Unknown output push mode: ' + mode)
 
     return _push_map[mode](data, spec, **kwargs)
+
+
+def make_stream_push_adapter(output):
+    """
+    Create a stream push adapter based on the given output binding.
+    """
+    mode = _detect_mode(output)
+
+    if mode not in _stream_push_map:
+        raise Exception('Unknown streaming output push mode: ' + mode)
+
+    return _stream_push_map[mode](output)
 
 
 register_fetch_handler('http', http.fetch)
@@ -133,3 +158,5 @@ register_push_handler('http', http.push)
 register_push_handler('mongodb', mongodb.push)
 register_push_handler('local', local.push)
 register_push_handler('inline', _inline_push)
+
+register_stream_push_adapter('http', http.HttpStreamPushAdapter)

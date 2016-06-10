@@ -51,6 +51,7 @@ add_python_test(tree PLUGINS_ENABLED r,vtk)
 add_python_test(workflow)
 add_python_test(pickle)
 add_python_test(spec)
+add_python_test(stream)
 add_python_test(directory)
 
 add_docstring_test(girder_worker.specs.spec)

@@ -369,34 +369,136 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def run_process(command, outputs, print_stdout, print_stderr):
+def run_process(command, output_pipes=None):
+    """
+    Run a subprocess, and listen for its outputs on various pipes.
+
+    :param command: The command to run.
+    :type command: list of str
+    :param output_pipes: This should be a dictionary mapping pipe descriptors
+        to instances of ``StreamPushAdapter`` that should handle the data from
+        the stream. Normally, keys of this dictionary are open file descriptors,
+        which are integers. There are two special cases where they are not,
+        which are the keys ``'_stdout'`` and ``'_stderr'``. These special keys
+        correspond to the stdout and stderr pipes that will be created for the
+        subprocess. If these are not set in the ``output_pipes`` map, the
+        default behavior is to direct them to the stdout and stderr of the
+        current process.
+    :type output_pipes: dict
+    """
+    output_pipes = output_pipes or {}
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    fds = [p.stdout, p.stderr]
-    while True:
-        ready = select.select(fds, (), fds, 1)[0]
 
-        if p.stdout in ready:
-            buf = os.read(p.stdout.fileno(), 1024)
-            if buf:
-                if print_stdout:
-                    sys.stdout.write(buf)
+    # we now know subprocess stdout and stderr filenos, so bind the adapters
+    stdout = p.stdout.fileno()
+    stderr = p.stderr.fileno()
+    output_pipes[stdout] = output_pipes.get(
+        '_stdout', WritePipeAdapter({}, sys.stdout))
+    output_pipes[stderr] = output_pipes.get(
+        '_stderr', WritePipeAdapter({}, sys.stdout))
+
+    fds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
+
+    try:
+        while True:
+            # get ready readable pipes, or timeout after 1 second
+            ready = select.select(fds, (), fds, 1)[0]
+
+            for ready_pipe in ready:
+                buf = os.read(ready_pipe, 65536)
+
+                if buf:
+                    output_pipes[ready_pipe].write(buf)
                 else:
-                    outputs['_stdout']['script_data'] += buf
-            else:
-                fds.remove(p.stdout)
-        if p.stderr in ready:
-            buf = os.read(p.stderr.fileno(), 1024)
-            if buf:
-                if print_stderr:
-                    sys.stderr.write(buf)
-                else:
-                    outputs['_stderr']['script_data'] += buf
-            else:
-                fds.remove(p.stderr)
-        if (not fds or not ready) and p.poll() is not None:
-            break
-        elif not fds and p.poll() is None:
-            p.wait()
+                    output_pipes[ready_pipe].close()
+                    if ready_pipe not in (stdout, stderr):
+                        # bad things happen if parent closes stdout or stderr
+                        os.close(ready_pipe)
+                    fds.remove(ready_pipe)
+            if (not fds or not ready) and p.poll() is not None:
+                # all pipes are empty and the process has returned, we are done
+                break
+            elif not fds and p.poll() is None:
+                # all pipes are closed but the process is still running
+                p.wait()
+    except Exception:
+        p.kill()  # kill child process if something went wrong on our end
+        raise
+    finally:
+        # close any remaining output adapters
+        for fd in fds:
+            if fd in output_pipes:
+                output_pipes[fd].close()
+                os.close(fd)
 
     return p
+
+
+class StreamPushAdapter(object):
+    """
+    This represents the interface that must be implemented by push adapters for
+    IO modes that want to implement streaming output.
+    """
+    def __init__(self, output_spec):
+        """
+        Initialize the adpater based on the output spec.
+        """
+        self.output_spec = output_spec
+
+    def write(self, buf):
+        """
+        Write a chunk of data to the output stream.
+        """
+        raise NotImplemented
+
+    def close(self):
+        """
+        Close the output stream. Called after the last data is sent.
+        """
+        pass
+
+
+class WritePipeAdapter(StreamPushAdapter):
+    """
+    Simply wraps another pipe that contains a ``write`` method. This is useful
+    for wrapping ``sys.stdout`` and ``sys.stderr``, where we want to call
+    ``write`` but not ``close`` on them.
+    """
+    def __init__(self, output_spec, pipe):
+        """
+        :param pipe: An object containing a ``write`` method, e.g. sys.stdout.
+        """
+        super(WritePipeAdapter, self).__init__(output_spec)
+        self.pipe = pipe
+
+    def write(self, buf):
+        self.pipe.write(buf)
+
+
+class AccumulateDictAdapter(StreamPushAdapter):
+    def __init__(self, output_spec, key, dictionary=None):
+        """
+        Appends all data from a stream under a key inside a dict.
+
+        :param output_spec: The output specification.
+        :type output_spec: dict
+        :param key: The key to accumulate the data under.
+        :type key: hashable
+        :param dictionary: Dictionary to write into. If not specified, uses the
+            output_spec.
+        :type dictionary: dict
+        """
+        super(AccumulateDictAdapter, self).__init__(output_spec)
+
+        if dictionary is None:
+            dictionary = output_spec
+
+        if key not in dictionary:
+            dictionary[key] = ''
+
+        self.dictionary = dictionary
+        self.key = key
+
+    def write(self, buf):
+        self.dictionary[self.key] += buf

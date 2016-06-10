@@ -1,15 +1,16 @@
 import ConfigParser
+import girder_worker
 import httmock
 import json
 import mock
 import os
-import girder_worker
 import shutil
 import six
+import stat
 import sys
 import unittest
 
-from girder_worker import TaskSpecValidationError
+from girder_worker import io, TaskSpecValidationError
 from girder_worker.plugins.docker.executor import DATA_VOLUME, SCRIPTS_VOLUME,\
     SCRIPTS_DIR
 
@@ -59,6 +60,9 @@ def setUpModule():
         girder_worker.config.add_section('docker')
     except ConfigParser.DuplicateSectionError:
         pass
+
+    if os.path.isdir(_tmp):
+        shutil.rmtree(_tmp)
 
 
 def tearDownModule():
@@ -275,3 +279,50 @@ class TestDockerMode(unittest.TestCase):
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
             girder_worker.run(task)
+
+    @mock.patch('girder_worker.utils.run_process')
+    @mock.patch('subprocess.Popen')
+    @mock.patch('subprocess.check_output')
+    def testNamedPipes(self, mockCheckOutput, mockPopen, mockRunProcess):
+        mockRunProcess.return_value = processMock
+        mockPopen.return_value = processMock
+        mockCheckOutput.return_value = inspectOutput
+
+        task = {
+            'mode': 'docker',
+            'docker_image': 'test/test',
+            'pull_image': False,
+            'inputs': [],
+            'outputs': [{
+                'id': 'named_pipe',
+                'format': 'text',
+                'type': 'string',
+                'target': 'filepath',
+                'stream': True
+            }]
+        }
+
+        outputs = {
+            'named_pipe': {
+                'mode': 'test_dummy'
+            }
+        }
+
+        class DummyAdapter(girder_worker.utils.StreamPushAdapter):
+            def write(self, buf):
+                pass
+
+        # Mock out the stream adapter
+        io.register_stream_push_adapter('test_dummy', DummyAdapter)
+
+        tmp = os.path.join(_tmp, 'testing')
+        if not os.path.isdir(tmp):
+            os.makedirs(tmp)
+
+        outputs = girder_worker.run(
+            task, inputs={}, outputs=outputs, _tempdir=tmp, cleanup=False)
+
+        # Make sure pipe was created inside the temp dir
+        pipe = os.path.join(tmp, 'named_pipe')
+        self.assertTrue(os.path.exists(pipe))
+        self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))

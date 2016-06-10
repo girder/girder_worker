@@ -1,31 +1,17 @@
-import contextlib
 import mock
 import os
 import girder_worker
 import girder_worker.configure
 import unittest
 import sys
-from six import StringIO
 from six.moves.configparser import ConfigParser, NoOptionError
+from . import captureOutput
 
 local_cfg = os.path.join(girder_worker.PACKAGE_DIR, 'worker.local.cfg')
 
 
 class SysExitException(Exception):
     pass
-
-
-@contextlib.contextmanager
-def captureOutput():
-    oldout, olderr = sys.stdout, sys.stderr
-    try:
-        out = [StringIO(), StringIO()]
-        sys.stdout, sys.stderr = out
-        yield out
-    finally:
-        sys.stdout, sys.stderr = oldout, olderr
-        out[0] = out[0].getvalue()
-        out[1] = out[1].getvalue()
 
 
 def setUpModule():
