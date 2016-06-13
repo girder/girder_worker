@@ -42,7 +42,7 @@ class Validator(namedtuple('Validator', ['type', 'format'])):
         return self in conv_graph.nodes()
 
 
-def csv_to_rows(input):
+def get_csv_reader(input):
 
     # csv package does not support unicode
     input = str(input)
@@ -64,8 +64,11 @@ def csv_to_rows(input):
             sample = '\n'.join(input[:sampleSize].splitlines()[:-1])
         dialect = csv.Sniffer().sniff(sample)
         dialect.skipinitialspace = True
+    return csv.DictReader(input.splitlines(), dialect=dialect)
 
-    reader = csv.DictReader(input.splitlines(), dialect=dialect)
+
+def csv_to_rows(input):
+    reader = get_csv_reader(input)
     rows = [d for d in reader]
     fields = reader.fieldnames
 
