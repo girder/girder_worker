@@ -369,7 +369,25 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def run_process(command, output_pipes=None):
+def _close_pipes(rds, wds, input_pipes, output_pipes):
+    """
+    Helper to close remaining input and output adapters after the subprocess
+    completes.
+    """
+    # close any remaining output adapters
+    for fd in rds:
+        if fd in output_pipes:
+            output_pipes[fd].close()
+            os.close(fd)
+
+    # close any remaining input adapters
+    for fd in wds:
+        if fd in input_pipes:
+            input_pipes[fd].close()
+            os.close(fd)
+
+
+def run_process(command, output_pipes=None, input_pipes=None):
     """
     Run a subprocess, and listen for its outputs on various pipes.
 
@@ -385,28 +403,41 @@ def run_process(command, output_pipes=None):
         default behavior is to direct them to the stdout and stderr of the
         current process.
     :type output_pipes: dict
+    :param input_pipes: This should be a dictionary mapping pipe descriptors
+        to instances of ``StreamFetchAdapter`` that should handle sending
+        input data in chunks. Normally, keys of this dictionary are open file
+        descriptors, which are integers. There is one special case that is not
+        an integer, which is ``'_stdin'``, which will be mapped to the standard
+        input pipe of the subprocess once it is created.
+    :type input_pipes: dict
     """
+    OUTPUT_BUF_LEN = 65536
+    input_pipes = input_pipes or {}
     output_pipes = output_pipes or {}
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+                         stderr=subprocess.PIPE, stdin=subprocess.PIPE)
 
     # we now know subprocess stdout and stderr filenos, so bind the adapters
     stdout = p.stdout.fileno()
     stderr = p.stderr.fileno()
+    stdin = p.stdin.fileno()
     output_pipes[stdout] = output_pipes.get(
         '_stdout', WritePipeAdapter({}, sys.stdout))
     output_pipes[stderr] = output_pipes.get(
-        '_stderr', WritePipeAdapter({}, sys.stdout))
+        '_stderr', WritePipeAdapter({}, sys.stderr))
 
-    fds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
+    if '_stdin' in input_pipes:
+        input_pipes[stdin] = input_pipes['_stdin']
+    rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
+    wds = [fd for fd in input_pipes.keys() if isinstance(fd, int)]
 
     try:
         while True:
-            # get ready readable pipes, or timeout after 1 second
-            ready = select.select(fds, (), fds, 1)[0]
+            # get ready pipes, or timeout after 1 second
+            readable, writable, _ = select.select(rds, wds, (), 1)
 
-            for ready_pipe in ready:
-                buf = os.read(ready_pipe, 65536)
+            for ready_pipe in readable:
+                buf = os.read(ready_pipe, OUTPUT_BUF_LEN)
 
                 if buf:
                     output_pipes[ready_pipe].write(buf)
@@ -415,24 +446,51 @@ def run_process(command, output_pipes=None):
                     if ready_pipe not in (stdout, stderr):
                         # bad things happen if parent closes stdout or stderr
                         os.close(ready_pipe)
-                    fds.remove(ready_pipe)
-            if (not fds or not ready) and p.poll() is not None:
+                    rds.remove(ready_pipe)
+            for ready_pipe in writable:
+                # TODO for now it's OK for the input reads to block since
+                # input generally happens first, but we should consider how to
+                # support non-blocking stream inputs in the future.
+                buf = input_pipes[ready_pipe].read()
+
+                if buf:
+                    os.write(ready_pipe, buf)
+                else:   # end of stream
+                    wds.remove(ready_pipe)
+                    if ready_pipe != stdin:
+                        os.close(ready_pipe)
+            empty = (not rds or not readable) and (not wds or not writable)
+            if empty and p.poll() is not None:
                 # all pipes are empty and the process has returned, we are done
                 break
-            elif not fds and p.poll() is None:
+            elif not rds and not wds and p.poll() is None:
                 # all pipes are closed but the process is still running
                 p.wait()
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
         raise
     finally:
-        # close any remaining output adapters
-        for fd in fds:
-            if fd in output_pipes:
-                output_pipes[fd].close()
-                os.close(fd)
+        _close_pipes(rds, wds, input_pipes, output_pipes)
 
     return p
+
+
+class StreamFetchAdapter(object):
+    """
+    This represents the interface that must be implemented by fetch adapters
+    for IO modes that want to implement streaming input.
+    """
+    def __init__(self, input_spec):
+        self.input_spec = input_spec
+
+    def read(self, buf_len):
+        """
+        Fetch adapters must implement this method, which is responsible for
+        reading up to ``self.buf_len`` bytes from the stream. For now, this is
+        expected to be a blocking read, and should return an empty string to
+        indicate the end of the stream.
+        """
+        raise NotImplemented
 
 
 class StreamPushAdapter(object):

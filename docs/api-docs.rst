@@ -92,6 +92,7 @@ specified to :py:func:`girder_worker.run`.
         (, "default": <default value if none is bound at runtime>)
         (, "target": <INPUT_TARGET_TYPE>)   ; default is "memory"
         (, "filename": <name of file if target="filepath">)
+        (, "stream": <set to true to indicate a streaming input>)
     }
 
     <INPUT_TARGET_TYPE> ::= "memory" | "filepath"
