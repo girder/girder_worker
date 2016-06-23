@@ -456,10 +456,8 @@ def run_process(command, output_pipes=None, input_pipes=None):
                 if buf:
                     os.write(ready_pipe, buf)
                 else:   # end of stream
-                    os.write(ready_pipe, '\x1a')  # send EOF character
                     wds.remove(ready_pipe)
-                    if ready_pipe != stdin:
-                        os.close(ready_pipe)
+                    os.close(ready_pipe)
             empty = (not rds or not readable) and (not wds or not writable)
             if empty and p.poll() is not None:
                 # all pipes are empty and the process has returned, we are done
