@@ -198,7 +198,7 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
     for id, spec in task_inputs.iteritems():
         pipe = make_pipe(id, spec, inputs)
         if pipe:
-            ipipes[os.open(pipe, os.O_WRONLY)] = \
+            ipipes[os.open(pipe, os.O_WRONLY | os.O_NONBLOCK)] = \
                 make_stream_fetch_adapter(inputs[id])
 
     # handle stream outputs
