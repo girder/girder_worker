@@ -456,6 +456,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
                 if buf:
                     os.write(ready_pipe, buf)
                 else:   # end of stream
+                    os.write(ready_pipe, '\x1a')  # send EOF character
                     wds.remove(ready_pipe)
                     if ready_pipe != stdin:
                         os.close(ready_pipe)
