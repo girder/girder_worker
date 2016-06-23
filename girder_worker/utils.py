@@ -384,7 +384,6 @@ def _close_pipes(rds, wds, input_pipes, output_pipes):
     # close any remaining input adapters
     for fd in wds:
         if fd in input_pipes:
-            input_pipes[fd].close()
             os.close(fd)
 
 
