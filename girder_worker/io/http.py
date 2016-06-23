@@ -46,6 +46,7 @@ class HttpStreamPushAdapter(StreamPushAdapter):
         easily, so we use the lower-level httplib module.
         """
         super(HttpStreamPushAdapter, self).__init__(output_spec)
+        self._closed = False
 
         parts = urlparse.urlparse(output_spec['url'])
         if parts.scheme == 'https':
@@ -86,12 +87,16 @@ class HttpStreamPushAdapter(StreamPushAdapter):
                   'message was:\n%s' % (self.output_spec['url'], resp.status,
                                         resp.read()))
             self.conn.close()
+            self._closed = True
             raise
 
     def close(self):
         """
         Close the output stream. Called after the last data is sent.
         """
+        if self._closed:
+            return
+
         try:
             self.conn.send(b'0\r\n\r\n')
             resp = self.conn.getresponse()
