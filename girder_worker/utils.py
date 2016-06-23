@@ -411,7 +411,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
         input pipe of the subprocess once it is created.
     :type input_pipes: dict
     """
-    OUTPUT_BUF_LEN = 65536
+    BUF_LEN = 65536
     input_pipes = input_pipes or {}
     output_pipes = output_pipes or {}
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
@@ -437,7 +437,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
             readable, writable, _ = select.select(rds, wds, (), 1)
 
             for ready_pipe in readable:
-                buf = os.read(ready_pipe, OUTPUT_BUF_LEN)
+                buf = os.read(ready_pipe, BUF_LEN)
 
                 if buf:
                     output_pipes[ready_pipe].write(buf)
@@ -451,7 +451,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
                 # TODO for now it's OK for the input reads to block since
                 # input generally happens first, but we should consider how to
                 # support non-blocking stream inputs in the future.
-                buf = input_pipes[ready_pipe].read()
+                buf = input_pipes[ready_pipe].read(BUF_LEN)
 
                 if buf:
                     os.write(ready_pipe, buf)
