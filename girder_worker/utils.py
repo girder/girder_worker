@@ -7,6 +7,7 @@ import girder_worker
 import girder_worker.plugins
 import select
 import shutil
+import six
 import subprocess
 import sys
 import tempfile
@@ -493,6 +494,20 @@ class StreamFetchAdapter(object):
         raise NotImplemented
 
 
+class MemoryFetchAdapter(StreamFetchAdapter):
+    def __init__(self, input_spec, data):
+        """
+        Simply reads data from memory. This can be used to map traditional
+        (non-streaming) inputs to pipes when using ``run_process``. This is
+        roughly identical behavior to BytesIO.
+        """
+        super(MemoryFetchAdapter, self).__init__(input_spec)
+        self._stream = six.BytesIO(data)
+
+    def read(self, buf_len):
+        return self._stream.read(buf_len)
+
+
 class StreamPushAdapter(object):
     """
     This represents the interface that must be implemented by push adapters for
@@ -537,7 +552,9 @@ class WritePipeAdapter(StreamPushAdapter):
 class AccumulateDictAdapter(StreamPushAdapter):
     def __init__(self, output_spec, key, dictionary=None):
         """
-        Appends all data from a stream under a key inside a dict.
+        Appends all data from a stream under a key inside a dict. Can be used
+        to bind traditional (non-streaming) outputs to pipes when using
+        ``run_process``.
 
         :param output_spec: The output specification.
         :type output_spec: dict
