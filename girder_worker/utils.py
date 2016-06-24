@@ -423,7 +423,7 @@ def _open_ipipes(wds, fifos, input_pipes):
     reading already. This modifies and returns the list of write descriptors,
     the list of waiting fifo names, and the mapping back to input adapters.
     """
-    for fifo in fifos:
+    for fifo in fifos.copy():
         try:
             fd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
             input_pipes[fd] = fifos.pop(fifo)
