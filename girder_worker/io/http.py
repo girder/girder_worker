@@ -13,13 +13,6 @@ class HttpStreamFetchAdapter(StreamFetchAdapter):
     def __init__(self, input_spec):
         super(HttpStreamFetchAdapter, self).__init__(input_spec)
 
-        method = input_spec.get('method', 'GET').upper()
-        headers = input_spec.get('headers', {})
-        params = input_spec.get('params', {})
-        self._req = requests.request(
-            method, input_spec['url'], headers=headers, params=params,
-            stream=True, allow_redirects=True)
-        self._req.raise_for_status()  # we have the response headers already
         self._iter = None  # will be lazily created
 
     def read(self, buf_len):
@@ -30,7 +23,14 @@ class HttpStreamFetchAdapter(StreamFetchAdapter):
         a different ``buf_len`` is passed in on subsequent requests.
         """
         if self._iter is None:  # lazy load response body iterator
-            self._iter = self._req.iter_content(buf_len, decode_unicode=False)
+            method = self.input_spec.get('method', 'GET').upper()
+            headers = self.input_spec.get('headers', {})
+            params = self.input_spec.get('params', {})
+            req = requests.request(
+                method, self.input_spec['url'], headers=headers, params=params,
+                stream=True, allow_redirects=True)
+            req.raise_for_status()  # we have the response headers already
+            self._iter = req.iter_content(buf_len, decode_unicode=False)
 
         try:
             return six.next(self._iter)

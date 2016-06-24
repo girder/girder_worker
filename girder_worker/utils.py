@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import functools
 import imp
 import os
@@ -9,6 +10,7 @@ import select
 import shutil
 import six
 import subprocess
+import stat
 import sys
 import tempfile
 import time
@@ -387,6 +389,52 @@ def _close_pipes(rds, wds, input_pipes, output_pipes):
             os.close(fd)
 
 
+def _setup_input_pipes(input_pipes, stdin):
+    """
+    Given a mapping of input pipes, return a tuple with 2 elements. The first is
+    a list of file descriptors to pass to ``select`` as writeable descriptors.
+    The second is a dictionary mapping paths to existing named pipes to their
+    adapters.
+    """
+    wds = []
+    fifos = {}
+    for pipe, adapter in six.viewvalues(input_pipes):
+        if isinstance(pipe, int):
+            # This is assumed to be an open system-level file descriptor
+            wds.append(pipe)
+        elif pipe == '_stdin':
+            # Special case for binding to standard input
+            input_pipes[stdin] = input_pipes['_stdin']
+            wds.append(stdin)
+        else:
+            if not os.path.exists(pipe):
+                raise Exception('Input pipe does not exist: %s' % pipe)
+            if not stat.S_ISFIFO(os.stat(pipe).st_mode):
+                raise Exception('Input pipe must be a fifo object: %s' % pipe)
+            fifos[pipe] = adapter
+
+    return wds, fifos
+
+
+def _open_ipipes(wds, fifos, input_pipes):
+    """
+    This will attempt to open the named pipes in the set of ``fifos`` for
+    writing, which will only succeed if the subprocess has opened them for
+    reading already. This modifies and returns the list of write descriptors,
+    the list of waiting fifo names, and the mapping back to input adapters.
+    """
+    for fifo in fifos:
+        try:
+            fd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+            input_pipes[fd] = fifos.pop(fifo)
+            wds.append(fd)
+        except OSError as e:
+            if e.errno != errno.ENXIO:
+                raise e
+
+    return wds, fifos, input_pipes
+
+
 def run_process(command, output_pipes=None, input_pipes=None):
     """
     Run a subprocess, and listen for its outputs on various pipes.
@@ -405,10 +453,11 @@ def run_process(command, output_pipes=None, input_pipes=None):
     :type output_pipes: dict
     :param input_pipes: This should be a dictionary mapping pipe descriptors
         to instances of ``StreamFetchAdapter`` that should handle sending
-        input data in chunks. Normally, keys of this dictionary are open file
-        descriptors, which are integers. There is one special case that is not
-        an integer, which is ``'_stdin'``, which will be mapped to the standard
-        input pipe of the subprocess once it is created.
+        input data in chunks. Keys in this dictionary can be either open file
+        descriptors (integers), the special value ``'_stdin'`` for standard
+        input, or a string representing a path to an existing fifo on the
+        filesystem. This third case supports the use of named pipes, since they
+        must be opened for reading before they can be opened for writing
     :type input_pipes: dict
     """
     BUF_LEN = 65536
@@ -426,15 +475,13 @@ def run_process(command, output_pipes=None, input_pipes=None):
     output_pipes[stderr] = output_pipes.get(
         '_stderr', WritePipeAdapter({}, sys.stderr))
 
-    if '_stdin' in input_pipes:
-        input_pipes[stdin] = input_pipes['_stdin']
     rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
-    wds = [fd for fd in input_pipes.keys() if isinstance(fd, int)]
+    wds, fifos = _setup_input_pipes(input_pipes, stdin)
 
     try:
         while True:
-            # get ready pipes, or timeout after 1 second
-            readable, writable, _ = select.select(rds, wds, (), 1)
+            # get ready pipes
+            readable, writable, _ = select.select(rds, wds, (), 0)
 
             for ready_pipe in readable:
                 buf = os.read(ready_pipe, BUF_LEN)
@@ -465,6 +512,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
             elif not rds and not wds and p.poll() is None:
                 # all pipes are closed but the process is still running
                 p.wait()
+            wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
         raise
