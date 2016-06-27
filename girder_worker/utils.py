@@ -481,6 +481,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
 
     try:
         while True:
+            status = p.poll()
             # get ready pipes
             readable, writable, _ = select.select(rds, wds, (), 0)
 
@@ -509,10 +510,10 @@ def run_process(command, output_pipes=None, input_pipes=None):
 
             wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
             empty = (not rds or not readable) and (not wds or not writable)
-            if empty and p.poll() is not None:
+            if empty and status is not None:
                 # all pipes are empty and the process has returned, we are done
                 break
-            elif not rds and not wds and p.poll() is None:
+            elif not rds and not wds and status is None:
                 # all pipes are closed but the process is still running
                 p.wait()
     except Exception:
