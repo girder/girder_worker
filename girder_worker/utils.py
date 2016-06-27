@@ -372,7 +372,7 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def _close_pipes(rds, wds, input_pipes, output_pipes):
+def _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr):
     """
     Helper to close remaining input and output adapters after the subprocess
     completes.
@@ -381,7 +381,8 @@ def _close_pipes(rds, wds, input_pipes, output_pipes):
     for fd in rds:
         if fd in output_pipes:
             output_pipes[fd].close()
-            os.close(fd)
+            if fd not in (stdout, stderr):
+                os.close(fd)
 
     # close any remaining input adapters
     for fd in wds:
@@ -517,7 +518,7 @@ def run_process(command, output_pipes=None, input_pipes=None):
         p.kill()  # kill child process if something went wrong on our end
         raise
     finally:
-        _close_pipes(rds, wds, input_pipes, output_pipes)
+        _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr)
 
     return p
 
