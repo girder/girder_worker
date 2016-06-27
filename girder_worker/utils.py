@@ -506,6 +506,8 @@ def run_process(command, output_pipes=None, input_pipes=None):
                 else:   # end of stream
                     wds.remove(ready_pipe)
                     os.close(ready_pipe)
+
+            wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
             empty = (not rds or not readable) and (not wds or not writable)
             if empty and p.poll() is not None:
                 # all pipes are empty and the process has returned, we are done
@@ -513,7 +515,6 @@ def run_process(command, output_pipes=None, input_pipes=None):
             elif not rds and not wds and p.poll() is None:
                 # all pipes are closed but the process is still running
                 p.wait()
-            wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
         raise
