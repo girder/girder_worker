@@ -398,7 +398,7 @@ def _setup_input_pipes(input_pipes, stdin):
     """
     wds = []
     fifos = {}
-    for pipe, adapter in six.viewvalues(input_pipes):
+    for pipe, adapter in six.viewitems(input_pipes):
         if isinstance(pipe, int):
             # This is assumed to be an open system-level file descriptor
             wds.append(pipe)
