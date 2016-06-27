@@ -1,13 +1,15 @@
+import httmock
 import os
 import sys
 import threading
 import unittest
 from . import captureOutput
-from girder_worker.io import make_stream_push_adapter
+from girder_worker.io import make_stream_push_adapter, make_stream_fetch_adapter
 from girder_worker.utils import run_process
 from six.moves import BaseHTTPServer, socketserver
 
-_script = os.path.join(os.path.dirname(__file__), 'stream_output.py')
+_iscript = os.path.join(os.path.dirname(__file__), 'stream_input.py')
+_oscript = os.path.join(os.path.dirname(__file__), 'stream_output.py')
 _pipepath = os.path.join(os.path.dirname(__file__), 'namedpipe')
 _socket_port = int(os.environ.get('WORKER_TEST_SOCKET_PORT', 7941))
 _server = None
@@ -43,7 +45,6 @@ class ServerThread(object):
         httpd.serve_forever()
 
     def stop(self):
-        #
         self.httpd.shutdown()
         self.httpd.server_close()
         self.thread.join(timeout=10)
@@ -82,7 +83,8 @@ class TestStream(unittest.TestCase):
         adapters = {
             fd: make_stream_push_adapter(output_spec)
         }
-        cmd = [sys.executable, _script, _pipepath]
+        cmd = [sys.executable, _oscript, _pipepath]
+
         try:
             with captureOutput() as stdpipes:
                 run_process(cmd, adapters)
@@ -93,3 +95,28 @@ class TestStream(unittest.TestCase):
         self.assertEqual(stdpipes, ['start\ndone\n', ''])
         self.assertEqual(len(_req_chunks), 1)
         self.assertEqual(_req_chunks[0], (9, 'a message'))
+
+    def testInputStreams(self):
+        input_spec = {
+            'mode': 'http',
+            'method': 'GET',
+            'url': 'http://mockedhost'
+        }
+
+        @httmock.urlmatch(netloc='^mockedhost$', method='GET')
+        def mock_fetch(url, request):
+            return 'hello\nworld'
+
+        adapters = {
+            _pipepath: make_stream_fetch_adapter(input_spec)
+        }
+        cmd = [sys.executable, _iscript, _pipepath]
+
+        try:
+            with captureOutput() as stdpipes, httmock.HTTMock(mock_fetch):
+                run_process(cmd, input_pipes=adapters)
+        except Exception:
+            print('Stdout/stderr from exception: ')
+            print(stdpipes)
+            raise
+        self.assertEqual(stdpipes, ['olleh\ndlrow\n', ''])
