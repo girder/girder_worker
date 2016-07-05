@@ -37,6 +37,7 @@ def _fetch_parent_item(file_id, client, dest):
     """
     target_file = client.getResource('file', file_id)
     item = client.getResource('item', target_file['itemId'])
+    dest = os.path.join(dest, client.transformFilename(item['name']))
     target_path = dest
 
     for file in client.listFile(item['_id']):
@@ -70,7 +71,7 @@ def fetch_handler(spec, **kwargs):
         client.downloadItem(spec['id'], kwargs['_tempdir'], filename)
     elif resource_type == 'file':
         if fetch_parent:
-            dest = _fetch_parent_item(spec['id'], client, dest)
+            dest = _fetch_parent_item(spec['id'], client, kwargs['_tempdir'])
         else:
             client.downloadFile(spec['id'], dest)
     else:
