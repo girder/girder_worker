@@ -6,6 +6,23 @@ import girder_worker
 import shutil
 import unittest
 
+_tmp = None
+
+
+def setUpModule():
+    global _tmp
+    _tmp = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'tmp', 'girder_io')
+    girder_worker.config.set('girder_worker', 'tmp_root', _tmp)
+
+    if os.path.isdir(_tmp):
+        shutil.rmtree(_tmp)
+
+
+def tearDownModule():
+    if os.path.isdir(_tmp):
+        shutil.rmtree(_tmp)
+
 
 class TestGirderIo(unittest.TestCase):
 
@@ -307,6 +324,92 @@ class TestGirderIo(unittest.TestCase):
             }
 
             girder_worker.run(copy.deepcopy(task), inputs=inputs)
+
+    def test_fetch_parent(self):
+        task = {
+            'inputs': [{
+                'name': 'input',
+                'type': 'string',
+                'format': 'text',
+                'target': 'filepath'
+            }],
+            'outputs': [{
+                'name': 'out',
+                'type': 'string',
+                'format': 'text'
+            }],
+            'script': 'out = input',
+            'mode': 'python',
+            'cleanup': False
+        }
+
+        self.api_root = '/foo/bar/api'
+        self.netloc = 'hello.com:1234'
+        self.scheme = 'https'
+
+        inputs = {
+            'input': {
+                'mode': 'girder',
+                'api_url': 'https://hello.com:1234/foo/bar/api',
+                'id': 'file2_id',
+                'name': 'other_file.txt',
+                'resource_type': 'file',
+                'fetch_parent': True
+            }
+        }
+
+        file1_info = {
+            '_id': 'file1_id',
+            'name': 'text.txt',
+            'itemId': 'item_id',
+            'size': 13
+        }
+
+        file2_info = {
+            '_id': 'file2_id',
+            'name': 'other_file.txt',
+            'itemId': 'item_id',
+            'size': 3
+        }
+
+        parent_item = {
+            '_id': 'item_id',
+            'name': 'parent_item'
+        }
+
+        @httmock.all_requests
+        def girder_mock(url, request):
+            api_root = self.api_root
+
+            if url.path == api_root + '/file/file2_id':  # fetch file info
+                return json.dumps(file2_info)
+            if url.path == api_root + '/item/item_id':  # fetch item info
+                return json.dumps(parent_item)
+            if url.path == api_root + '/item/item_id/files':  # list parent
+                return json.dumps([file1_info, file2_info])
+            if url.path == api_root + '/file/file1_id/download':
+                return 'file_contents'
+            if url.path == api_root + '/file/file2_id/download':
+                return 'foo'
+            else:
+                raise Exception('Unexpected %s request to %s.' % (
+                    request.method, url.path))
+
+        with httmock.HTTMock(girder_mock):
+            outputs = girder_worker.run(task, inputs=inputs, validate=False,
+                                        auto_convert=False, cleanup=False)
+            self.assertIn('out', outputs)
+            path = outputs['out']['data']
+            parent = os.path.dirname(path)
+            file1_path = os.path.join(parent, 'text.txt')
+            self.assertTrue(os.path.isfile(path))
+            self.assertTrue(os.path.isfile(file1_path))
+            self.assertEqual(os.path.basename(path), 'other_file.txt')
+            self.assertEqual(os.path.basename(parent), 'parent_item')
+            with open(path, 'rb') as fd:
+                self.assertEqual(fd.read(), 'foo')
+            with open(file1_path, 'rb') as fd:
+                self.assertEqual(fd.read(), 'file_contents')
 
 
 if __name__ == '__main__':

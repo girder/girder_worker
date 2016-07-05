@@ -164,6 +164,7 @@ Girder IO
         (, "scheme": <"http" or "https", default is "http">)
         (, "token": <girder token used for authentication>)
         (, "resource_type": <"file", "item", or "folder", default is "file">)
+        (, "fetch_parent": <whether to download the whole parent resource as well, default is false>)
     }
 
 .. note :: For historical reasons, task inputs that do not specify a ``target`` field
