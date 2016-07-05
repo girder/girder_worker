@@ -7,12 +7,17 @@ from celery import Celery
 app = None
 
 
+class _CeleryConfig:
+    CELERY_ACCEPT_CONTENT = ['json', 'yaml']
+
+
 def main():
     global app
     app = Celery(
         main=girder_worker.config.get('celery', 'app_main'),
         backend=girder_worker.config.get('celery', 'broker'),
         broker=girder_worker.config.get('celery', 'broker'))
+    app.config_from_object(_CeleryConfig)
 
     @app.task
     def run(*pargs, **kwargs):
