@@ -17,14 +17,14 @@ def _init_client(spec, require_token=False):
         api_root = spec.get('api_root', '/api/v1')
         client = girder_client.GirderClient(
             host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
+    else:
+        raise Exception('You must pass either an api_url or host key for '
+                        'Girder input and output bindings.')
 
     if 'token' in spec:
         client.token = spec['token']
     elif require_token:
         raise Exception('You must pass a token for Girder authentication.')
-    else:
-        raise Exception('You must pass either an api_url or host key for '
-                        'Girder input and output bindings.')
 
     return client
 
