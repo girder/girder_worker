@@ -29,10 +29,31 @@ def _init_client(spec, require_token=False):
     return client
 
 
+def _fetch_parent_item(file_id, client, dest):
+    """
+    Fetches the whole item that contains the given file ID into the given
+    destination directory. Returns the path to the specific file once the
+    download is complete.
+    """
+    target_file = client.getResource('file', file_id)
+    item = client.getResource('item', target_file['itemId'])
+    target_path = dest
+
+    for file in client.listFile(item['_id']):
+        path = os.path.join(dest, client.transformFilename(file['name']))
+        client.downloadFile(file['_id'], path)
+
+        if file['_id'] == target_file['_id']:
+            target_path = path
+
+    return target_path
+
+
 def fetch_handler(spec, **kwargs):
     resource_type = spec.get('resource_type', 'file').lower()
-    taskInput = kwargs.get('task_input', {})
-    target = taskInput.get('target', 'filepath')
+    task_input = kwargs.get('task_input', {})
+    target = task_input.get('target', 'filepath')
+    fetch_parent = spec.get('fetch_parent', False)
 
     if 'id' not in spec:
         raise Exception('Must pass a resource ID for girder inputs.')
@@ -40,14 +61,18 @@ def fetch_handler(spec, **kwargs):
         raise Exception('Must pass a name for girder inputs.')
 
     client = _init_client(spec)
-    dest = os.path.join(kwargs['_tempdir'], spec['name'])
+    filename = client.transformFilename(spec['name'])
+    dest = os.path.join(kwargs['_tempdir'], filename)
 
     if resource_type == 'folder':
         client.downloadFolderRecursive(spec['id'], dest)
     elif resource_type == 'item':
-        client.downloadItem(spec['id'], kwargs['_tempdir'], spec['name'])
+        client.downloadItem(spec['id'], kwargs['_tempdir'], filename)
     elif resource_type == 'file':
-        client.downloadFile(spec['id'], dest)
+        if fetch_parent:
+            dest = _fetch_parent_item(spec['id'], client, dest)
+        else:
+            client.downloadFile(spec['id'], dest)
     else:
         raise Exception('Invalid resource type: ' + resource_type)
 
