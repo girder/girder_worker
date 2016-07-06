@@ -194,7 +194,106 @@ These are called *connections* in Girder Worker parlance.
         'output_step': 'find_neighborhood'}
    ]
 
-We now have a complete workflow! Let's run this, and write the final data to a file.
+We now have a complete workflow! For completeness, here is the full workflow specification as pure JSON.
+This file could be loaded with Python's ``json`` package and directly sent to ``girder_worker.run()``.
+
+.. code-block:: json
+
+    {
+      "mode": "workflow",
+      "inputs": [
+        {
+          "type": "graph",
+          "name": "G",
+          "format": "adjacencylist"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "graph",
+          "name": "result_graph",
+          "format": "networkx"
+        }
+      ],
+      "connections": [
+        {
+          "input": "G",
+          "input_step": "most_popular",
+          "name": "G"
+        },
+        {
+          "output": "G",
+          "input_step": "find_neighborhood",
+          "input": "G",
+          "output_step": "most_popular"
+        },
+        {
+          "output": "most_popular_person",
+          "input_step": "find_neighborhood",
+          "input": "most_popular_person",
+          "output_step": "most_popular"
+        },
+        {
+          "output": "subgraph",
+          "name": "result_graph",
+          "output_step": "find_neighborhood"
+        }
+      ],
+      "steps": [
+        {
+          "name": "most_popular",
+          "task": {
+            "inputs": [
+              {
+                "type": "graph",
+                "name": "G",
+                "format": "networkx"
+              }
+            ],
+            "script": "\nfrom networkx import degree\n\ndegrees = degree(G)\nmost_popular_person = max(degrees, key=degrees.get)\n",
+            "outputs": [
+              {
+                "type": "string",
+                "name": "most_popular_person",
+                "format": "text"
+              },
+              {
+                "type": "graph",
+                "name": "G",
+                "format": "networkx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "find_neighborhood",
+          "task": {
+            "inputs": [
+              {
+                "type": "graph",
+                "name": "G",
+                "format": "networkx"
+              },
+              {
+                "type": "string",
+                "name": "most_popular_person",
+                "format": "text"
+              }
+            ],
+            "script": "\nfrom networkx import ego_graph\n\nsubgraph = ego_graph(G, most_popular_person)\n",
+            "outputs": [
+              {
+                "type": "graph",
+                "name": "subgraph",
+                "format": "networkx"
+              }
+            ]
+          }
+        }
+      ]
+    }
+
+Now let's run this, and write the final data to a file.
 
 .. testcode::
 
