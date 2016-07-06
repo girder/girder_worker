@@ -8,7 +8,7 @@ app = None
 
 
 class _CeleryConfig:
-    CELERY_ACCEPT_CONTENT = ['json', 'yaml']
+    CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
 
 
 def main():
