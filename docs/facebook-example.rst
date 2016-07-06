@@ -194,106 +194,7 @@ These are called *connections* in Girder Worker parlance.
         'output_step': 'find_neighborhood'}
    ]
 
-We now have a complete workflow! For completeness, here is the full workflow specification as pure JSON.
-This file could be loaded with Python's ``json`` package and directly sent to ``girder_worker.run()``.
-
-.. code-block:: json
-
-    {
-      "mode": "workflow",
-      "inputs": [
-        {
-          "type": "graph",
-          "name": "G",
-          "format": "adjacencylist"
-        }
-      ],
-      "outputs": [
-        {
-          "type": "graph",
-          "name": "result_graph",
-          "format": "networkx"
-        }
-      ],
-      "connections": [
-        {
-          "input": "G",
-          "input_step": "most_popular",
-          "name": "G"
-        },
-        {
-          "output": "G",
-          "input_step": "find_neighborhood",
-          "input": "G",
-          "output_step": "most_popular"
-        },
-        {
-          "output": "most_popular_person",
-          "input_step": "find_neighborhood",
-          "input": "most_popular_person",
-          "output_step": "most_popular"
-        },
-        {
-          "output": "subgraph",
-          "name": "result_graph",
-          "output_step": "find_neighborhood"
-        }
-      ],
-      "steps": [
-        {
-          "name": "most_popular",
-          "task": {
-            "inputs": [
-              {
-                "type": "graph",
-                "name": "G",
-                "format": "networkx"
-              }
-            ],
-            "script": "\nfrom networkx import degree\n\ndegrees = degree(G)\nmost_popular_person = max(degrees, key=degrees.get)\n",
-            "outputs": [
-              {
-                "type": "string",
-                "name": "most_popular_person",
-                "format": "text"
-              },
-              {
-                "type": "graph",
-                "name": "G",
-                "format": "networkx"
-              }
-            ]
-          }
-        },
-        {
-          "name": "find_neighborhood",
-          "task": {
-            "inputs": [
-              {
-                "type": "graph",
-                "name": "G",
-                "format": "networkx"
-              },
-              {
-                "type": "string",
-                "name": "most_popular_person",
-                "format": "text"
-              }
-            ],
-            "script": "\nfrom networkx import ego_graph\n\nsubgraph = ego_graph(G, most_popular_person)\n",
-            "outputs": [
-              {
-                "type": "graph",
-                "name": "subgraph",
-                "format": "networkx"
-              }
-            ]
-          }
-        }
-      ]
-    }
-
-Now let's run this, and write the final data to a file.
+We now have a complete workflow! Let's run this, and write the final data to a file.
 
 .. testcode::
 
@@ -340,6 +241,60 @@ Now let's run this, and write the final data to a file.
    True
 
 Running ``workflow.py`` will produce the JSON in a file called ``data.json``, which we'll pass to d3.js in the next step.
+
+For completeness, here is the complete workflow specification as pure JSON:
+
+.. literalinclude:: static/facebook-example-spec.json
+
+This file can be loaded with Python's ``json`` package and directly sent to ``girder_worker.run()``:
+
+.. testcode::
+
+   import json
+   with open('docs/static/facebook-example-spec.json') as spec:
+       workflow = json.load(spec)
+
+   with open('docs/static/facebook-sample-data.txt') as infile:
+       output = girder_worker.run(workflow,
+                                  inputs={'G': {'format': 'adjacencylist',
+                                                'data': infile.read()}},
+                                  outputs={'result_graph': {'format': 'networkx.json'}})
+
+   with open('data.json', 'wb') as outfile:
+       outfile.write(output['result_graph']['data'])
+
+.. testoutput::
+   :hide:
+
+   --- beginning: most_popular ---
+   --- finished: most_popular ---
+   --- beginning: find_neighborhood ---
+   --- finished: find_neighborhood ---
+
+.. testcode::
+   :hide:
+
+   import json
+
+   with open('data.json') as infile:
+       actual = json.load(infile)
+
+   with open('docs/static/data.json') as infile:
+       expected = json.load(infile)
+
+   def dict_ordered(obj):
+       if isinstance(obj, dict):
+           return sorted((k, dict_ordered(v)) for k, v in obj.items())
+       elif isinstance(obj, list):
+           return sorted(dict_ordered(x) for x in obj)
+       else:
+           return obj
+
+.. doctest::
+   :hide:
+
+   >>> dict_ordered(actual) == dict_ordered(expected)
+   True
 
 .. note :: More information on Girder Worker tasks and workflows can be found in :doc:`api-docs`.
 

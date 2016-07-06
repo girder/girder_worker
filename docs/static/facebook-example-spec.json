@@ -1,0 +1,93 @@
+{
+  "mode": "workflow",
+  "inputs": [
+    {
+      "type": "graph",
+      "name": "G",
+      "format": "adjacencylist"
+    }
+  ],
+  "outputs": [
+    {
+      "type": "graph",
+      "name": "result_graph",
+      "format": "networkx"
+    }
+  ],
+  "connections": [
+    {
+      "input": "G",
+      "input_step": "most_popular",
+      "name": "G"
+    },
+    {
+      "output": "G",
+      "input_step": "find_neighborhood",
+      "input": "G",
+      "output_step": "most_popular"
+    },
+    {
+      "output": "most_popular_person",
+      "input_step": "find_neighborhood",
+      "input": "most_popular_person",
+      "output_step": "most_popular"
+    },
+    {
+      "output": "subgraph",
+      "name": "result_graph",
+      "output_step": "find_neighborhood"
+    }
+  ],
+  "steps": [
+    {
+      "name": "most_popular",
+      "task": {
+        "inputs": [
+          {
+            "type": "graph",
+            "name": "G",
+            "format": "networkx"
+          }
+        ],
+        "script": "\nfrom networkx import degree\n\ndegrees = degree(G)\nmost_popular_person = max(degrees, key=degrees.get)\n",
+        "outputs": [
+          {
+            "type": "string",
+            "name": "most_popular_person",
+            "format": "text"
+          },
+          {
+            "type": "graph",
+            "name": "G",
+            "format": "networkx"
+          }
+        ]
+      }
+    },
+    {
+      "name": "find_neighborhood",
+      "task": {
+        "inputs": [
+          {
+            "type": "graph",
+            "name": "G",
+            "format": "networkx"
+          },
+          {
+            "type": "string",
+            "name": "most_popular_person",
+            "format": "text"
+          }
+        ],
+        "script": "\nfrom networkx import ego_graph\n\nsubgraph = ego_graph(G, most_popular_person)\n",
+        "outputs": [
+          {
+            "type": "graph",
+            "name": "subgraph",
+            "format": "networkx"
+          }
+        ]
+      }
+    }
+  ]
+}
