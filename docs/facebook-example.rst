@@ -242,6 +242,60 @@ We now have a complete workflow! Let's run this, and write the final data to a f
 
 Running ``workflow.py`` will produce the JSON in a file called ``data.json``, which we'll pass to d3.js in the next step.
 
+For completeness, here is the complete workflow specification as pure JSON:
+
+.. literalinclude:: static/facebook-example-spec.json
+
+This file can be loaded with Python's ``json`` package and directly sent to ``girder_worker.run()``:
+
+.. testcode::
+
+   import json
+   with open('docs/static/facebook-example-spec.json') as spec:
+       workflow = json.load(spec)
+
+   with open('docs/static/facebook-sample-data.txt') as infile:
+       output = girder_worker.run(workflow,
+                                  inputs={'G': {'format': 'adjacencylist',
+                                                'data': infile.read()}},
+                                  outputs={'result_graph': {'format': 'networkx.json'}})
+
+   with open('data.json', 'wb') as outfile:
+       outfile.write(output['result_graph']['data'])
+
+.. testoutput::
+   :hide:
+
+   --- beginning: most_popular ---
+   --- finished: most_popular ---
+   --- beginning: find_neighborhood ---
+   --- finished: find_neighborhood ---
+
+.. testcode::
+   :hide:
+
+   import json
+
+   with open('data.json') as infile:
+       actual = json.load(infile)
+
+   with open('docs/static/data.json') as infile:
+       expected = json.load(infile)
+
+   def dict_ordered(obj):
+       if isinstance(obj, dict):
+           return sorted((k, dict_ordered(v)) for k, v in obj.items())
+       elif isinstance(obj, list):
+           return sorted(dict_ordered(x) for x in obj)
+       else:
+           return obj
+
+.. doctest::
+   :hide:
+
+   >>> dict_ordered(actual) == dict_ordered(expected)
+   True
+
 .. note :: More information on Girder Worker tasks and workflows can be found in :doc:`api-docs`.
 
 
