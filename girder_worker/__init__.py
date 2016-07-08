@@ -66,6 +66,17 @@ _paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
 utils.load_plugins(_plugins, _paths, quiet=True)
 
 
+def _resolve_scripts(task):
+    if task.get('mode') != 'workflow':
+        if 'script_uri' in task and 'script' not in task:
+            task['script'] = girder_worker.io.fetch({
+                'url': task['script_uri']
+            })
+    elif 'steps' in task:
+        for step in task['steps']:
+            _resolve_scripts(step['task'])
+
+
 def load(task_file):
     """
     Load a task JSON into memory, resolving any ``'script_uri'`` fields
@@ -80,15 +91,12 @@ def load(task_file):
     with open(task_file) as f:
         task = json.load(f)
 
-    if 'script' not in task and task.get('mode') != 'workflow':
-        prevdir = os.getcwd()
-        parent = os.path.dirname(task_file)
-        if parent != '':
-            os.chdir(os.path.dirname(task_file))
-        task['script'] = girder_worker.io.fetch({
-            'url': task['script_uri']
-        })
-        os.chdir(prevdir)
+    prevdir = os.getcwd()
+    parent = os.path.dirname(task_file)
+    if parent != '':
+        os.chdir(os.path.dirname(task_file))
+    _resolve_scripts(task)
+    os.chdir(prevdir)
 
     return task
 

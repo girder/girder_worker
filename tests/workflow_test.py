@@ -1,4 +1,5 @@
 import girder_worker
+import os
 import unittest
 
 
@@ -328,6 +329,14 @@ class TestWorkflow(unittest.TestCase):
                 }
             ]
         }
+        # Change dir for loading analyses
+        self.prevdir = os.getcwd()
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(cur_path)
+        self.analysis_path = os.path.join(cur_path, '..', 'analysis')
+
+    def tearDown(self):
+        os.chdir(self.prevdir)
 
     def test_workflow(self):
         outputs = girder_worker.run(
@@ -377,6 +386,27 @@ class TestWorkflow(unittest.TestCase):
                 }
             }
         }])
+
+    def test_load(self):
+        flu = girder_worker.load(os.path.join(
+            self.analysis_path, 'xdata', 'flu.json'))
+
+        script_path = os.path.join(self.analysis_path, 'xdata', 'flu.py')
+        with open(script_path) as script_file:
+            script_content = script_file.read()
+
+        self.assertEqual(flu['script'], script_content)
+
+    def test_load_workflow(self):
+        flu = girder_worker.load(os.path.join(
+            self.analysis_path, 'xdata', 'flu_workflow.json'))
+
+        script_path = os.path.join(self.analysis_path, 'xdata', 'flu.py')
+        with open(script_path) as script_file:
+            script_content = script_file.read()
+
+        self.assertEqual(flu['steps'][0]['task']['script'], script_content)
+
 
 if __name__ == '__main__':
     unittest.main()

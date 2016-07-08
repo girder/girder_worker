@@ -1,0 +1,36 @@
+{
+  "mode": "workflow",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "data",
+      "type": "table",
+      "format": "csv"
+    }
+  ],
+  "steps": [
+    {
+      "name": 1,
+      "task": {
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "table",
+            "name": "data",
+            "format": "csv"
+          }
+        ],
+        "mode": "python",
+        "name": "Flu trends",
+        "script_uri": "file://flu.py"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "data",
+      "output_step": 1,
+      "output": "data"
+    }
+  ]
+}
