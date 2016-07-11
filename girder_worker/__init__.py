@@ -266,6 +266,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
         for name, d in inputs.iteritems():
             task_input = task_inputs[name]
+            if task_input.get('stream'):
+                continue  # this input will be fetched as a stream
 
             # Fetch the input
             if fetch:

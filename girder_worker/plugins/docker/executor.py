@@ -1,10 +1,10 @@
 import json
-import girder_worker.io
 import os
 import re
 import subprocess
 
 from girder_worker import config, TaskSpecValidationError, utils
+from girder_worker.io import make_stream_fetch_adapter, make_stream_push_adapter
 
 DATA_VOLUME = '/mnt/girder_worker/data'
 SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
@@ -166,25 +166,65 @@ def _get_pre_args(task, uid, gid):
     return args
 
 
-def _create_named_output_pipes(task_outputs, outputs, tempdir):
+def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
     """
-    Returns a map of output IDs to their named pipes, which are file descriptors
-    opened in read-only, non-blocking mode.
+    Returns a 2 tuple of input and output pipe mappings. The first element is
+    a dict mapping input file descriptors to the corresponding stream adapters,
+    the second is a dict mapping output file descriptors to the corresponding
+    stream adapters. This also handles the special cases of STDIN, STDOUT, and
+    STDERR mappings, and in the case of non-streaming standard IO pipes, will
+    create default bindings for those as well.
     """
-    pipes = {}
-    for id, spec in task_outputs.iteritems():
-        if (spec.get('stream') and id in outputs and
+    ipipes = {}
+    opipes = {}
+
+    def make_pipe(id, spec, bindings):
+        """
+        Helper to make a pipe conditionally for valid streaming IO specs. If the
+        given spec is not a streaming spec, returns False. If it is, returns the
+        path to the pipe file that was created.
+        """
+        if (spec.get('stream') and id in bindings and
                 spec.get('target') == 'filepath'):
             path = spec.get('path', id)
             if path.startswith('/'):
                 raise Exception('Streaming filepaths must be relative.')
             path = os.path.join(tempdir, path)
             os.mkfifo(path)
+            return path
+        return False
 
-            # Map pipe's file descriptor to its output stream adapter
-            pipes[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = \
-                girder_worker.io.make_stream_push_adapter(outputs[id])
-    return pipes
+    # handle stream inputs
+    for id, spec in task_inputs.iteritems():
+        pipe = make_pipe(id, spec, inputs)
+        if pipe:
+            # Don't open from this side, must be opened for reading first!
+            ipipes[pipe] = make_stream_fetch_adapter(inputs[id])
+
+    # handle stream outputs
+    for id, spec in task_outputs.iteritems():
+        pipe = make_pipe(id, spec, outputs)
+        if pipe:
+            opipes[os.open(pipe, os.O_RDONLY | os.O_NONBLOCK)] = \
+                make_stream_push_adapter(outputs[id])
+
+    # special handling for stdin, stdout, and stderr pipes
+    if '_stdin' in task_inputs and '_stdin' in inputs:
+        if task_inputs['_stdin'].get('stream'):
+            ipipes['_stdin'] = make_stream_fetch_adapter(inputs['_stdin'])
+        else:
+            ipipes['_stdin'] = utils.MemoryFetchAdapter(
+                inputs[id], inputs[id]['data'])
+
+    for id in ('_stdout', '_stderr'):
+        if id in task_outputs and id in outputs:
+            if task_outputs[id].get('stream'):
+                opipes[id] = make_stream_push_adapter(outputs[id])
+            else:
+                opipes[id] = utils.AccumulateDictAdapter(
+                    outputs[id], 'script_data')
+
+    return ipipes, opipes
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -198,10 +238,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     args = _expand_args(task.get('container_args', []), inputs, task_inputs,
                         tempdir)
 
-    pipes = _create_named_output_pipes(task_outputs, outputs, tempdir)
-    for id in ('_stdout', '_stderr'):
-        if id in task_outputs and id in outputs:
-            pipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
+    ipipes, opipes = _setup_pipes(
+        task_inputs, inputs, task_outputs, outputs, tempdir)
 
     pre_args = _get_pre_args(task, os.getuid(), os.getgid())
     command = [
@@ -213,7 +251,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     print('Running container: %s' % repr(command))
 
-    p = utils.run_process(command, output_pipes=pipes)
+    p = utils.run_process(command, output_pipes=opipes, input_pipes=ipipes)
 
     if p.returncode != 0:
         raise Exception('Error: docker run returned code %d.' % p.returncode)

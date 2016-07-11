@@ -2,10 +2,40 @@ import httplib
 import os
 import re
 import requests
+import six
 import ssl
 import urlparse
 
-from girder_worker.utils import StreamPushAdapter
+from girder_worker.utils import StreamFetchAdapter, StreamPushAdapter
+
+
+class HttpStreamFetchAdapter(StreamFetchAdapter):
+    def __init__(self, input_spec):
+        super(HttpStreamFetchAdapter, self).__init__(input_spec)
+
+        self._iter = None  # will be lazily created
+
+    def read(self, buf_len):
+        """
+        Implementation note: due to a constraint of the requests library, the
+        buf_len that is used the first time this method is called will cause
+        all future requests to ``read`` to have the same ``buf_len`` even if
+        a different ``buf_len`` is passed in on subsequent requests.
+        """
+        if self._iter is None:  # lazy load response body iterator
+            method = self.input_spec.get('method', 'GET').upper()
+            headers = self.input_spec.get('headers', {})
+            params = self.input_spec.get('params', {})
+            req = requests.request(
+                method, self.input_spec['url'], headers=headers, params=params,
+                stream=True, allow_redirects=True)
+            req.raise_for_status()  # we have the response headers already
+            self._iter = req.iter_content(buf_len, decode_unicode=False)
+
+        try:
+            return six.next(self._iter)
+        except StopIteration:
+            return b''
 
 
 class HttpStreamPushAdapter(StreamPushAdapter):
@@ -16,6 +46,7 @@ class HttpStreamPushAdapter(StreamPushAdapter):
         easily, so we use the lower-level httplib module.
         """
         super(HttpStreamPushAdapter, self).__init__(output_spec)
+        self._closed = False
 
         parts = urlparse.urlparse(output_spec['url'])
         if parts.scheme == 'https':
@@ -56,12 +87,16 @@ class HttpStreamPushAdapter(StreamPushAdapter):
                   'message was:\n%s' % (self.output_spec['url'], resp.status,
                                         resp.read()))
             self.conn.close()
+            self._closed = True
             raise
 
     def close(self):
         """
         Close the output stream. Called after the last data is sent.
         """
+        if self._closed:
+            return
+
         try:
             self.conn.send(b'0\r\n\r\n')
             resp = self.conn.getresponse()
@@ -78,7 +113,7 @@ class HttpStreamPushAdapter(StreamPushAdapter):
             self.conn.close()
 
 
-def _readFilenameFromResponse(request, url):
+def _read_filename_from_resp(request, url):
     """
     This helper will derive a filename from the HTTP response, first attempting
     to use the content disposition header, otherwise falling back to the last
@@ -99,8 +134,8 @@ def fetch(spec, **kwargs):
     """
     if 'url' not in spec:
         raise Exception('No URL specified for HTTP input.')
-    taskInput = kwargs.get('task_input', {})
-    target = taskInput.get('target', 'memory')
+    task_input = kwargs.get('task_input', {})
+    target = task_input.get('target', 'memory')
     url = spec['url']
     method = spec.get('method', 'GET').upper()
     request = requests.request(method, url, headers=spec.get('headers', {}),
@@ -116,10 +151,10 @@ def fetch(spec, **kwargs):
     if target == 'filepath':
         tmpDir = kwargs['_tempdir']
 
-        if 'filename' in taskInput:
-            filename = taskInput['filename']
+        if 'filename' in task_input:
+            filename = task_input['filename']
         else:
-            filename = _readFilenameFromResponse(request, url)
+            filename = _read_filename_from_resp(request, url)
 
         path = os.path.join(tmpDir, filename)
 

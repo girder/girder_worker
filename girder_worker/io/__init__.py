@@ -6,6 +6,7 @@ import tempfile
 
 _fetch_map = {}
 _push_map = {}
+_stream_fetch_map = {}
 _stream_push_map = {}
 
 
@@ -63,6 +64,19 @@ def register_push_handler(mode, handler):
     :type handler: function
     """
     _push_map[mode] = handler
+
+
+def register_stream_fetch_adapter(mode, adapter_cls):
+    """
+    Register an adapter class to handle streaming input for a given mode.
+
+    :param mode: The mode to bind this adapter to.
+    :type mode: str
+    :param adapter_cls: The adapter class that will be instantiated to handle
+        stream fetching for the given mode.
+    :type adapter_cls: :py:class:`StreamFetchAdapter`
+    """
+    _stream_fetch_map[mode] = adapter_cls
 
 
 def register_stream_push_adapter(mode, adapter_cls):
@@ -136,6 +150,18 @@ def push(data, spec, **kwargs):
     return _push_map[mode](data, spec, **kwargs)
 
 
+def make_stream_fetch_adapter(input):
+    """
+    Create a stream fetch adapter based on the given input binding.
+    """
+    mode = _detect_mode(input)
+
+    if mode not in _stream_fetch_map:
+        raise Exception('Unknown streaming input fetch mode: ' + mode)
+
+    return _stream_fetch_map[mode](input)
+
+
 def make_stream_push_adapter(output):
     """
     Create a stream push adapter based on the given output binding.
@@ -160,3 +186,4 @@ register_push_handler('local', local.push)
 register_push_handler('inline', _inline_push)
 
 register_stream_push_adapter('http', http.HttpStreamPushAdapter)
+register_stream_fetch_adapter('http', http.HttpStreamFetchAdapter)

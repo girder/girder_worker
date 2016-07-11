@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import functools
 import imp
 import os
@@ -7,7 +8,9 @@ import girder_worker
 import girder_worker.plugins
 import select
 import shutil
+import six
 import subprocess
+import stat
 import sys
 import tempfile
 import time
@@ -369,7 +372,71 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def run_process(command, output_pipes=None):
+def _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr):
+    """
+    Helper to close remaining input and output adapters after the subprocess
+    completes.
+    """
+    # close any remaining output adapters
+    for fd in rds:
+        if fd in output_pipes:
+            output_pipes[fd].close()
+            if fd not in (stdout, stderr):
+                os.close(fd)
+
+    # close any remaining input adapters
+    for fd in wds:
+        if fd in input_pipes:
+            os.close(fd)
+
+
+def _setup_input_pipes(input_pipes, stdin):
+    """
+    Given a mapping of input pipes, return a tuple with 2 elements. The first is
+    a list of file descriptors to pass to ``select`` as writeable descriptors.
+    The second is a dictionary mapping paths to existing named pipes to their
+    adapters.
+    """
+    wds = []
+    fifos = {}
+    for pipe, adapter in six.viewitems(input_pipes):
+        if isinstance(pipe, int):
+            # This is assumed to be an open system-level file descriptor
+            wds.append(pipe)
+        elif pipe == '_stdin':
+            # Special case for binding to standard input
+            input_pipes[stdin] = input_pipes['_stdin']
+            wds.append(stdin)
+        else:
+            if not os.path.exists(pipe):
+                raise Exception('Input pipe does not exist: %s' % pipe)
+            if not stat.S_ISFIFO(os.stat(pipe).st_mode):
+                raise Exception('Input pipe must be a fifo object: %s' % pipe)
+            fifos[pipe] = adapter
+
+    return wds, fifos
+
+
+def _open_ipipes(wds, fifos, input_pipes):
+    """
+    This will attempt to open the named pipes in the set of ``fifos`` for
+    writing, which will only succeed if the subprocess has opened them for
+    reading already. This modifies and returns the list of write descriptors,
+    the list of waiting fifo names, and the mapping back to input adapters.
+    """
+    for fifo in fifos.copy():
+        try:
+            fd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+            input_pipes[fd] = fifos.pop(fifo)
+            wds.append(fd)
+        except OSError as e:
+            if e.errno != errno.ENXIO:
+                raise e
+
+    return wds, fifos, input_pipes
+
+
+def run_process(command, output_pipes=None, input_pipes=None):
     """
     Run a subprocess, and listen for its outputs on various pipes.
 
@@ -385,28 +452,41 @@ def run_process(command, output_pipes=None):
         default behavior is to direct them to the stdout and stderr of the
         current process.
     :type output_pipes: dict
+    :param input_pipes: This should be a dictionary mapping pipe descriptors
+        to instances of ``StreamFetchAdapter`` that should handle sending
+        input data in chunks. Keys in this dictionary can be either open file
+        descriptors (integers), the special value ``'_stdin'`` for standard
+        input, or a string representing a path to an existing fifo on the
+        filesystem. This third case supports the use of named pipes, since they
+        must be opened for reading before they can be opened for writing
+    :type input_pipes: dict
     """
+    BUF_LEN = 65536
+    input_pipes = input_pipes or {}
     output_pipes = output_pipes or {}
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+                         stderr=subprocess.PIPE, stdin=subprocess.PIPE)
 
     # we now know subprocess stdout and stderr filenos, so bind the adapters
     stdout = p.stdout.fileno()
     stderr = p.stderr.fileno()
+    stdin = p.stdin.fileno()
     output_pipes[stdout] = output_pipes.get(
         '_stdout', WritePipeAdapter({}, sys.stdout))
     output_pipes[stderr] = output_pipes.get(
-        '_stderr', WritePipeAdapter({}, sys.stdout))
+        '_stderr', WritePipeAdapter({}, sys.stderr))
 
-    fds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
+    rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
+    wds, fifos = _setup_input_pipes(input_pipes, stdin)
 
     try:
         while True:
-            # get ready readable pipes, or timeout after 1 second
-            ready = select.select(fds, (), fds, 1)[0]
+            status = p.poll()
+            # get ready pipes
+            readable, writable, _ = select.select(rds, wds, (), 0)
 
-            for ready_pipe in ready:
-                buf = os.read(ready_pipe, 65536)
+            for ready_pipe in readable:
+                buf = os.read(ready_pipe, BUF_LEN)
 
                 if buf:
                     output_pipes[ready_pipe].write(buf)
@@ -415,24 +495,66 @@ def run_process(command, output_pipes=None):
                     if ready_pipe not in (stdout, stderr):
                         # bad things happen if parent closes stdout or stderr
                         os.close(ready_pipe)
-                    fds.remove(ready_pipe)
-            if (not fds or not ready) and p.poll() is not None:
+                    rds.remove(ready_pipe)
+            for ready_pipe in writable:
+                # TODO for now it's OK for the input reads to block since
+                # input generally happens first, but we should consider how to
+                # support non-blocking stream inputs in the future.
+                buf = input_pipes[ready_pipe].read(BUF_LEN)
+
+                if buf:
+                    os.write(ready_pipe, buf)
+                else:   # end of stream
+                    wds.remove(ready_pipe)
+                    os.close(ready_pipe)
+
+            wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
+            empty = (not rds or not readable) and (not wds or not writable)
+            if empty and status is not None:
                 # all pipes are empty and the process has returned, we are done
                 break
-            elif not fds and p.poll() is None:
+            elif not rds and not wds and status is None:
                 # all pipes are closed but the process is still running
                 p.wait()
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
         raise
     finally:
-        # close any remaining output adapters
-        for fd in fds:
-            if fd in output_pipes:
-                output_pipes[fd].close()
-                os.close(fd)
+        _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr)
 
     return p
+
+
+class StreamFetchAdapter(object):
+    """
+    This represents the interface that must be implemented by fetch adapters
+    for IO modes that want to implement streaming input.
+    """
+    def __init__(self, input_spec):
+        self.input_spec = input_spec
+
+    def read(self, buf_len):
+        """
+        Fetch adapters must implement this method, which is responsible for
+        reading up to ``self.buf_len`` bytes from the stream. For now, this is
+        expected to be a blocking read, and should return an empty string to
+        indicate the end of the stream.
+        """
+        raise NotImplemented
+
+
+class MemoryFetchAdapter(StreamFetchAdapter):
+    def __init__(self, input_spec, data):
+        """
+        Simply reads data from memory. This can be used to map traditional
+        (non-streaming) inputs to pipes when using ``run_process``. This is
+        roughly identical behavior to BytesIO.
+        """
+        super(MemoryFetchAdapter, self).__init__(input_spec)
+        self._stream = six.BytesIO(data)
+
+    def read(self, buf_len):
+        return self._stream.read(buf_len)
 
 
 class StreamPushAdapter(object):
@@ -479,7 +601,9 @@ class WritePipeAdapter(StreamPushAdapter):
 class AccumulateDictAdapter(StreamPushAdapter):
     def __init__(self, output_spec, key, dictionary=None):
         """
-        Appends all data from a stream under a key inside a dict.
+        Appends all data from a stream under a key inside a dict. Can be used
+        to bind traditional (non-streaming) outputs to pipes when using
+        ``run_process``.
 
         :param output_spec: The output specification.
         :type output_spec: dict
