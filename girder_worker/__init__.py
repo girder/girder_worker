@@ -6,7 +6,7 @@ import os
 
 from girder_worker.format import (
     converter_path, get_validator_analysis, Validator)
-from ConfigParser import ConfigParser
+from ConfigParser import SafeConfigParser
 from executors.python import run as python_run
 from executors.workflow import run as workflow_run
 from networkx import NetworkXNoPath
@@ -16,7 +16,7 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Read the configuration files
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
-config = ConfigParser()
+config = SafeConfigParser(os.environ)
 config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Maps task modes to their implementation
