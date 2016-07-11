@@ -22,7 +22,7 @@
         ],
         "mode": "python",
         "name": "Flu trends",
-        "script_uri": "file://flu.py"
+        "script_uri": "file://./flu.py"
       }
     }
   ],
