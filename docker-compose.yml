@@ -1,0 +1,15 @@
+version: '2'
+
+
+services:
+   broker:
+      image: rabbitmq:3
+      env_file: ./docker.env
+
+   worker:
+      build:
+         context: .
+         dockerfile: Dockerfile
+      links:
+         - broker:broker
+      env_file: ./docker.env

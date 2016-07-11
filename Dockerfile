@@ -1,0 +1,35 @@
+FROM ubuntu:xenial
+
+RUN apt-get update && \
+  apt-get install -qy software-properties-common python-software-properties && \
+  apt-get update && apt-get install -qy \
+    build-essential \
+    wget \
+    python \
+    libffi-dev \
+    libssl-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libpython-dev && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py
+
+WORKDIR /girder_worker
+COPY setup.py /girder_worker/setup.py
+COPY requirements.txt /girder_worker/requirements.txt
+COPY README.rst /girder_worker/README.rst
+COPY examples /girder_worker/examples
+COPY scripts /girder_worker/scripts
+COPY girder_worker /girder_worker/girder_worker
+
+RUN pip install -r requirements.txt -e .
+
+RUN useradd -D --shell=/bin/bash && useradd -m worker
+RUN sed -i girder_worker/worker.local.cfg \
+   -e '/^broker/ s/guest@localhost/%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/'
+RUN girder-worker-config set girder_worker tmp_root /tmp
+
+USER worker
+
+ENTRYPOINT ["python", "-m", "girder_worker"]
