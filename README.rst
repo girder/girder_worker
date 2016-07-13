@@ -11,6 +11,12 @@ and from various data sources, including Girder.
 
 Visit the `documentation <http://girder-worker.readthedocs.org>`_ for more details and API documentation.
 
+For questions, comments, or to get in touch with the maintainers, head to our `Gitter Forum
+<https://gitter.im/girder/girder_worker>`_.
+
+We'd love for you to `contribute to Girder Worker <CONTRIBUTING.md>`_.
+
+
 .. |build-status| image:: https://travis-ci.org/girder/girder_worker.png?branch=master
     :target: https://travis-ci.org/girder/girder_worker
     :alt: Build Status
