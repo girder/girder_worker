@@ -153,6 +153,9 @@ class JobManager(object):
 
             self._redirectPipes(True)
 
+    def flush(self):
+        self._flush()
+
     def write(self, message, forceFlush=False):
         """
         Append a message to the log for this job. If logPrint is enabled, this
