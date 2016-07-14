@@ -6,7 +6,9 @@ from girder_worker import config
 from six import StringIO
 
 
-def _get_cache_settings():
+def _get_cache_settings(spec):
+    if not spec.get('use_cache', True):
+        return None
     if not config.getboolean('girder_io', 'diskcache_enabled'):
         return None
     return dict(
@@ -23,7 +25,7 @@ def _init_client(spec, require_token=False):
     if 'api_url' in spec:
         client = girder_client.GirderClient(
             apiUrl=spec['api_url'],
-            cacheSettings=_get_cache_settings())
+            cacheSettings=_get_cache_settings(spec))
     elif 'host' in spec:
         scheme = spec.get('scheme', 'http')
         port = spec.get('port', {
@@ -33,7 +35,7 @@ def _init_client(spec, require_token=False):
         api_root = spec.get('api_root', '/api/v1')
         client = girder_client.GirderClient(
             host=spec['host'], scheme=scheme, apiRoot=api_root, port=port,
-            cacheSettings=_get_cache_settings())
+            cacheSettings=_get_cache_settings(spec))
     else:
         raise Exception('You must pass either an api_url or host key for '
                         'Girder input and output bindings.')
