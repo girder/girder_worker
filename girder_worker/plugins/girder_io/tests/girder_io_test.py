@@ -36,6 +36,7 @@ class TestGirderIo(unittest.TestCase):
 
     def test_girder_io(self):
         file_uploaded = []
+        file_downloaded = []
         upload_initialized = []
 
         @httmock.all_requests
@@ -50,22 +51,26 @@ class TestGirderIo(unittest.TestCase):
                 return json.dumps([{
                     'name': 'test.txt',
                     '_id': 'file_id',
+                    'created': '2000-01-01 00:00:00',
                     'size': 13
                 }])
             elif url.path == api_root + '/item/new_item_id/files':
                 return '[]'
             elif url.path == api_root + '/file/file_id/download':
+                file_downloaded.append(1)
                 return 'file_contents'
             elif url.path == api_root + '/file' and request.method == 'POST':
                 upload_initialized.append(1)
                 return json.dumps({
-                    '_id': 'upload_id'
+                    '_id': 'upload_id',
+                    'created': '2000-01-01 00:00:00',
                 })
             elif (url.path == api_root + '/file/chunk' and
                   request.method == 'POST'):
                 file_uploaded.append(1)
                 return json.dumps({
                     '_id': 'new_file_id',
+                    'created': '2000-01-01 00:00:00',
                     'name': 'test.txt'
                 })
             else:
@@ -96,6 +101,15 @@ class TestGirderIo(unittest.TestCase):
             with open(path) as f:
                 self.assertEqual(f.read(), 'file_contents')
             shutil.rmtree(os.path.dirname(path))  # clean tmp dir
+
+            # test diskcache
+            self.assertEqual(file_downloaded, [1])
+            girder_worker.config.set('girder_io', 'diskcache_enabled', '1')
+            girder_worker.config.set('girder_io', 'diskcache_directory', _tmp)
+            girder_worker.run(self.task, inputs=inputs, outputs=None)
+            self.assertEqual(file_downloaded, [1, 1])
+            girder_worker.run(self.task, inputs=inputs, outputs=None)
+            self.assertEqual(file_downloaded, [1, 1])
 
             # Now test pushing to girder
             del inputs['input']['data']
@@ -134,6 +148,7 @@ class TestGirderIo(unittest.TestCase):
                 return json.dumps([{
                     'name': 'test.txt',
                     '_id': 'file_id',
+                    'created': '2000-01-01 00:00:00',
                     'size': 13
                 }])
             elif url.path == api_root + '/item/new_item_id/files':
@@ -143,7 +158,8 @@ class TestGirderIo(unittest.TestCase):
             elif url.path == api_root + '/file' and request.method == 'POST':
                 upload_initialized.append(1)
                 return json.dumps({
-                    '_id': 'upload_id'
+                    '_id': 'upload_id',
+                    'created': '2000-01-01 00:00:00',
                 })
             elif (url.path == api_root + '/file/chunk' and
                   request.method == 'POST'):
@@ -151,6 +167,7 @@ class TestGirderIo(unittest.TestCase):
                 chunk_sent.append(1)
                 return json.dumps({
                     '_id': 'new_file_id',
+                    'created': '2000-01-01 00:00:00',
                     'name': 'test.txt'
                 })
             else:
@@ -241,6 +258,7 @@ class TestGirderIo(unittest.TestCase):
                 return json.dumps([{
                     'name': 'test.txt',
                     '_id': 'file_id',
+                    'created': '2000-01-01 00:00:00',
                     'size': 13
                 }])
             elif url.path == api_root + '/item/new_item_id/files':
@@ -249,13 +267,15 @@ class TestGirderIo(unittest.TestCase):
                 return 'file_contents'
             elif url.path == api_root + '/file' and request.method == 'POST':
                 return json.dumps({
-                    '_id': 'upload_id'
+                    '_id': 'upload_id',
+                    'created': '2000-01-01 00:00:00',
                 })
             elif (url.path == api_root + '/file/chunk' and
                   request.method == 'POST'):
                 self.assertTrue('file_contents' in request.body)
                 return json.dumps({
                     '_id': 'new_file_id',
+                    'created': '2000-01-01 00:00:00',
                     'name': 'test.txt'
                 })
             else:
@@ -360,6 +380,7 @@ class TestGirderIo(unittest.TestCase):
 
         file1_info = {
             '_id': 'file1_id',
+            'created': '2000-01-01 00:00:00',
             'name': 'text.txt',
             'itemId': 'item_id',
             'size': 13
@@ -367,6 +388,7 @@ class TestGirderIo(unittest.TestCase):
 
         file2_info = {
             '_id': 'file2_id',
+            'created': '2000-01-01 00:00:00',
             'name': 'other_file.txt',
             'itemId': 'item_id',
             'size': 3
@@ -381,6 +403,8 @@ class TestGirderIo(unittest.TestCase):
         def girder_mock(url, request):
             api_root = self.api_root
 
+            if url.path == api_root + '/file/file1_id':  # fetch file info
+                return json.dumps(file1_info)
             if url.path == api_root + '/file/file2_id':  # fetch file info
                 return json.dumps(file2_info)
             if url.path == api_root + '/item/item_id':  # fetch item info
