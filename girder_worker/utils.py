@@ -154,7 +154,11 @@ class JobManager(object):
             self._redirectPipes(True)
 
     def flush(self):
-        self._flush()
+        """
+        This API call is required to conform to file-like objects,
+        but in this case is a no-op to avoid circumventing rate-limiting.
+        """
+        pass
 
     def write(self, message, forceFlush=False):
         """
