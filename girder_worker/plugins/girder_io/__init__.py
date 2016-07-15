@@ -2,12 +2,30 @@ import girder_client
 import os
 import girder_worker
 
+from girder_worker import config
 from six import StringIO
+
+
+def _get_cache_settings(spec):
+    if not spec.get('use_cache', True):
+        return None
+    if not config.getboolean('girder_io', 'diskcache_enabled'):
+        return None
+    return dict(
+        directory=config.get('girder_io', 'diskcache_directory'),
+        eviction_policy=config.get('girder_io', 'diskcache_eviction_policy'),
+        size_limit=config.getint('girder_io', 'diskcache_size_limit'),
+        cull_limit=config.getint('girder_io', 'diskcache_cull_limit'),
+        large_value_threshold=config.getint(
+            'girder_io', 'diskcache_large_value_threshold'),
+    )
 
 
 def _init_client(spec, require_token=False):
     if 'api_url' in spec:
-        client = girder_client.GirderClient(apiUrl=spec['api_url'])
+        client = girder_client.GirderClient(
+            apiUrl=spec['api_url'],
+            cacheSettings=_get_cache_settings(spec))
     elif 'host' in spec:
         scheme = spec.get('scheme', 'http')
         port = spec.get('port', {
@@ -16,7 +34,8 @@ def _init_client(spec, require_token=False):
         }[scheme])
         api_root = spec.get('api_root', '/api/v1')
         client = girder_client.GirderClient(
-            host=spec['host'], scheme=scheme, apiRoot=api_root, port=port)
+            host=spec['host'], scheme=scheme, apiRoot=api_root, port=port,
+            cacheSettings=_get_cache_settings(spec))
     else:
         raise Exception('You must pass either an api_url or host key for '
                         'Girder input and output bindings.')
