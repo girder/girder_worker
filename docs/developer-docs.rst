@@ -15,7 +15,11 @@ Install requirements: ::
 
     pip install -r requirements.txt
 
-    # If you plan on developing the worker, you will also want to do:
+    # If you plan on developing the worker, you will also want to install system packages and Python requirements:
+
+    # Command for Ubuntu
+    sudo apt-get install libxml2-dev libxslt1-dev
+
     pip install -r requirements-dev.txt
 
 Test it: ::

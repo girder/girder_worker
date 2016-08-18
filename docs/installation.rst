@@ -8,7 +8,7 @@ section of the developer documentation.)
 First, install required system packages: ::
 
     # Command for Ubuntu
-    sudo apt-get install libjpeg-dev zlib1g-dev
+    sudo apt-get install libjpeg-dev zlib1g-dev libssl-dev
 
 Next, the following command will install the core dependencies: ::
 
