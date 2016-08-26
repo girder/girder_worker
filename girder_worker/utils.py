@@ -197,6 +197,8 @@ class JobManager(object):
         if not self.url or status is None or status == self.status:
             return
 
+        # Ensure that the logs are flushed before the status is changed
+        self._flush()
         self.status = status
         self._redirectPipes(False)
         requests.request(self.method.upper(), self.url, headers=self.headers,
