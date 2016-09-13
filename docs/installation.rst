@@ -8,7 +8,7 @@ section of the developer documentation.)
 First, install required system packages: ::
 
     # Command for Ubuntu
-    sudo apt-get install libjpeg-dev zlib1g-dev
+    sudo apt-get install libjpeg-dev zlib1g-dev libssl-dev
 
 Next, the following command will install the core dependencies: ::
 
@@ -23,6 +23,25 @@ and the spark plugin, you would run: ::
 
 You can run this command at any time to install dependencies of other plugins, even if
 the girder worker is already installed.
+
+.. _remoteexecution:
+
+Remote Execution
+----------------
+
+Want to run things remotely? Girder worker relies on celery as its distributed task queue.  Celery
+requires a message broker, which can be Mongo, though Celery recommends using `RabbitMQ <https://www.rabbitmq.com/>`_ as your message broker.
+
+If you have followed the standard or development installation process, celery will have already been installed.
+
+Run the girder_worker, which will run a celery worker process: ::
+
+    python -m girder_worker
+
+On the client, run a script akin to the following example: ::
+
+    python examples/example_client.py
+
 
 .. _configuration:
 
