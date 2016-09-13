@@ -1,6 +1,9 @@
 Developer documentation
 =======================
 
+This section of the documentation is meant for those who wish to contribute to
+the Girder Worker platform.
+
 .. _install-from-source:
 
 Installing from source
@@ -22,7 +25,18 @@ Install requirements: ::
 
     pip install -r requirements-dev.txt
 
+If you want to run the girder_worker as a remote worker from the source install directory, you'll need to install it with pip in editable mode. If you don't want to include
+any girder worker plugins: ::
+
+    pip install -U -e .
+
 Test it: ::
+
+To test whether the setup without complex dependencies is working
+
+    python -m unittest tests.format_test
+
+To test the setup is working with complex dependencies including R, vtk, and Mongo
 
     python -m unittest -v tests.table_test
     python -m unittest -v tests.tree_test
@@ -57,21 +71,6 @@ First get CMake_, then do the following: ::
     python -c "import vtk"  # should work without an error
 
 .. _CMake: http://www.cmake.org/
-
-Want to run things remotely? On the client and server install celery: ::
-
-    pip install celery
-
-Then fire up the celery worker: ::
-
-    python -m girder_worker
-
-On the client, run a script akin to the following example: ::
-
-    python examples/example_client.py
-
-This section of the documentation is meant for those who wish to contribute to
-the Girder Worker platform.
 
 Installing worker plugins from pip
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
