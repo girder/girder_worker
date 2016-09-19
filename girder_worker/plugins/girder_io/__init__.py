@@ -126,16 +126,24 @@ def push_handler(data, spec, **kwargs):
             raise Exception('Girder uploads from memory objects must '
                             'explicitly pass a "name" field.')
         fd = StringIO(data)
-        client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
-                          parentType=parent_type, name=spec['name'],
-                          reference=reference)
+        try:
+            client.uploadFile(
+                parentId=spec['parent_id'], stream=fd, size=len(data),
+                parentType=parent_type, name=spec['name'], reference=reference)
+        except girder_client.HttpError as e:
+            print e.responseText
+            raise
     elif target == 'filepath':
         name = spec.get('name') or os.path.basename(data)
         size = os.path.getsize(data)
         with open(data, 'rb') as fd:
-            client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,
-                              parentType=parent_type, name=name,
-                              reference=reference)
+            try:
+                client.uploadFile(
+                    parentId=spec['parent_id'], stream=fd, size=size,
+                    parentType=parent_type, name=name, reference=reference)
+            except girder_client.HttpError as e:
+                print e.responseText
+                raise
     else:
         raise Exception('Invalid Girder push target: ' + target)
 
