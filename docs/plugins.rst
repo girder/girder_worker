@@ -197,6 +197,26 @@ new item with the same name as the file), or into an existing item.
         (, "reference": <arbitrary reference string to pass to the server>)
     }
 
+Cache Configuration
+*******************
+
+The Girder Client (used by the Girder IO plugin) supports caching of files
+downloaded from Girder. These cache settings are exposed in the Girder Worker
+configuration.  The following options are available:
+
+  * ``diskcache_enabled`` (default=0): enable or disable diskcache for files
+    downloaded with the girder client
+  * ``diskcache_directory`` (default=girder_file_cache): directory to use for
+    the diskcache
+  * ``diskcache_eviction_policy`` (default=least-recently-used): eviction policy
+    used when diskcache size limit is reached
+  * ``diskcache_size_limit`` (default=1073741824): maximum size of the disk
+    cache, 1GB default
+  * ``diskcache_cull_limit`` (default=10): maximum number of items to cull when
+    evicting items
+  * ``diskcache_large_value_threshold`` (default=1024): cached values below this
+    size are stored directly in the cache's sqlite db
+
 R
 -
 
