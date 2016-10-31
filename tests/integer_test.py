@@ -67,7 +67,7 @@ class TestInteger(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], 2)
 
         self.assertRaisesRegexp(
-            Exception, '^Required input 'b' not provided.$',
+            Exception, '^Required input \'b\' not provided.$',
             girder_worker.run, self.analysis,
             inputs={
                 'a': {'format': 'integer', 'data': 2}

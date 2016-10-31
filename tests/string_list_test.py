@@ -68,7 +68,7 @@ class TestStringList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], ['a', 'b'])
 
         self.assertRaisesRegexp(
-            Exception, '^Required input 'b' not provided.$',
+            Exception, '^Required input \'b\' not provided.$',
             girder_worker.run, self.analysis,
             inputs={
                 'a': {'format': 'string_list', 'data': ['a']}

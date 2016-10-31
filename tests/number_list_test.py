@@ -81,7 +81,7 @@ class TestNumberList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], [0, 2])
 
         self.assertRaisesRegexp(
-            Exception, '^Required input 'b' not provided.$',
+            Exception, '^Required input \'b\' not provided.$',
             girder_worker.run, self.analysis,
             inputs={
                 'a': {'format': 'number_list', 'data': [2]}
