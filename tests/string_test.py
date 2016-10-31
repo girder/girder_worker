@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import unittest
 
 
@@ -29,7 +29,7 @@ class TestNumber(unittest.TestCase):
         }
 
     def test_text(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'text', 'data': 'hi, '},
@@ -42,7 +42,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], 'hi, there')
 
     def test_string(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'string', 'data': 'hi, '},
@@ -55,7 +55,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], 'hi, there')
 
     def test_json(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'json', 'data': '"hi, "'},
@@ -68,7 +68,7 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], '"hi, there"')
 
     def test_unicode(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'text', 'data': u'hi, '},
