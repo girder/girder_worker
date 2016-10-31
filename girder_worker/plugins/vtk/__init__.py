@@ -1,6 +1,4 @@
 import os
-from girder_worker.core import format
-
 
 def vtkrow_to_dict(attributes, i):
     row = {}
@@ -65,6 +63,8 @@ def dict_to_vtkrow(row, attributes):
 
 
 def load(params):
+    from girder_worker.core import format
+
     converters_dir = os.path.join(params['plugin_dir'], 'converters')
     format.import_converters([
         os.path.join(converters_dir, 'geometry'),

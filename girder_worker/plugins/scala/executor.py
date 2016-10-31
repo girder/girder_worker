@@ -1,7 +1,7 @@
 import os
 import json
 
-from girder_worker import utils
+from girder_worker.core import utils
 
 
 def _write_scala_script(script, inputs, task_outputs, tmp_dir):

@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import unittest
 
 
@@ -35,14 +35,14 @@ class TestR(unittest.TestCase):
         }
 
     def test_array(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.array_out,
             inputs={},
             outputs={'output': {'format': 'serialized'}})
         self.assertEqual('\n'.join(outputs['output']['data'].split('\n')[3:]),
                          '131840\n14\n3\n1\n2\n3\n')
 
-        outputs = girder_worker.run(
+        outputs = run(
             self.array_in,
             inputs={'input': outputs['output']},
             outputs={'output': {'format': 'serialized'}})
@@ -50,12 +50,12 @@ class TestR(unittest.TestCase):
                          '131840\n14\n5\n1\n2\n3\n4\n5\n')
 
     def test_function(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.function_out,
             inputs={},
             outputs={'output': {'format': 'object'}})
         self.assertEqual(outputs['output']['data'](3)[0], 9)
-        outputs = girder_worker.run(
+        outputs = run(
             self.function_in, inputs={'input': outputs['output']})
         self.assertEqual(outputs['output']['data'], 16)
 

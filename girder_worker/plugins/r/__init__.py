@@ -1,9 +1,9 @@
 import os
-from girder_worker.core import register_executor, format
-from . import executor
-
 
 def load(params):
+    from girder_worker.core import register_executor, format
+    from . import executor
+
     register_executor('r', executor.run)
 
     converters_dir = os.path.join(params['plugin_dir'], 'converters')

@@ -1,7 +1,6 @@
-import girder_worker
-from . import executor
-
-
 def load(params):
-    girder_worker.register_executor('scala', executor.run)
-    girder_worker.register_executor('spark.scala', executor.run_spark)
+    from girder_worker.core import register_executor
+    from . import executor
+
+    register_executor('scala', executor.run)
+    register_executor('spark.scala', executor.run_spark)

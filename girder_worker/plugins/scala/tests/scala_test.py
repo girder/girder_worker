@@ -1,5 +1,5 @@
 import os
-import girder_worker
+from girder_worker.tasks import run
 import shutil
 import unittest
 
@@ -103,7 +103,7 @@ for (line <- bufferedSource.getLines) {
             }
         }
 
-        out = girder_worker.run(task, inputs=inputs)
+        out = run(task, inputs=inputs)
 
         self.assertEqual(out, {
             '_stdout': {
@@ -206,7 +206,7 @@ val not_b = !b
             }
         }
 
-        out = girder_worker.run(task, inputs=inputs)
+        out = run(task, inputs=inputs)
 
         self.assertEqual(out, {
             'count': {
@@ -275,5 +275,5 @@ println("Within Set Sum of Squared Errors = " + WSSSE)""",
             }
         }
 
-        out = girder_worker.run(task, inputs=inputs)
+        out = run(task, inputs=inputs)
         self.assertTrue(out['WSSSE']['data'] < 20)
