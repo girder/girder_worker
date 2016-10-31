@@ -43,6 +43,7 @@ class TestIntegerList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], [1, 2, 3, 4])
 
     def test_json(self):
+
         outputs = girder_worker.run(
             self.analysis,
             inputs={
@@ -68,7 +69,7 @@ class TestIntegerList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], [0, 2])
 
         self.assertRaisesRegexp(
-            Exception, '^Required input 'b' not provided.$',
+            Exception, '^Required input \'b\' not provided.$',
             girder_worker.run, self.analysis,
             inputs={
                 'a': {'format': 'integer_list', 'data': [2]}
