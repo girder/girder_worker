@@ -7,7 +7,7 @@ def spec_class_generator(class_type, spec):
     """Generate a generic Task style class from a Spec style dict.
     For example:
 
-    >>> from girder_worker.specs.utils import spec_class_generator
+    >>> from girder_worker.core.specs.utils import spec_class_generator
     >>> spec = {
     ...             "inputs": [
     ...                 {"name": "a",
