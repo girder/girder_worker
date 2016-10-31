@@ -1,7 +1,6 @@
 import json
 import os
-#import girder_worker
-from girder_worker.tasks import run, convert
+from girder_worker.tasks import convert
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
 import unittest

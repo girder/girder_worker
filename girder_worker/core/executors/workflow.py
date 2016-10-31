@@ -78,8 +78,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
                 )
 
             # Validate the output
-            if (validate and not
-                    girder_worker.core.isvalid(vis_input['type'], script_output)):
+            if (validate and not girder_worker.core.isvalid(
+                    vis_input['type'], script_output)):
                 raise Exception(
                     'Output %s (%s) is not in the expected type (%s) and '
                     'format (%s).' % (

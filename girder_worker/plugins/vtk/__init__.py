@@ -1,5 +1,6 @@
 import os
 
+
 def vtkrow_to_dict(attributes, i):
     row = {}
     for c in range(attributes.GetNumberOfArrays()):

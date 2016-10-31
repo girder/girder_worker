@@ -1,8 +1,10 @@
 import sys
 import unittest
 from girder_worker.tasks import run
-from girder_worker.core.format import conv_graph, converter_path, has_converter, \
-    Validator, print_conversion_graph, print_conversion_table
+from girder_worker.core.format import (conv_graph, converter_path,
+                                       has_converter,
+                                       Validator, print_conversion_graph,
+                                       print_conversion_table)
 from six import StringIO
 from networkx import NetworkXNoPath
 

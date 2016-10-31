@@ -1,6 +1,7 @@
 import os
 import platform
 
+
 def before_run(e):
     import executor
     if e.info['task']['mode'] == 'docker':

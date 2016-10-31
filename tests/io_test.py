@@ -148,7 +148,8 @@ with open(file) as f:
             }
         }
 
-        job_mgr = girder_worker.core.utils.JobManager(True, url='http://jobstatus/')
+        job_mgr = girder_worker.core.utils.JobManager(
+            True, url='http://jobstatus/')
 
         received = []
         status_changes = []
@@ -230,7 +231,8 @@ with open(file) as f:
         self.assertRegexpMatches(outputs['_tempdir']['data'], _tmp + '.+')
 
     def testConvertingStatus(self):
-        job_mgr = girder_worker.core.utils.JobManager(True, url='http://jobstatus/')
+        job_mgr = girder_worker.core.utils.JobManager(
+            True, url='http://jobstatus/')
 
         status_changes = []
 

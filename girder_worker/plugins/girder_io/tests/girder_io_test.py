@@ -225,7 +225,8 @@ class TestGirderIo(unittest.TestCase):
         }
 
         with httmock.HTTMock(girder_mock):
-            outputs = girder_worker.tasks.run(task, inputs=inputs, outputs=outputs)
+            outputs = girder_worker.tasks.run(task, inputs=inputs,
+                                              outputs=outputs)
             self.assertEqual(chunk_sent, [1])
             self.assertEqual(upload_initialized, [1])
 
@@ -421,8 +422,10 @@ class TestGirderIo(unittest.TestCase):
                     request.method, url.path))
 
         with httmock.HTTMock(girder_mock):
-            outputs = girder_worker.tasks.run(task, inputs=inputs, validate=False,
-                                        auto_convert=False, cleanup=False)
+            outputs = girder_worker.tasks.run(task, inputs=inputs,
+                                              validate=False,
+                                              auto_convert=False,
+                                              cleanup=False)
             self.assertIn('out', outputs)
             path = outputs['out']['data']
             parent = os.path.dirname(path)

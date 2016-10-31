@@ -5,7 +5,6 @@ from girder_worker.core import specs, run
 from girder_worker.core.specs.utils import spec_class_generator, to_frozenset
 
 
-
 class TestSpec(TestCase):
     """Tests edge cases of the base spec."""
 

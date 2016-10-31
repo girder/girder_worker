@@ -201,7 +201,7 @@ class TestDockerMode(unittest.TestCase):
                 'url': 'https://foo.com/file.txt'
             }
             out = run(task, inputs=inputs, validate=False,
-                                    auto_convert=False)
+                      auto_convert=False)
             self.assertEqual(mockPopen.call_count, 2)
             cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
             self.assertEqual(tuple(cmd1[:2]), ('docker', 'run'))

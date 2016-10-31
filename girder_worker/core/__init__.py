@@ -1,5 +1,4 @@
 import events
-import format
 import io
 import json
 import os
@@ -44,24 +43,20 @@ def unregister_executor(name):
     """
     del _task_map[name]
 
+register_executor('python', python_run)
+register_executor('workflow', workflow_run)
 
-def init_core():
-    # Register the core executors that are always enabled.
-    register_executor('python', python_run)
-    register_executor('workflow', workflow_run)
+# Load plugins that are enabled in the config file or env var
+_plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
+                          config.get('girder_worker', 'plugins_enabled'))
+_plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
+_paths = os.environ.get(
+    'WORKER_PLUGIN_LOAD_PATH', config.get(
+        'girder_worker', 'plugin_load_path')).split(':')
+_paths = [p for p in _paths if p.strip()]
+_paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
+utils.load_plugins(_plugins, _paths, quiet=True)
 
-    # Load plugins that are enabled in the config file or env var
-    _plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
-                              config.get('girder_worker', 'plugins_enabled'))
-    _plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
-    _paths = os.environ.get(
-        'WORKER_PLUGIN_LOAD_PATH', config.get(
-            'girder_worker', 'plugin_load_path')).split(':')
-    _paths = [p for p in _paths if p.strip()]
-    _paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
-    utils.load_plugins(_plugins, _paths, quiet=True)
-
-init_core()
 
 def _resolve_scripts(task):
     if task.get('mode') != 'workflow':
