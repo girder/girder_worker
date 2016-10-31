@@ -15,7 +15,7 @@ In this example we will:
 
 .. testsetup::
 
-   import girder_worker
+   import girder_worker.tasks
 
 Obtain the dataset
 ~~~~~~~~~~~~~~~~~~~
@@ -199,7 +199,7 @@ We now have a complete workflow! Let's run this, and write the final data to a f
 .. testcode::
 
    with open('docs/static/facebook-sample-data.txt') as infile:
-       output = girder_worker.run(workflow,
+       output = girder_worker.tasks.run(workflow,
                                   inputs={'G': {'format': 'adjacencylist',
                                                 'data': infile.read()}},
                                   outputs={'result_graph': {'format': 'networkx.json'}})
@@ -246,16 +246,17 @@ For completeness, here is the complete workflow specification as pure JSON:
 
 .. literalinclude:: static/facebook-example-spec.json
 
-This file can be loaded with Python's ``json`` package and directly sent to ``girder_worker.run()``:
+This file can be loaded with Python's ``json`` package and directly sent to ``girder_worker.tasks.run()``:
 
 .. testcode::
 
    import json
+
    with open('docs/static/facebook-example-spec.json') as spec:
        workflow = json.load(spec)
 
    with open('docs/static/facebook-sample-data.txt') as infile:
-       output = girder_worker.run(workflow,
+       output = girder_worker.tasks.run(workflow,
                                   inputs={'G': {'format': 'adjacencylist',
                                                 'data': infile.read()}},
                                   outputs={'result_graph': {'format': 'networkx.json'}})

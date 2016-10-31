@@ -5,7 +5,7 @@ Overview
 --------
 
 The main purpose of Girder Worker is to execute a broad range of tasks. These tasks,
-along with a set of input bindings and output bindings are passed to the :py:func:`girder_worker.run`
+along with a set of input bindings and output bindings are passed to the :py:func:`girder_worker.tasks.run`
 function, which is responsible for fetching the inputs as necessary and executing
 the task, and finally populating any output variables and sending them to their
 destination.
@@ -16,7 +16,7 @@ In this section, we describe the structure of each of those dictionaries.
 The task specification
 **********************
 
-The first argument to :py:func:`girder_worker.run` describes the task to execute,
+The first argument to :py:func:`girder_worker.tasks.run` describes the task to execute,
 independently of the actual data that it will be executed upon. The most
 important field of the task is the ``mode``, which describes what type of task
 it is. The structure for the task dictionary is described below. Uppercase names
@@ -287,11 +287,11 @@ Script execution
 Formats
 -------
 
-.. automodule:: girder_worker.format
+.. automodule:: girder_worker.core.format
    :members:
 
 Pythonic task API
 -----------------
 
-.. automodule:: girder_worker.specs
+.. automodule:: girder_worker.core.specs
    :members:

@@ -11,7 +11,7 @@ and through a remote worker.
 
 .. testsetup::
 
-   import girder_worker
+   import girder_worker.tasks
    from PIL.Image import Image
 
 Download and view an image
@@ -77,12 +77,12 @@ reads the file as part of the automatic data format conversion.
    }
 
 Finally to run this task, we only need to provide the task object and the input binding to
-:func:`girder_worker.run`.  The object returned by this function contains data extracted
+:func:`girder_worker.tasks.run`.  The object returned by this function contains data extracted
 and converted through the task's output ports.
 
 .. testcode::
 
-   output = girder_worker.run(show_image, {'the_image': lenna})
+   output = girder_worker.tasks.run(show_image, {'the_image': lenna})
 
 .. doctest::
    :hide:
@@ -117,11 +117,11 @@ look like the following:
 Notice that this task takes an additional numeric input that acts as
 a parameter for the blurring filter.  Connecting our ``show_image``
 task, we can view the result of our image filter.  First, we create
-a new workflow object from the :mod:`girder_worker.specs` module.
+a new workflow object from the :mod:`girder_worker.core.specs` module.
 
 .. testcode::
 
-   from girder_worker.specs import Workflow
+   from girder_worker.core.specs import Workflow
    wf = Workflow()
 
 Next, we add all the tasks to the workflow.  The order in which the tasks
@@ -143,7 +143,7 @@ Running a workflow has the same syntax as running a single task.
 
 .. testcode::
 
-   output = girder_worker.run(
+   output = girder_worker.tasks.run(
       wf,
       inputs={
          'blur_input': lenna,
@@ -239,7 +239,7 @@ port name with the task name.
 
 .. testcode::
 
-   output = girder_worker.run(
+   output = girder_worker.tasks.run(
       wf,
       inputs={
          'blur1.blur_input': lenna,
