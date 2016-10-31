@@ -354,7 +354,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
                 if status == utils.JobStatus.RUNNING:
                     _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
-                    io.push(
+                io.push(
                     data, d, **dict({'task_output': task_output}, **kwargs))
             else:
                 raise Exception('Expected exact format match but %s != %s.' % (
