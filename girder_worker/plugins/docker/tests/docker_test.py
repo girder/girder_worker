@@ -10,7 +10,7 @@ import stat
 import sys
 import unittest
 
-from girder_worker import io, TaskSpecValidationError
+from girder_worker.core import run, io, TaskSpecValidationError
 from girder_worker.plugins.docker.executor import DATA_VOLUME, SCRIPTS_VOLUME,\
     SCRIPTS_DIR
 
@@ -38,7 +38,7 @@ inspectOutput = json.dumps([{
 # Monkey patch select.select in the docker task module
 def _mockSelect(r, w, x, *args, **kwargs):
     return r, w, x
-girder_worker.utils.select.select = _mockSelect
+girder_worker.core.utils.select.select = _mockSelect
 
 
 # Monkey patch os.read to simulate subprocess stdout and stderr
@@ -116,7 +116,7 @@ class TestDockerMode(unittest.TestCase):
             _old = sys.stdout
             mockedStdOut = six.StringIO()
             sys.stdout = mockedStdOut
-            out = girder_worker.run(
+            out = run(
                 task, inputs=inputs, cleanup=False, validate=False,
                 auto_convert=False)
             sys.stdout = _old
@@ -173,8 +173,8 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            out = girder_worker.run(task, inputs=inputs, validate=False,
-                                    auto_convert=False)
+            out = run(task, inputs=inputs, validate=False,
+                      auto_convert=False)
             self.assertEqual(mockPopen.call_count, 3)
             cmd2 = mockPopen.call_args_list[1][1]['args']
             self.assertEqual(cmd2[6:11], [
@@ -200,7 +200,7 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            out = girder_worker.run(task, inputs=inputs, validate=False,
+            out = run(task, inputs=inputs, validate=False,
                                     auto_convert=False)
             self.assertEqual(mockPopen.call_count, 2)
             cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list]
@@ -241,20 +241,20 @@ class TestDockerMode(unittest.TestCase):
         msg = (r'^Docker outputs must be either "_stdout", "_stderr", or '
                'filepath-target outputs\.$')
         with self.assertRaisesRegexp(TaskSpecValidationError, msg):
-            girder_worker.run(task)
+            run(task)
 
         task['outputs'][0]['target'] = 'filepath'
         task['outputs'][0]['path'] = '/tmp/some/invalid/path'
         msg = (r'^Docker filepath output paths must either start with "%s/" '
                'or be specified relative to that directory\.$' % DATA_VOLUME)
         with self.assertRaisesRegexp(TaskSpecValidationError, msg):
-            girder_worker.run(task)
+            run(task)
 
         task['outputs'][0]['path'] = '%s/valid_path.txt' % DATA_VOLUME
         path = os.path.join(_tmp, '.*', 'valid_path\.txt')
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
-            girder_worker.run(task)
+            run(task)
         # Make sure docker stuff actually got called in this case.
         self.assertEqual(mockPopen.call_count, 3)
 
@@ -265,7 +265,7 @@ class TestDockerMode(unittest.TestCase):
         path = os.path.join(tmp, 'valid_path.txt')
         with open(path, 'w') as f:
             f.write('simulated output')
-        outputs = girder_worker.run(task, _tempdir=tmp)
+        outputs = run(task, _tempdir=tmp)
         self.assertEqual(outputs, {
             'file_output_1': {
                 'data': path,
@@ -278,9 +278,9 @@ class TestDockerMode(unittest.TestCase):
         path = os.path.join(_tmp, '.*', 'file_output_1')
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
-            girder_worker.run(task)
+            run(task)
 
-    @mock.patch('girder_worker.utils.run_process')
+    @mock.patch('girder_worker.core.utils.run_process')
     @mock.patch('subprocess.Popen')
     @mock.patch('subprocess.check_output')
     def testNamedPipes(self, mockCheckOutput, mockPopen, mockRunProcess):
@@ -308,7 +308,7 @@ class TestDockerMode(unittest.TestCase):
             }
         }
 
-        class DummyAdapter(girder_worker.utils.StreamPushAdapter):
+        class DummyAdapter(girder_worker.core.utils.StreamPushAdapter):
             def write(self, buf):
                 pass
 
@@ -319,7 +319,7 @@ class TestDockerMode(unittest.TestCase):
         if not os.path.isdir(tmp):
             os.makedirs(tmp)
 
-        outputs = girder_worker.run(
+        outputs = run(
             task, inputs={}, outputs=outputs, _tempdir=tmp, cleanup=False)
 
         # Make sure pipe was created inside the temp dir
