@@ -1,9 +1,9 @@
 """Tests for core spec objects."""
 import unittest
 from unittest import TestCase
-from girder_worker import specs
-from girder_worker.specs.utils import spec_class_generator, to_frozenset
-import girder_worker
+from girder_worker.core import specs, run
+from girder_worker.core.specs.utils import spec_class_generator, to_frozenset
+
 
 
 class TestSpec(TestCase):
@@ -627,8 +627,8 @@ class TestWorkflow(TestCase):
         inputs = {'a2.a': {'format': 'json', 'data': '1'},
                   'a3.a': {'format': 'number', 'data': 2}}
 
-        ground = girder_worker.run(self.workflow, inputs=inputs)
-        system = girder_worker.run(wf, inputs=inputs)
+        ground = run(self.workflow, inputs=inputs)
+        system = run(wf, inputs=inputs)
 
         self.assertEquals(system, ground)
 
@@ -653,8 +653,8 @@ class TestWorkflow(TestCase):
         inputs = {'a2.a': {'format': 'json', 'data': '1'},
                   'a3.a': {'format': 'number', 'data': 2}}
 
-        ground = girder_worker.run(self.workflow, inputs=inputs)
-        system = girder_worker.run(wf, inputs=inputs)
+        ground = run(self.workflow, inputs=inputs)
+        system = run(wf, inputs=inputs)
 
         self.assertEquals(system, ground)
 
@@ -716,8 +716,8 @@ class TestWorkflow(TestCase):
         inputs = {'a2.a': {'format': 'json', 'data': '1'},
                   'a3.a': {'format': 'number', 'data': 2}}
 
-        ground = girder_worker.run(self.workflow, inputs=inputs)
-        system = girder_worker.run(wf, inputs=inputs)
+        ground = run(self.workflow, inputs=inputs)
+        system = run(wf, inputs=inputs)
 
         self.assertEquals(system, ground)
 

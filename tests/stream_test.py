@@ -4,8 +4,8 @@ import sys
 import threading
 import unittest
 from . import captureOutput
-from girder_worker.io import make_stream_push_adapter, make_stream_fetch_adapter
-from girder_worker.utils import run_process
+from girder_worker.core.io import make_stream_push_adapter, make_stream_fetch_adapter
+from girder_worker.core.utils import run_process
 from six.moves import BaseHTTPServer, socketserver
 
 _iscript = os.path.join(os.path.dirname(__file__), 'stream_input.py')

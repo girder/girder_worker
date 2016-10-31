@@ -1,4 +1,5 @@
-import girder_worker
+from girder_worker.tasks import run
+from girder_worker.core import load
 import os
 import unittest
 
@@ -339,7 +340,7 @@ class TestWorkflow(unittest.TestCase):
         os.chdir(self.prevdir)
 
     def test_workflow(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.workflow,
             inputs={
                 'x': {'format': 'json', 'data': '1'},
@@ -349,7 +350,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs['result']['data'], (1+3)*(2+2))
 
         # Test using the default value for x (10).
-        outputs = girder_worker.run(
+        outputs = run(
             self.workflow,
             inputs={
                 'y': {'format': 'number', 'data': 2}
@@ -358,7 +359,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs['result']['data'], (10+3)*(2+2))
 
     def test_multi_input(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.multi_input,
             inputs={
                 'x': {'format': 'number', 'data': 2},
@@ -368,7 +369,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(outputs['result']['data'], (2*2)+(3*3))
 
     def test_visualization(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.visualization,
             inputs={
                 'x': {'format': 'number', 'data': 2},
@@ -388,7 +389,7 @@ class TestWorkflow(unittest.TestCase):
         }])
 
     def test_load(self):
-        flu = girder_worker.load(os.path.join(
+        flu = load(os.path.join(
             self.analysis_path, 'xdata', 'flu.json'))
 
         script_path = os.path.join(self.analysis_path, 'xdata', 'flu.py')
@@ -398,7 +399,7 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(flu['script'], script_content)
 
     def test_load_workflow(self):
-        flu = girder_worker.load(os.path.join(
+        flu = load(os.path.join(
             self.analysis_path, 'xdata', 'flu_workflow.json'))
 
         script_path = os.path.join(self.analysis_path, 'xdata', 'flu.py')
