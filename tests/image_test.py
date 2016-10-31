@@ -1,5 +1,6 @@
 import base64
 import girder_worker
+from girder_worker.core import run, convert
 import math
 import operator
 import os
@@ -61,7 +62,7 @@ class TestImage(unittest.TestCase):
         }
 
     def test_base64(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'png.base64', 'data': self.image},
@@ -72,7 +73,7 @@ class TestImage(unittest.TestCase):
     def test_convert(self):
         tmp = tempfile.mktemp()
 
-        output = girder_worker.convert('image', {
+        output = convert('image', {
             'format': 'png.base64',
             'data': self.image
         }, {
@@ -86,14 +87,14 @@ class TestImage(unittest.TestCase):
         self.assertEqual(output['format'], 'png')
         self.assertEqual(base64.b64encode(value), self.image)
 
-        output = girder_worker.convert(
+        output = convert(
             'image',
             {'format': 'png.base64', 'data': self.image},
             {'format': 'pil'})
 
         tmp = tempfile.mktemp()
 
-        output = girder_worker.convert(
+        output = convert(
             'image',
             output,
             {'format': 'png'})
@@ -104,7 +105,7 @@ class TestImage(unittest.TestCase):
         im2 = Image.open(io2)
         self.assertEqual(compareImages(im1, im2), 0)
 
-        output = girder_worker.convert('image', {
+        output = convert('image', {
             'format': 'png.base64',
             'data': self.image
         }, {
