@@ -1,6 +1,6 @@
 import girder_worker
 
-from girder_worker.utils import toposort
+from girder_worker.core.utils import toposort
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
@@ -43,7 +43,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
 
             # Run step
             print '--- beginning: %s ---' % steps[step]['name']
-            out = girder_worker.run(steps[step]['task'], bindings[step])
+            out = girder_worker.core.run(steps[step]['task'], bindings[step])
             print '--- finished: %s ---' % steps[step]['name']
 
             # Update bindings of downstream analyses
@@ -79,7 +79,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
 
             # Validate the output
             if (validate and not
-                    girder_worker.isvalid(vis_input['type'], script_output)):
+                    girder_worker.core.isvalid(vis_input['type'], script_output)):
                 raise Exception(
                     'Output %s (%s) is not in the expected type (%s) and '
                     'format (%s).' % (
@@ -87,7 +87,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
                         vis_input['type'], script_output['format']))
 
             if auto_convert:
-                vis_bindings[b] = girder_worker.convert(
+                vis_bindings[b] = girder_worker.core.convert(
                     vis_input['type'],
                     script_output,
                     {'format': vis_input['format']}
@@ -96,7 +96,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
             elif script_output['format'] == vis_input['format']:
                 data = script_output['data']
                 if 'mode' in script_output:
-                    girder_worker.io.push(data, script_output)
+                    girder_worker.core.io.push(data, script_output)
                 else:
                     vis_bindings[b] = {
                         'type': vis_input['type'],

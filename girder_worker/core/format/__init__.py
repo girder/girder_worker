@@ -3,7 +3,7 @@ import json
 import glob
 import os
 import math
-import girder_worker.io
+from girder_worker.core.io import fetch
 import networkx as nx
 from collections import namedtuple
 from networkx.algorithms.shortest_paths.generic import all_shortest_paths
@@ -209,6 +209,7 @@ def import_converters(search_paths):
         working directory. Passing a single path as a string also works.
     :type search_paths: str or list of str
     """
+
     if not isinstance(search_paths, (list, tuple)):
         search_paths = [search_paths]
 
@@ -217,7 +218,7 @@ def import_converters(search_paths):
             analysis = json.load(f)
 
             if 'script' not in analysis:
-                analysis['script'] = girder_worker.io.fetch({
+                analysis['script'] = fetch({
                     'mode': analysis.get('script_fetch_mode', 'auto'),
                     'url': analysis['script_uri']
                 })
