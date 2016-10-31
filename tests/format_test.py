@@ -1,7 +1,7 @@
 import sys
 import unittest
-import girder_worker
-from girder_worker.format import conv_graph, converter_path, has_converter, \
+from girder_worker.tasks import run
+from girder_worker.core.format import conv_graph, converter_path, has_converter, \
     Validator, print_conversion_graph, print_conversion_table
 from six import StringIO
 from networkx import NetworkXNoPath
@@ -56,9 +56,9 @@ class TestFormat(unittest.TestCase):
         with self.assertRaisesRegexp(
                 Exception,
                 'some_number: No such validator number/invalidformat'):
-            girder_worker.run(number_copy, inputs={'some_number':
-                                                   {'format': 'json',
-                                                    'data': '5'}})
+            run(number_copy, inputs={'some_number':
+                                     {'format': 'json',
+                                      'data': '5'}})
 
         # If the input is valid, but there is no conversion path
         number_copy['inputs'][0]['format'] = 'validformat'
@@ -67,9 +67,9 @@ class TestFormat(unittest.TestCase):
                 Exception,
                 ('some_number: No conversion path from number/json '
                  'to number/validformat')):
-            girder_worker.run(number_copy, inputs={'some_number':
-                                                   {'format': 'json',
-                                                    'data': '5'}})
+            run(number_copy, inputs={'some_number':
+                                     {'format': 'json',
+                                      'data': '5'}})
         conv_graph.remove_node(Validator('number', 'validformat'))
 
     def test_is_valid(self):

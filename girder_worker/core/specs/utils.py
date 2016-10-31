@@ -1,4 +1,4 @@
-from girder_worker import specs
+from girder_worker.core import specs
 from collections import Hashable
 
 

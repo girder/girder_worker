@@ -1,6 +1,5 @@
 import base64
-import girder_worker
-from girder_worker.core import run, convert
+from girder_worker.tasks import run, convert
 import math
 import operator
 import os

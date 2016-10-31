@@ -1,6 +1,7 @@
 import json
 import os
-import girder_worker
+#import girder_worker
+from girder_worker.tasks import run, convert
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
 import unittest
@@ -31,7 +32,7 @@ class TestGraph(unittest.TestCase):
 
     def test_clique(self):
         # clique.json -> NetworkX
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['alphabetGraph'], {'format': 'networkx'})
 
         self.assertEqual(
@@ -41,7 +42,7 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(output['data'].degree('55ba5019f8883b5bf35f3e30'), 0)
 
         # NetworkX -> clique.json
-        output = girder_worker.convert(
+        output = convert(
             'graph', output, {'format': 'clique.json'})
 
         # Since the id of the nodes are lost, only test the structure
@@ -70,7 +71,7 @@ class TestGraph(unittest.TestCase):
         self.assertIn((oid_by_name['b'], oid_by_name['c']), edges)
 
     def test_adjacencylist(self):
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['distances'], {'format': 'adjacencylist'})
 
         expected_edges = set(self.test_input['distances']['data'].edges())
@@ -89,7 +90,7 @@ class TestGraph(unittest.TestCase):
 
         self.assertEqual(expected_edges, actual_edges)
 
-        output = girder_worker.convert(
+        output = convert(
             'graph', output, {'format': 'networkx'})
 
         # Don't take edges into consideration, because they were lost in the
@@ -100,7 +101,7 @@ class TestGraph(unittest.TestCase):
                           edge_match=None))
 
     def test_graphml(self):
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['distances'], {'format': 'graphml'})
         expected_edges = set(self.test_input['distances']['data'].edges(
             data='distance'))
@@ -122,7 +123,7 @@ class TestGraph(unittest.TestCase):
 
         self.assertEqual(expected_edges, actual_edges)
 
-        output = girder_worker.convert(
+        output = convert(
             'graph', output, {'format': 'networkx'})
 
         self.assertTrue(
