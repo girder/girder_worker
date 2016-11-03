@@ -2,8 +2,8 @@
 
 import six
 
-from girder_worker import io, convert, isvalid
-from girder_worker.format import Validator
+from girder_worker.core import io, convert, isvalid
+from girder_worker.core.format import Validator
 from .spec import Spec
 
 

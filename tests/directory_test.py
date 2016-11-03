@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import os
 import shutil
 import tarfile
@@ -57,7 +57,7 @@ class TestDirectory(unittest.TestCase):
             os.remove(self.createFromDir + '.tgz')
 
     def testExtractZip(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.extractTask,
             inputs={
                 'myDir': {
@@ -76,7 +76,7 @@ class TestDirectory(unittest.TestCase):
             os.path.isfile(os.path.join(self.zipDir, 'provision.retry')))
 
     def testExtractTgz(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.extractTask,
             inputs={
                 'myDir': {
@@ -110,7 +110,7 @@ class TestDirectory(unittest.TestCase):
             'mode': 'python'
         }
 
-        outputs = girder_worker.run(task, inputs={
+        outputs = run(task, inputs={
             'myArchive': {
                 'format': 'path',
                 'data': self.createFromDir
@@ -141,7 +141,7 @@ class TestDirectory(unittest.TestCase):
             'mode': 'python'
         }
 
-        outputs = girder_worker.run(task, inputs={
+        outputs = run(task, inputs={
             'myArchive': {
                 'format': 'path',
                 'data': self.createFromDir

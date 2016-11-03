@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import unittest
 import os
 
@@ -30,7 +30,7 @@ class TestSpark(unittest.TestCase):
             script = fp.read()
             analysis['script'] = script
 
-        outputs = girder_worker.run(
+        outputs = run(
             analysis, {
                 'a': {
                     'format': 'json',
@@ -63,10 +63,10 @@ class TestSpark(unittest.TestCase):
             script = fp.read()
             analysis['script'] = script
 
-        outputs = girder_worker.run(analysis,
-                                    {'a': {'format': 'json',
-                                           'data': '[1,2,3,4,5,6,7,8,9]'}},
-                                    {'b': {'format': 'json'}})
+        outputs = run(analysis,
+                      {'a': {'format': 'json',
+                             'data': '[1,2,3,4,5,6,7,8,9]'}},
+                      {'b': {'format': 'json'}})
 
         expected = {
             'b': {

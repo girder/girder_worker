@@ -1,4 +1,5 @@
 from tempfile import mktemp
+from girder_worker.tasks import run
 import girder_worker
 import os
 import unittest
@@ -12,7 +13,7 @@ def _mockTempfile():
     _tmpfiles.append(out)
     return out
 
-girder_worker.executors.python.tempfile.mktemp = _mockTempfile
+girder_worker.core.executors.python.tempfile.mktemp = _mockTempfile
 
 
 class TestDebug(unittest.TestCase):
@@ -65,7 +66,7 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for analysis debugging"""
         global _tmpfiles
 
-        girder_worker.run(
+        run(
             dict(self.analysis.items() + [('write_script', 1)]),
             inputs=self.inputs, outputs=self.outputs)
 
@@ -80,7 +81,7 @@ class TestDebug(unittest.TestCase):
         """Runs the table json test but with asserts for kwarg debugging"""
         global _tmpfiles
 
-        girder_worker.run(
+        run(
             self.analysis, self.inputs, self.outputs, write_script=True)
 
         # Should have generated serveral files ()

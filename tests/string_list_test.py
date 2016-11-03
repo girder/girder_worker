@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import unittest
 
 
@@ -30,7 +30,7 @@ class TestStringList(unittest.TestCase):
         }
 
     def test_string(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'string_list', 'data': ['a', 'b']},
@@ -43,7 +43,7 @@ class TestStringList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], ['a', 'b', 'c', 'd'])
 
     def test_json(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'json', 'data': '["a", "b"]'},
@@ -56,7 +56,7 @@ class TestStringList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], '["a", "b", "c", "d"]')
 
     def test_default(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'b': {'format': 'string_list', 'data': ['b']}
@@ -69,7 +69,7 @@ class TestStringList(unittest.TestCase):
 
         self.assertRaisesRegexp(
             Exception, '^Required input \'b\' not provided.$',
-            girder_worker.run, self.analysis,
+            run, self.analysis,
             inputs={
                 'a': {'format': 'string_list', 'data': ['a']}
             },

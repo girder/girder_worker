@@ -1,5 +1,5 @@
 import os
-import girder_worker
+from girder_worker.tasks import convert
 import vtk
 import networkx as nx
 import unittest
@@ -66,7 +66,7 @@ class TestGraph(unittest.TestCase):
 
     def test_vtkgraph(self):
         # Test vtkgraph -> vtkgraph.serialized on a simple digraph
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['simpleVtkDiGraph'],
             {'format': 'vtkgraph.serialized'})
 
@@ -77,7 +77,7 @@ class TestGraph(unittest.TestCase):
 
         # Test networkx -> vtkgraph.serialized on an undirected
         # graph w/ edge data
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['distances'],
             {'format': 'vtkgraph.serialized'})
 
@@ -88,7 +88,7 @@ class TestGraph(unittest.TestCase):
                              fixture.read().splitlines()[1:])
 
         # Test networkx -> vtkgraph with missing edge attributes
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['grants'],
             {'format': 'vtkgraph.serialized'})
 
@@ -100,14 +100,14 @@ class TestGraph(unittest.TestCase):
         # Test networkx -> vtkgraph throws errors for different types
         # of metadata
         with self.assertRaises(Exception):
-            output = girder_worker.convert(
+            output = convert(
                 'graph', {'format': 'networkx', 'data': nx.Graph([
                     ('A', 'B', {'value': 10}),
                     ('B', 'C', {'value': '10'})
                 ])}, {'format': 'vtkgraph'})
 
         # Test vtkgraph -> networkx
-        output = girder_worker.convert(
+        output = convert(
             'graph', self.test_input['simpleVtkDiGraph'],
             {'format': 'networkx'})
 

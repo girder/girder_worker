@@ -1,4 +1,5 @@
-import girder_worker
+from girder_worker.tasks import run
+from girder_worker.core import load
 import unittest
 import os
 
@@ -14,10 +15,10 @@ class TestArbor(unittest.TestCase):
             cur_path + '/../../../../' + 'analysis/arbor')
 
     def test_pgls(self):
-        pgls = girder_worker.load(os.path.join(self.arbor_path, 'pgls.json'))
+        pgls = load(os.path.join(self.arbor_path, 'pgls.json'))
         tree_file = os.path.join('data', 'anolis.phy')
         table_file = os.path.join('data', 'anolisDataAppended.csv')
-        girder_worker.run(
+        run(
             pgls,
             {
                 'tree': {'format': 'newick', 'url': 'file://' + tree_file},
@@ -30,11 +31,11 @@ class TestArbor(unittest.TestCase):
         # print outputs
 
     # def test_fit_continuous(self):
-    #     fit_continuous = girder_worker.load(
+    #     fit_continuous = load(
     #         os.path.join(self.arbor_path, 'fit_continuous.json'))
     #     tree_file = os.path.join('data', 'anolis.phy')
     #     table_file = os.path.join('data', 'anolisDataAppended.csv')
-    #     outputs = girder_worker.run(
+    #     outputs = run(
     #         fit_continuous,
     #         {
     #             'tree': {'format': 'newick', 'url': 'file://' + tree_file},
@@ -46,10 +47,10 @@ class TestArbor(unittest.TestCase):
     #     # print outputs
 
     def test_cont2disc(self):
-        cont2disc = girder_worker.load(
+        cont2disc = load(
             os.path.join(self.arbor_path, 'continuous_to_discrete.json'))
         table_file = os.path.join('data', 'anolisDataAppended.csv')
-        girder_worker.run(
+        run(
             cont2disc,
             {
                 'table': {'format': 'csv', 'url': 'file://' + table_file},

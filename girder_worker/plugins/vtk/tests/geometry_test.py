@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run, convert
 import unittest
 import vtk
 
@@ -38,7 +38,7 @@ class TestGeometry(unittest.TestCase):
         }
 
     def test_cone(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.cone,
             inputs={
                 'resolution': {'format': 'number', 'data': 100},
@@ -51,7 +51,7 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(cone.GetNumberOfPoints(), 101)
 
     def test_convert(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.cone,
             inputs={
                 'resolution': {'format': 'number', 'data': 100},
@@ -62,7 +62,7 @@ class TestGeometry(unittest.TestCase):
             })
         cone = outputs['cone']['data']
         self.assertTrue(isinstance(cone, str))
-        converted = girder_worker.convert(
+        converted = convert(
             'geometry',
             outputs['cone'],
             {'format': 'vtkpolydata'}

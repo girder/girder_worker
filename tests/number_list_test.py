@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import unittest
 
 
@@ -30,7 +30,7 @@ class TestNumberList(unittest.TestCase):
         }
 
     def test_numeric(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'number_list', 'data': [1, 2]},
@@ -43,7 +43,7 @@ class TestNumberList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], [1, 2, 3, 4])
 
     def test_json(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'json', 'data': '[1, 2]'},
@@ -56,7 +56,7 @@ class TestNumberList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], '[1, 2, 3, 4]')
 
     def test_float(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'number_list', 'data': [1.5, 2.5]},
@@ -69,7 +69,7 @@ class TestNumberList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], [1.5, 2.5, 3.5, 4.5])
 
     def test_default(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'b': {'format': 'number_list', 'data': [2]}
@@ -82,7 +82,7 @@ class TestNumberList(unittest.TestCase):
 
         self.assertRaisesRegexp(
             Exception, '^Required input \'b\' not provided.$',
-            girder_worker.run, self.analysis,
+            run, self.analysis,
             inputs={
                 'a': {'format': 'number_list', 'data': [2]}
             },

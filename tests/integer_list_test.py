@@ -1,4 +1,4 @@
-import girder_worker
+from girder_worker.tasks import run
 import unittest
 
 
@@ -30,7 +30,7 @@ class TestIntegerList(unittest.TestCase):
         }
 
     def test_integer(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'integer_list', 'data': [1, 2]},
@@ -44,7 +44,7 @@ class TestIntegerList(unittest.TestCase):
 
     def test_json(self):
 
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'a': {'format': 'json', 'data': '[1, 2]'},
@@ -57,7 +57,7 @@ class TestIntegerList(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], '[1, 2, 3, 4]')
 
     def test_default(self):
-        outputs = girder_worker.run(
+        outputs = run(
             self.analysis,
             inputs={
                 'b': {'format': 'integer_list', 'data': [2]}
@@ -70,7 +70,7 @@ class TestIntegerList(unittest.TestCase):
 
         self.assertRaisesRegexp(
             Exception, '^Required input \'b\' not provided.$',
-            girder_worker.run, self.analysis,
+            run, self.analysis,
             inputs={
                 'a': {'format': 'integer_list', 'data': [2]}
             },

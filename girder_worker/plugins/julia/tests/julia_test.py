@@ -1,5 +1,5 @@
 import os
-import girder_worker
+import girder_worker.tasks
 import shutil
 import unittest
 
@@ -108,7 +108,7 @@ It was the worst of times
             }
         }
 
-        out = girder_worker.run(task, inputs=inputs)
+        out = girder_worker.tasks.run(task, inputs=inputs)
 
         self.assertEqual(out, {
             '_stdout': {

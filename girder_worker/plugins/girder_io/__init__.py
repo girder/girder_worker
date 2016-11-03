@@ -1,7 +1,5 @@
 import girder_client
 import os
-import girder_worker
-
 from girder_worker import config
 from six import StringIO
 
@@ -141,5 +139,6 @@ def push_handler(data, spec, **kwargs):
 
 
 def load(params):
-    girder_worker.io.register_fetch_handler('girder', fetch_handler)
-    girder_worker.io.register_push_handler('girder', push_handler)
+    from girder_worker.core import io
+    io.register_fetch_handler('girder', fetch_handler)
+    io.register_push_handler('girder', push_handler)

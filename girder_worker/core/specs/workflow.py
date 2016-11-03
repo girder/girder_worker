@@ -1,6 +1,6 @@
 """This module defines the workflow pipeline object."""
 
-from girder_worker.specs import PortList, ReadOnlyAttributeException, Spec
+from girder_worker.core.specs import PortList, ReadOnlyAttributeException, Spec
 
 from collections import MutableMapping
 import networkx as nx

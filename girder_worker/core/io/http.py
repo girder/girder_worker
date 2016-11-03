@@ -6,7 +6,7 @@ import six
 import ssl
 import urlparse
 
-from girder_worker.utils import StreamFetchAdapter, StreamPushAdapter
+from girder_worker.core.utils import StreamFetchAdapter, StreamPushAdapter
 
 
 class HttpStreamFetchAdapter(StreamFetchAdapter):

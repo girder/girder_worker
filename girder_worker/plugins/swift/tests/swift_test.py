@@ -1,5 +1,5 @@
 import os
-import girder_worker
+from girder_worker.tasks import run
 import shutil
 import unittest
 
@@ -60,7 +60,7 @@ out = echo_app(strcat("a,b,c\\n", a, ",2,3"));
             }
         }
 
-        out = girder_worker.run(task, inputs=inputs)
+        out = run(task, inputs=inputs)
 
         self.assertEqual(out, {
             'out.csv': {

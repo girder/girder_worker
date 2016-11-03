@@ -58,13 +58,12 @@ add_python_test(spec)
 add_python_test(stream)
 add_python_test(directory)
 
-
-add_docstring_test(girder_worker.specs.spec)
-add_docstring_test(girder_worker.specs.task)
-add_docstring_test(girder_worker.specs.port)
-add_docstring_test(girder_worker.specs.port_list)
-add_docstring_test(girder_worker.specs.utils)
-add_docstring_test(girder_worker.format)
+add_docstring_test(girder_worker.core.specs.spec)
+add_docstring_test(girder_worker.core.specs.task)
+add_docstring_test(girder_worker.core.specs.port)
+add_docstring_test(girder_worker.core.specs.port_list)
+add_docstring_test(girder_worker.core.specs.utils)
+add_docstring_test(girder_worker.core.format)
 
 if(SPHINX_DOCTEST)
   add_test(

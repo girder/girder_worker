@@ -1,6 +1,5 @@
-import girder_worker
-from . import executor
-
-
 def load(params):
-    girder_worker.register_executor('swift', executor.run)
+    from girder_worker.core import register_executor
+    from . import executor
+
+    register_executor('swift', executor.run)

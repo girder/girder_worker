@@ -1,7 +1,7 @@
 import re
 import tempfile
 
-from girder_worker import utils
+from girder_worker.core import utils
 
 
 def _expand_args(args, inputs, taskInputs, tmpDir):
