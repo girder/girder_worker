@@ -15,9 +15,9 @@ setup(name='gwexample',
           'Programming Language :: Python'
       ],
       entry_points={
-        'girder_worker.tasks': [
-            "module = gwexample.analyses.tasks",
-        ]
+          'girder_worker_plugins': [
+              'gwexample = gwexample:GWExamplePlugin',
+          ]
       },
       packages=['gwexample'],
       zip_safe=False)

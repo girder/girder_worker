@@ -1,7 +1,8 @@
-from girder_worker import app
+from girder_worker.app import app
+
 
 @app.task
-def fib(n):
-    if n==1 or n==2:
+def fibonacci(n):
+    if n == 1 or n == 2:
         return 1
-    return fib(n-1)+fib(n-2)
+    return fibonacci(n-1) + fibonacci(n-2)
