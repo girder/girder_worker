@@ -26,9 +26,9 @@ class TestTaskPlugin(unittest.TestCase):
 
         main()
 
-        app.conf.update.assert_any_call({'CELERY_IMPORTS': ['girder_worker.tasks']})
+        app.conf.update.assert_any_call({'CELERY_IMPORTS':
+                                         ['girder_worker.tasks']})
         app.conf.update.assert_any_call({'CELERY_INCLUDE': []})
-
 
     @mock.patch('girder_worker.__main__.pr')
     @mock.patch('girder_worker.__main__.app')
@@ -44,8 +44,10 @@ class TestTaskPlugin(unittest.TestCase):
 
         main()
 
-        app.conf.update.assert_any_call({'CELERY_IMPORTS': ['girder_worker.tasks']})
-        app.conf.update.assert_any_call({'CELERY_INCLUDE': ['mock.plugin.tasks']})
+        app.conf.update.assert_any_call({'CELERY_IMPORTS':
+                                         ['girder_worker.tasks']})
+        app.conf.update.assert_any_call({'CELERY_INCLUDE':
+                                         ['mock.plugin.tasks']})
 
     @mock.patch('girder_worker.__main__.pr')
     @mock.patch('girder_worker.__main__.app')
@@ -58,16 +60,18 @@ class TestTaskPlugin(unittest.TestCase):
         plugin.load = mock.Mock(return_value=mock_plugin(['mock.plugin.tasks']))
 
         plugin2 = EntryPoint.parse('mock = mockplugin:MockPlugin')
-        plugin2.load = mock.Mock(return_value=mock_plugin(['mock.plugin2.tasks']))
+        plugin2.load = mock.Mock(return_value=mock_plugin(
+            ['mock.plugin2.tasks']))
 
         pr.iter_entry_points.return_value = [core, plugin, plugin2]
 
         main()
 
-        app.conf.update.assert_any_call({'CELERY_IMPORTS': ['girder_worker.tasks']})
-        app.conf.update.assert_any_call({'CELERY_INCLUDE': ['mock.plugin.tasks',
-                                                            'mock.plugin2.tasks']})
-
+        app.conf.update.assert_any_call({'CELERY_IMPORTS':
+                                         ['girder_worker.tasks']})
+        app.conf.update.assert_any_call({'CELERY_INCLUDE':
+                                         ['mock.plugin.tasks',
+                                          'mock.plugin2.tasks']})
 
     @mock.patch('girder_worker.__main__.pr')
     @mock.patch('girder_worker.__main__.app')
@@ -88,20 +92,21 @@ class TestTaskPlugin(unittest.TestCase):
     @mock.patch('girder_worker.__main__.app')
     def test_plugin_throws_import_error(self, app, pr):
         core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        core.load = mock.Mock(side_effect=ImportError("Intentionally throw import error"))
+        core.load = mock.Mock(side_effect=ImportError(
+            'Intentionally throw import error'))
         pr.iter_entry_points.return_value = [core]
 
         main()
 
         app.conf.update.assert_any_call({'CELERY_IMPORTS': []})
 
-
     @mock.patch('girder_worker.__main__.pr')
     @mock.patch('girder_worker.__main__.app')
     def test_plugin_task_imports_throws_exception(self, app, pr):
         core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
         MockPlugin = mock_plugin([])
-        MockPlugin.task_imports = mock.Mock(side_effect=Exception("Intentionally throw exception"))
+        MockPlugin.task_imports = mock.Mock(side_effect=Exception(
+            'Intentionally throw exception'))
 
         core.load = mock.Mock(return_value=MockPlugin)
         pr.iter_entry_points.return_value = [core]
