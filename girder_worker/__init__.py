@@ -9,7 +9,6 @@ config = SafeConfigParser(os.environ)
 config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 
-
 class GirderWorkerPluginABC(object):
     """ """
     __metaclass__ = abc.ABCMeta

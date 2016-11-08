@@ -1,6 +1,8 @@
 import pkg_resources as pr
 from . import config
+from ConfigParser import NoSectionError, NoOptionError
 from .app import app
+
 
 def get_plugin_tasks(ep):
     try:
@@ -19,7 +21,14 @@ def main():
         # If this is the girder_worker EntryPoint
         if ep.module_name == __package__:
             # And core_tasks config is True
-            if config.getboolean('girder_worker', 'core_tasks'):
+            include_core_tasks = True
+            try:
+                include_core_tasks = config.getboolean(
+                    'girder_worker', 'core_tasks')
+            except (NoSectionError, NoOptionError):
+                pass
+
+            if include_core_tasks:
                 # Load core tasks in CELERY_IMPORTS
                 # Note: CELERY_IMPORTS  guarantees that core tasks
                 #       will be loaded before all plugin tasks.
