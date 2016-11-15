@@ -210,7 +210,7 @@ see the following output:
     [2016-11-08 12:22:57,218: WARNING/MainProcess] celery@minastirith ready.
 
 Notice that the task ``gwexample.analyses.tasks.fibonacci`` is now
-available. With the girder-worker worker running, you should be able to
+available. With the girder-worker processes running, you should be able to
 execute ``python example_client.py`` in the current working directory.
 After a brief delay, this should print out ``121393`` - the Fibonacci
 number for 26.
@@ -293,7 +293,7 @@ this entry point looks like this:
           )
 
 Python `Entry
-Poitns <https://setuptools.readthedocs.io/en/latest/pkg_resources.html#entry-points>`__
+Points <https://setuptools.readthedocs.io/en/latest/pkg_resources.html#entry-points>`__
 are a way for python packages to advertise classes and objects to other
 installed packages. Entry points are defined in the following way:
 
