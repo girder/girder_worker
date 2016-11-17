@@ -294,7 +294,7 @@ class TestGirderIo(unittest.TestCase):
                 'mode': 'girder',
                 'api_url': 'https://hello.com:1234/foo/bar/api',
                 'token': 'foo',
-                'host': 'wrong_host',
+                'host': 'wronghost',
                 'id': 'item_id',
                 'name': 'test.txt',
                 'resource_type': 'item',
@@ -311,7 +311,7 @@ class TestGirderIo(unittest.TestCase):
                 'mode': 'girder',
                 'api_url': 'https://hello.com:1234/foo/bar/api',
                 'token': 'foo',
-                'host': 'wrong_host',
+                'host': 'wronghost',
                 'port': 5678,
                 'api_root': '/wrong/api/root',
                 'scheme': 'http',
@@ -329,14 +329,14 @@ class TestGirderIo(unittest.TestCase):
 
             # Test default values for scheme, host, and port
             self.scheme = 'http'
-            self.netloc = 'wrong_host:80'
+            self.netloc = 'wronghost:80'
             self.api_root = '/api/v1'
 
             inputs = {
                 'input': {
                     'mode': 'girder',
                     'token': 'foo',
-                    'host': 'wrong_host',
+                    'host': 'wronghost',
                     'id': 'item_id',
                     'name': 'test.txt',
                     'resource_type': 'item',
