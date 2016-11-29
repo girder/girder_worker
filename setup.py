@@ -28,6 +28,36 @@ from setuptools.command.install import install
 WORKER_VERSION = '0.2.0'
 
 
+def unpin_version(r):
+    """
+    Generate an identical package requirement string but replace any pinned
+    version (e.g. ==3.2.0)  with unpinned, minimum versions (e.g. >=3.2.0).
+    This function takes a pkg_resources Requirement object and returns a string
+    """
+    try:
+        name = r.name
+        extras = '[{}]'.format(','.join(r.extras)) if r.extras else ''
+        marker = ' ;{}'.format(str(r.marker)) if r.marker else ''
+
+        # version spec OR url,  not both
+        if r.url is not None:
+            # No meaningful way to 'unpin' a URL version
+            version = ' @{}'.format(r.url) if r.url else ''
+
+        else:
+            # Convert any '==' requirements to '>=' requirements
+            version = ' {}'.format(
+                ','.join([">={}".format(version) if op == '==' else op + version
+                          for op, version in r.specs]))
+
+        return str(r.parse("{}{}{}{}".format(
+            name, extras, version, marker
+        )))
+
+    except Exception:
+        return str(r)
+
+
 class CustomInstall(install):
     """
     Override the default install to add some custom install-time behavior.
@@ -61,7 +91,7 @@ try:
         install_reqs = parse_requirements(f.read())
 except Exception:
     pass
-reqs = [str(req) for req in install_reqs]
+reqs = [unpin_version(req) for req in install_reqs]
 
 # Build up extras_require for plugin requirements
 extras_require = {}
@@ -71,7 +101,7 @@ for name in os.listdir(plugins_dir):
     if os.path.isfile(reqs_file):
         with open(reqs_file) as f:
             plugin_reqs = parse_requirements(f.read())
-        extras_require[name] = [str(r) for r in plugin_reqs]
+        extras_require[name] = [unpin_version(r) for r in plugin_reqs]
     else:
         extras_require[name] = []
 
