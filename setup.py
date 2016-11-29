@@ -27,7 +27,21 @@ from setuptools.command.install import install
 
 WORKER_VERSION = '0.2.0'
 
-
+# Note to future developers:
+# tl;dr - don't copy this function!
+#
+# This function is a compromise and not a recommended way of approaching this
+# problem. Ideally install_requires should statically define the minimum
+# versions of immediate dependencies allowing developers to experiment with
+# new upstream features. extra_requires should point to separate pip install
+# -able packages for plugins like girder_io, docker, r, etc which should be
+# managed through entry_points or with an entry point based plugin management
+# package like stevedore (https://pypi.python.org/pypi/stevedore). This would
+# allow each application plugin (e.g. girder_io) to manage its own dependencies
+# separately from girder_worker. But - until such time as an approach like this
+# is implemented we directly read requirements.txt files from plugin
+# directories and "unpin" them to ensure developers are not constrained by
+# pinned versions and generally to avoid dependency hell.
 def unpin_version(r):
     """
     Generate an identical package requirement string but replace any pinned
