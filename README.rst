@@ -1,5 +1,5 @@
 |logo| Girder Worker |build-status| |docs-status| |license-badge| |gitter-badge|
-=========================================================================
+================================================================================
 
 A flexible, simple script execution engine that integrates with the
 `Girder <http://girder.readthedocs.org>`_ data management system to run
