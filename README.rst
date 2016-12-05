@@ -1,5 +1,5 @@
-Girder Worker |build-status| |docs-status| |license-badge| |gitter-badge|
-=========================================================================
+|logo| Girder Worker |build-status| |docs-status| |license-badge| |gitter-badge|
+================================================================================
 
 A flexible, simple script execution engine that integrates with the
 `Girder <http://girder.readthedocs.org>`_ data management system to run
@@ -16,6 +16,8 @@ For questions, comments, or to get in touch with the maintainers, head to our `G
 
 We'd love for you to `contribute to Girder Worker <CONTRIBUTING.md>`_.
 
+
+.. |logo| image:: docs/static/favicon.png
 
 .. |build-status| image:: https://travis-ci.org/girder/girder_worker.png?branch=master
     :target: https://travis-ci.org/girder/girder_worker
