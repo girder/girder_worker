@@ -2,7 +2,7 @@ import abc
 import os
 from ConfigParser import SafeConfigParser
 
-__version__ = '1.0.0'
+__version__ = '0.3.0'
 __license__ = 'Apache 2.0'
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
