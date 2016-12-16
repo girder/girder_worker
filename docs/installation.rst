@@ -36,7 +36,7 @@ If you have followed the standard or development installation process, celery wi
 
 Run the girder_worker, which will run a celery worker process: ::
 
-    python -m girder_worker
+    girder-worker
 
 On the client, run a script akin to the following example: ::
 
