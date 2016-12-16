@@ -17,15 +17,13 @@
 #  limitations under the License.
 ###############################################################################
 
-import json
 import os
+import re
 import setuptools
 import shutil
 
 from pkg_resources import parse_requirements
 from setuptools.command.install import install
-
-WORKER_VERSION = '0.2.0'
 
 # Note to future developers:
 # tl;dr - don't copy this function!
@@ -87,6 +85,12 @@ class CustomInstall(install):
             shutil.copyfile(distcfg, localcfg)
 
 
+init = os.path.join(os.path.dirname(__file__), 'girder_worker', '__init__.py')
+with open(init) as fd:
+    version = re.search(
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+        fd.read(), re.MULTILINE).group(1)
+
 with open('README.rst') as f:
     readme = f.read()
 
@@ -122,7 +126,7 @@ for name in os.listdir(plugins_dir):
 # perform the install
 setuptools.setup(
     name='girder-worker',
-    version=WORKER_VERSION,
+    version=version,
     description='Batch execution engine built on celery.',
     long_description=readme,
     author='Kitware, Inc.',
