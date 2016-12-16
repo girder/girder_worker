@@ -168,6 +168,8 @@ release is described here.
     before you can run the upload step. To do so, simply run ``python setup.py sdist register``.
 
 
+.. _task-plugins:
+
 Task Plugins
 ============================
 
