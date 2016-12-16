@@ -1,25 +1,26 @@
 .. _worker-plugins:
 
-Plugins
+Application Plugins
 =======
 
-The Girder Worker plugin system is used to extend the core functionality of Girder Worker
-in a number of ways. Plugins can execute any Python code when they are loaded at
-runtime, but the most common augmentations they perform are:
+The Girder Worker application plugin system is used to extend the core functionality of
+Girder Worker in a number of ways. Application plugins can execute any Python code when
+they are loaded at runtime, but the most common augmentations they perform are:
 
-  * **Adding new execution modes.** Without any plugins enabled, the core Girder Worker
-    application can only perform two types of tasks: ``python`` and ``workflow`` modes.
-    It's common for plugins to implement other task execution modes.
-  * **Adding new data types or formats.** Plugins can make Girder Worker aware of new
-    data types and formats, and provide implementations for how to validate and
-    convert to and from those formats.
+  * **Adding new execution modes.** Without any application plugins enabled, the core
+    Girder Worker application can only perform two types of tasks: ``python`` and
+    ``workflow`` modes. It's common for application plugins to implement other task
+    execution modes.
+  * **Adding new data types or formats.** Application plugins can make Girder Worker
+    aware of new data types and formats, and provide implementations for how to validate
+    and convert to and from those formats.
   * **Adding new IO modes.** One of the primary functions of Girder Worker is to fetch
     input data from heterogenous sources and expose it to tasks in a uniform way.
-    Plugins can implement novel modes of fetching and pushing input and output
-    data for a task.
+    Application plugins can implement novel modes of fetching and pushing input and
+    output data for a task.
 
-Below is a list of the plugins that are shipped with the girder_worker package. They
-can be enabled via the configuration file (see :ref:`configuration`).
+Below is a list of the application plugins that are shipped with the girder_worker package.
+They can be enabled via the configuration file (see :ref:`configuration`).
 
 Docker
 ------
@@ -289,7 +290,7 @@ VTK
 
 .. note :: vtkGraphs lose their actual node values as they are represented by their index.
   In addition, nodes and edges are given all metadata attributes with defaults if they do not specify the metadatum themselves.
-  This is noted further in :py:mod:`girder_worker.plugins.vtk.converters.graph.networkx_to_vtkgraph`
+  This is noted further in :py:mod:`girder_worker.core.plugins.vtk.converters.graph.networkx_to_vtkgraph`
 
 .. _vtkGraph: http://www.vtk.org/doc/nightly/html/classvtkGraph.html
 .. _vtkGraphWriter: http://www.vtk.org/doc/nightly/html/classvtkGraphWriter.html
