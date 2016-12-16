@@ -30,7 +30,7 @@ particular form, loaded with
 :py:func:`girder_worker.core.format.import_converters`. See that function's documentation
 for how to define validators and converters.
 
-The following are the types available in Girder Worker core. Application Plugins may add their
+The following are the types available in Girder Worker core. Application plugins may add their
 own types and formats using the ``girder_worker.core.format.import_converters`` function. See
 the :doc:`plugins` section for details on plugin-specific types and formats.
 
