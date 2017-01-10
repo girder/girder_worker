@@ -292,8 +292,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                     raise Exception('%s: %s' % (name, str(e)))
 
                 d['script_data'] = converted['data']
-            elif (d.get('format', task_input.get('format')) ==
-                  task_input.get('format')):
+            elif not validate or (d.get('format', task_input.get('format')) ==
+                                  task_input.get('format')):
                 d['script_data'] = d['data']
             else:
                 raise Exception(
@@ -307,7 +307,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
         for name, task_output in task_outputs.iteritems():
             if name not in outputs:
-                outputs[name] = {'format': task_output['format']}
+                outputs[name] = {'format': task_output.get('format')}
 
         # Set the appropriate job status flag
         _job_status(job_mgr, status)
@@ -323,7 +323,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             d = outputs[name]
             script_output = {'data': d['script_data'],
-                             'format': task_output['format']}
+                             'format': task_output.get('format')}
 
             # Validate the output
             if validate and not isvalid(
@@ -344,7 +344,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                     task_output['type'], script_output, d,
                     status=utils.JobStatus.CONVERTING_OUTPUT,
                     **dict({'task_output': task_output}, **kwargs))
-            elif d['format'] == task_output['format']:
+            elif not validate or d['format'] == task_output['format']:
                 data = d['script_data']
 
                 if status == utils.JobStatus.RUNNING:
