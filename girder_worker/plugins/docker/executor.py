@@ -72,9 +72,9 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     for arg in args:
         for inputId in re.findall(regex, arg):
             if inputId in inputs:
-                transformed = _transform_path(inputs, taskInputs, inputId,
-                                              tmpDir)
-                arg = arg.replace('$input{%s}' % inputId, transformed)
+                transformed = _transform_path(
+                    inputs, taskInputs, inputId, tmpDir)
+                arg = arg.replace('$input{%s}' % inputId, str(transformed))
             elif inputId == '_tempdir':
                 arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
 
