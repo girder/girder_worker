@@ -57,6 +57,29 @@ an argument can also be expanded, e.g.: ::
 
     "container_args": ["--some-parameter=$input{some_parameter_value}"]
 
+Some command line arguments represent boolean flag values, and they should either be
+present or absent depending on a boolean input value. For example, perhaps your container
+accepts a command line argument ``--verbose`` to switch to verbose output. To support this
+as an input, you could use the following task input:
+
+.. code-block:: json
+
+    {
+    "id": "verbose",
+    "name": "Verbose output",
+    "description": "Prints more information during processing.",
+    "type": "boolean",
+    "format": "boolean",
+    "arg": "--verbose"
+    }
+
+Then, in your ``container_args`` list, you can use a special ``$flag{id}`` token to control
+whether this argument (specified via the ``arg`` parameter) is included or omitted:
+
+.. code-block:: none
+
+    "container_args": [..., "$flag{verbose}", ...]
+
 The temporary directory for the Girder Worker task is mapped into the running container
 under the directory ``/mnt/girder_worker/data``, so any files that were fetched into that
 temp directory will be available inside the running container at that path.

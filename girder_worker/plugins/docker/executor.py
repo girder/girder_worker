@@ -67,18 +67,26 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     location that it will be available inside the running container.
     """
     newArgs = []
-    regex = re.compile(r'\$input\{([^}]+)\}')
+    inputRe = re.compile(r'\$input\{([^}]+)\}')
+    flagRe = re.compile(r'\$flag\{([^}]+)\}')
 
     for arg in args:
-        for inputId in re.findall(regex, arg):
+        for inputId in re.findall(inputRe, arg):
             if inputId in inputs:
                 transformed = _transform_path(
                     inputs, taskInputs, inputId, tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, str(transformed))
             elif inputId == '_tempdir':
                 arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
+        for inputId in re.findall(flagRe, arg):
+            if inputId in inputs and inputs[inputId]['script_data']:
+                val = taskInputs[inputId].get('arg', inputId)
+            else:
+                val = ''
+            arg = arg.replace('$flag{%s}' % inputId, val)
 
-        newArgs.append(arg)
+        if arg:
+            newArgs.append(arg)
 
     return newArgs
 

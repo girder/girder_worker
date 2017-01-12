@@ -81,7 +81,9 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': 'test/test:latest',
             'container_args': [
-                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}'],
+                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}',
+                '$flag{bar}'
+            ],
             'pull_image': True,
             'inputs': [{
                 'id': 'foo',
@@ -89,6 +91,12 @@ class TestDockerMode(unittest.TestCase):
                 'format': 'string',
                 'type': 'string',
                 'target': 'filepath'
+            }, {
+                'id': 'bar',
+                'name': 'Bar',
+                'format': 'boolean',
+                'type': 'boolean',
+                'arg': '--bar'
             }],
             'outputs': [{
                 'id': '_stderr',
@@ -101,6 +109,10 @@ class TestDockerMode(unittest.TestCase):
             'foo': {
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
+            },
+            'bar': {
+                'mode': 'inline',
+                'data': True
             }
         }
 
@@ -156,8 +168,9 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(cmd2[9:15], [
                 str(os.getuid()), str(os.getgid()),
                 '/usr/bin/foo', '--flag', '-f', '%s/file.txt' % DATA_VOLUME])
-            self.assertEqual(cmd2[-1], '--temp-dir=%s' % DATA_VOLUME)
-            self.assertEqual(len(cmd2), 16)
+            self.assertEqual(cmd2[-2], '--temp-dir=%s' % DATA_VOLUME)
+            self.assertEqual(cmd2[-1], '--bar')
+            self.assertEqual(len(cmd2), 17)
 
             self.assertEqual(len(cmd3), 1)
             six.assertRegex(self, cmd3[0], 'docker-gc$')
@@ -173,8 +186,11 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            out = run(task, inputs=inputs, validate=False,
-                      auto_convert=False)
+            inputs['bar'] = {
+                'mode': 'inline',
+                'data': False
+            }
+            run(task, inputs=inputs, validate=False, auto_convert=False)
             self.assertEqual(mockPopen.call_count, 3)
             cmd2 = mockPopen.call_args_list[1][1]['args']
             self.assertEqual(cmd2[6:11], [
@@ -184,6 +200,7 @@ class TestDockerMode(unittest.TestCase):
                 'none',
                 'test/test:latest'
             ])
+            self.assertNotIn('--bar', cmd2)
             self.assertEqual(cmd2[11:16], [
                 str(os.getuid()), str(os.getgid()),
                 '/bin/bash', '-f', '%s/file.txt' % DATA_VOLUME])
