@@ -81,7 +81,9 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': 'test/test:latest',
             'container_args': [
-                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}', '$flag{bar}'],
+                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}',
+                '$flag{bar}'
+            ],
             'pull_image': True,
             'inputs': [{
                 'id': 'foo',
