@@ -80,7 +80,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
                 arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
         for inputId in re.findall(flagRe, arg):
             if inputId in inputs and inputs[inputId]['script_data']:
-                val = inputId
+                val = taskInputs[inputId].get('arg', inputId)
             else:
                 val = ''
             arg = arg.replace('$flag{%s}' % inputId, val)

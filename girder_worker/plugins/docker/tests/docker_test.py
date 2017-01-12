@@ -81,7 +81,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': 'test/test:latest',
             'container_args': [
-                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}', '$flag{--bar}'],
+                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}', '$flag{bar}'],
             'pull_image': True,
             'inputs': [{
                 'id': 'foo',
@@ -90,10 +90,11 @@ class TestDockerMode(unittest.TestCase):
                 'type': 'string',
                 'target': 'filepath'
             }, {
-                'id': '--bar',
-                'name': 'bar',
+                'id': 'bar',
+                'name': 'Bar',
                 'format': 'boolean',
-                'type': 'boolean'
+                'type': 'boolean',
+                'arg': '--bar'
             }],
             'outputs': [{
                 'id': '_stderr',
@@ -107,7 +108,7 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             },
-            '--bar': {
+            'bar': {
                 'mode': 'inline',
                 'data': True
             }
@@ -183,7 +184,7 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            inputs['--bar'] = {
+            inputs['bar'] = {
                 'mode': 'inline',
                 'data': False
             }
