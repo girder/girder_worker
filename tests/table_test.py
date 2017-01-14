@@ -1,4 +1,5 @@
-from girder_worker.tasks import run, convert
+from girder_worker.tasks import run
+from girder_worker.plugins.types import convert
 from girder_worker.core import load
 import os
 import tempfile

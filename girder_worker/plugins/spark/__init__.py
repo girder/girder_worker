@@ -23,7 +23,8 @@ def pyspark_run_cleanup(event):
 
 def load(params):
     import girder_worker
-    from girder_worker.core import events, format, register_executor
+    from girder_worker.core import events, register_executor
+    from girder_worker.plugins.types import format
     from . import pyspark_executor, spark
 
     # If we have a spark config section then try to setup spark environment
@@ -35,5 +36,4 @@ def load(params):
     events.bind('run.before', 'spark', setup_pyspark_task)
     events.bind('run.finally', 'spark', pyspark_run_cleanup)
 
-    format.import_converters(
-        os.path.join(params['plugin_dir'], 'converters'))
+    format.import_converters(os.path.join(params['plugin_dir'], 'converters'))
