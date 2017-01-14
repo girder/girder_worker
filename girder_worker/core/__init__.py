@@ -79,6 +79,19 @@ def set_job_status(mgr, status):
         mgr.updateStatus(status)
 
 
+def _extractId(spec):
+    return spec['id'] if 'id' in spec else spec['name']
+
+
+def _validateInputs(task_inputs, inputs):
+    for name, task_input in task_inputs.iteritems():
+        if name not in inputs:
+            if 'default' in task_input:
+                inputs[name] = task_input['default']
+            else:
+                raise Exception('Required input \'%s\' not provided.' % name)
+
+
 @utils.with_tmpdir
 def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
     """
@@ -107,14 +120,11 @@ def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
         was provided. Instead, those outputs will be saved to that URI and the
         output binding will contain the location in the ``'uri'`` field.
     """
-    def extractId(spec):
-        return spec['id'] if 'id' in spec else spec['name']
-
     inputs = inputs or {}
     outputs = outputs or {}
 
-    task_inputs = {extractId(d): d for d in task.get('inputs', ())}
-    task_outputs = {extractId(d): d for d in task.get('outputs', ())}
+    task_inputs = {_extractId(d): d for d in task.get('inputs', ())}
+    task_outputs = {_extractId(d): d for d in task.get('outputs', ())}
     mode = task.get('mode', 'python')
 
     if mode not in _task_map:
@@ -137,12 +147,7 @@ def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
 
     try:
         # If some inputs are not there, fill in with defaults
-        for name, task_input in task_inputs.iteritems():
-            if name not in inputs:
-                if 'default' in task_input:
-                    inputs[name] = task_input['default']
-                else:
-                    raise Exception('Required input \'%s\' not provided.' % name)
+        _validateInputs(task_inputs, inputs)
 
         for name, d in inputs.iteritems():
             task_input = task_inputs[name]
