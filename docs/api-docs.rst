@@ -287,7 +287,7 @@ Script execution
 Formats
 -------
 
-.. automodule:: girder_worker.core.format
+.. automodule:: girder_worker.plugins.types.format
    :members:
 
 Pythonic task API

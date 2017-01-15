@@ -11,6 +11,8 @@ and through a remote worker.
 
 .. testsetup::
 
+   import os
+   os.environ['WORKER_PLUGINS_ENABLED'] = 'types'
    import girder_worker.tasks
    from PIL.Image import Image
 

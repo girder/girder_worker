@@ -1,6 +1,6 @@
 def before_run(e):
     import executor
-    if e.info['task']['mode'] == 'docker':
+    if e.info['task'].get('mode') == 'docker':
         executor.validate_task_outputs(e.info['task_outputs'])
 
 

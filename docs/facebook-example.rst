@@ -15,7 +15,10 @@ In this example we will:
 
 .. testsetup::
 
+   import os
+   os.environ['WORKER_PLUGINS_ENABLED'] = 'types'
    import girder_worker.tasks
+
 
 Obtain the dataset
 ~~~~~~~~~~~~~~~~~~~
