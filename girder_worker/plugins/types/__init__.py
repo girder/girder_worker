@@ -109,7 +109,7 @@ def handle_input(e):
                 status=utils.JobStatus.CONVERTING_INPUT,
                 **dict({'task_input': task_input, 'fetch': False}, **kwargs))
         except Exception, e:
-            raise Exception('%s: %s' % (name, repr(e)))
+            raise Exception('%s: %s' % (name, str(e)))
 
         input['script_data'] = converted['data']
     elif not validate or input.get('format', task_input.get('format')) == task_input.get('format'):

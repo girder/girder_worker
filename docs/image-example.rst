@@ -12,9 +12,11 @@ and through a remote worker.
 .. testsetup::
 
    import os
-   os.environ['WORKER_PLUGINS_ENABLED'] = 'types'
    import girder_worker.tasks
+   from girder_worker import PACKAGE_DIR, core
    from PIL.Image import Image
+   core.utils.load_plugin('types', [os.path.join(PACKAGE_DIR, 'plugins')])
+
 
 Download and view an image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
