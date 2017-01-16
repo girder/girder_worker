@@ -185,14 +185,23 @@ def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
             if task_output.get('stream'):
                 continue  # this output has already been sent as a stream
 
-            events.trigger('run.handle_output', {
+            output = outputs[name]
+            e = events.trigger('run.handle_output', {
                 'info': info,
                 'task_output': task_output,
+                'output': output,
                 'outputs': outputs,
                 'name': name
             })
 
-            outputs[name].pop('script_data', None)
+            if not e.default_prevented:
+                data = outputs[name]['script_data']
+
+                if status == utils.JobStatus.RUNNING:
+                    set_job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
+                io.push(data, outputs[name], **dict({'task_output': task_output}, **kwargs))
+
+            output.pop('script_data', None)
 
         events.trigger('run.after', info)
 

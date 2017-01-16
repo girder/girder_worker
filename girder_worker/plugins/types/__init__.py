@@ -125,8 +125,6 @@ def handle_output(e):
     outputs = e.info['outputs']
     name = e.info['name']
     kwargs = e.info['info']['kwargs']
-    status = e.info['info']['status']
-    job_mgr = e.info['info']['job_mgr']
     output = outputs[name]
     auto_convert = kwargs.get('auto_convert', True)
     validate = kwargs.get('validate', True)
@@ -147,16 +145,10 @@ def handle_output(e):
 
     if auto_convert:
         outputs[name] = convert(
-            task_output['type'], script_output, output,
-            status=utils.JobStatus.CONVERTING_OUTPUT,
+            task_output['type'], script_output, output, status=utils.JobStatus.CONVERTING_OUTPUT,
             **dict({'task_output': task_output}, **kwargs))
-    elif not validate or output['format'] == task_output['format']:
-        data = output['script_data']
-
-        if status == utils.JobStatus.RUNNING:
-            set_job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
-        io.push(data, output, **dict({'task_output': task_output}, **kwargs))
-    else:
+        e.prevent_default()  # convert handles the push for us
+    elif validate and outputs[name]['format'] != task_output['format']:
         raise Exception(
             'Expected format match but %s != %s.' % (output['format'], task_output['format']))
 
