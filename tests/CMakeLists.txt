@@ -40,7 +40,7 @@ endif()
 
 add_python_test(config)
 add_python_test(format PLUGINS_ENABLED types)
-add_python_test(graph)
+add_python_test(graph PLUGINS_ENABLED types,vtk)
 add_python_test(image PLUGINS_ENABLED types)
 add_python_test(io)
 add_python_test(number PLUGINS_ENABLED types)

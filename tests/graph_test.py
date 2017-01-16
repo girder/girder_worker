@@ -1,6 +1,6 @@
 import json
 import os
-from girder_worker.tasks import convert
+from girder_worker.plugins.types import convert
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
 import unittest
@@ -25,8 +25,7 @@ class TestGraph(unittest.TestCase):
             }
         }
 
-        with open(os.path.join(
-                'tests', 'data', 'clique.json'), 'rb') as fixture:
+        with open(os.path.join('tests', 'data', 'clique.json'), 'rb') as fixture:
             self.test_input['alphabetGraph']['data'] = fixture.read()
 
     def test_clique(self):
