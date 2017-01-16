@@ -325,5 +325,17 @@ VTK
 .. _vtkPolyDataWriter: http://www.vtk.org/doc/nightly/html/classvtkPolyDataWriter.html
 .. _vtkTree: http://www.vtk.org/doc/nightly/html/classvtkTree.html
 
+Types
+-----
+
+* **Plugin ID:** ``types``
+* **Description:** This plugin allows type and format annotations of inputs and outputs
+  to be added to task specs and IO bindings. It can also perform automatic conversion between
+  different formats for known types, as well as validating the correctness of the data formats.
+  These behaviors are enabled with optional boolean arguments to the ``run`` task: ``validate``
+  and ``auto_convert``. Other plugins such as VTK and R add additional types and formats to
+  the typesystem supported by this plugin. The full documentation including a list of supported
+  types and formats can be found in the :ref:`types-and-formats` section.
+
 .. |ra| unicode:: 8594 .. right arrow
 .. |ba| unicode:: 8596 .. bidirectional arrow
