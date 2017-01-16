@@ -88,20 +88,14 @@ class TestDockerMode(unittest.TestCase):
             'inputs': [{
                 'id': 'foo',
                 'name': 'A variable',
-                'format': 'string',
-                'type': 'string',
                 'target': 'filepath'
             }, {
                 'id': 'bar',
                 'name': 'Bar',
-                'format': 'boolean',
-                'type': 'boolean',
                 'arg': '--bar'
             }],
             'outputs': [{
-                'id': '_stderr',
-                'format': 'string',
-                'type': 'string'
+                'id': '_stderr'
             }]
         }
 
@@ -145,8 +139,7 @@ class TestDockerMode(unittest.TestCase):
             # We bound _stderr as a task output, so it should be in the output
             self.assertEqual(out, {
                 '_stderr': {
-                    'data': 'error message\n',
-                    'format': 'string'
+                    'data': 'error message\n'
                 }
             })
 
@@ -242,8 +235,6 @@ class TestDockerMode(unittest.TestCase):
             'inputs': [],
             'outputs': [{
                 'id': 'file_output_1',
-                'format': 'text',
-                'type': 'string'
             }]
         }
 
@@ -285,8 +276,7 @@ class TestDockerMode(unittest.TestCase):
         outputs = run(task, _tempdir=tmp)
         self.assertEqual(outputs, {
             'file_output_1': {
-                'data': path,
-                'format': 'text'
+                'data': path
             }
         })
 
@@ -312,8 +302,6 @@ class TestDockerMode(unittest.TestCase):
             'inputs': [],
             'outputs': [{
                 'id': 'named_pipe',
-                'format': 'text',
-                'type': 'string',
                 'target': 'filepath',
                 'stream': True
             }]
