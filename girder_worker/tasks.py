@@ -1,5 +1,5 @@
 import core
-from .core.utils import JobManager, JobStatus
+from .utils import JobManager, JobStatus
 from .app import app
 
 
