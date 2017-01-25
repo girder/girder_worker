@@ -11,22 +11,22 @@ def cleanup(e):
     """
     Since files written by docker containers are owned by root, we can't
     clean them up in the worker process since that typically doesn't run
-    as root. So, we run a lightweight container to clean up the temp dir.
+    as root. So, we run a lightweight container to make the temp dir cleanable.
     """
     from .executor import DATA_VOLUME
     if e.info['task']['mode'] == 'docker' and '_tempdir' in e.info['kwargs']:
         tmpdir = e.info['kwargs']['_tempdir']
         cmd = [
             'docker', 'run', '--rm', '-v', '%s:%s' % (tmpdir, DATA_VOLUME),
-            'busybox', 'rm', '-rf', '%s/*' % DATA_VOLUME
+            'busybox', 'chmod', '-R', 'o+rw', DATA_VOLUME
         ]
         p = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         if p.returncode:
-            print('Error cleaning docker tmpdir %s.' % tmpdir)
+            print('Error setting perms on docker tempdir %s.' % tmpdir)
             print('STDOUT: ' + out)
             print('STDERR: ' + err)
-            raise Exception('Docker tempdir cleanup returned code %d.' % p.returncode)
+            raise Exception('Docker tempdir chmod returned code %d.' % p.returncode)
 
 
 def load(params):

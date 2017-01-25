@@ -157,8 +157,8 @@ class TestDockerMode(unittest.TestCase):
 
             self.assertEqual(cmd4[:4], ['docker', 'run', '--rm', '-v'])
             six.assertRegex(self, cmd4[4], _tmp + '/.*:%s' % DATA_VOLUME)
-            self.assertEqual(cmd4[5:], ['busybox', 'rm', '-rf', '%s/*' % DATA_VOLUME])
-            self.assertEqual(len(cmd4), 9)
+            self.assertEqual(cmd4[5:], ['busybox', 'chmod', '-R', 'o+rw', DATA_VOLUME])
+            self.assertEqual(len(cmd4), 10)
 
             # Make sure we can specify a custom entrypoint to the container
             mockPopen.reset_mock()
