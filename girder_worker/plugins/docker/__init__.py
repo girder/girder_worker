@@ -18,7 +18,7 @@ def cleanup(e):
         tmpdir = e.info['kwargs']['_tempdir']
         cmd = [
             'docker', 'run', '--rm', '-v', '%s:%s' % (tmpdir, DATA_VOLUME),
-            'busybox', 'chmod', '-R', 'o+rw', DATA_VOLUME
+            'busybox', 'chmod', '-R', 'a+rw', DATA_VOLUME
         ]
         p = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()

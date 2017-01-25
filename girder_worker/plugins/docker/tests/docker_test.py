@@ -157,7 +157,7 @@ class TestDockerMode(unittest.TestCase):
 
             self.assertEqual(cmd4[:4], ['docker', 'run', '--rm', '-v'])
             six.assertRegex(self, cmd4[4], _tmp + '/.*:%s' % DATA_VOLUME)
-            self.assertEqual(cmd4[5:], ['busybox', 'chmod', '-R', 'o+rw', DATA_VOLUME])
+            self.assertEqual(cmd4[5:], ['busybox', 'chmod', '-R', 'a+rw', DATA_VOLUME])
             self.assertEqual(len(cmd4), 10)
 
             # Make sure we can specify a custom entrypoint to the container
@@ -178,7 +178,6 @@ class TestDockerMode(unittest.TestCase):
             run(task, inputs=inputs, validate=False, auto_convert=False)
             self.assertEqual(mockPopen.call_count, 4)
             cmd2 = mockPopen.call_args_list[1][1]['args']
-            print cmd2
             self.assertEqual(cmd2[4:9], [
                 '--net', 'none', '--entrypoint', '/bin/bash', 'test/test:latest'])
             self.assertNotIn('--bar', cmd2)
