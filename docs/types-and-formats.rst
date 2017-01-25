@@ -3,9 +3,14 @@
 Types and formats
 =================
 
-In Girder Worker, every analysis input and output is typed. A `type` in Girder Worker is a
-high-level description of a data structure useful for intuitive workflows.
-It is not tied to a particular representation.
+In Girder Worker, analysis inputs and outputs may contain type and format annotations. These
+annotations only have an effect if the ``types`` plugin is enabled on the worker,
+and the specific behaviors of validation and conversion of data formats are controlled
+by flags to the ``run`` task called ``validate`` and ``auto_convert`` respectively, which
+default to being enabled if they are not explicitly passed.
+
+A `type` in Girder Worker is a high-level description of a data structure useful for intuitive
+workflows. It is not tied to a particular representation.
 For example, the `table` type may be defined as a list of rows with ordered,
 named column fields. This description does not specify any central representation
 since the information may be stored in a variety of ways.
