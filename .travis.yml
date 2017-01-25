@@ -23,6 +23,7 @@ env:
   - PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib:~/local/lib:~/local/lib/R/lib
 
 before_install:
+  - pip install -U pip six
   - pushd "${HOME}"
   - curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGO_VERSION}.tgz" | gunzip -c | tar x
   - cd mongodb-*/bin && export PATH="${PWD}:${PATH}"
