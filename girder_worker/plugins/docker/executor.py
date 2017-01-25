@@ -1,17 +1,12 @@
-import json
 import os
 import re
 import subprocess
 
 from girder_worker import config
 from girder_worker.core import TaskSpecValidationError, utils
-from girder_worker.core.io import (
-    make_stream_fetch_adapter, make_stream_push_adapter)
+from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 
 DATA_VOLUME = '/mnt/girder_worker/data'
-SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
-SCRIPTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                           'scripts')
 
 
 def _pull_image(image):
@@ -19,8 +14,7 @@ def _pull_image(image):
     Pulls the specified Docker image onto this worker.
     """
     command = ('docker', 'pull', image)
-    p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    p = subprocess.Popen(args=command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
 
     if p.returncode != 0:
@@ -154,28 +148,6 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
-def _get_pre_args(task, uid, gid):
-    """
-    When using our entrypoint.sh script, we have to detect the existing entry
-    point and munge the args to make the behavior equivalent. This returns
-    the list of arguments that should go prior to the client-specified args.
-    """
-    args = [str(uid), str(gid)]
-
-    if 'entrypoint' in task:
-        if isinstance(task['entrypoint'], (list, tuple)):
-            args.extend(task['entrypoint'])
-        else:
-            args.append(task['entrypoint'])
-    else:
-        # Read entrypoint from container if default is used
-        info = json.loads(subprocess.check_output(
-            args=['docker', 'inspect', '--type=image', task['docker_image']]))
-        args.extend(info[0]['Config']['Entrypoint'])
-
-    return args
-
-
 def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
     """
     Returns a 2 tuple of input and output pipe mappings. The first element is
@@ -245,19 +217,23 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         _pull_image(image)
 
     tempdir = kwargs.get('_tempdir')
-    args = _expand_args(task.get('container_args', []), inputs, task_inputs,
-                        tempdir)
+    args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
 
     ipipes, opipes = _setup_pipes(
         task_inputs, inputs, task_outputs, outputs, tempdir)
 
-    pre_args = _get_pre_args(task, os.getuid(), os.getgid())
+    if 'entrypoint' in task:
+        if isinstance(task['entrypoint'], (list, tuple)):
+            ep_args = ['--entrypoint'] + task['entrypoint']
+        else:
+            ep_args = ['--entrypoint', task['entrypoint']]
+    else:
+        ep_args = []
+
     command = [
         'docker', 'run',
-        '-v', '%s:%s' % (tempdir, DATA_VOLUME),
-        '-v', '%s:%s:ro' % (SCRIPTS_DIR, SCRIPTS_VOLUME),
-        '--entrypoint', os.path.join(SCRIPTS_VOLUME, 'entrypoint.sh')
-    ] + task.get('docker_run_args', []) + [image] + pre_args + args
+        '-v', '%s:%s' % (tempdir, DATA_VOLUME)
+    ] + task.get('docker_run_args', []) + ep_args + [image] + args
 
     print('Running container: %s' % repr(command))
 
