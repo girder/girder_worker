@@ -144,6 +144,7 @@ with open(file) as f:
                 'type': 'string',
                 'url': 'https://output.com/location.out',
                 'headers': {'foo': 'bar'},
+                'params': {'queryParam': 'value'},
                 'method': 'PUT'
             }
         }
@@ -160,6 +161,7 @@ with open(file) as f:
                 # The input fetch request
                 return 'dummy file contents'
             elif url.netloc == 'output.com' and url.path == '/location.out':
+                self.assertEqual(url.query, 'queryParam=value')
                 received.append(request.body)
                 return ''
             elif (url.netloc == 'jobstatus' and url.path == '/' and
