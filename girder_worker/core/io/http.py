@@ -188,11 +188,11 @@ def push(data, spec, **kwargs):
         with open(data, 'rb') as fd:
             request = requests.request(
                 method, url, headers=spec.get('headers', {}), data=fd,
-                allow_redirects=True)
+                params=spec.get('params', {}), allow_redirects=True)
     elif target == 'memory':
         request = requests.request(
             method, url, headers=spec.get('headers', {}), data=data,
-            allow_redirects=True)
+            params=spec.get('params', {}), allow_redirects=True)
     else:
         raise Exception('Invalid HTTP fetch target: ' + target)
 

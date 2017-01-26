@@ -254,6 +254,7 @@ return value of :py:func:`girder_worker.run`.
         "format": <data format>
         (, "headers": <dict of HTTP headers to send with the request>)
         (, "method": <http method to use, default is "POST">)
+        (, "params": <dict of HTTP query parameters to send with the request>)
     }
 
     <OUTPUT_BINDING_LOCAL> ::= {
