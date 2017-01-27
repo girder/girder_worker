@@ -45,7 +45,7 @@ before_install:
   - popd
   - cmake --version
   # download VTK
-  - curl -L http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz | tar zx -C ~
+  - curl -L https://data.kitware.com/api/v1/file/588b62958d777f4f3f30c773/download | tar zx -C ~
   # install R
   -  mkdir -p $HOME/local
   - if [ ! -f $HOME/local/env-arbor ] ; then curl -L https://data.kitware.com/api/v1/file/588b63c68d777f4f3f30c776/download | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
