@@ -5,6 +5,7 @@ sudo: false
 
 services:
   - docker
+  - mongodb
 
 addons:
   apt:
@@ -34,14 +35,6 @@ before_script:
 before_install:
   - pip install -U pip six
   - pushd "${HOME}"
-  - curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGO_VERSION}.tgz" | gunzip -c | tar x
-  - cd mongodb-*/bin && export PATH="${PWD}:${PATH}"
-  - popd
-  - mkdir /tmp/db
-  - mongod --dbpath=/tmp/db >/dev/null 2>/dev/null &
-  - mongod --version
-  - pushd "${HOME}"
-  - curl -L "http://cmake.org/files/v3.2/cmake-3.2.2-Linux-x86_64.tar.gz" | gunzip -c | tar x
   - cd cmake-*/bin && export PATH="${PWD}:${PATH}"
   - popd
   - cmake --version
