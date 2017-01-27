@@ -20,6 +20,7 @@ cache:
     - $HOME/local
     - $HOME/swift-0.96.1
     - $HOME/julia-0.4.2
+    - $HOME/vtk-precise64
 
 # environment variables
 env:
@@ -45,7 +46,7 @@ before_install:
   - popd
   - cmake --version
   # download VTK
-  - curl -L https://data.kitware.com/api/v1/file/588b62958d777f4f3f30c773/download | tar zx -C ~
+  - if [ ! -f $HOME/vtk-precise64/bin/vtkpython ] ; then curl -L https://data.kitware.com/api/v1/file/588b62958d777f4f3f30c773/download | tar zx -C ~ ; fi
   # install R
   -  mkdir -p $HOME/local
   - if [ ! -f $HOME/local/env-arbor ] ; then curl -L https://data.kitware.com/api/v1/file/588b63c68d777f4f3f30c776/download | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
