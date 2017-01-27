@@ -11,6 +11,7 @@ from girder_worker.core import run, io
 
 test_image = 'cjh1/girder_worker:test'
 
+
 def setUpModule():
     global _tmp
     _tmp = os.path.join(
@@ -141,7 +142,6 @@ class TestDockerMode(unittest.TestCase):
         message = '%s\n' % self._test_message
         self.assertTrue(message not in lines)
         self.assertEqual(out['_stdout']['data'], message)
-
 
     def testDockerModeOutputPipes(self):
         """
