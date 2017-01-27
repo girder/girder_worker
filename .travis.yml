@@ -42,10 +42,8 @@ before_install:
   # download VTK
   - curl -L http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz | tar zx -C ~
   # install R
-  - mkdir -p $HOME/local
-  - if [ ! -f $HOME/local/env-R ] ; then curl -L http://midas3.kitware.com/midas/download/bitstream/457205/R_3.2.0.tar.bz2 | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-R ; fi
-  - source $HOME/local/env-R
-  - if [ ! -f $HOME/local/env-arbor ] ; then curl -L http://midas3.kitware.com/midas/download/bitstream/457206/aRbor-packages_1.0.0.tar.bz2 | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
+  -  mkdir -p $HOME/local
+  - if [ ! -f $HOME/local/env-arbor ] ; then curl -L https://data.kitware.com/api/v1/file/588b63c68d777f4f3f30c776/download | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
   - source $HOME/local/env-arbor
   - R --version
   - R -e '.libPaths(); sessionInfo()'
