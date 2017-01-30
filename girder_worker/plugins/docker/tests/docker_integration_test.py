@@ -1,5 +1,4 @@
 import ConfigParser
-import girder_worker
 import os
 import shutil
 import six
@@ -7,6 +6,7 @@ import stat
 import sys
 import unittest
 
+import girder_worker
 from girder_worker.core import run, io
 
 test_image = 'girder/girder_worker_test:latest'
