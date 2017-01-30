@@ -9,7 +9,7 @@ import unittest
 
 from girder_worker.core import run, io
 
-test_image = 'cjh1/girder_worker:test'
+test_image = 'girder/girder_worker_test:latest'
 
 
 def setUpModule():
