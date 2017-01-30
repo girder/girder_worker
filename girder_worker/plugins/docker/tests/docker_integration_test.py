@@ -135,7 +135,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
-        message = '%s\n' % self._test_message
+        message = '%s\r\n' % self._test_message
         self.assertTrue(message not in lines)
         self.assertEqual(out['_stdout']['data'], message)
 
