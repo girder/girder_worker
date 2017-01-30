@@ -164,7 +164,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     tempdir = kwargs.get('_tempdir')
     args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
 
-    ipipes, opipes = _setup_pipes(
+    inputs, outputs = _setup_pipes(
         task_inputs, inputs, task_outputs, outputs, tempdir)
 
     if 'entrypoint' in task:
@@ -179,7 +179,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     client = docker.from_env()
     config = {
         'tty': True,
-        'volumes':{
+        'volumes': {
             tempdir: {
                 'bind': DATA_VOLUME,
                 'mode': 'rw'
@@ -218,13 +218,14 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         def close_output(output):
             return output not in (stdout.fileno(), stderr.fileno())
 
-        opipes[stdout.fileno()] = opipes.get(
+        outputs[stdout.fileno()] = outputs.get(
             '_stdout', utils.WritePipeAdapter({}, sys.stdout))
-        opipes[stderr.fileno()] = opipes.get(
+        outputs[stderr.fileno()] = outputs.get(
             '_stderr', utils.WritePipeAdapter({}, sys.stderr))
 
         # Run select loop
-        utils.select_loop(exit_condition=exit_condition, close_output=close_output, outputs=opipes, inputs=ipipes)
+        utils.select_loop(exit_condition=exit_condition, close_output=close_output,
+                          outputs=outputs, inputs=inputs)
     finally:
         # Close our stdout and stderr sockets
         if stdout:
