@@ -256,69 +256,69 @@ def _open_ipipes(wds, fifos, input_pipes):
     return wds, fifos, input_pipes
 
 
-def select_loop(exit_condition=lambda: False, close_output_pipe=lambda: True,
-                output_pipes=None, input_pipes=None):
+def select_loop(exit_condition=lambda: False, close_output=lambda x: True,
+                outputs=None, inputs=None):
     """
     Run a select loop for a set of input and output pipes
 
     :param exit_condition: A function to evaluate to determine if the select
         loop should terminate if all pipes are empty.
     :type exit_condition: function
-    :param close_output_pipe: A function to use to test whether a output pipe
+    :param close_output: A function to use to test whether a output
         should be closed when EOF is reached. Certain output pipes such as
         stdout, stderr should not be closed.
-    :param output_pipes: This should be a dictionary mapping pipe descriptors
+    :param outputs: This should be a dictionary mapping pipe descriptors
         to instances of ``StreamPushAdapter`` that should handle the data from
         the stream. The keys of this dictionary are open file descriptors,
         which are integers.
-    :type output_pipes: dict
-    :param input_pipes: This should be a dictionary mapping pipe descriptors
+    :type outputs: dict
+    :param inputs: This should be a dictionary mapping pipe descriptors
         to instances of ``StreamFetchAdapter`` that should handle sending
         input data in chunks. Keys in this dictionary can be either open file
         descriptors (integers) or a string representing a path to an existing
         fifo on the filesystem. This second case supports the use of named
         pipes, since they must be opened for reading before they can be opened
         for writing
-    :type input_pipes: dict
+    :type inputs: dict
     """
 
     BUF_LEN = 65536
-    input_pipes = input_pipes or {}
-    output_pipes = output_pipes or {}
+    inputs = inputs or {}
+    outputs = outputs or {}
 
-    rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
-    wds, fifos = _setup_input_pipes(input_pipes)
+    rds = [fd for fd in outputs.keys() if isinstance(fd, int)]
+    wds, fifos = _setup_input_pipes(inputs)
 
     try:
         while True:
             # get ready pipes
             readable, writable, _ = select.select(rds, wds, (), 0)
 
-            for ready_pipe in readable:
-                buf = os.read(ready_pipe, BUF_LEN)
+            for ready_fd in readable:
+                buf = os.read(ready_fd, BUF_LEN)
 
                 if buf:
-                    output_pipes[ready_pipe].write(buf)
+                    outputs[ready_fd].write(buf)
                 else:
-                    output_pipes[ready_pipe].close()
+                    outputs[ready_fd].close()
                     # Should we close this pipe? In the case of stdout or stderr
                     # bad things happen if parent closes
-                    if close_output_pipe(ready_pipe):
-                        os.close(ready_pipe)
-                    rds.remove(ready_pipe)
-            for ready_pipe in writable:
+                    if close_output(ready_fd):
+                        os.close(ready_fd)
+                    rds.remove(ready_fd)
+            for ready_fd in writable:
                 # TODO for now it's OK for the input reads to block since
                 # input generally happens first, but we should consider how to
                 # support non-blocking stream inputs in the future.
-                buf = input_pipes[ready_pipe].read(BUF_LEN)
+                buf = inputs[ready_fd].read(BUF_LEN)
 
                 if buf:
-                    os.write(ready_pipe, buf)
+                    os.write(ready_fd, buf)
                 else:   # end of stream
-                    wds.remove(ready_pipe)
-                    os.close(ready_pipe)
+                    wds.remove(ready_fd)
+                    os.close(ready_fd)
 
-            wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
+            wds, fifos, inputs = _open_ipipes(wds, fifos, inputs)
             # all pipes empty?s
             empty = (not rds or not readable) and (not wds or not writable)
             # all pipes closed
@@ -327,7 +327,7 @@ def select_loop(exit_condition=lambda: False, close_output_pipe=lambda: True,
                 break
 
     finally:
-        _close_pipes(rds, wds, input_pipes, output_pipes, close_output_pipe)
+        _close_pipes(rds, wds, inputs, outputs, close_output)
 
 
 def run_process(command, output_pipes=None, input_pipes=None):
@@ -384,8 +384,8 @@ def run_process(command, output_pipes=None, input_pipes=None):
 
     try:
         select_loop(exit_condition=exit_condition,
-                    close_output_pipe=close_output_pipe,
-                    output_pipes=output_pipes, input_pipes=input_pipes)
+                    close_output=close_output_pipe,
+                    outputs=output_pipes, inputs=input_pipes)
 
         # Wait for the process to terminate
         p.wait()
