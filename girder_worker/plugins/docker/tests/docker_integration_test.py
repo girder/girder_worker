@@ -81,13 +81,13 @@ class TestDockerMode(unittest.TestCase):
         }
 
         _old = sys.stdout
-        mockedStdOut = six.StringIO()
-        sys.stdout = mockedStdOut
+        stdout_captor = six.StringIO()
+        sys.stdout = stdout_captor
         run(
             task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
             auto_convert=False)
         sys.stdout = _old
-        lines = mockedStdOut.getvalue().splitlines()
+        lines = stdout_captor.getvalue().splitlines()
         self.assertEqual(lines[-2], self._test_message)
         self.assertEqual(
             lines[-1], 'Garbage collecting old containers and images.')
@@ -111,14 +111,14 @@ class TestDockerMode(unittest.TestCase):
             'outputs': []
         }
         _old = sys.stdout
-        mockedStdOut = six.StringIO()
-        sys.stdout = mockedStdOut
+        stdout_captor = six.StringIO()
+        sys.stdout = stdout_captor
         run(
             task, inputs=inputs, cleanup=True, validate=False,
             auto_convert=False)
         sys.stdout = _old
 
-        lines = mockedStdOut.getvalue().splitlines()
+        lines = stdout_captor.getvalue().splitlines()
         self.assertEqual(lines[-2], self._test_message)
         self.assertEqual(
             lines[-1], 'Garbage collecting old containers and images.')
@@ -131,14 +131,14 @@ class TestDockerMode(unittest.TestCase):
         }]
 
         _old = sys.stdout
-        mockedStdOut = six.StringIO()
-        sys.stdout = mockedStdOut
+        stdout_captor = six.StringIO()
+        sys.stdout = stdout_captor
         out = run(
             task, inputs=inputs, cleanup=False, validate=False,
             auto_convert=False)
         sys.stdout = _old
 
-        lines = mockedStdOut.getvalue().splitlines()
+        lines = stdout_captor.getvalue().splitlines()
         message = '%s\n' % self._test_message
         self.assertTrue(message not in lines)
         self.assertEqual(out['_stdout']['data'], message)
