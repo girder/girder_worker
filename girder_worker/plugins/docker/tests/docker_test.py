@@ -38,11 +38,13 @@ process_mock.configure_mock(**{
     'returncode': 0
 })
 
+
 def _reset_mocks():
     global docker_client_mock, docker_container_mock
     docker_client_mock.reset_mock()
     # Need to reset side_effect
     docker_container_mock.attach_socket.side_effect = [stdout_socket_mock, stderr_socket_mock]
+
 
 # Monkey patch select.select in the docker task module
 def _mockSelect(r, w, x, *args, **kwargs):
@@ -160,18 +162,18 @@ class TestDockerMode(unittest.TestCase):
 
             # We should have one call to images.pull(...)
             self.assertEqual(docker_client_mock.images.pull.call_count, 1)
-            self.assertEqual(docker_client_mock.images.pull.call_args_list[0][0], ('test/test:latest', ))
-
+            self.assertEqual(docker_client_mock.images.pull.call_args_list[0][0],
+                             ('test/test:latest', ))
 
             # We should have two calls to containers.run(...)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
             run1, run2 = docker_client_mock.containers.run.call_args_list
 
-
             args, kwargs = run1
             self.assertEqual(args[0], 'test/test:latest')
             six.assertRegex(self, kwargs['volumes'].keys()[0], _tmp + '/.*')
-            self.assertEqual(kwargs['volumes'].itervalues().next()['bind'], DATA_VOLUME)
+            self.assertEqual(kwargs['volumes'].itervalues().next()['bind'],
+                             DATA_VOLUME)
             self.assertEqual(args[1][0:2], ['-f', '%s/file.txt' % DATA_VOLUME])
             self.assertEqual(args[1][-2], '--temp-dir=%s' % DATA_VOLUME)
             self.assertEqual(args[1][-1], '--bar')
