@@ -3,6 +3,10 @@ language: python
 
 sudo: false
 
+services:
+  - docker
+  - mongodb
+
 addons:
   apt:
     packages:
@@ -17,32 +21,30 @@ cache:
     - $HOME/local
     - $HOME/swift-0.96.1
     - $HOME/julia-0.4.2
+    - $HOME/vtk-precise64
+    - $HOME/cmake-3.2.2-Linux-x86_64
 
 # environment variables
 env:
   - PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib:~/local/lib:~/local/lib/R/lib
 
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+
 before_install:
   - pip install -U pip six
   - pushd "${HOME}"
-  - curl "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGO_VERSION}.tgz" | gunzip -c | tar x
-  - cd mongodb-*/bin && export PATH="${PWD}:${PATH}"
-  - popd
-  - mkdir /tmp/db
-  - mongod --dbpath=/tmp/db >/dev/null 2>/dev/null &
-  - mongod --version
-  - pushd "${HOME}"
-  - curl -L "http://cmake.org/files/v3.2/cmake-3.2.2-Linux-x86_64.tar.gz" | gunzip -c | tar x
+  - if [ ! -f $HOME/cmake-3.2.2-Linux-x86_64/bin/cmake ] ; then  curl -L http://cmake.org/files/v3.2/cmake-3.2.2-Linux-x86_64.tar.gz | gunzip -c | tar x ; fi
   - cd cmake-*/bin && export PATH="${PWD}:${PATH}"
   - popd
   - cmake --version
   # download VTK
-  - curl -L http://midas3.kitware.com/midas/download/bitstream/366970/vtk-precise64-118242.tar.gz | tar zx -C ~
+  - if [ ! -f $HOME/vtk-precise64/bin/vtkpython ] ; then curl -L https://data.kitware.com/api/v1/file/588b62958d777f4f3f30c773/download | tar zx -C ~ ; fi
   # install R
   - mkdir -p $HOME/local
-  - if [ ! -f $HOME/local/env-R ] ; then curl -L http://midas3.kitware.com/midas/download/bitstream/457205/R_3.2.0.tar.bz2 | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-R ; fi
-  - source $HOME/local/env-R
-  - if [ ! -f $HOME/local/env-arbor ] ; then curl -L http://midas3.kitware.com/midas/download/bitstream/457206/aRbor-packages_1.0.0.tar.bz2 | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
+  - if [ ! -f $HOME/local/env-arbor ] ; then curl -L https://data.kitware.com/api/v1/file/588b63c68d777f4f3f30c776/download | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
   - source $HOME/local/env-arbor
   - R --version
   - R -e '.libPaths(); sessionInfo()'
@@ -60,8 +62,8 @@ before_install:
   - sleep 3
   - $SPARK_HOME/sbin/start-slave.sh worker1 spark://localhost:7077
   # install swift
-  - export PATH=$PATH:$HOME/swift-0.96.1/bin
-  - swift --version || curl -L http://swiftlang.org/packages/swift-0.96.1.tar.gz | tar zx -C ~
+  - export PATH=$PATH:$HOME/swift-0.96.2/bin
+  - swift --version || curl -L https://data.kitware.com/api/v1/file/588b61cf8d777f4f3f30c770/download | tar zx -C ~
   - swift --version
   # install julia
   - export JULIA_INSTALL_HOME=$HOME/julia-0.4.2
