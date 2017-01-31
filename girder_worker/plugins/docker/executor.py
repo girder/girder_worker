@@ -164,7 +164,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     tempdir = kwargs.get('_tempdir')
     args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
 
-    inputs, outputs = _setup_pipes(
+    ipipes, opipes = _setup_pipes(
         task_inputs, inputs, task_outputs, outputs, tempdir)
 
     if 'entrypoint' in task:
@@ -202,14 +202,12 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             'stdout': True,
             'logs': True,
             'stream': True
-
         })
 
         stderr = container.attach_socket(params={
             'stderr': True,
             'logs': True,
             'stream': True
-
         })
 
         def exit_condition():
@@ -218,14 +216,14 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         def close_output(output):
             return output not in (stdout.fileno(), stderr.fileno())
 
-        outputs[stdout.fileno()] = outputs.get(
+        opipes[stdout.fileno()] = opipes.get(
             '_stdout', utils.WritePipeAdapter({}, sys.stdout))
-        outputs[stderr.fileno()] = outputs.get(
+        opipes[stderr.fileno()] = opipes.get(
             '_stderr', utils.WritePipeAdapter({}, sys.stderr))
 
         # Run select loop
         utils.select_loop(exit_condition=exit_condition, close_output=close_output,
-                          outputs=outputs, inputs=inputs)
+                          outputs=opipes, inputs=ipipes)
     finally:
         # Close our stdout and stderr sockets
         if stdout:
