@@ -9,7 +9,7 @@ import stat
 import sys
 import unittest
 
-from girder_worker.core import run, io, TaskSpecValidationError
+from girder_worker.core import cleanup, run, io, TaskSpecValidationError
 from girder_worker.plugins.docker.executor import DATA_VOLUME
 
 _tmp = None
@@ -128,9 +128,7 @@ class TestDockerMode(unittest.TestCase):
             lines = mockedStdOut.getvalue().splitlines()
             self.assertEqual(lines[0],
                              'Pulling Docker image: test/test:latest')
-            self.assertEqual(lines[-2], 'output message')
-            self.assertEqual(
-                lines[-1], 'Garbage collecting old containers and images.')
+            self.assertEqual(lines[-1], 'output message')
 
             # We bound _stderr as a task output, so it should be in the output
             self.assertEqual(out, {
@@ -140,8 +138,8 @@ class TestDockerMode(unittest.TestCase):
                 }
             })
 
-            self.assertEqual(mockPopen.call_count, 4)
-            cmd1, cmd2, cmd3, cmd4 = [x[1]['args'] for x in mockPopen.call_args_list]
+            self.assertEqual(mockPopen.call_count, 3)
+            cmd1, cmd2, cmd3 = [x[1]['args'] for x in mockPopen.call_args_list]
 
             self.assertEqual(cmd1, ('docker', 'pull', 'test/test:latest'))
             self.assertEqual(cmd2[:3], ['docker', 'run', '-v'])
@@ -152,13 +150,10 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(cmd2[-1], '--bar')
             self.assertEqual(len(cmd2), 9)
 
-            self.assertEqual(len(cmd3), 1)
-            six.assertRegex(self, cmd3[0], 'docker-gc$')
-
-            self.assertEqual(cmd4[:4], ['docker', 'run', '--rm', '-v'])
-            six.assertRegex(self, cmd4[4], _tmp + '/.*:%s' % DATA_VOLUME)
-            self.assertEqual(cmd4[5:], ['busybox', 'chmod', '-R', 'a+rw', DATA_VOLUME])
-            self.assertEqual(len(cmd4), 10)
+            self.assertEqual(cmd3[:4], ['docker', 'run', '--rm', '-v'])
+            six.assertRegex(self, cmd3[4], _tmp + '/.*:%s' % DATA_VOLUME)
+            self.assertEqual(cmd3[5:], ['busybox', 'chmod', '-R', 'a+rw', DATA_VOLUME])
+            self.assertEqual(len(cmd3), 10)
 
             # Make sure we can specify a custom entrypoint to the container
             mockPopen.reset_mock()
@@ -176,7 +171,7 @@ class TestDockerMode(unittest.TestCase):
                 'data': False
             }
             run(task, inputs=inputs, validate=False, auto_convert=False)
-            self.assertEqual(mockPopen.call_count, 4)
+            self.assertEqual(mockPopen.call_count, 3)
             cmd2 = mockPopen.call_args_list[1][1]['args']
             self.assertEqual(cmd2[4:9], [
                 '--net', 'none', '--entrypoint', '/bin/bash', 'test/test:latest'])
@@ -184,10 +179,6 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(cmd2[9:11], ['-f', '%s/file.txt' % DATA_VOLUME])
 
             mockPopen.reset_mock()
-            # Make sure custom config settings are respected
-            girder_worker.config.set('docker', 'cache_timeout', '123456')
-            girder_worker.config.set(
-                'docker', 'exclude_images', 'test/test:latest')
 
             # Make sure we can skip pulling the image
             task['pull_image'] = False
@@ -196,14 +187,27 @@ class TestDockerMode(unittest.TestCase):
                 'url': 'https://foo.com/file.txt'
             }
             run(task, inputs=inputs, validate=False, auto_convert=False)
-            self.assertEqual(mockPopen.call_count, 3)
-            cmd1, cmd2 = [x[1]['args'] for x in mockPopen.call_args_list][:2]
+            self.assertEqual(mockPopen.call_count, 2)
+            cmd1 = [x[1]['args'] for x in mockPopen.call_args_list][0]
             self.assertEqual(tuple(cmd1[:2]), ('docker', 'run'))
             self.assertEqual(cmd1[4:6], ['--net', 'none'])
-            six.assertRegex(self, cmd2[0], 'docker-gc$')
-            env = mockPopen.call_args_list[1][1]['env']
-            self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
-            six.assertRegex(self, env['EXCLUDE_FROM_GC'], 'docker_gc_scratch/.docker-gc-exclude$')
+
+    @mock.patch('subprocess.Popen')
+    def testCleanupHook(self, mockPopen):
+        mockPopen.return_value = processMock
+        girder_worker.config.set('docker', 'cache_timeout', '123456')
+        girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
+
+        # Make sure docker-gc is called during cleanup
+        cleanup.main()
+
+        self.assertEqual(mockPopen.call_count, 1)
+        cmd = [x[1]['args'] for x in mockPopen.call_args_list][0]
+
+        six.assertRegex(self, cmd[0], 'docker-gc$')
+        env = mockPopen.call_args_list[0][1]['env']
+        self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
+        six.assertRegex(self, env['EXCLUDE_FROM_GC'], r'\.docker-gc-exclude$')
 
     @mock.patch('subprocess.Popen')
     def testOutputValidation(self, mockPopen):
@@ -239,7 +243,7 @@ class TestDockerMode(unittest.TestCase):
         with self.assertRaisesRegexp(Exception, msg):
             run(task)
         # Make sure docker stuff actually got called in this case.
-        self.assertEqual(mockPopen.call_count, 4)
+        self.assertEqual(mockPopen.call_count, 3)
 
         # Simulate a task that has written into the temp dir
         tmp = os.path.join(_tmp, 'simulated_output')
