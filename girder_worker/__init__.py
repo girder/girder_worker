@@ -1,4 +1,5 @@
 import abc
+import logging
 import os
 from ConfigParser import SafeConfigParser
 
@@ -10,6 +11,10 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
 config = SafeConfigParser(os.environ)
 config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
+
+# The root logger is used as a placeholder for the moment, but this
+# should be configurable via config files later. TODO
+logger = logging
 
 
 class GirderWorkerPluginABC(object):
