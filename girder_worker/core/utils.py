@@ -185,7 +185,8 @@ def load_plugin(name, paths):
 
             if hasattr(module, 'load'):
                 module.load({
-                    'plugin_dir': plugin_dir
+                    'plugin_dir': plugin_dir,
+                    'name': name
                 })
 
             break
