@@ -178,7 +178,7 @@ def _job_status(mgr, status):
 
 @utils.with_tmpdir  # noqa
 def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
-        fetch=True, **kwargs):
+        fetch=True, status=None, **kwargs):
     """
     Run a task with the specified I/O bindings.
 
@@ -231,7 +231,6 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         raise Exception('Invalid mode: %s' % mode)
 
     job_mgr = kwargs.get('_job_manager')
-    status = job_mgr.status if job_mgr is not None else None
 
     info = {
         'task': task,
