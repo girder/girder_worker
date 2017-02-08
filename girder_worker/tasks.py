@@ -3,15 +3,11 @@ from .utils import JobManager, JobStatus
 from .app import app
 
 
-@app.task(name='girder_worker.run')
-def run(*pargs, **kwargs):
-    jobInfo = kwargs.pop('jobInfo', {})
+@app.task(name='girder_worker.run', bind=True)
+def run(task, *pargs, **kwargs):
     retval = 0
 
-    with JobManager(logPrint=jobInfo.get('logPrint', True),
-                    url=jobInfo.get('url'), method=jobInfo.get('method'),
-                    headers=jobInfo.get('headers'),
-                    reference=jobInfo.get('reference')) as jm:
+    with task.job_manager as jm:
         kwargs['_job_manager'] = jm
         kwargs['status'] = JobStatus.RUNNING
         retval = core.run(*pargs, **kwargs)
