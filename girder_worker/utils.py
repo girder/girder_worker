@@ -1,7 +1,6 @@
 import requests
 import time
 import sys
-import traceback
 
 
 class JobStatus(object):
