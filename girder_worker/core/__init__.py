@@ -178,7 +178,7 @@ def _job_status(mgr, status):
 
 @utils.with_tmpdir  # noqa
 def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
-        fetch=True, status=None, **kwargs):
+        fetch=True, **kwargs):
     """
     Run a task with the specified I/O bindings.
 
@@ -209,8 +209,6 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         validation and conversion tasks.
     :param fetch: If ``True`` will perform a fetch on the input before
         running the task (default ``True``).
-    :param status: Job status to update to during execution of this task.
-    :type status: girder_worker.JobStatus
     :returns: A dictionary of the form ``name: binding`` where ``name`` is
         the name of the output and ``binding`` is an output binding of the form
         ``{'format': format, 'data': data}``. If the `outputs` param
@@ -233,6 +231,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         raise Exception('Invalid mode: %s' % mode)
 
     job_mgr = kwargs.get('_job_manager')
+    status = job_mgr.status if job_mgr is not None else None
 
     info = {
         'task': task,

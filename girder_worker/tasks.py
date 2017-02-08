@@ -1,17 +1,11 @@
 import core
-from .utils import JobManager, JobStatus
 from .app import app
 
 
 @app.task(name='girder_worker.run', bind=True)
 def run(task, *pargs, **kwargs):
-    retval = 0
-
-    with task.job_manager as jm:
-        kwargs['_job_manager'] = jm
-        kwargs['status'] = JobStatus.RUNNING
-        retval = core.run(*pargs, **kwargs)
-        return retval
+    kwargs['_job_manager'] = task.job_manager
+    return core.run(*pargs, **kwargs)
 
 
 @app.task(name='girder_worker.convert')

@@ -59,28 +59,6 @@ class JobManager(object):
             self._pipes = sys.stdout, sys.stderr
             sys.stdout, sys.stderr = self, self
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, excType, excValue, tb):
-        """
-        When the context is exited, if we have a non-empty buffer, we flush
-        the remaining contents and restore sys.stdout and sys.stderr to their
-        previous values. We also set the job status to ERROR if we exited the
-        context with an exception, or SUCCESS otherwise.
-        """
-        if excType:
-            msg = '%s: %s\n%s' % (
-                excType, excValue, ''.join(traceback.format_tb(tb)))
-
-            self.write(msg)
-            self.updateStatus(JobStatus.ERROR)
-        else:
-            self.updateStatus(JobStatus.SUCCESS)
-
-        self._flush()
-        self._redirectPipes(False)
-
     def _redirectPipes(self, redirect):
         if self.logPrint:
             if redirect:
