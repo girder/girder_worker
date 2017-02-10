@@ -194,6 +194,7 @@ class TestDockerMode(unittest.TestCase):
 
     @mock.patch('subprocess.Popen')
     def testCleanupHook(self, mockPopen):
+        os.makedirs(_tmp)
         mockPopen.return_value = processMock
         girder_worker.config.set('docker', 'cache_timeout', '123456')
         girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')

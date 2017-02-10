@@ -2,7 +2,11 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 from girder_worker import config
+
+# Minimum interval in seconds at which to run the docker-gc script
+MIN_GC_INTERVAL = 600
 
 
 def before_run(e):
@@ -28,6 +32,13 @@ def docker_gc(e):
     the same directory as this file. After that, deletes all images that are
     no longer used by any containers.
     """
+    stampfile = os.path.join(config.get('girder_worker', 'tmp_root'), '.dockergcstamp')
+    if os.path.exists(stampfile) and time.time() - os.path.getmtime(stampfile) < MIN_GC_INTERVAL:
+        return
+    else:  # touch the file
+        with open(stampfile, 'w') as f:
+            f.write('')
+
     print('Garbage collecting docker containers and images.')
     gc_dir = tempfile.mkdtemp()
 
