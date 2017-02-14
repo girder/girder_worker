@@ -3,7 +3,11 @@ from .core.utils import JobManager, JobStatus
 from .app import app
 
 
-@app.task(name='girder_worker.run')
+def _cleanup(*args, **kwargs):
+    core.events.trigger('cleanup')
+
+
+@app.task(name='girder_worker.run', after_return=_cleanup)
 def run(*pargs, **kwargs):
     jobInfo = kwargs.pop('jobInfo', {})
     retval = 0
