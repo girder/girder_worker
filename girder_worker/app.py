@@ -22,7 +22,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     """
     try:
         task.job_manager = deserialize_job_info_spec(
-            **task.request.headers['jobInfoSpec'])
+            **task.request.jobInfoSpec)
 
         task.job_manager.updateStatus(JobStatus.RUNNING)
     except KeyError:
