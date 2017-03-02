@@ -1,4 +1,5 @@
 import girder_worker
+import traceback as tb
 from celery import Celery
 from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success)
@@ -39,7 +40,6 @@ def gw_task_success(sender=None, **rest):
 def gw_task_failure(sender=None, exception=None,
                     traceback=None, **rest):
     if sender.job_manager is not None:
-        import traceback as tb
 
         msg = '%s: %s\n%s' % (
             exception.__class__.__name__, exception,

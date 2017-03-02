@@ -58,6 +58,7 @@ add_python_test(spec)
 add_python_test(stream)
 add_python_test(directory)
 add_python_test(task_plugin)
+add_python_test(task_signal)
 
 add_docstring_test(girder_worker.core.specs.spec)
 add_docstring_test(girder_worker.core.specs.task)
