@@ -8,10 +8,7 @@ def _cleanup(*args, **kwargs):
 
 
 @app.task(name='girder_worker.run', bind=True, after_return=_cleanup)
-def run(tasks, *pargs, **kwargs):
-    jobInfo = kwargs.pop('jobInfo', {})
-    retval = 0
-
+def run(task, *pargs, **kwargs):
     kwargs['_job_manager'] = task.job_manager \
         if hasattr(task, 'job_manager') else None
 
