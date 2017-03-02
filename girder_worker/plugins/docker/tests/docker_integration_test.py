@@ -88,9 +88,7 @@ class TestDockerMode(unittest.TestCase):
             auto_convert=False)
         sys.stdout = _old
         lines = stdout_captor.getvalue().splitlines()
-        self.assertEqual(lines[-2], self._test_message)
-        self.assertEqual(
-            lines[-1], 'Garbage collecting old containers and images.')
+        self.assertEqual(lines[-1], self._test_message)
 
         task = {
             'mode': 'docker',
@@ -119,9 +117,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
-        self.assertEqual(lines[-2], self._test_message)
-        self.assertEqual(
-            lines[-1], 'Garbage collecting old containers and images.')
+        self.assertEqual(lines[-1], self._test_message)
 
         # Test _stdout
         task['outputs'] = [{

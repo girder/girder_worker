@@ -3,9 +3,12 @@ from girder_worker.utils import JobStatus
 from .app import app
 
 
-@app.task(name='girder_worker.run', bind=True)
-def run(task, *pargs, **kwargs):
+def _cleanup(*args, **kwargs):
+    core.events.trigger('cleanup')
 
+
+@app.task(name='girder_worker.run', bind=True, after_return=_cleanup)
+def run(task, *pargs, **kwargs):
     kwargs['_job_manager'] = task.job_manager \
         if hasattr(task, 'job_manager') else None
 
