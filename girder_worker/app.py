@@ -21,13 +21,19 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     updating their status in girder.
     """
     try:
-        task.job_manager = deserialize_job_info_spec(
-            **task.request.jobInfoSpec)
+        try:
+            # Celery 4.x API
+            jobSpec = task.request.jobInfoSpec
+        except AttributeError:
+            # Celery 3.X API
+            jobSpec = task.request.headers['jobInfoSpec']
+
+        task.job_manager = deserialize_job_info_spec(**jobSpec)
 
         task.job_manager.updateStatus(JobStatus.RUNNING)
     except KeyError:
         task.job_manager = None
-        # Log warning here?
+        print('Warning: No jobInfoSpec. Setting job_manager to None.')
 
 
 @task_success.connect
