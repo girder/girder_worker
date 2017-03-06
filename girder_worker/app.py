@@ -30,7 +30,12 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
         task.job_manager = deserialize_job_info_spec(**jobSpec)
 
-        task.job_manager.updateStatus(JobStatus.RUNNING)
+        # For now,  only automatically update status if this is
+        # not a child task. Otherwise child tasks completion will
+        # update the parent task's jobModel in girder.
+        if task.request.parent_id is None:
+            task.job_manager.updateStatus(JobStatus.RUNNING)
+
     except KeyError:
         task.job_manager = None
         print('Warning: No jobInfoSpec. Setting job_manager to None.')
@@ -39,7 +44,8 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 @task_success.connect
 def gw_task_success(sender=None, **rest):
     try:
-        sender.job_manager.updateStatus(JobStatus.SUCCESS)
+        if sender.request.parent_id is None:
+            sender.job_manager.updateStatus(JobStatus.SUCCESS)
     except AttributeError:
         pass
 
@@ -54,9 +60,12 @@ def gw_task_failure(sender=None, exception=None,
             ''.join(tb.format_tb(traceback)))
 
         sender.job_manager.write(msg)
-        sender.job_manager.updateStatus(JobStatus.ERROR)
+
+        if sender.request.parent_id is None:
+            sender.job_manager.updateStatus(JobStatus.ERROR)
     except AttributeError:
         pass
+
 
 @task_postrun.connect
 def gw_task_postrun(task=None, sender=None, task_id=None,
@@ -67,6 +76,7 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
         task.job_manager._redirectPipes(False)
     except AttributeError:
         pass
+
 
 class _CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
