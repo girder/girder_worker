@@ -25,7 +25,8 @@ class TestSignals(unittest.TestCase):
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_prerun(self, jm):
         task = mock.MagicMock()
-        task.request.headers = self.headers
+        task.request.jobInfoSpec = self.headers['jobInfoSpec']
+        task.request.parent_id = None
 
         gw_task_prerun(task=task)
 
@@ -35,6 +36,7 @@ class TestSignals(unittest.TestCase):
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_success(self, jm):
         task = mock.MagicMock()
+        task.request.parent_id = None
         task.job_manager = jm(**self.headers)
 
         gw_task_success(sender=task)
@@ -45,6 +47,7 @@ class TestSignals(unittest.TestCase):
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_failure(self, jm):
         task = mock.MagicMock()
+        task.request.parent_id = None
         task.job_manager = jm(**self.headers)
 
         exc, tb = mock.MagicMock(), mock.MagicMock()
@@ -62,6 +65,7 @@ class TestSignals(unittest.TestCase):
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_postrun(self, jm):
         task = mock.MagicMock()
+        task.request.parent_id = None
         task.job_manager = jm(**self.headers)
 
         gw_task_postrun(task=task)
