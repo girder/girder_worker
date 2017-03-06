@@ -38,14 +38,16 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
 @task_success.connect
 def gw_task_success(sender=None, **rest):
-    if sender.job_manager is not None:
+    try:
         sender.job_manager.updateStatus(JobStatus.SUCCESS)
+    except AttributeError:
+        pass
 
 
 @task_failure.connect
 def gw_task_failure(sender=None, exception=None,
                     traceback=None, **rest):
-    if sender.job_manager is not None:
+    try:
 
         msg = '%s: %s\n%s' % (
             exception.__class__.__name__, exception,
@@ -53,16 +55,18 @@ def gw_task_failure(sender=None, exception=None,
 
         sender.job_manager.write(msg)
         sender.job_manager.updateStatus(JobStatus.ERROR)
-
+    except AttributeError:
+        pass
 
 @task_postrun.connect
 def gw_task_postrun(task=None, sender=None, task_id=None,
                     args=None, kwargs=None,
                     retval=None, state=None, **rest):
-    if task.job_manager is not None:
+    try:
         task.job_manager._flush()
         task.job_manager._redirectPipes(False)
-
+    except AttributeError:
+        pass
 
 class _CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
