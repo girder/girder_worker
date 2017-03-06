@@ -36,7 +36,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
         if task.request.parent_id is None:
             task.job_manager.updateStatus(JobStatus.RUNNING)
 
-    except KeyError:
+    except (KeyError, TypeError):
         task.job_manager = None
         print('Warning: No jobInfoSpec. Setting job_manager to None.')
 
