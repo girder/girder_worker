@@ -8,9 +8,9 @@ def _cleanup(*args, **kwargs):
 
 
 @app.task(name='girder_worker.run', bind=True, after_return=_cleanup)
-def run(task, *pargs, **kwargs):
-    kwargs['_job_manager'] = task.job_manager \
-        if hasattr(task, 'job_manager') else None
+def run(_celery_task, *pargs, **kwargs):
+    kwargs['_job_manager'] = _celery_task.job_manager \
+        if hasattr(_celery_task, 'job_manager') else None
 
     kwargs['status'] = JobStatus.RUNNING
 
