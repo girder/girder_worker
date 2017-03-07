@@ -209,6 +209,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         validation and conversion tasks.
     :param fetch: If ``True`` will perform a fetch on the input before
         running the task (default ``True``).
+    :param status: Job status to update to during execution of this task.
+    :type status: girder_worker.utils.JobStatus
     :returns: A dictionary of the form ``name: binding`` where ``name`` is
         the name of the output and ``binding`` is an output binding of the form
         ``{'format': format, 'data': data}``. If the `outputs` param
