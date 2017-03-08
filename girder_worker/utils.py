@@ -19,10 +19,10 @@ class JobStatus(object):
 
 class JobManager(object):
     """
-    This class is a context manager that can be used to write log messages to
-    Girder by capturing stdout/stderr printed within the context and sending
-    them in a rate-limited manner to Girder. This is not threadsafe since it
-    changes the global values of sys.stdout/sys.stderr.
+    This class can be used to write log messages to Girder by capturing
+    stdout/stderr printed within the context and sending them in a
+    rate-limited manner to Girder. This is not threadsafe since it changes
+    the global values of sys.stdout/sys.stderr.
 
     It also exposes utilities for updating other job fields such as progress
     and status.
