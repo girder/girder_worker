@@ -17,7 +17,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
     This provides the a JobManager class as an attribute of the
     task before task execution.  decorated functions may bind to
-    thier task and have access to the job_manager for logging and
+    their task and have access to the job_manager for logging and
     updating their status in girder.
     """
     try:
