@@ -10,6 +10,10 @@ def deserialize_job_info_spec(**kwargs):
     return girder_worker.utils.JobManager(**kwargs)
 
 
+class JobSpecNotFound(Exception):
+    pass
+
+
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,
                    args=None, kwargs=None, **rest):
@@ -21,12 +25,24 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     updating their status in girder.
     """
     try:
-        try:
-            # Celery 4.x API
+        # Celery 4.x API
+        if hasattr(task.request, 'jobInfoSpec'):
             jobSpec = task.request.jobInfoSpec
-        except AttributeError:
-            # Celery 3.X API
+
+        # Celery 3.X API
+        elif task.request.headers is not None and \
+                'jobInfoSpec' in task.request.headers:
             jobSpec = task.request.headers['jobInfoSpec']
+
+        # Deprecated: This method of passing job information
+        # to girder_worker is depricated. Newer versions of girder
+        # pass this information automatically as apart of the
+        # header metadata in the worker scheduler.
+        elif 'jobInfo' in kwargs:
+            jobSpec = kwargs.pop('jobInfo', {})
+
+        else:
+            raise JobSpecNotFound
 
         task.job_manager = deserialize_job_info_spec(**jobSpec)
 
@@ -36,7 +52,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
         if task.request.parent_id is None:
             task.job_manager.updateStatus(JobStatus.RUNNING)
 
-    except (KeyError, TypeError):
+    except JobSpecNotFound:
         task.job_manager = None
         print('Warning: No jobInfoSpec. Setting job_manager to None.')
 
