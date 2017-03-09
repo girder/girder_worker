@@ -27,6 +27,31 @@ class JobSpecNotFound(Exception):
     pass
 
 
+# ::: NOTE :::
+# This is a transitional function for managing compatability between
+# Celery 3.X and 4.X. The issue is how child tasks,  spawned from
+# girder-worker, handle their status updates and logging. In Celery 3.X
+# there is no easy way to determine if a task was spawned by another
+# task and so all status updates/logs are sent to the same girder job
+# model.  In Celery 4.X task ancestry is handled through the parent_id
+# attribute. So for Celery 4.X child tasks will report nothing,  for
+# Celery 3.X child tasks report everything to the same girder JobModel.
+# This is not an ideal situation, and while the path forward is to
+# transition to Celery 4, this function exists to temporarily provide
+# backwards compatability with Celery 3.X while projects transition.
+def _update_status(task, status):
+    # Celery 4.X
+    if hasattr(task.request, 'parent_id'):
+        # For now,  only automatically update status if this is
+        # not a child task. Otherwise child tasks completion will
+        # update the parent task's jobModel in girder.
+        if task.request.parent_id is None:
+            task.job_manager.updateStatus(status)
+    # Celery 3.X
+    else:
+        task.job_manager.updateStatus(status)
+
+
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,
                    args=None, kwargs=None, **rest):
@@ -59,11 +84,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
         task.job_manager = deserialize_job_info_spec(**jobSpec)
 
-        # For now,  only automatically update status if this is
-        # not a child task. Otherwise child tasks completion will
-        # update the parent task's jobModel in girder.
-        if task.request.parent_id is None:
-            task.job_manager.updateStatus(JobStatus.RUNNING)
+        _update_status(task, JobStatus.RUNNING)
 
     except JobSpecNotFound:
         task.job_manager = None
@@ -73,8 +94,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 @task_success.connect
 def gw_task_success(sender=None, **rest):
     try:
-        if sender.request.parent_id is None:
-            sender.job_manager.updateStatus(JobStatus.SUCCESS)
+        _update_status(sender, JobStatus.SUCCESS)
     except AttributeError:
         pass
 
@@ -90,8 +110,7 @@ def gw_task_failure(sender=None, exception=None,
 
         sender.job_manager.write(msg)
 
-        if sender.request.parent_id is None:
-            sender.job_manager.updateStatus(JobStatus.ERROR)
+        _update_status(sender, JobStatus.ERROR)
     except AttributeError:
         pass
 
