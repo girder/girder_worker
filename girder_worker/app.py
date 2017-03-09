@@ -1,9 +1,22 @@
 import girder_worker
 import traceback as tb
-from celery import Celery
+from celery import Celery, __version__
+from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
-                            task_failure, task_success)
+                            task_failure, task_success, worker_ready)
 from .utils import JobStatus
+
+
+@worker_ready.connect
+def check_celery_version(*args, **kwargs):
+    if LooseVersion(__version__) < LooseVersion('4.0.0'):
+        print("""You are running Celery {}.
+
+        Celery 3.X is being depricated in girder-worker!
+
+        Common APIs are compatible so we do not expect significant disruption.
+        Please verify that your system works with Celery 4.X as soon as
+        possible.""".format(__version__))
 
 
 def deserialize_job_info_spec(**kwargs):
