@@ -11,6 +11,7 @@ from executors.workflow import run as workflow_run
 from networkx import NetworkXNoPath
 from . import utils
 
+from girder_worker.utils import JobStatus
 from girder_worker import config, PACKAGE_DIR
 
 # Maps task modes to their implementation
@@ -163,9 +164,9 @@ def convert(type, input, output, fetch=True, status=None, **kwargs):
             data_descriptor = result['output']
         data = data_descriptor['data']
 
-    if status == utils.JobStatus.CONVERTING_OUTPUT:
+    if status == JobStatus.CONVERTING_OUTPUT:
         job_mgr = kwargs.get('_job_manager')
-        _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
+        _job_status(job_mgr, JobStatus.PUSHING_OUTPUT)
     io.push(data, output, **kwargs)
     return output
 
@@ -263,8 +264,8 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
             # Fetch the input
             if fetch:
-                if status == utils.JobStatus.RUNNING and 'data' not in d:
-                    _job_status(job_mgr, utils.JobStatus.FETCHING_INPUT)
+                if status == JobStatus.RUNNING and 'data' not in d:
+                    _job_status(job_mgr, JobStatus.FETCHING_INPUT)
                 d['data'] = io.fetch(
                     d, **dict({'task_input': task_input}, **kwargs))
 
@@ -284,7 +285,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                 try:
                     converted = convert(
                         task_input['type'], d, {'format': task_input['format']},
-                        status=utils.JobStatus.CONVERTING_INPUT,
+                        status=JobStatus.CONVERTING_INPUT,
                         **dict(
                             {'task_input': task_input, 'fetch': False},
                             **kwargs))
@@ -342,13 +343,13 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
             if auto_convert:
                 outputs[name] = convert(
                     task_output['type'], script_output, d,
-                    status=utils.JobStatus.CONVERTING_OUTPUT,
+                    status=JobStatus.CONVERTING_OUTPUT,
                     **dict({'task_output': task_output}, **kwargs))
             elif not validate or d['format'] == task_output['format']:
                 data = d['script_data']
 
-                if status == utils.JobStatus.RUNNING:
-                    _job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
+                if status == JobStatus.RUNNING:
+                    _job_status(job_mgr, JobStatus.PUSHING_OUTPUT)
                 io.push(
                     data, d, **dict({'task_output': task_output}, **kwargs))
             else:

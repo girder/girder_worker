@@ -1,5 +1,5 @@
 import core
-from .core.utils import JobManager, JobStatus
+from girder_worker.utils import JobStatus
 from .app import app
 
 
@@ -7,19 +7,14 @@ def _cleanup(*args, **kwargs):
     core.events.trigger('cleanup')
 
 
-@app.task(name='girder_worker.run', after_return=_cleanup)
-def run(*pargs, **kwargs):
-    jobInfo = kwargs.pop('jobInfo', {})
-    retval = 0
+@app.task(name='girder_worker.run', bind=True, after_return=_cleanup)
+def run(_celery_task, *pargs, **kwargs):
+    kwargs['_job_manager'] = _celery_task.job_manager \
+        if hasattr(_celery_task, 'job_manager') else None
 
-    with JobManager(logPrint=jobInfo.get('logPrint', True),
-                    url=jobInfo.get('url'), method=jobInfo.get('method'),
-                    headers=jobInfo.get('headers'),
-                    reference=jobInfo.get('reference')) as jm:
-        kwargs['_job_manager'] = jm
-        kwargs['status'] = JobStatus.RUNNING
-        retval = core.run(*pargs, **kwargs)
-        return retval
+    kwargs['status'] = JobStatus.RUNNING
+
+    return core.run(*pargs, **kwargs)
 
 
 @app.task(name='girder_worker.convert')
