@@ -12,11 +12,11 @@ def check_celery_version(*args, **kwargs):
     if LooseVersion(__version__) < LooseVersion('4.0.0'):
         print("""You are running Celery {}.
 
-        Celery 3.X is being depricated in girder-worker!
+Celery 3.X is being deprecated in girder-worker!
 
-        Common APIs are compatible so we do not expect significant disruption.
-        Please verify that your system works with Celery 4.X as soon as
-        possible.""".format(__version__))
+Common APIs are compatible so we do not expect significant disruption.
+Please verify that your system works with Celery 4.X as soon as possible."""
+              .format(__version__))
 
 
 def deserialize_job_info_spec(**kwargs):
@@ -73,7 +73,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
             jobSpec = task.request.headers['jobInfoSpec']
 
         # Deprecated: This method of passing job information
-        # to girder_worker is depricated. Newer versions of girder
+        # to girder_worker is deprecated. Newer versions of girder
         # pass this information automatically as apart of the
         # header metadata in the worker scheduler.
         elif 'jobInfo' in kwargs:
