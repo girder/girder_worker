@@ -1,10 +1,24 @@
 import girder_worker
+import graypy
 import traceback as tb
 from celery import Celery, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
-                            task_failure, task_success, worker_ready)
+                            task_failure, task_success, worker_ready,
+                            after_setup_logger, after_setup_task_logger)
 from .utils import JobStatus
+
+
+@after_setup_logger.connect
+def setup_worker_graylog(logger, **kwargs):
+    logger.addHandler(graypy.GELFHandler(girder_worker.config.get('graylog', 'host'),
+                                         girder_worker.config.get('graylog', 'port')))
+
+
+@after_setup_task_logger.connect
+def setup_worker_task_graylog(logger, **kwargs):
+    logger.addHandler(graypy.GELFHandler(girder_worker.config.get('graylog', 'host'),
+                                         girder_worker.config.get('graylog', 'port')))
 
 
 @worker_ready.connect
