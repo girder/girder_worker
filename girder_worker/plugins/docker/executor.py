@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 
+from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 
@@ -17,9 +18,8 @@ def _pull_image(image):
     stdout, stderr = p.communicate()
 
     if p.returncode != 0:
-        print('Error pulling Docker image %s:' % image)
-        print('STDOUT: ' + stdout)
-        print('STDERR: ' + stderr)
+        logger.error(
+            'Error pulling Docker image %s:\nSTDOUT: %s\nSTDERR: %s', image, stdout, stderr)
 
         raise Exception('Docker pull returned code {}.'.format(p.returncode))
 
@@ -159,7 +159,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
 
     if task.get('pull_image', True):
-        print('Pulling Docker image: ' + image)
+        logger.info('Pulling Docker image: %s', image)
         _pull_image(image)
 
     tempdir = kwargs.get('_tempdir')
@@ -181,7 +181,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         '-v', '%s:%s' % (tempdir, DATA_VOLUME)
     ] + task.get('docker_run_args', []) + ep_args + [image] + args
 
-    print('Running container: %s' % repr(command))
+    logger.info('Running container: %s', repr(command))
 
     p = utils.run_process(command, output_pipes=opipes, input_pipes=ipipes)
 

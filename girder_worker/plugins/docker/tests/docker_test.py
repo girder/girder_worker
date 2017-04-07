@@ -126,9 +126,7 @@ class TestDockerMode(unittest.TestCase):
             # We didn't specify _stdout as an output, so it should just get
             # printed to sys.stdout (which we mocked)
             lines = mockedStdOut.getvalue().splitlines()
-            self.assertEqual(lines[0],
-                             'Pulling Docker image: test/test:latest')
-            self.assertEqual(lines[-1], 'output message')
+            self.assertEqual(lines, ['output message'])
 
             # We bound _stderr as a task output, so it should be in the output
             self.assertEqual(out, {

@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import tempfile
 import time
-from girder_worker import config
+from girder_worker import config, logger
 
 # Minimum interval in seconds at which to run the docker-gc script
 MIN_GC_INTERVAL = 600
@@ -39,7 +39,7 @@ def docker_gc(e):
         with open(stampfile, 'w') as f:
             f.write('')
 
-    print('Garbage collecting docker containers and images.')
+    logger.info('Garbage collecting docker containers and images.')
     gc_dir = tempfile.mkdtemp()
 
     try:
@@ -89,9 +89,9 @@ def task_cleanup(e):
         p = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         if p.returncode:
-            print('Error setting perms on docker tempdir %s.' % tmpdir)
-            print('STDOUT: ' + out)
-            print('STDERR: ' + err)
+            logger.error(
+                'Error setting perms on docker tempdir %s.\nSTDOUT: %s\nSTDERR:%s',
+                tmpdir, out, err)
             raise Exception('Docker tempdir chmod returned code %d.' % p.returncode)
 
 
