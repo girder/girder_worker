@@ -13,6 +13,8 @@ def before_run(e):
     import executor
     if e.info['task']['mode'] == 'docker':
         executor.validate_task_outputs(e.info['task_outputs'])
+    if not _read_from_config('gc', False):
+        e.info.setdefault('kwargs', {})['_rm_container'] = True
 
 
 def _read_from_config(key, default):
@@ -32,6 +34,8 @@ def docker_gc(e):
     the same directory as this file. After that, deletes all images that are
     no longer used by any containers.
     """
+    if not _read_from_config('gc', False):
+        return
     stampfile = os.path.join(config.get('girder_worker', 'tmp_root'), '.dockergcstamp')
     if os.path.exists(stampfile) and time.time() - os.path.getmtime(stampfile) < MIN_GC_INTERVAL:
         return
