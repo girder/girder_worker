@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import docker
 from girder_worker import config, logger
 
 # Minimum interval in seconds at which to run the docker-gc script
@@ -82,17 +83,24 @@ def task_cleanup(e):
     from .executor import DATA_VOLUME
     if e.info['task']['mode'] == 'docker' and '_tempdir' in e.info['kwargs']:
         tmpdir = e.info['kwargs']['_tempdir']
-        cmd = [
-            'docker', 'run', '--rm', '-v', '%s:%s' % (tmpdir, DATA_VOLUME),
-            'busybox', 'chmod', '-R', 'a+rw', DATA_VOLUME
-        ]
-        p = subprocess.Popen(args=cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        if p.returncode:
-            logger.error(
-                'Error setting perms on docker tempdir %s.\nSTDOUT: %s\nSTDERR:%s',
-                tmpdir, out, err)
-            raise Exception('Docker tempdir chmod returned code %d.' % p.returncode)
+        client = docker.from_env()
+        config = {
+            'tty': True,
+            'volumes': {
+                tmpdir: {
+                    'bind': DATA_VOLUME,
+                    'mode': 'rw'
+                }
+            },
+            'detach': False,
+            'remove': True
+        }
+        args = ['chmod', '-R', 'a+rw', DATA_VOLUME]
+
+        try:
+            client.containers.run('busybox', args, **config)
+        except:
+            logger.error('Error setting perms on docker tempdir %s.' % tmpdir)
 
 
 def load(params):
