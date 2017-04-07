@@ -85,10 +85,8 @@ class TestDockerMode(unittest.TestCase):
     def setUp(self):
         _reset_mocks()
 
-    @mock.patch('subprocess.Popen')
     @mock.patch('docker.from_env')
-    def testDockerMode(self, from_env, popen):
-        popen.return_value = process_mock
+    def testDockerMode(self, from_env):
         from_env.return_value = docker_client_mock
 
         task = {
@@ -178,11 +176,6 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(args[1][-2], '--temp-dir=%s' % DATA_VOLUME)
             self.assertEqual(args[1][-1], '--bar')
 
-            # Call to docker-gc
-            popen_calls = popen.call_args_list
-            self.assertEqual(len(popen_calls), 1)
-            six.assertRegex(self, popen_calls[0][1]['args'][0], 'docker-gc$')
-
             args, kwargs = run2
             self.assertEqual(args[0], 'busybox')
 
@@ -213,9 +206,7 @@ class TestDockerMode(unittest.TestCase):
 
             self.assertNotIn('--bar', args)
             self.assertEqual(args[1][0:2], ['-f', '%s/file.txt' % DATA_VOLUME])
-
             _reset_mocks()
-            popen.reset_mock()
 
             # Make sure custom config settings are respected
             girder_worker.config.set('docker', 'cache_timeout', '123456')
@@ -234,13 +225,7 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(docker_client_mock.images.pull.call_count, 0)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
 
-            popen_calls = popen.call_args_list
-            self.assertEqual(len(popen_calls), 1)
-            six.assertRegex(self, popen_calls[0][1]['args'][0], 'docker-gc$')
 
-            env = popen_calls[0][1]['env']
-            self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
-            six.assertRegex(self, env['EXCLUDE_FROM_GC'], 'docker_gc_scratch/.docker-gc-exclude$')
 
     @mock.patch('subprocess.Popen')
     def testCleanupHook(self, mockPopen):
@@ -260,10 +245,8 @@ class TestDockerMode(unittest.TestCase):
         self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
         six.assertRegex(self, env['EXCLUDE_FROM_GC'], r'\.docker-gc-exclude$')
 
-    @mock.patch('subprocess.Popen')
     @mock.patch('docker.from_env')
-    def testOutputValidation(self, from_env, popen):
-        popen.return_value = process_mock
+    def testOutputValidation(self, from_env):
         from_env.return_value = docker_client_mock
 
         task = {
@@ -323,10 +306,8 @@ class TestDockerMode(unittest.TestCase):
         with self.assertRaisesRegexp(Exception, msg):
             run(task)
 
-    @mock.patch('subprocess.Popen')
     @mock.patch('docker.from_env')
-    def testNamedPipes(self, from_env, popen):
-        popen.return_value = process_mock
+    def testNamedPipes(self, from_env):
         from_env.return_value = docker_client_mock
 
         task = {

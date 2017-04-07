@@ -19,7 +19,7 @@ def _pull_image(image):
     try:
         client.images.pull(image)
     except docker.errors.APIError:
-        print('Error pulling Docker image %s:' % image)
+        logger.error('Error pulling Docker image %s:' % image)
         raise
 
 
@@ -191,7 +191,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     if ep_args:
         config['entrypoint'] = ep_args
 
-    print('Running container: image: %s args: %s config: %s' % (image, args, config))
+    logger.info('Running container: image: %s args: %s config: %s' % (image, args, config))
     container = client.containers.run(image, args, **config)
 
     stdout = None
