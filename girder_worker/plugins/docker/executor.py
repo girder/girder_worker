@@ -94,7 +94,7 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
-def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
+def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe):
     """
     Returns a 2 tuple of input and output pipe mappings. The first element is
     a dict mapping input file descriptors to the corresponding stream adapters,
@@ -112,8 +112,7 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
         given spec is not a streaming spec, returns False. If it is, returns the
         path to the pipe file that was created.
         """
-        if (spec.get('stream') and id in bindings and
-                spec.get('target') == 'filepath'):
+        if spec.get('stream') and id in bindings and spec.get('target') == 'filepath':
             path = spec.get('path', id)
             if path.startswith('/'):
                 raise Exception('Streaming filepaths must be relative.')
@@ -136,21 +135,25 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
             opipes[os.open(pipe, os.O_RDONLY | os.O_NONBLOCK)] = \
                 make_stream_push_adapter(outputs[id])
 
+    # handle special stream output for job progress
+    if progress_pipe and job_mgr:
+        path = os.path.join(tempdir, '.girder_progress')
+        os.mkfifo(path)
+        opipes[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = utils.JobProgressAdapter(job_mgr)
+
     # special handling for stdin, stdout, and stderr pipes
     if '_stdin' in task_inputs and '_stdin' in inputs:
         if task_inputs['_stdin'].get('stream'):
             ipipes['_stdin'] = make_stream_fetch_adapter(inputs['_stdin'])
         else:
-            ipipes['_stdin'] = utils.MemoryFetchAdapter(
-                inputs[id], inputs[id]['data'])
+            ipipes['_stdin'] = utils.MemoryFetchAdapter(inputs[id], inputs[id]['data'])
 
     for id in ('_stdout', '_stderr'):
         if id in task_outputs and id in outputs:
             if task_outputs[id].get('stream'):
                 opipes[id] = make_stream_push_adapter(outputs[id])
             else:
-                opipes[id] = utils.AccumulateDictAdapter(
-                    outputs[id], 'script_data')
+                opipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
     return ipipes, opipes
 
@@ -162,11 +165,14 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         logger.info('Pulling Docker image: %s', image)
         _pull_image(image)
 
+    progress_pipe = task.get('progress_pipe', False)
+
     tempdir = kwargs.get('_tempdir')
+    job_mgr = kwargs.get('_job_manager')
     args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
 
     ipipes, opipes = _setup_pipes(
-        task_inputs, inputs, task_outputs, outputs, tempdir)
+        task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe)
 
     if 'entrypoint' in task:
         if isinstance(task['entrypoint'], (list, tuple)):
