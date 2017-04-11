@@ -148,7 +148,7 @@ setuptools.setup(
         'girder_worker': [
             'worker.dist.cfg',
             'worker.local.cfg',
-            'format/**/*'
+            'core/format/**/*'
         ] + plugin_data
     },
     cmdclass={
