@@ -175,11 +175,15 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             ep_args = ['--entrypoint', task['entrypoint']]
     else:
         ep_args = []
+    if kwargs.get('_rm_container'):
+        rm_args = ['--rm']
+    else:
+        rm_args = []
 
     command = [
         'docker', 'run',
         '-v', '%s:%s' % (tempdir, DATA_VOLUME)
-    ] + task.get('docker_run_args', []) + ep_args + [image] + args
+    ] + task.get('docker_run_args', []) + rm_args + ep_args + [image] + args
 
     logger.info('Running container: %s', repr(command))
 

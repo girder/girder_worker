@@ -30,6 +30,8 @@ processMock.configure_mock(**{
 # Monkey patch select.select in the docker task module
 def _mockSelect(r, w, x, *args, **kwargs):
     return r, w, x
+
+
 girder_worker.core.utils.select.select = _mockSelect
 
 
@@ -40,6 +42,8 @@ def _mockOsRead(fd, *args, **kwargs):
         return _out.read()
     elif fd == ERR_FD:
         return _err.read()
+
+
 girder_worker.plugins.docker.executor.os.read = _mockOsRead
 
 
@@ -194,6 +198,7 @@ class TestDockerMode(unittest.TestCase):
     def testCleanupHook(self, mockPopen):
         os.makedirs(_tmp)
         mockPopen.return_value = processMock
+        girder_worker.config.set('docker', 'gc', 'True')
         girder_worker.config.set('docker', 'cache_timeout', '123456')
         girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
 
@@ -207,6 +212,20 @@ class TestDockerMode(unittest.TestCase):
         env = mockPopen.call_args_list[0][1]['env']
         self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
         six.assertRegex(self, env['EXCLUDE_FROM_GC'], r'\.docker-gc-exclude$')
+
+    @mock.patch('subprocess.Popen')
+    def testCleanupHookWithoutOptIn(self, mockPopen):
+        mockPopen.return_value = processMock
+        cleanup.main()
+        self.assertEqual(mockPopen.call_count, 0)
+        # Now with explicit settings
+        mockPopen.return_value = processMock
+        girder_worker.config.set('docker', 'gc', 'False')
+        girder_worker.config.set('docker', 'cache_timeout', '123456')
+        girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
+        # Make sure docker-gc is not called during cleanup
+        cleanup.main()
+        self.assertEqual(mockPopen.call_count, 0)
 
     @mock.patch('subprocess.Popen')
     def testOutputValidation(self, mockPopen):
