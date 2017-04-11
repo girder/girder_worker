@@ -4,6 +4,7 @@ set -e
 
 source_dir="${1}"
 binary_dir="${2}"
+rm -rf ve/
 virtualenv ve
 . ve/bin/activate
 cd ${source_dir}
