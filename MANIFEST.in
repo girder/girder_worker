@@ -8,5 +8,5 @@ include README.rst
 include girder_worker/worker.dist.cfg
 recursive-include girder_worker/format *
 recursive-include girder_worker/plugins *
-global-exclude *.pyc *.pyo *.cmake
+global-exclude *.pyc *.pyo *.cmake worker.local.cfg
 prune girder_worker/plugins/*/tests
