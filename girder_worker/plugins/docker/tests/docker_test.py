@@ -225,8 +225,6 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(docker_client_mock.images.pull.call_count, 0)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
 
-
-
     @mock.patch('subprocess.Popen')
     def testCleanupHook(self, mockPopen):
         os.makedirs(_tmp)
