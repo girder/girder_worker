@@ -190,9 +190,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     if ep_args:
         config['entrypoint'] = ep_args
 
-    if kwargs.get('_rm_container'):
-        config['auto_remove'] = True
-
     logger.info('Running container: image: %s args: %s config: %s' % (image, args, config))
     container = client.containers.run(image, args, **config)
 
@@ -232,6 +229,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             stdout.close()
         if stderr:
             stderr.close()
+
+        if container and kwargs.get('_rm_container'):
+            container.remove()
 
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath' and not spec.get('stream'):
