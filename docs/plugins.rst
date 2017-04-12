@@ -156,11 +156,14 @@ If you specify an absolute path, it must start with ``/mnt/girder_worker/data/``
 will be thrown before the task is run. These conventions apply whether the path
 is specified in the ``id`` or ``path`` field.
 
-In addition to the special ``_stdout`` and ``_stderr`` outputs, there is another special output
-identifier called ``_progress``. This output is a named pipe that may be used by containers to
-output progress information for the task. Progress messages should be JSON objects and must be written
-**one per line** to the pipe. The JSON objects may contain any of the following fields, but none
-are required:
+Progress reporting from docker tasks
+************************************
+
+Docker tasks have the option of reporting progress back to Girder via a special named pipe. If
+you want to do this, specify ``"progress_pipe": true"`` in your docker task specification. This
+will create a special named pipe at ``/mnt/girder_worker/data/.girder_progress``. In your container
+logic, you may write progress notification messages to this named pipe, one per line.
+Progress messages should be JSON objects with the following fields, all of which are optional:
 
   * ``message`` (string): A human-readable message about the current task progress.
   * ``current`` (number): A numeric value representing current progress, which should always be
@@ -169,9 +172,16 @@ are required:
     of ``current`` when the task is complete. Only pass this field if the total is changing or being
     initially set.
 
-For example: ::
+An example progress notification string: ::
 
     {"message": "Halfway there!", "total": 100, "current": 50}
+
+.. note:: When writing to the named pipe, you should explicitly call ``flush`` on the file
+   descriptor afterward, otherwise the messages may sit in a buffer and may not reach the
+   Girder server as you write them.
+
+.. note:: This feature may not work on Docker on non-Linux platforms, and the call to open the
+   pipe for writing from within the container may block indefinitely.
 
 Management of Docker Containers and Images
 ******************************************
