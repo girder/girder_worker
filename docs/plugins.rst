@@ -156,6 +156,40 @@ If you specify an absolute path, it must start with ``/mnt/girder_worker/data/``
 will be thrown before the task is run. These conventions apply whether the path
 is specified in the ``id`` or ``path`` field.
 
+Management of Docker Containers and Images
+******************************************
+
+Docker images may be pulled when a task is run.  By default, these images are
+never removed.  Docker containers are automatically removed when the task is
+complete.
+
+As an alternative, a 'garbage collection' process can be used instead.  It can
+be enabled by modifying settings in the ``[docker]`` section of the config 
+file, which can be done using the command:
+
+.. code-block :: none
+
+  girder-worker-config set docker gc True
+
+When the ``gc`` config value is set to ``True``, containers are not removed 
+when the task ends.  Instead, periodically, any images not associated with a
+container will be removed, and then any stopped containers will be removed.
+This will free disk space associated with the images, but may remove images
+that are not directly related to Girder Worker.
+
+When garbage collection is turned on, images can be excluded from the process
+by setting ``exclude_images`` to a comma-separated list of image names.  For
+instance:
+
+.. code-block :: none
+
+  girder-worker-config set docker exclude_images dsarchive/histomicstk,rabbitmq
+
+Only containers that have been stopped longer than a certain time are removed.
+This time defaults to an hour, and can be specified as any number of seconds
+via the ``cache_timeout`` setting.
+
+
 Girder IO
 ---------
 

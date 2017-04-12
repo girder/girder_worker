@@ -126,7 +126,7 @@ Girder Worker releases are uploaded to `PyPI <https://pypi.python.org/pypi/girde
 for easy installation via ``pip``. The recommended process for generating a new
 release is described here.
 
-1.  From the target commit, set the desired version number in ``setup.py``.
+1.  From the target commit, set the desired version number in the top level ``__init__.py``.
     Create a new commit and note the SHA; this will become the release tag.
 
 2.  Ensure that all tests pass.
