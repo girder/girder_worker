@@ -257,7 +257,7 @@ def _open_ipipes(wds, fifos, input_pipes):
     return wds, fifos, input_pipes
 
 
-def select_loop(exit_condition=lambda: False, close_output=lambda x: True,
+def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
                 outputs=None, inputs=None):
     """
     Run a select loop for a set of input and output pipes
