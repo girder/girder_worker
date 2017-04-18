@@ -13,6 +13,7 @@ import stat
 import sys
 import tempfile
 import traceback
+import time
 
 
 class TerminalColor(object):
@@ -322,12 +323,15 @@ def select_loop(exit_condition=lambda: False, close_output=lambda x: True,
                     wds.remove(ready_fd)
                     os.close(ready_fd)
 
+            # If we didn't do anything sleep for 100 ms to avoid hot loop
+            if not readable and not writable:
+                time.sleep(0.1)
+
             wds, fifos, inputs = _open_ipipes(wds, fifos, inputs)
             # all pipes empty?
             empty = (not rds or not readable) and (not wds or not writable)
-            # all pipes closed
-            closed = not rds and not wds
-            if (empty and exit) or closed:
+
+            if (empty and exit):
                 break
 
     finally:
