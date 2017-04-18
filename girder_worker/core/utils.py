@@ -13,7 +13,6 @@ import stat
 import sys
 import tempfile
 import traceback
-import time
 
 
 class TerminalColor(object):
@@ -292,8 +291,8 @@ def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
 
     try:
         while True:
-            # get ready pipes
-            readable, writable, _ = select.select(rds, wds, (), 0)
+            # get ready pipes, timeout of 100 ms
+            readable, writable, _ = select.select(rds, wds, (), 0.1)
 
             # We evaluate this first so that we get one last iteration of
             # of the loop before breaking out of the loop.
@@ -322,10 +321,6 @@ def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
                 else:   # end of stream
                     wds.remove(ready_fd)
                     os.close(ready_fd)
-
-            # If we didn't do anything sleep for 100 ms to avoid hot loop
-            if not readable and not writable:
-                time.sleep(0.1)
 
             wds, fifos, inputs = _open_ipipes(wds, fifos, inputs)
             # all pipes empty?
