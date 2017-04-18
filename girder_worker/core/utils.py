@@ -291,12 +291,12 @@ def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
 
     try:
         while True:
-            # get ready pipes, timeout of 100 ms
-            readable, writable, _ = select.select(rds, wds, (), 0.1)
-
             # We evaluate this first so that we get one last iteration of
             # of the loop before breaking out of the loop.
             exit = exit_condition()
+
+            # get ready pipes, timeout of 100 ms
+            readable, writable, _ = select.select(rds, wds, (), 0.1)
 
             for ready_fd in readable:
                 buf = os.read(ready_fd, BUF_LEN)
