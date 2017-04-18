@@ -294,6 +294,10 @@ def select_loop(exit_condition=lambda: False, close_output=lambda x: True,
             # get ready pipes
             readable, writable, _ = select.select(rds, wds, (), 0)
 
+            # We evaluate this first so that we get one last iteration of
+            # of the loop before breaking out of the loop.
+            exit = exit_condition()
+
             for ready_fd in readable:
                 buf = os.read(ready_fd, BUF_LEN)
 
@@ -319,11 +323,11 @@ def select_loop(exit_condition=lambda: False, close_output=lambda x: True,
                     os.close(ready_fd)
 
             wds, fifos, inputs = _open_ipipes(wds, fifos, inputs)
-            # all pipes empty?s
+            # all pipes empty?
             empty = (not rds or not readable) and (not wds or not writable)
             # all pipes closed
             closed = not rds and not wds
-            if (empty and exit_condition()) or closed:
+            if (empty and exit) or closed:
                 break
 
     finally:
