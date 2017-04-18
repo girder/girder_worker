@@ -394,9 +394,6 @@ def run_process(command, output_pipes=None, input_pipes=None):
         select_loop(exit_condition=exit_condition,
                     close_output=close_output_pipe,
                     outputs=output_pipes, inputs=input_pipes)
-
-        # Wait for the process to terminate
-        p.wait()
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
         raise
