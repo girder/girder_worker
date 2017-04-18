@@ -25,6 +25,7 @@ stderr_socket_mock.fileno.return_value = ERR_FD
 
 docker_container_mock = mock.Mock()
 docker_container_mock.attach_socket.side_effect = [stdout_socket_mock, stderr_socket_mock]
+docker_container_mock.status = 'exited'
 
 docker_client_mock = mock.Mock()
 docker_client_mock.containers.run.return_value = docker_container_mock

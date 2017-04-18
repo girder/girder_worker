@@ -210,7 +210,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         })
 
         def exit_condition():
-            return container.status == 'terminated'
+            container.reload()
+            return container.status in ['exited', 'dead']
 
         def close_output(output):
             return output not in (stdout.fileno(), stderr.fileno())
