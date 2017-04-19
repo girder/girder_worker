@@ -1,6 +1,10 @@
 |logo| Girder Worker |build-status| |docs-status| |license-badge| |gitter-badge|
 ================================================================================
 
+.. image:: https://badges.gitter.im/girder/girder_worker.svg
+   :alt: Join the chat at https://gitter.im/girder/girder_worker
+   :target: https://gitter.im/girder/girder_worker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 A flexible, simple script execution engine that integrates with the
 `Girder <http://girder.readthedocs.org>`_ data management system to run
 distributed batch jobs.
