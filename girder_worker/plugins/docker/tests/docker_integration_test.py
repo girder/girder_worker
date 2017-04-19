@@ -316,11 +316,19 @@ class TestDockerMode(unittest.TestCase):
             task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
             auto_convert=False)
 
+        def _fetch_new_containers(last_container_id):
+            if last_container_id:
+                filters = {
+                    'since': last_container_id
+                }
+                new_containers = docker_client.containers.list(all=True, filters=filters)
+            else:
+                new_containers = docker_client.containers.list(all=True)
+
+            return new_containers
+
+        new_containers = _fetch_new_containers(last_container_id)
         # Now assert that the container was removed
-        filters = {
-            'since': last_container_id
-        }
-        new_containers = docker_client.containers.list(all=True, filters=filters)
         self.assertEqual(len(new_containers), 0)
 
         # Now confirm that the container doesn't get removed if we set
@@ -333,7 +341,7 @@ class TestDockerMode(unittest.TestCase):
         run(
             task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
             auto_convert=False, _rm_containers=False)
-        new_containers = docker_client.containers.list(all=True, filters=filters)
+        new_containers = _fetch_new_containers(last_container_id)
         self.assertEqual(len(new_containers), 1)
         self.assertEqual(new_containers[0].attrs.get('Config', {})['Image'], test_image)
         # Clean it up
