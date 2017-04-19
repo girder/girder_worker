@@ -274,7 +274,7 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))
         self.assertEqual(output['_stdout']['data'].rstrip(), self._test_message)
 
-    def testDockerModelRemoveContainer(self):
+    def testDockerModeRemoveContainer(self):
         """
         Test automatic container removal
         """
