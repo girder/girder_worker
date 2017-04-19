@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import time
 import docker
+from docker.errors import DockerException
 from girder_worker import config, logger
 
 # Minimum interval in seconds at which to run the docker-gc script
@@ -103,8 +104,10 @@ def task_cleanup(e):
 
         try:
             client.containers.run('busybox', args, **config)
-        except:
+        except DockerException as dex:
             logger.error('Error setting perms on docker tempdir %s.' % tmpdir)
+            logger.error(dex)
+            raise
 
 
 def load(params):

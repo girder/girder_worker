@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import docker
+from docker.errors import DockerException
 
 from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
@@ -17,8 +18,9 @@ def _pull_image(image):
     client = docker.from_env()
     try:
         client.images.pull(image)
-    except docker.errors.APIError:
+    except DockerException as dex:
         logger.error('Error pulling Docker image %s:' % image)
+        logger.error(dex)
         raise
 
 
@@ -153,46 +155,19 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
     return ipipes, opipes
 
 
-def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
-    image = task['docker_image']
-
-    if task.get('pull_image', True):
-        logger.info('Pulling Docker image: %s', image)
-        _pull_image(image)
-
-    tempdir = kwargs.get('_tempdir')
-    args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
-
-    ipipes, opipes = _setup_pipes(
-        task_inputs, inputs, task_outputs, outputs, tempdir)
-
-    if 'entrypoint' in task:
-        if isinstance(task['entrypoint'], (list, tuple)):
-            ep_args = task['entrypoint']
-        else:
-            ep_args = [task['entrypoint']]
-    else:
-        ep_args = []
-
+def _run_container(image, args, config):
     # TODO we could allow configuration of non default socket
     client = docker.from_env()
-    config = {
-        'tty': True,
-        'volumes': {
-            tempdir: {
-                'bind': DATA_VOLUME,
-                'mode': 'rw'
-            }
-        },
-        'detach': True
-    }
-
-    if ep_args:
-        config['entrypoint'] = ep_args
 
     logger.info('Running container: image: %s args: %s config: %s' % (image, args, config))
-    container = client.containers.run(image, args, **config)
+    try:
+        return client.containers.run(image, args, **config)
+    except DockerException as dex:
+        logger.error(dex)
+        raise
 
+
+def _run_select_loop(container, opipes, ipipes):
     stdout = None
     stderr = None
     try:
@@ -231,6 +206,47 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         if stderr:
             stderr.close()
 
+
+def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
+    image = task['docker_image']
+
+    if task.get('pull_image', True):
+        logger.info('Pulling Docker image: %s', image)
+        _pull_image(image)
+
+    tempdir = kwargs.get('_tempdir')
+    args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
+
+    ipipes, opipes = _setup_pipes(
+        task_inputs, inputs, task_outputs, outputs, tempdir)
+
+    if 'entrypoint' in task:
+        if isinstance(task['entrypoint'], (list, tuple)):
+            ep_args = task['entrypoint']
+        else:
+            ep_args = [task['entrypoint']]
+    else:
+        ep_args = []
+
+    config = {
+        'tty': True,
+        'volumes': {
+            tempdir: {
+                'bind': DATA_VOLUME,
+                'mode': 'rw'
+            }
+        },
+        'detach': True
+    }
+
+    if ep_args:
+        config['entrypoint'] = ep_args
+
+    container = _run_container(image, args, config)
+
+    try:
+        _run_select_loop(container, opipes, ipipes)
+    finally:
         if container and kwargs.get('_rm_container'):
             container.remove()
 
