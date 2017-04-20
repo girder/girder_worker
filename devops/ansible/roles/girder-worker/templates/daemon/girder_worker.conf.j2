@@ -1,0 +1,24 @@
+description "girder worker"
+
+start on started mountall
+stop on shutdown
+
+# Automatically Respawn:
+respawn
+respawn limit 10 10
+
+setuid "{{ girder_worker_exec_user|default(ansible_user_id) }}"
+setgid "{{ girder_worker_exec_user|default(ansible_user_id) }}"
+
+script
+    {% if girder_worker_virtualenv is defined %}
+      . "{{ girder_worker_virtualenv }}/bin/activate" && \
+      girder-worker --pidfile="{{ ansible_user_dir }}/.worker_pids" --logfile="{{ ansible_user_dir }}/worker.log"
+    {% else %}
+      exec girder-worker
+    {% endif %}
+end script
+
+pre-stop script
+    exec celery multi stopwait worker --pidfile="{{ ansible_user_dir }}/.worker_pids"
+end script

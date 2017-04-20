@@ -1,0 +1,21 @@
+- name: Install upstart service
+  template:
+    src: "daemon/girder_worker.conf.j2"
+    dest: "/etc/init/girder_worker.conf"
+  become: yes
+  become_user: root
+
+- name: (Re)start service
+  service:
+    name: girder_worker
+    state: restarted
+  become: yes
+  become_user: root
+  when: girder_worker_start
+
+- name: Enable/Disable Girder service on boot
+  service:
+    name: girder_worker
+    enabled: "{{ girder_worker_enabled }}"
+  become: yes
+  become_user: root

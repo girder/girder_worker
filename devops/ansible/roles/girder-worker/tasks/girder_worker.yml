@@ -1,0 +1,23 @@
+- name: Install Girder Worker system dependencies
+  apt:
+    name: "{{ item }}"
+  become: yes
+  become_user: root
+  with_items:
+    - "{{ 'git' if girder_worker_install_source == 'git' else omit }}"
+    - libjpeg-dev
+    - libssl-dev
+    - python-dev
+    - python-pip
+    - "{{ 'python-virtualenv' if girder_worker_virtualenv else omit }}"
+    - zlib1g-dev
+
+
+
+- name: Download Girder Worker
+  git:
+    repo: "https://github.com/girder/girder_worker.git"
+    dest: "{{ girder_worker_path }}"
+    version: "{{ girder_worker_git_version }}"
+    update: "{{ girder_worker_update|default(omit) }}"
+  when: girder_worker_install_source == "git"
