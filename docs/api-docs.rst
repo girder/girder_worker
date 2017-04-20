@@ -53,6 +53,7 @@ such as ``pdb``.
         (, "entrypoint": <custom override for container entry point>)
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
+        (, "progress_pipe": <set to true to create a channel for progress notifications>)
     }
 
     <WORKFLOW_TASK> ::= {
