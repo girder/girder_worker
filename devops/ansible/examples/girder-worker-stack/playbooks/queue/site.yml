@@ -24,3 +24,5 @@
         state: present
         tags:
           - administrator
+      become: yes
+      become_user: root
