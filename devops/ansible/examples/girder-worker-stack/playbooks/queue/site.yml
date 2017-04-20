@@ -1,0 +1,26 @@
+- hosts: all
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      become: yes
+      become_user: root
+
+  roles:
+    - role: SimpliField.rabbitmq
+      become: yes
+      become_user: root
+
+  post_tasks:
+    - name: create rabbitmq user
+      rabbitmq_user:
+        user: girder_worker
+        password: girder_worker
+        vhost: /
+        configure_priv: .*
+        read_priv: .*
+        write_priv: .*
+        state: present
+        tags:
+          - administrator
