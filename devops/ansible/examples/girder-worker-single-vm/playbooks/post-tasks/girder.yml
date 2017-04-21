@@ -1,0 +1,61 @@
+- name: Wait for Girder to be available
+  wait_for:
+    port: 8080
+
+- name: Install Girder-Client
+  pip:
+    name: "girder-client"
+    state: present
+  become: yes
+  become_user: root
+
+- name: Create Girder User
+  girder:
+    port: 8080
+    user:
+      firstName: "girder"
+      lastName: "girder"
+      login: "girder"
+      password: "girder"
+      email: "girder@girder.girder"
+      admin: yes
+      state: present
+
+- name: Copy Fibonacci Plugin
+  copy:
+    src: "../../../etc/fibonacci_plugin"
+    dest: "{{ ansible_user_dir }}"
+    force: no
+
+- name: Install Fibonacci Plugin
+  command: "{{ girder_install_executable }} plugin -s {{ ansible_user_dir }}/fibonacci_plugin"
+
+- name: Enable Fibonacci Plugin
+  girder:
+    port: 8080
+    username: "girder"
+    password: "girder"
+    plugins:
+      - fibonacci_plugin
+      - worker
+    state: present
+
+- name: Restart Girder
+  service:
+    name: girder
+    state: restarted
+  become: yes
+  become_user: root
+
+- name: Wait for Girder to be available
+  wait_for:
+    port: 8080
+
+- name: Set Worker API Url
+  girder:
+    port: 8080
+    username: "girder"
+    password: "girder"
+    setting:
+      key: "worker.api_url"
+      value: "http://localhost:8080/api/v1"
