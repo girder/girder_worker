@@ -67,9 +67,10 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
             else:
                 val = ''
             arg = arg.replace('$flag{%s}' % inputId, val)
+            if not arg:
+                continue
 
-        if arg:
-            newArgs.append(arg)
+        newArgs.append(arg)
 
     return newArgs
 
