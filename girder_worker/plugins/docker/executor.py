@@ -54,6 +54,7 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
     flagRe = re.compile(r'\$flag\{([^}]+)\}')
 
     for arg in args:
+        skip = False
         for inputId in re.findall(inputRe, arg):
             if inputId in inputs:
                 transformed = _transform_path(
@@ -67,8 +68,9 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
             else:
                 val = ''
             arg = arg.replace('$flag{%s}' % inputId, val)
-
-        if arg:
+            if not arg:
+                skip = True
+        if not skip:
             newArgs.append(arg)
 
     return newArgs
