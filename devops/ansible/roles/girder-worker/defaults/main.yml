@@ -6,7 +6,7 @@ girder_worker_install_source: "pypi" # must be one of pypi, git
 girder_worker_pypi_version: null
 girder_worker_git_version: "master"
 
-# path to virtualenv to install into it, will be created if it doesn't exist
+# path to virtualenv to install into, will be created if it doesn't exist
 # girder_worker_virtualenv: null
 
 # only useful if girder_worker_install_source is git, otherwise pip installs to relevant
@@ -27,4 +27,4 @@ girder_worker_enabled: yes
 
 # the user to run the girder-worker daemon under
 # unused if girder_worker_daemonize is false
-#girder_worker_user: "{{ ansible_user_id }}"
+girder_worker_user: "{{ ansible_user_id }}"

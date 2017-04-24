@@ -1,18 +1,18 @@
 - name: Copy Fibonacci Worker Plugin
   copy:
     src: "../../../etc/fibonacci_worker_plugin"
-    dest: "/home/{{ worker_user }}"
+    dest: "/home/{{ girder_worker_user }}"
     force: no
   become: yes
-  become_user: "{{ worker_user }}"
+  become_user: "{{ girder_worker_user }}"
 
 - name: Install Fibonacci Worker Plugin
   pip:
-    name: "/home/{{ worker_user }}/fibonacci_worker_plugin"
+    name: "/home/{{ girder_worker_user }}/fibonacci_worker_plugin"
     extra_args: "-e"
     virtualenv: "{{ girder_worker_virtualenv }}"
   become: yes
-  become_user: "{{ worker_user }}"
+  become_user: "{{ girder_worker_user }}"
 
 - name: Restart Girder Worker
   service:

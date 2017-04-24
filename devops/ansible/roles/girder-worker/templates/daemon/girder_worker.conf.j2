@@ -7,18 +7,21 @@ stop on shutdown
 respawn
 respawn limit 10 10
 
-setuid "{{ girder_worker_exec_user|default(ansible_user_id) }}"
-setgid "{{ girder_worker_exec_user|default(ansible_user_id) }}"
+setuid "{{ girder_worker_user }}"
+setgid "{{ girder_worker_user }}"
 
 script
-    {% if girder_worker_virtualenv is defined %}
-      . "{{ girder_worker_virtualenv }}/bin/activate" && \
-      girder-worker --pidfile="{{ ansible_user_dir }}/.worker_pids" --logfile="{{ ansible_user_dir }}/worker.log"
-    {% else %}
-      exec girder-worker
-    {% endif %}
+{% if girder_worker_virtualenv is defined %}
+  exec "{{ girder_worker_virtualenv }}/bin/girder-worker"
+{% else %}
+  exec girder-worker
+{% endif %}
 end script
 
 pre-stop script
-    exec celery multi stopwait worker --pidfile="{{ ansible_user_dir }}/.worker_pids"
+{% if girder_worker_virtualenv is defined %}
+  exec "{{ girder_worker_virtualenv }}/bin/celery multi stopwait worker"
+{% else %}
+  exec celery multi stopwait worker
+{% endif %}
 end script
