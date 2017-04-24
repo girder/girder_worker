@@ -4,15 +4,25 @@
   become: yes
   become_user: root
   with_items:
-    - "{{ 'git' if girder_worker_install_source == 'git' else omit }}"
     - libjpeg-dev
     - libssl-dev
     - python-dev
     - python-pip
-    - "{{ 'python-virtualenv' if girder_worker_virtualenv else omit }}"
     - zlib1g-dev
 
+- name: Install Girder Worker system dependencies
+  apt:
+    name: git
+  become: yes
+  become_user: root
+  when: girder_worker_install_source == "git"
 
+- name: Install Girder Worker system dependencies
+  apt:
+    name: python-virtualenv
+  become: yes
+  become_user: root
+  when: girder_worker_virtualenv is defined
 
 - name: Download Girder Worker
   git:
