@@ -90,7 +90,7 @@ class TestDockerMode(unittest.TestCase):
                 'name': 'Bar',
                 'format': 'boolean',
                 'type': 'boolean',
-                'arg': '--bar'
+                'arg': '--bar',
             }],
             'outputs': [{
                 'id': '_stderr',
@@ -107,7 +107,7 @@ class TestDockerMode(unittest.TestCase):
             'bar': {
                 'mode': 'inline',
                 'data': True
-            }
+            },
         }
 
         @httmock.all_requests
@@ -130,6 +130,8 @@ class TestDockerMode(unittest.TestCase):
             # We didn't specify _stdout as an output, so it should just get
             # printed to sys.stdout (which we mocked)
             lines = mockedStdOut.getvalue().splitlines()
+            # Remove log messages from output
+            lines = [line for line in lines if '] INFO: ' not in line]
             self.assertEqual(lines, ['output message'])
 
             # We bound _stderr as a task output, so it should be in the output
@@ -179,6 +181,42 @@ class TestDockerMode(unittest.TestCase):
                 '--net', 'none', '--entrypoint', '/bin/bash', 'test/test:latest'])
             self.assertNotIn('--bar', cmd2)
             self.assertEqual(cmd2[9:11], ['-f', '%s/file.txt' % DATA_VOLUME])
+
+            # Make sure we can pass empty values
+            mockPopen.reset_mock()
+            task['inputs'].append({
+                'id': 'baz',
+                'format': 'string',
+                'type': 'string',
+            })
+            task['container_args'].extend(['--baz', '$input{baz}'])
+            inputs['baz'] = {
+                'data': '',
+                'format': 'string',
+                'mode': 'inline',
+                'type': 'string'
+            }
+            run(task, inputs=inputs, validate=False, auto_convert=False)
+            self.assertEqual(mockPopen.call_count, 3)
+            cmd2 = mockPopen.call_args_list[1][1]['args']
+            self.assertEqual(cmd2[4:9], [
+                '--net', 'none', '--entrypoint', '/bin/bash', 'test/test:latest'])
+            self.assertNotIn('--bar', cmd2)
+            self.assertEqual(cmd2[9:11], ['-f', '%s/file.txt' % DATA_VOLUME])
+            self.assertEqual(cmd2[cmd2.index('--baz'):cmd2.index('--baz')+2],
+                             ['--baz', ''])
+            # And non-empty values
+            mockPopen.reset_mock()
+            inputs['baz']['data'] = 'parameter1'
+            run(task, inputs=inputs, validate=False, auto_convert=False)
+            self.assertEqual(mockPopen.call_count, 3)
+            cmd2 = mockPopen.call_args_list[1][1]['args']
+            self.assertEqual(cmd2[cmd2.index('--baz'):cmd2.index('--baz')+2],
+                             ['--baz', 'parameter1'])
+            del inputs['baz']
+            task['inputs'].pop()
+            task['container_args'].pop()
+            task['container_args'].pop()
 
             mockPopen.reset_mock()
 
