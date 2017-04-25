@@ -51,7 +51,7 @@
 
     - name: Copy Fibonacci Plugin
       copy:
-        src: "../../etc/fibonacci_plugin"
+        src: "../../../etc/fibonacci_plugin"
         dest: "{{ ansible_user_dir }}"
         force: no
 

@@ -34,7 +34,7 @@
 
     - name: Copy Fibonacci Worker Plugin
       copy:
-        src: "../../etc/fibonacci_worker_plugin"
+        src: "../../../etc/fibonacci_worker_plugin"
         dest: "/home/{{ worker_user }}"
         force: no
       become: yes
