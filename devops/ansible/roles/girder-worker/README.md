@@ -1,5 +1,5 @@
-girder.girder
-=============
+girder.girder_worker
+====================
 An Ansible role to install [Girder Worker](https://github.com/girder/girder_worker).
 
 Further documentation on Girder Worker can be found [here](https://girder-worker.readthedocs.io).
