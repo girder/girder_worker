@@ -68,6 +68,17 @@
           - worker
         state: present
 
+    - name: Restart Girder
+      service:
+        name: girder
+        state: restarted
+      become: yes
+      become_user: root
+
+    - name: Wait for Girder to be available
+      wait_for:
+        port: 8080
+
     - name: Set Worker Plugin Settings
       girder:
         port: 8080
