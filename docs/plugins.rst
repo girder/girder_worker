@@ -98,6 +98,14 @@ If you want to pass additional command line options to ``docker run`` that shoul
 come before the container name, pass them as a list via the ``"docker_run_args"``
 key.
 
+.. note::
+
+   The Docker plugin currently does not support running ``dockerd``
+   with the option ``--selinux-enabled``.  Running with this option
+   may result in an error like: ::
+
+     Exception: Docker tempdir chmod returned code 1.
+
 Outputs from Docker tasks
 *************************
 
@@ -188,15 +196,6 @@ instance:
 Only containers that have been stopped longer than a certain time are removed.
 This time defaults to an hour, and can be specified as any number of seconds
 via the ``cache_timeout`` setting.
-
-Docker and SELinux
-******************
-
-The Docker plugin currently does not support running ``dockerd`` with
-the option ``--selinux-enabled``.  Running with this option may result
-in an error like: ::
-
-  Exception: Docker tempdir chmod returned code 1.
 
 
 Girder IO
