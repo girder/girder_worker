@@ -1,6 +1,6 @@
 import imp
 import json
-import sys
+import six
 import tempfile
 
 
@@ -19,20 +19,19 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             fh.write(task['script'])
 
         with open(debug_path, 'r') as fh:
-            exec fh in custom.__dict__
+            exec(fh.read(), custom.__dict__)
 
     else:
         try:
-            exec task['script'] in custom.__dict__
-        except Exception, e:
-            trace = sys.exc_info()[2]
+            exec(task['script'], custom.__dict__)
+        except Exception as e:
             lines = task['script'].split('\n')
-            lines = [(str(i+1) + ': ' + lines[i]) for i in xrange(len(lines))]
+            lines = ['%d: %s' % (i, line) for i, line in enumerate(lines, 1)]
             error = (
                 str(e) + '\nScript:\n' + '\n'.join(lines) +
                 '\nTask:\n' + json.dumps(task, indent=4)
             )
-            raise Exception(error), None, trace
+            six.raise_from(Exception(error), e)
 
     for name, task_output in task_outputs.iteritems():
         outputs[name]['script_data'] = custom.__dict__[name]

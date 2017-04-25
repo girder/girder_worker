@@ -1,4 +1,4 @@
-import core
+from girder_worker import core
 from girder_worker.utils import JobStatus
 from .app import app
 

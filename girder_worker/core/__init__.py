@@ -1,15 +1,12 @@
-import events
-import io
 import json
 import os
 
-from format import (
-    converter_path, get_validator_analysis, Validator)
+from .format import converter_path, get_validator_analysis, Validator
 
-from executors.python import run as python_run
-from executors.workflow import run as workflow_run
+from .executors.python import run as python_run
+from .executors.workflow import run as workflow_run
 from networkx import NetworkXNoPath
-from . import utils
+from . import events, utils, io
 
 from girder_worker.utils import JobStatus
 from girder_worker import config, PACKAGE_DIR
@@ -289,7 +286,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                         **dict(
                             {'task_input': task_input, 'fetch': False},
                             **kwargs))
-                except Exception, e:
+                except Exception as e:
                     raise Exception('%s: %s' % (name, str(e)))
 
                 d['script_data'] = converted['data']

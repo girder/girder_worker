@@ -248,7 +248,7 @@ port name with the task name.
          'blur2.blur_radius': {'format': 'number', 'data': 8},
       }
    )
-   print output['mean_value']['data']
+   print(output['mean_value']['data'])
 
 .. testoutput::
    :hide:

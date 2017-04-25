@@ -42,9 +42,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
                 continue
 
             # Run step
-            print '--- beginning: %s ---' % steps[step]['name']
+            print('--- beginning: %s ---' % steps[step]['name'])
             out = girder_worker.core.run(steps[step]['task'], bindings[step])
-            print '--- finished: %s ---' % steps[step]['name']
+            print('--- finished: %s ---' % steps[step]['name'])
 
             # Update bindings of downstream analyses
             if step in downstream:

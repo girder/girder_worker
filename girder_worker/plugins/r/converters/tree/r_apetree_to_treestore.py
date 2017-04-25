@@ -6,12 +6,12 @@ import bson
 
 
 def printApeTree(apeTree):
-    print 'print overall apeTree:'
-    print apeTree
-    print '[0]:', apeTree[0]
-    print '[1]:', apeTree[1]
-    print '[2]:', apeTree[2]
-    print '[3]:', apeTree[3]
+    print('print overall apeTree:')
+    print(apeTree)
+    print('[0]:', apeTree[0])
+    print('[1]:', apeTree[1])
+    print('[2]:', apeTree[2])
+    print('[3]:', apeTree[3])
 
 
 # lookup taxa by name so we don't get the nodes scrambled in the APE tree
@@ -82,7 +82,7 @@ def addApeTreeEdgesIntoTreeStore(apeTree, data_coll):
         try:
             endNode['branch_length'] = apeTree[3][edgeIndex]
         except TypeError:
-            print 'error on edgeIndex or no branchlength:', edgeIndex
+            print('error on edgeIndex or no branchlength:', edgeIndex)
 
         # print 'edgeIndex: ',edgeIndex,'endnode:  ', endNode
         data_coll.update(endNodeQuery, endNode)
@@ -119,7 +119,7 @@ def clearInternalNodeNames(apeTree, data_coll):
         leafIndex = 2
         countIndex = 1
     else:
-        print 'alternative ape tree compondent order case'
+        print('alternative ape tree compondent order case')
         leafIndex = 1
         countIndex = 2
     leafCount = len(apeTree[leafIndex])
