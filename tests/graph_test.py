@@ -106,7 +106,7 @@ class TestGraph(unittest.TestCase):
             data='distance'))
         actual_edges = set()
 
-        self.assertIsInstance(output['data'], (str, unicode))
+        self.assertIsInstance(output['data'], (six.binary_type, six.text_type))
         tree = etree.fromstring(output['data'])
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree[0].tag, self.GRAPHML_NS + 'key')

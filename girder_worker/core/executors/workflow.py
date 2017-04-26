@@ -1,4 +1,5 @@
 import girder_worker
+import six
 
 from girder_worker.core.utils import toposort
 
@@ -48,7 +49,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
 
             # Update bindings of downstream analyses
             if step in downstream:
-                for name, conn_list in downstream[step].iteritems():
+                for name, conn_list in six.viewitems(downstream[step]):
                     for conn in conn_list:
                         if 'input_step' in conn:
                             # This is a connection to a downstream step
@@ -65,7 +66,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, validate,  # noqa
         if 'visualization' not in step or not step['visualization']:
             continue
         vis_bindings = {}
-        for b, value in bindings[step['name']].iteritems():
+        for b, value in six.viewitems(bindings[step['name']]):
             script_output = value
             vis_input = None
             for step_input in step['task']['inputs']:

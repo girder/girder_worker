@@ -1,4 +1,5 @@
 import rpy2.robjects
+import six
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -21,7 +22,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     rpy2.robjects.reval(task['script'], env)
 
-    for name, task_output in task_outputs.iteritems():
+    for name, task_output in six.viewitems(task_outputs):
         d = outputs[name]
         d['script_data'] = env[str(name)]
 

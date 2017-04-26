@@ -1,5 +1,6 @@
 import imp
 import json
+import six
 import sys
 
 
@@ -39,5 +40,5 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
             )
             raise Exception(error), None, trace
 
-    for name, task_output in task_outputs.iteritems():
+    for name, task_output in six.viewitems(task_outputs):
         outputs[name]['script_data'] = custom.__dict__[name]

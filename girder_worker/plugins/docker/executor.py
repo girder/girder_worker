@@ -1,5 +1,6 @@
 import os
 import re
+import six
 import subprocess
 
 from girder_worker import logger
@@ -82,7 +83,7 @@ def validate_task_outputs(task_outputs):
     valid. Outputs in docker mode can result in side effects, so it's best to
     make sure the specs are valid prior to fetching.
     """
-    for name, spec in task_outputs.iteritems():
+    for name, spec in six.viewitems(task_outputs):
         if spec.get('target') == 'filepath':
             path = spec.get('path', name)
             if path.startswith('/') and not path.startswith(DATA_VOLUME + '/'):
@@ -125,14 +126,14 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
         return False
 
     # handle stream inputs
-    for id, spec in task_inputs.iteritems():
+    for id, spec in six.viewitems(task_inputs):
         pipe = make_pipe(id, spec, inputs)
         if pipe:
             # Don't open from this side, must be opened for reading first!
             ipipes[pipe] = make_stream_fetch_adapter(inputs[id])
 
     # handle stream outputs
-    for id, spec in task_outputs.iteritems():
+    for id, spec in six.viewitems(task_outputs):
         pipe = make_pipe(id, spec, outputs)
         if pipe:
             opipes[os.open(pipe, os.O_RDONLY | os.O_NONBLOCK)] = \
@@ -194,7 +195,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     if p.returncode != 0:
         raise Exception('Error: docker run returned code %d.' % p.returncode)
 
-    for name, spec in task_outputs.iteritems():
+    for name, spec in six.viewitems(task_outputs):
         if spec.get('target') == 'filepath' and not spec.get('stream'):
             path = spec.get('path', name)
             if not path.startswith('/'):
