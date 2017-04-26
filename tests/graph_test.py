@@ -3,6 +3,7 @@ import os
 from girder_worker.tasks import convert
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
+import six
 import unittest
 from lxml import etree
 
