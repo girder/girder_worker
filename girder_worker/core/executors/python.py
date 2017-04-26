@@ -15,7 +15,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     if task.get('write_script', kwargs.get('write_script', False)):
         debug_path = tempfile.mktemp()
-        with open(debug_path, 'wb') as fh:
+        with open(debug_path, 'w') as fh:
             fh.write(task['script'])
 
         with open(debug_path, 'r') as fh:
