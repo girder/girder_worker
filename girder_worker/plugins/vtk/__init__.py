@@ -47,7 +47,8 @@ def dict_to_vtkarrays(row, fields, attributes):
 def dict_to_vtkrow(row, attributes):
     for key in row:
         value = row[key]
-        if not isinstance(value, (list, int, long, float, six.binary_type, six.text_type)):
+        types = [list, float] + list(six.string_types) + list(six.integer_types)
+        if not isinstance(value, tuple(types)):
             value = six.binary_type(value)
         found = False
         for i in range(attributes.GetNumberOfArrays()):

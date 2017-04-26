@@ -1,7 +1,6 @@
 import imp
 import json
 import six
-import sys
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
