@@ -1,5 +1,5 @@
 from __future__ import print_function
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 
 import argparse
 import os
