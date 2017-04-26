@@ -9,12 +9,12 @@ Group={{ girder_worker_user }}
 {% if girder_worker_virtualenv is defined %}
 ExecStart={{ girder_worker_virtualenv }}/bin/girder-worker
 {% else %}
-ExecStart=girder-worker
+ExecStart={{ lookup('pipe', 'which girder-worker') }}
 {% endif %}
 {% if girder_worker_virtualenv is defined %}
 ExecStop={{ girder_worker_virtualenv }}/bin/celery multi stopwait worker
 {% else %}
-ExecStop=celery multi stopwait worker
+ExecStop={{ lookup('pipe', 'which celery') }} multi stopwait worker
 {% endif %}
 
 [Install]
