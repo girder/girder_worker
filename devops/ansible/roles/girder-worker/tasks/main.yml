@@ -14,5 +14,7 @@
 - include: pip.yml
   when: girder_worker_virtualenv is defined
 
+- include: configure.yml
+
 - include: daemon.yml
   when: girder_worker_daemonize
