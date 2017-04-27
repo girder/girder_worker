@@ -31,7 +31,7 @@ def dict_to_vtkarrays(row, fields, attributes):
         if isinstance(value, list):
             comp = len(value)
             value = value[0]
-        if isinstance(value, (int, long, float)):
+        if isinstance(value, tuple([float] + list(six.integer_types))):
             arr = vtk.vtkDoubleArray()
         elif isinstance(value, str):
             arr = vtk.vtkStringArray()
