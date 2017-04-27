@@ -296,9 +296,9 @@ def run_process(command, output_pipes=None, input_pipes=None):
     stderr = p.stderr.fileno()
     stdin = p.stdin.fileno()
     output_pipes[stdout] = output_pipes.get(
-        '_stdout', WritePipeAdapter({}, sys.stdout))
+        '_stdout', WritePipeAdapter({}, getattr(sys.stdout, 'buffer', sys.stdout)))
     output_pipes[stderr] = output_pipes.get(
-        '_stderr', WritePipeAdapter({}, sys.stderr))
+        '_stderr', WritePipeAdapter({}, getattr(sys.stderr, 'buffer', sys.stderr)))
 
     rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
     wds, fifos = _setup_input_pipes(input_pipes, stdin)

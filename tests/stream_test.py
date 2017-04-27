@@ -93,9 +93,9 @@ class TestStream(unittest.TestCase):
             print('Stdout/stderr from exception: ')
             print(stdpipes)
             raise
-        self.assertEqual(stdpipes, ['start\ndone\n', ''])
+        self.assertEqual(stdpipes, [b'start\ndone\n', b''])
         self.assertEqual(len(_req_chunks), 1)
-        self.assertEqual(_req_chunks[0], (9, 'a message'))
+        self.assertEqual(_req_chunks[0], (9, b'a message'))
 
     def testInputStreams(self):
         input_spec = {
@@ -120,4 +120,4 @@ class TestStream(unittest.TestCase):
             print('Stdout/stderr from exception: ')
             print(stdpipes)
             raise
-        self.assertEqual(stdpipes, ['olleh\ndlrow\n', ''])
+        self.assertEqual(stdpipes, [b'olleh\ndlrow\n', b''])
