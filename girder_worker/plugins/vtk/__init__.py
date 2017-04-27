@@ -31,7 +31,7 @@ def dict_to_vtkarrays(row, fields, attributes):
         if isinstance(value, list):
             comp = len(value)
             value = value[0]
-        if isinstance(value, tuple([float] + list(six.integer_types))):
+        if isinstance(value, (float,) + six.integer_types):
             arr = vtk.vtkDoubleArray()
         elif isinstance(value, str):
             arr = vtk.vtkStringArray()
@@ -47,7 +47,7 @@ def dict_to_vtkarrays(row, fields, attributes):
 def dict_to_vtkrow(row, attributes):
     for key in row:
         value = row[key]
-        types = [list, float] + list(six.string_types) + list(six.integer_types)
+        types = (list, float) + six.string_types + six.integer_types
         if not isinstance(value, tuple(types)):
             value = six.binary_type(value)
         found = False
