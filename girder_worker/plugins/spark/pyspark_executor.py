@@ -28,6 +28,8 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     else:
         try:
+            if isinstance(task['script'], six.binary_type):
+                task['script'] = task['script'].decode('utf8')
             exec(task['script'], custom.__dict__)
         except Exception as e:
             lines = task['script'].split('\n')
