@@ -9,6 +9,7 @@ from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 
 DATA_VOLUME = '/mnt/girder_worker/data'
+BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
 
 def _pull_image(image):
@@ -158,13 +159,13 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, p
     return ipipes, opipes
 
 
-def _run_container(image, args, config):
+def _run_container(image, args, **kwargs):
     # TODO we could allow configuration of non default socket
     client = docker.from_env()
 
-    logger.info('Running container: image: %s args: %s config: %s' % (image, args, config))
+    logger.info('Running container: image: %s args: %s kwargs: %s' % (image, args, kwargs))
     try:
-        return client.containers.run(image, args, **config)
+        return client.containers.run(image, args, **kwargs)
     except DockerException as dex:
         logger.error(dex)
         raise
@@ -234,7 +235,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     else:
         ep_args = []
 
-    config = {
+    run_kwargs = {
         'tty': True,
         'volumes': {
             tempdir: {
@@ -246,9 +247,16 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     }
 
     if ep_args:
-        config['entrypoint'] = ep_args
+        run_kwargs['entrypoint'] = ep_args
 
-    container = _run_container(image, args, config)
+    # Allow run args to overriden
+    extra_run_kwargs = task.get('docker_run_args', {})
+    # Filter out any we don't want to override
+    extra_run_kwargs = {k: v for k, v in extra_run_kwargs.items() if k not
+                        in BLACKLISTED_DOCKER_RUN_ARGS}
+    run_kwargs.update(extra_run_kwargs)
+
+    container = _run_container(image, args, **run_kwargs)
 
     try:
         _run_select_loop(container, opipes, ipipes)

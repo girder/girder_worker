@@ -365,3 +365,47 @@ class TestDockerMode(unittest.TestCase):
         pipe = os.path.join(tmp, 'named_pipe')
         self.assertTrue(os.path.exists(pipe))
         self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))
+
+    @mock.patch('docker.from_env')
+    def testDockerRunArgs(self, from_env):
+        from_env.return_value = docker_client_mock
+
+        task = {
+            'mode': 'docker',
+            'docker_image': 'test/test:latest',
+            'container_args': [
+                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}',
+                '$flag{bar}'
+            ],
+            'docker_run_args': {
+                'network_disabled': True
+            },
+            'pull_image': True,
+            'inputs': [],
+            'outputs': [{
+                'id': '_stderr',
+                'format': 'string',
+                'type': 'string'
+            }]
+        }
+        run(task, inputs={}, cleanup=False, validate=False,
+            auto_convert=False)
+
+        kwargs = docker_client_mock.containers.run.call_args_list[0][1]
+        self.assertTrue('network_disabled' in kwargs)
+        self.assertTrue(kwargs['network_disabled'])
+
+        # Ensure we can't override detach and tty
+        _reset_mocks()
+        task['docker_run_args'] = {
+            'detach': False,
+            'tty': False
+        }
+        run(task, inputs={}, cleanup=False, validate=False,
+            auto_convert=False)
+
+        kwargs = docker_client_mock.containers.run.call_args_list[0][1]
+        self.assertTrue('detach' in kwargs)
+        self.assertTrue(kwargs['detach'])
+        self.assertTrue('tty' in kwargs)
+        self.assertTrue(kwargs['tty'])
