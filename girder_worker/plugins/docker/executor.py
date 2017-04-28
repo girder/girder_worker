@@ -21,7 +21,7 @@ def _pull_image(image):
         client.images.pull(image)
     except DockerException as dex:
         logger.error('Error pulling Docker image %s:' % image)
-        logger.error(dex)
+        logger.exception(dex)
         raise
 
 

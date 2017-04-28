@@ -106,7 +106,7 @@ def task_cleanup(e):
             client.containers.run('busybox', args, **config)
         except DockerException as dex:
             logger.error('Error setting perms on docker tempdir %s.' % tmpdir)
-            logger.error(dex)
+            logger.exception(dex)
             raise
 
 
