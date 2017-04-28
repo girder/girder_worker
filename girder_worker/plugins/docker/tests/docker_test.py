@@ -12,6 +12,7 @@ import unittest
 from girder_worker.core import cleanup, run, io, TaskSpecValidationError
 from girder_worker.plugins.docker.executor import DATA_VOLUME
 
+
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
 _out = six.StringIO('output message\n')
@@ -113,7 +114,7 @@ class TestDockerMode(unittest.TestCase):
                 'name': 'Bar',
                 'format': 'boolean',
                 'type': 'boolean',
-                'arg': '--bar'
+                'arg': '--bar',
             }],
             'outputs': [{
                 'id': '_stderr',
@@ -130,7 +131,7 @@ class TestDockerMode(unittest.TestCase):
             'bar': {
                 'mode': 'inline',
                 'data': True
-            }
+            },
         }
 
         @httmock.all_requests
@@ -153,6 +154,8 @@ class TestDockerMode(unittest.TestCase):
             # We didn't specify _stdout as an output, so it should just get
             # printed to sys.stdout (which we mocked)
             lines = mockedStdOut.getvalue().splitlines()
+            # Remove log messages from output
+            lines = [line for line in lines if '] INFO: ' not in line]
             self.assertEqual(lines, ['output message'])
 
             # We bound _stderr as a task output, so it should be in the output
@@ -218,7 +221,55 @@ class TestDockerMode(unittest.TestCase):
             girder_worker.config.set(
                 'docker', 'exclude_images', 'test/test:latest')
 
+            # Make sure we can pass empty values
+            task['inputs'].append({
+                'id': 'baz',
+                'format': 'string',
+                'type': 'string',
+            })
+            task['container_args'].extend(['--baz', '$input{baz}'])
+            inputs['baz'] = {
+                'data': '',
+                'format': 'string',
+                'mode': 'inline',
+                'type': 'string'
+            }
+            run(task, inputs=inputs, validate=False, auto_convert=False)
+            self.assertEqual(docker_client_mock.containers.run.call_count, 2)
+            args = docker_client_mock.containers.run.call_args_list[0][0]
+            self.assertEqual(args[0], 'test/test:latest')
+            #             self.assertEqual(mockPopen.call_count, 3)
+#             cmd2 = mockPopen.call_args_list[1][1]['args']
+            self.assertEqual(args[1], [
+                '-f',
+                '/mnt/girder_worker/data/file.txt',
+                '--temp-dir=/mnt/girder_worker/data',
+                '--baz', ''
+            ])
+            self.assertNotIn('--bar', args)
+
+            # And non-empty values
+            _reset_mocks()
+            inputs['baz']['data'] = 'parameter1'
+            run(task, inputs=inputs, validate=False, auto_convert=False)
+            self.assertEqual(docker_client_mock.containers.run.call_count, 2)
+            args = docker_client_mock.containers.run.call_args_list[0][0]
+            self.assertEqual(args[0], 'test/test:latest')
+            self.assertEqual(args[1], [
+                '-f',
+                '/mnt/girder_worker/data/file.txt',
+                '--temp-dir=/mnt/girder_worker/data',
+                '--baz', 'parameter1'
+            ])
+
+            # Clean up
+            del inputs['baz']
+            task['inputs'].pop()
+            task['container_args'].pop()
+            task['container_args'].pop()
+
             # Make sure we can skip pulling the image
+            _reset_mocks()
             task['pull_image'] = False
             inputs['foo'] = {
                 'mode': 'http',
