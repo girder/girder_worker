@@ -1,10 +1,59 @@
 import girder_worker
 import traceback as tb
-from celery import Celery, __version__
+from celery import Celery, Task, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success, worker_ready)
 from .utils import JobStatus
+
+
+class GWTask(Task):
+    """Girder Worker Task object"""
+
+    def job_description(self, user, **kwargs):
+        # Note that celery_handler should not be bound
+        # to any schedule event in girder. This prevents
+        # the job from being accidentally scheduled and being
+        # passed to the 'worker_handler' code
+        return {
+            "title": '',
+            "type": '',
+            "handler": 'celery_handler',
+            "user": user,
+            "args": kwargs.get("args", ()),
+            "kwargs": kwargs.get("kwargs", ())
+        }
+    def apply_async(self, *args, **kwargs):
+        try:
+            from girder.utility.model_importer import ModelImporter
+            from girder.plugins.worker import utils
+
+            job_model = ModelImporter.model('job', 'jobs')
+
+            user = kwargs.pop('girder_user', None)
+
+            job = job_model.createJob(**self.job_description(user, **kwargs))
+            job = job_model.save(job)
+
+            headers = {
+                'jobInfoSpec': utils.jobInfoSpec(
+                    job, kwargs.get('girder_token', None)),
+                'apiUrl': utils.getWorkerApiUrl()
+            }
+
+            if 'headers' in kwargs:
+                kwargs['headers'].update(headers)
+            else:
+                kwargs['headers'] = headers
+
+            async_result = super(GWTask, self).apply_async(*args, **kwargs)
+            async_result.job = job
+            return async_result
+
+        except ImportError:
+            async_result = super(GWTask, self).apply_async(*args, **kwargs)
+            async_result.job = None
+            return async_result
 
 
 @worker_ready.connect
@@ -133,6 +182,7 @@ class _CeleryConfig:
 app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
     backend=girder_worker.config.get('celery', 'broker'),
-    broker=girder_worker.config.get('celery', 'broker'))
+    broker=girder_worker.config.get('celery', 'broker'),
+    task_cls="girder_worker.app:GWTask")
 
 app.config_from_object(_CeleryConfig)
