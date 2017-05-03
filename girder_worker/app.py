@@ -10,20 +10,21 @@ from .utils import JobStatus
 class GWTask(Task):
     """Girder Worker Task object"""
 
-    def job_description(self, user, **kwargs):
+    def job_description(self, user, args=(), kwargs=()):
         # Note that celery_handler should not be bound
         # to any schedule event in girder. This prevents
         # the job from being accidentally scheduled and being
         # passed to the 'worker_handler' code
         return {
-            "title": '',
-            "type": '',
+            "title": 'Test Job',
+            "type": 'worker',
             "handler": 'celery_handler',
             "user": user,
-            "args": kwargs.get("args", ()),
-            "kwargs": kwargs.get("kwargs", ())
+            "args": args,
+            "kwargs": kwargs
         }
-    def apply_async(self, *args, **kwargs):
+    def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
+                    link=None, link_error=None, shadow=None, **options):
         try:
             from girder.utility.model_importer import ModelImporter
             from girder.plugins.worker import utils
@@ -31,27 +32,37 @@ class GWTask(Task):
             job_model = ModelImporter.model('job', 'jobs')
 
             user = kwargs.pop('girder_user', None)
+            token = kwargs.pop('girder_token', None)
 
-            job = job_model.createJob(**self.job_description(user, **kwargs))
-            job = job_model.save(job)
+            job = job_model.createJob(**self.job_description(user, args, kwargs))
+
+            # If we don't have a token from girder_token kwarg,  use
+            # the job token instead. Otherwise no token
+            if token is None:
+                token = job.get('token', None)
 
             headers = {
-                'jobInfoSpec': utils.jobInfoSpec(
-                    job, kwargs.get('girder_token', None)),
+                'jobInfoSpec': utils.jobInfoSpec(job, token),
                 'apiUrl': utils.getWorkerApiUrl()
             }
 
-            if 'headers' in kwargs:
-                kwargs['headers'].update(headers)
+            if 'headers' in options:
+                options['headers'].update(headers)
             else:
-                kwargs['headers'] = headers
+                options['headers'] = headers
 
-            async_result = super(GWTask, self).apply_async(*args, **kwargs)
+            async_result = super(GWTask, self).apply_async(
+                args=args, kwargs=kwargs, task_id=task_id, producer=producer,
+                link=link, link_error=link_error, shadow=shadow, **options)
+
             async_result.job = job
             return async_result
 
         except ImportError:
-            async_result = super(GWTask, self).apply_async(*args, **kwargs)
+            async_result = super(GWTask, self).apply_async(
+                args=args, kwargs=kwargs, task_id=task_id, producer=producer,
+                link=link, link_error=link_error, shadow=shadow, **options)
+
             async_result.job = None
             return async_result
 
