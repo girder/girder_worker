@@ -2,6 +2,6 @@
     "inputs": [{"name": "input", "type": "tree", "format": "newick"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
     "extensions": ["phy", "tre", "tree", "nwk", "newick"],
-    "script": "output = isinstance(input, (str, unicode))",
+    "script": "import six; output = isinstance(input, six.string_types)",
     "mode": "python"
 }

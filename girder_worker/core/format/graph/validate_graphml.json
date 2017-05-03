@@ -2,6 +2,6 @@
     "inputs": [{"name": "input", "type": "graph", "format": "graphml"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
     "extensions": ["graphml", "gml"],
-    "script": "output = isinstance(input, (str, unicode))",
+    "script": "import six; output = isinstance(input, six.string_types)",
     "mode": "python"
 }

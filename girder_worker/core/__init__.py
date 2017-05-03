@@ -1,15 +1,13 @@
-import events
-import io
 import json
 import os
+import six
 
-from format import (
-    converter_path, get_validator_analysis, Validator)
+from .format import converter_path, get_validator_analysis, Validator
 
-from executors.python import run as python_run
-from executors.workflow import run as workflow_run
+from .executors.python import run as python_run
+from .executors.workflow import run as workflow_run
 from networkx import NetworkXNoPath
-from . import utils
+from . import events, utils, io
 
 from girder_worker.utils import JobStatus
 from girder_worker import config, PACKAGE_DIR
@@ -249,7 +247,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
 
     try:
         # If some inputs are not there, fill in with defaults
-        for name, task_input in task_inputs.iteritems():
+        for name, task_input in six.viewitems(task_inputs):
             if name not in inputs:
                 if 'default' in task_input:
                     inputs[name] = task_input['default']
@@ -257,7 +255,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                     raise Exception(
                         'Required input \'%s\' not provided.' % name)
 
-        for name, d in inputs.iteritems():
+        for name, d in six.viewitems(inputs):
             task_input = task_inputs[name]
             if task_input.get('stream'):
                 continue  # this input will be fetched as a stream
@@ -289,7 +287,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                         **dict(
                             {'task_input': task_input, 'fetch': False},
                             **kwargs))
-                except Exception, e:
+                except Exception as e:
                     raise Exception('%s: %s' % (name, str(e)))
 
                 d['script_data'] = converted['data']
@@ -306,7 +304,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         if outputs is None:
             outputs = {}
 
-        for name, task_output in task_outputs.iteritems():
+        for name, task_output in six.viewitems(task_outputs):
             if name not in outputs:
                 outputs[name] = {'format': task_output.get('format')}
 
@@ -318,7 +316,7 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
                         task_inputs=task_inputs, task_outputs=task_outputs,
                         auto_convert=auto_convert, validate=validate, **kwargs)
 
-        for name, task_output in task_outputs.iteritems():
+        for name, task_output in six.viewitems(task_outputs):
             if task_output.get('stream'):
                 continue  # this output has already been sent as a stream
 

@@ -1,4 +1,5 @@
 import os
+import six
 
 
 def vtkrow_to_dict(attributes, i):
@@ -30,11 +31,11 @@ def dict_to_vtkarrays(row, fields, attributes):
         if isinstance(value, list):
             comp = len(value)
             value = value[0]
-        if isinstance(value, (int, long, float)):
+        if isinstance(value, (float,) + six.integer_types):
             arr = vtk.vtkDoubleArray()
         elif isinstance(value, str):
             arr = vtk.vtkStringArray()
-        elif isinstance(value, unicode):
+        elif isinstance(value, six.text_type):
             arr = vtk.vtkUnicodeStringArray()
         else:
             arr = vtk.vtkStringArray()
@@ -46,8 +47,9 @@ def dict_to_vtkarrays(row, fields, attributes):
 def dict_to_vtkrow(row, attributes):
     for key in row:
         value = row[key]
-        if not isinstance(value, (list, int, long, float, str, unicode)):
-            value = str(value)
+        types = (list, float) + six.string_types + six.integer_types
+        if not isinstance(value, tuple(types)):
+            value = six.binary_type(value)
         found = False
         for i in range(attributes.GetNumberOfArrays()):
             arr = attributes.GetAbstractArray(i)

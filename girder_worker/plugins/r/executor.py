@@ -1,4 +1,5 @@
 import rpy2.robjects
+import six
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -19,9 +20,11 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     for name in inputs:
         env[str(name)] = inputs[name]['script_data']
 
+    if isinstance(task['script'], six.binary_type):
+        task['script'] = task['script'].decode('utf8')
     rpy2.robjects.reval(task['script'], env)
 
-    for name, task_output in task_outputs.iteritems():
+    for name, task_output in six.viewitems(task_outputs):
         d = outputs[name]
         d['script_data'] = env[str(name)]
 

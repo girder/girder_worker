@@ -67,7 +67,7 @@ class TestDebug(unittest.TestCase):
         global _tmpfiles
 
         run(
-            dict(self.analysis.items() + [('write_script', 1)]),
+            dict(write_script=1, **self.analysis),
             inputs=self.inputs, outputs=self.outputs)
 
         # Should have generated just one debug file

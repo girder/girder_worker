@@ -34,7 +34,7 @@ def recursive_clade(obj, data_coll, tree_coll=None):
         attr = getattr(obj, key)
         if attr and attr is not None:
             # debugging
-            print 'key = %s, attr = %s' % (key, attr)
+            print('key = %s, attr = %s' % (key, attr))
 
             # get all non-recursive clade attributes first
             # do we need to even do this first? SZ -Aug 16, 2012

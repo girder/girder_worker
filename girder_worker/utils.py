@@ -1,5 +1,6 @@
 import requests
 import time
+import six
 import sys
 
 
@@ -112,7 +113,7 @@ class JobManager(object):
         if self.logPrint:
             self._pipes[0].write(message)
 
-        if type(message) == unicode:
+        if isinstance(message, six.text_type):
             message = message.encode('utf8')
 
         self._buf += message

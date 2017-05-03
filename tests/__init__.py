@@ -7,7 +7,7 @@ import sys
 def captureOutput():
     oldout, olderr = sys.stdout, sys.stderr
     try:
-        out = [six.StringIO(), six.StringIO()]
+        out = [six.BytesIO(), six.BytesIO()]
         sys.stdout, sys.stderr = out
         yield out
     finally:

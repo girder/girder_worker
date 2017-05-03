@@ -1,4 +1,5 @@
 from girder_worker.tasks import run
+import six
 import unittest
 
 
@@ -79,7 +80,7 @@ class TestNumber(unittest.TestCase):
             })
         self.assertEqual(outputs['c']['format'], 'text')
         self.assertEqual(outputs['c']['data'], u'hi, there')
-        self.assertIsInstance(outputs['c']['data'], unicode)
+        self.assertIsInstance(outputs['c']['data'], six.text_type)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,7 @@
-# it is not really Python, but there is no R support on Travis CI yet
 language: python
+python:
+  - "2.7"
+  - "3.4"
 
 sudo: false
 

@@ -3,6 +3,7 @@ import os
 from girder_worker.tasks import convert
 import networkx as nx
 from networkx.algorithms.isomorphism import is_isomorphic, numerical_edge_match
+import six
 import unittest
 from lxml import etree
 
@@ -106,7 +107,7 @@ class TestGraph(unittest.TestCase):
             data='distance'))
         actual_edges = set()
 
-        self.assertIsInstance(output['data'], (str, unicode))
+        self.assertIsInstance(output['data'], (six.binary_type, six.text_type))
         tree = etree.fromstring(output['data'])
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree[0].tag, self.GRAPHML_NS + 'key')

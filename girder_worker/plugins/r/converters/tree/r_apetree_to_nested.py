@@ -9,19 +9,19 @@ tipLabelIndex = -1
 if 'tip.label' in element_names:
     tipLabelIndex = element_names.index('tip.label')
 else:
-    print 'Error: tip.label not found in input ape tree'
+    print('Error: tip.label not found in input ape tree')
 
 nNodeIndex = -1
 if 'Nnode' in element_names:
     nNodeIndex = element_names.index('Nnode')
 else:
-    print 'Error: Nnode not found in input ape tree'
+    print('Error: Nnode not found in input ape tree')
 
 edgeIndex = -1
 if 'edge' in element_names:
     edgeIndex = element_names.index('edge')
 else:
-    print 'Error: edge not found in input ape tree'
+    print('Error: edge not found in input ape tree')
 
 # optional elements
 edgeLengthIndex = -1
@@ -70,9 +70,9 @@ for edge in range(edgeCount):
         try:
             endNode['edge_data'] = {'weight': input[edgeLengthIndex][edge]}
         except TypeError:
-            print 'error on edge or no branchlength:', edge
+            print('error on edge or no branchlength:', edge)
         except IndexError:
-            print 'error on edge or no branchlength:', edge
+            print('error on edge or no branchlength:', edge)
 
     # add edge leaving start node and going to endnode
     startNode['children'].append(endNode)

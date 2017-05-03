@@ -1,6 +1,6 @@
 import pkg_resources as pr
 from . import config
-from ConfigParser import NoSectionError, NoOptionError
+from six.moves.configparser import NoSectionError, NoOptionError
 from .app import app
 
 

@@ -1,4 +1,5 @@
 import re
+import six
 import tempfile
 
 from girder_worker.core import utils
@@ -50,6 +51,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         raise Exception('Error: swift run returned code {}.'.format(
                         p.returncode))
 
-    for name, task_output in task_outputs.iteritems():
+    for name, task_output in six.viewitems(task_outputs):
         with open(name) as output_file:
             outputs[name]['script_data'] = output_file.read()

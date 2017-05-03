@@ -1,3 +1,5 @@
+import six
+
 
 def set_nested(obj, path, v):
     key = path.pop()
@@ -12,7 +14,7 @@ def set_nested(obj, path, v):
 output = []
 for row in input['rows']:
     item = {}
-    for k, v in row.iteritems():
+    for k, v in six.viewitems(row):
         path = k.split('.')
         path.reverse()
         set_nested(item, path, v)

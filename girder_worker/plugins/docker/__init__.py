@@ -10,7 +10,7 @@ MIN_GC_INTERVAL = 600
 
 
 def before_run(e):
-    import executor
+    from . import executor
     if e.info['task']['mode'] == 'docker':
         executor.validate_task_outputs(e.info['task_outputs'])
     if not _read_from_config('gc', False):
@@ -101,7 +101,7 @@ def task_cleanup(e):
 
 def load(params):
     from girder_worker.core import events, register_executor
-    import executor
+    from . import executor
 
     events.bind('run.before', params['name'], before_run)
     events.bind('run.finally', params['name'], task_cleanup)

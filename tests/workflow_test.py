@@ -393,9 +393,8 @@ class TestWorkflow(unittest.TestCase):
             self.analysis_path, 'xdata', 'flu.json'))
 
         script_path = os.path.join(self.analysis_path, 'xdata', 'flu.py')
-        with open(script_path) as script_file:
+        with open(script_path, 'rb') as script_file:
             script_content = script_file.read()
-
         self.assertEqual(flu['script'], script_content)
 
     def test_load_workflow(self):
@@ -403,7 +402,7 @@ class TestWorkflow(unittest.TestCase):
             self.analysis_path, 'xdata', 'flu_workflow.json'))
 
         script_path = os.path.join(self.analysis_path, 'xdata', 'flu.py')
-        with open(script_path) as script_file:
+        with open(script_path, 'rb') as script_file:
             script_content = script_file.read()
 
         self.assertEqual(flu['steps'][0]['task']['script'], script_content)

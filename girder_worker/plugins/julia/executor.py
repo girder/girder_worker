@@ -1,5 +1,6 @@
 import os
 import json
+import six
 
 from girder_worker.core import utils
 
@@ -8,7 +9,7 @@ def _write_julia_script(script, inputs, task_outputs, tmp_dir):
     script_fname = os.path.join(tmp_dir, 'script.julia')
     with open(script_fname, 'w') as script_file:
         # Send input values to the script
-        for name, binding in inputs.iteritems():
+        for name, binding in six.viewitems(inputs):
             value = json.dumps(binding['script_data'])
             script_file.write(name + ' = ' + value + '\n')
 
@@ -49,7 +50,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         raise Exception('Error: julia run returned code {}.'.format(
                         p.returncode))
 
-    for name, task_output in task_outputs.iteritems():
+    for name, task_output in six.viewitems(task_outputs):
         if name != '_stderr' and name != '_stdout':
             fname = os.path.join(tmp_dir, name)
             with open(fname) as output_file:

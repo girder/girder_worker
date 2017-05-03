@@ -66,22 +66,22 @@ def toposort(data):
 
     # Find all items that don't depend on anything.
     extra = functools.reduce(
-        set.union, data.itervalues()) - set(data.iterkeys())
+        set.union, six.viewvalues(data)) - set(six.viewkeys(data))
     # Add empty dependences where needed
     data.update({item: set() for item in extra})
 
     # Perform the toposort.
     while True:
-        ordered = set(item for item, dep in data.iteritems() if not dep)
+        ordered = set(item for item, dep in six.viewitems(data) if not dep)
         if not ordered:
             break
         yield ordered
         data = {item: (dep - ordered)
-                for item, dep in data.iteritems() if item not in ordered}
+                for item, dep in six.viewitems(data) if item not in ordered}
     # Detect any cycles in the dependency graph.
     if data:
         raise Exception('Cyclic dependencies detected:\n%s' % '\n'.join(
-                        repr(x) for x in data.iteritems()))
+                        repr(x) for x in six.viewitems(data)))
 
 
 @contextlib.contextmanager
@@ -296,9 +296,9 @@ def run_process(command, output_pipes=None, input_pipes=None):
     stderr = p.stderr.fileno()
     stdin = p.stdin.fileno()
     output_pipes[stdout] = output_pipes.get(
-        '_stdout', WritePipeAdapter({}, sys.stdout))
+        '_stdout', WritePipeAdapter({}, getattr(sys.stdout, 'buffer', sys.stdout)))
     output_pipes[stderr] = output_pipes.get(
-        '_stderr', WritePipeAdapter({}, sys.stderr))
+        '_stderr', WritePipeAdapter({}, getattr(sys.stderr, 'buffer', sys.stderr)))
 
     rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
     wds, fifos = _setup_input_pipes(input_pipes, stdin)

@@ -1,4 +1,5 @@
 import base64
+import functools
 from girder_worker.tasks import run, convert
 import math
 import operator
@@ -14,7 +15,7 @@ def compareImages(im1, im2):
     h1 = im1.histogram()
     h2 = im2.histogram()
 
-    return math.sqrt(reduce(operator.add,
+    return math.sqrt(functools.reduce(operator.add,
                      map(lambda a, b: (a-b)**2, h1, h2))/len(h1))
 
 

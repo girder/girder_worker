@@ -26,4 +26,4 @@ async_result = celeryapp.send_task('girder_worker.run', [task], {
     }
 })
 
-print async_result.get()
+print(async_result.get())

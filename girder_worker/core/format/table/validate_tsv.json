@@ -2,6 +2,6 @@
     "inputs": [{"name": "input", "type": "table", "format": "tsv"}],
     "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
     "extensions": ["tsv"],
-    "script": "output = isinstance(input, (str, unicode))",
+    "script": "import six; output = isinstance(input, six.string_types)",
     "mode": "python"
 }

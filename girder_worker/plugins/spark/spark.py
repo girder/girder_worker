@@ -2,7 +2,7 @@ import girder_worker
 import os
 import sys
 
-from ConfigParser import NoOptionError, NoSectionError
+from six.moves.configparser import NoOptionError, NoSectionError
 
 
 def setup_spark_env():
