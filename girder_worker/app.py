@@ -10,29 +10,44 @@ from .utils import JobStatus
 class GWTask(Task):
     """Girder Worker Task object"""
 
-    def job_description(self, user, args=(), kwargs=()):
+    _girder_job_title = None
+    _girder_job_type = None
+    _girder_job_public = False
+    _girder_job_handler = "celery_handler"
+    _girder_job_other_fields = {}
+
+    def job_description(self, user=None, args=(), kwargs=()):
         # Note that celery_handler should not be bound
         # to any schedule event in girder. This prevents
         # the job from being accidentally scheduled and being
         # passed to the 'worker_handler' code
         return {
-            "title": 'Test Job',
-            "type": 'worker',
-            "handler": 'celery_handler',
+            "title": self._girder_job_title,
+            "type": self._girder_job_type,
+            "handler": self._girder_job_handler,
+            "public": self._girder_job_public,
             "user": user,
             "args": args,
-            "kwargs": kwargs
+            "kwargs": kwargs,
+            "otherFields": self._girder_job_other_fields
         }
+
     def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
                     link=None, link_error=None, shadow=None, **options):
         try:
+            # If we can import these we assume our producer is girder
+            # We can create the job model's directly
             from girder.utility.model_importer import ModelImporter
             from girder.plugins.worker import utils
+            from girder.api.rest import getCurrentUser
+
+
+            print(args)
 
             job_model = ModelImporter.model('job', 'jobs')
 
-            user = kwargs.pop('girder_user', None)
-            token = kwargs.pop('girder_token', None)
+            user = options.pop('girder_user', getCurrentUser())
+            token = options.pop('girder_token', None)
 
             job = job_model.createJob(**self.job_description(user, args, kwargs))
 
@@ -59,6 +74,9 @@ class GWTask(Task):
             return async_result
 
         except ImportError:
+            # TODO: Check for self.job_manager to see if we have
+            #       tokens etc to contact girder and create a job model
+            #       we may be in a chain or a chord or some-such
             async_result = super(GWTask, self).apply_async(
                 args=args, kwargs=kwargs, task_id=task_id, producer=producer,
                 link=link, link_error=link_error, shadow=shadow, **options)

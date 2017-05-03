@@ -3,6 +3,23 @@ import time
 import sys
 
 
+def girder_job(title=None, type=None, public=False,
+               handler="celery_handler", otherFields=None):
+    """Decorator that populates a girder_worker celery task with
+    girder's job metadata. """
+
+    otherFields = otherFields or {}
+
+    def _girder_job(task_obj):
+        task_obj._girder_job_title = title
+        task_obj._girder_job_type = type
+        task_obj._girder_job_public = public
+        task_obj._girder_job_handler = handler
+        task_obj._girder_job_other_fields = otherFields
+        return task_obj
+
+    return _girder_job
+
 class JobStatus(object):
     INACTIVE = 0
     QUEUED = 1
