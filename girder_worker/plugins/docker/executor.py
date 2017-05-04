@@ -1,27 +1,28 @@
 import os
 import re
-import subprocess
+import sys
+import docker
+from docker.errors import DockerException
 
 from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 
 DATA_VOLUME = '/mnt/girder_worker/data'
+BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
 
 def _pull_image(image):
     """
     Pulls the specified Docker image onto this worker.
     """
-    command = ('docker', 'pull', image)
-    p = subprocess.Popen(args=command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-
-    if p.returncode != 0:
-        logger.error(
-            'Error pulling Docker image %s:\nSTDOUT: %s\nSTDERR: %s', image, stdout, stderr)
-
-        raise Exception('Docker pull returned code {}.'.format(p.returncode))
+    client = docker.from_env()
+    try:
+        client.images.pull(image)
+    except DockerException as dex:
+        logger.error('Error pulling Docker image %s:' % image)
+        logger.exception(dex)
+        raise
 
 
 def _transform_path(inputs, taskInputs, inputId, tmpDir):
@@ -96,7 +97,7 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
-def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
+def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe):
     """
     Returns a 2 tuple of input and output pipe mappings. The first element is
     a dict mapping input file descriptors to the corresponding stream adapters,
@@ -114,8 +115,7 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
         given spec is not a streaming spec, returns False. If it is, returns the
         path to the pipe file that was created.
         """
-        if (spec.get('stream') and id in bindings and
-                spec.get('target') == 'filepath'):
+        if spec.get('stream') and id in bindings and spec.get('target') == 'filepath':
             path = spec.get('path', id)
             if path.startswith('/'):
                 raise Exception('Streaming filepaths must be relative.')
@@ -138,23 +138,79 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir):
             opipes[os.open(pipe, os.O_RDONLY | os.O_NONBLOCK)] = \
                 make_stream_push_adapter(outputs[id])
 
+    # handle special stream output for job progress
+    if progress_pipe and job_mgr:
+        path = os.path.join(tempdir, '.girder_progress')
+        os.mkfifo(path)
+        opipes[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = utils.JobProgressAdapter(job_mgr)
+
     # special handling for stdin, stdout, and stderr pipes
     if '_stdin' in task_inputs and '_stdin' in inputs:
         if task_inputs['_stdin'].get('stream'):
             ipipes['_stdin'] = make_stream_fetch_adapter(inputs['_stdin'])
         else:
-            ipipes['_stdin'] = utils.MemoryFetchAdapter(
-                inputs[id], inputs[id]['data'])
+            ipipes['_stdin'] = utils.MemoryFetchAdapter(inputs[id], inputs[id]['data'])
 
     for id in ('_stdout', '_stderr'):
         if id in task_outputs and id in outputs:
             if task_outputs[id].get('stream'):
                 opipes[id] = make_stream_push_adapter(outputs[id])
             else:
-                opipes[id] = utils.AccumulateDictAdapter(
-                    outputs[id], 'script_data')
+                opipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
     return ipipes, opipes
+
+
+def _run_container(image, args, **kwargs):
+    # TODO we could allow configuration of non default socket
+    client = docker.from_env()
+
+    logger.info('Running container: image: %s args: %s kwargs: %s' % (image, args, kwargs))
+    try:
+        return client.containers.run(image, args, **kwargs)
+    except DockerException as dex:
+        logger.error(dex)
+        raise
+
+
+def _run_select_loop(container, opipes, ipipes):
+    stdout = None
+    stderr = None
+    try:
+        # attach to standard streams
+        stdout = container.attach_socket(params={
+            'stdout': True,
+            'logs': True,
+            'stream': True
+        })
+
+        stderr = container.attach_socket(params={
+            'stderr': True,
+            'logs': True,
+            'stream': True
+        })
+
+        def exit_condition():
+            container.reload()
+            return container.status in ['exited', 'dead']
+
+        def close_output(output):
+            return output not in (stdout.fileno(), stderr.fileno())
+
+        opipes[stdout.fileno()] = opipes.get(
+            '_stdout', utils.WritePipeAdapter({}, sys.stdout))
+        opipes[stderr.fileno()] = opipes.get(
+            '_stderr', utils.WritePipeAdapter({}, sys.stderr))
+
+        # Run select loop
+        utils.select_loop(exit_condition=exit_condition, close_output=close_output,
+                          outputs=opipes, inputs=ipipes)
+    finally:
+        # Close our stdout and stderr sockets
+        if stdout:
+            stdout.close()
+        if stderr:
+            stderr.close()
 
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
@@ -164,35 +220,51 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         logger.info('Pulling Docker image: %s', image)
         _pull_image(image)
 
+    progress_pipe = task.get('progress_pipe', False)
+
     tempdir = kwargs.get('_tempdir')
+    job_mgr = kwargs.get('_job_manager')
     args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
 
     ipipes, opipes = _setup_pipes(
-        task_inputs, inputs, task_outputs, outputs, tempdir)
+        task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe)
 
     if 'entrypoint' in task:
         if isinstance(task['entrypoint'], (list, tuple)):
-            ep_args = ['--entrypoint'] + task['entrypoint']
+            ep_args = task['entrypoint']
         else:
-            ep_args = ['--entrypoint', task['entrypoint']]
+            ep_args = [task['entrypoint']]
     else:
         ep_args = []
-    if kwargs.get('_rm_container'):
-        rm_args = ['--rm']
-    else:
-        rm_args = []
 
-    command = [
-        'docker', 'run',
-        '-v', '%s:%s' % (tempdir, DATA_VOLUME)
-    ] + task.get('docker_run_args', []) + rm_args + ep_args + [image] + args
+    run_kwargs = {
+        'tty': True,
+        'volumes': {
+            tempdir: {
+                'bind': DATA_VOLUME,
+                'mode': 'rw'
+            }
+        },
+        'detach': True
+    }
 
-    logger.info('Running container: %s', repr(command))
+    if ep_args:
+        run_kwargs['entrypoint'] = ep_args
 
-    p = utils.run_process(command, output_pipes=opipes, input_pipes=ipipes)
+    # Allow run args to overriden
+    extra_run_kwargs = task.get('docker_run_args', {})
+    # Filter out any we don't want to override
+    extra_run_kwargs = {k: v for k, v in extra_run_kwargs.items() if k not
+                        in BLACKLISTED_DOCKER_RUN_ARGS}
+    run_kwargs.update(extra_run_kwargs)
 
-    if p.returncode != 0:
-        raise Exception('Error: docker run returned code %d.' % p.returncode)
+    container = _run_container(image, args, **run_kwargs)
+
+    try:
+        _run_select_loop(container, opipes, ipipes)
+    finally:
+        if container and kwargs.get('_rm_container'):
+            container.remove()
 
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath' and not spec.get('stream'):

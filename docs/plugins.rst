@@ -164,6 +164,33 @@ If you specify an absolute path, it must start with ``/mnt/girder_worker/data/``
 will be thrown before the task is run. These conventions apply whether the path
 is specified in the ``id`` or ``path`` field.
 
+Progress reporting from docker tasks
+************************************
+
+Docker tasks have the option of reporting progress back to Girder via a special named pipe. If
+you want to do this, specify ``"progress_pipe": true"`` in your docker task specification. This
+will create a special named pipe at ``/mnt/girder_worker/data/.girder_progress``. In your container
+logic, you may write progress notification messages to this named pipe, one per line.
+Progress messages should be JSON objects with the following fields, all of which are optional:
+
+  * ``message`` (string): A human-readable message about the current task progress.
+  * ``current`` (number): A numeric value representing current progress, which should always be
+    less than or equal to the ``total`` value.
+  * ``total`` (number): A numeric value representing the maximum progress value, i.e. the value
+    of ``current`` when the task is complete. Only pass this field if the total is changing or being
+    initially set.
+
+An example progress notification string: ::
+
+    {"message": "Halfway there!", "total": 100, "current": 50}
+
+.. note:: When writing to the named pipe, you should explicitly call ``flush`` on the file
+   descriptor afterward, otherwise the messages may sit in a buffer and may not reach the
+   Girder server as you write them.
+
+.. note:: This feature may not work on Docker on non-Linux platforms, and the call to open the
+   pipe for writing from within the container may block indefinitely.
+
 Management of Docker Containers and Images
 ******************************************
 
@@ -172,14 +199,14 @@ never removed.  Docker containers are automatically removed when the task is
 complete.
 
 As an alternative, a 'garbage collection' process can be used instead.  It can
-be enabled by modifying settings in the ``[docker]`` section of the config 
+be enabled by modifying settings in the ``[docker]`` section of the config
 file, which can be done using the command:
 
 .. code-block :: none
 
   girder-worker-config set docker gc True
 
-When the ``gc`` config value is set to ``True``, containers are not removed 
+When the ``gc`` config value is set to ``True``, containers are not removed
 when the task ends.  Instead, periodically, any images not associated with a
 container will be removed, and then any stopped containers will be removed.
 This will free disk space associated with the images, but may remove images
@@ -196,7 +223,6 @@ instance:
 Only containers that have been stopped longer than a certain time are removed.
 This time defaults to an hour, and can be specified as any number of seconds
 via the ``cache_timeout`` setting.
-
 
 Girder IO
 ---------
