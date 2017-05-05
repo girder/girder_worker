@@ -301,7 +301,6 @@ class Task(celery.Task):
         return is_revoked(self)
 
 
-
 class _CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
 
