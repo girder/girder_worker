@@ -1,8 +1,6 @@
 import requests
 import time
 import sys
-import celery
-from .app import is_revoked
 
 
 def girder_job(title=None, type=None, public=False,
@@ -197,14 +195,3 @@ class JobManager(object):
         if forceFlush or time.time() - self._last > self.interval:
             self._flush()
             self._last = time.time()
-
-
-class Task(celery.Task):
-    @property
-    def canceled(self):
-        """
-        A property to indicate if a task has been canceled.
-
-        :returns True is this task has been canceled, False otherwise.
-        """
-        return is_revoked(self)

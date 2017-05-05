@@ -290,6 +290,18 @@ def is_revoked(task):
     return task.request.id in _revoked_tasks(task)
 
 
+class Task(celery.Task):
+    @property
+    def canceled(self):
+        """
+        A property to indicate if a task has been canceled.
+
+        :returns True is this task has been canceled, False otherwise.
+        """
+        return is_revoked(self)
+
+
+
 class _CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
 
