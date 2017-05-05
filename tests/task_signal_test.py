@@ -139,11 +139,13 @@ class TestSignals(unittest.TestCase):
         task.job_manager.updateStatus.assert_called_once_with(
             JobStatus.RUNNING)
 
+    @mock.patch('girder_worker.app.is_revoked')
     @mock.patch('girder_worker.utils.JobManager')
-    def test_task_success(self, jm):
+    def test_task_success(self, jm, is_revoked):
         task = mock.MagicMock()
         task.request.parent_id = None
         task.job_manager = jm(**self.headers)
+        is_revoked.return_value = False
 
         gw_task_success(sender=task)
 
