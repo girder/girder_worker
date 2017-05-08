@@ -47,6 +47,7 @@ def nodeNameFromIndex(index):
         return input[nodeLabelIndex][index - 1 - leafCount]
     return ''
 
+
 # loop through the nodes and create a dict for each one
 for index in range(1, totalNodes + 1):
     node = {'node_data': {}}
@@ -89,5 +90,6 @@ def nodeWeights(node, cur):
     node['node_data']['node weight'] = cur
     for c in node.get('children', []):
         nodeWeights(c, cur)
+
 
 nodeWeights(output, 0.0)

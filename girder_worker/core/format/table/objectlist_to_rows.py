@@ -15,6 +15,7 @@ def subkeys(path, obj, row):
         field_map[field] = True
         row[field] = obj
 
+
 for obj in input:
     row = {}
     subkeys([], obj, row)

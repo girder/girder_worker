@@ -71,5 +71,6 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(converted.GetNumberOfCells(), 101)
         self.assertEqual(converted.GetNumberOfPoints(), 101)
 
+
 if __name__ == '__main__':
     unittest.main()

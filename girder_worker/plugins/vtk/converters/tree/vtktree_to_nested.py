@@ -17,6 +17,7 @@ def process_node(vtknode, node):
         process_node(vtkchild, n)
         node['children'].append(n)
 
+
 node_fields = []
 for c in range(input.GetVertexData().GetNumberOfArrays()):
     node_fields.append(input.GetVertexData().GetAbstractArray(c).GetName())

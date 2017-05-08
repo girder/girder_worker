@@ -76,5 +76,6 @@ class TestInteger(unittest.TestCase):
                 'c': {'format': 'integer'}
             })
 
+
 if __name__ == '__main__':
     unittest.main()

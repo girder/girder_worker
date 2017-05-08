@@ -90,5 +90,6 @@ class TestNumberList(unittest.TestCase):
                 'c': {'format': 'number_list'}
             })
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -156,5 +156,6 @@ class TestDirectory(unittest.TestCase):
             self.assertTrue('shapefile/shapefile.cpg' in names)
             self.assertTrue('shapefile/shapefile.prj' in names)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -63,5 +63,6 @@ def main():
     elif args.cmd == 'rm':
         rm_config(args.section, args.option)
 
+
 if __name__ == '__main__':
     main()  # pragma: no cover

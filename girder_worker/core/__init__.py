@@ -44,6 +44,7 @@ def unregister_executor(name):
     """
     del _task_map[name]
 
+
 register_executor('python', python_run)
 register_executor('workflow', workflow_run)
 
