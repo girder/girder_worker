@@ -4,9 +4,10 @@ import sys
 
 
 def girder_job(title=None, type=None, public=False,
-               handler="celery_handler", otherFields=None):
+               handler='celery_handler', otherFields=None):
     """Decorator that populates a girder_worker celery task with
-    girder's job metadata. """
+    girder's job metadata.
+    """
 
     otherFields = otherFields or {}
 
@@ -19,6 +20,7 @@ def girder_job(title=None, type=None, public=False,
         return task_obj
 
     return _girder_job
+
 
 class JobStatus(object):
     INACTIVE = 0
