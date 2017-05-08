@@ -89,5 +89,6 @@ class TestNumber(unittest.TestCase):
                 'c': {'format': 'number'}
             })
 
+
 if __name__ == '__main__':
     unittest.main()

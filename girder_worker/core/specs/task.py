@@ -42,6 +42,7 @@ class TaskSpec(Spec):
 
     _serializer = str
 
+
 # add base spec properties
 TaskSpec.make_property('mode', 'The execution mode of the task', 'python')
 TaskSpec.make_property('script', 'A script or function to execute', '')
@@ -133,5 +134,6 @@ class Task(MutableMapping):
 
     def get(self, key, default=None):
         return self.__spec__.get(key, default)
+
 
 __all__ = ('TaskSpec', 'Task', 'ReadOnlyAttributeException', )

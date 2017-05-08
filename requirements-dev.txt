@@ -1,12 +1,24 @@
 coverage==4.1.0
 coveralls==1.1
-flake8==2.5.4
-flake8-docstrings==0.2.6
-flake8-quotes==0.3.0
+flake8==3.3.0
+flake8-blind-except==0.1.1
+flake8-docstrings==1.1.0
+
+# Unique to girder_worker
+flake8-quotes==0.9.0
+
+# dependencies of flake8
+mccabe==0.6.1
+pep8==1.7.0
+pyflakes==1.5.0
+
+# dependencies of flake8-docstrings
+pep257==0.7.0
+
+
 httmock==1.2.5
 lxml==3.6.0
 mock==2.0.0
-pep8-naming==0.3.3
 Sphinx==1.4.3
 sphinx-rtd-theme==0.1.9
 virtualenv==15.1.0
