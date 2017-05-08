@@ -1,19 +1,20 @@
 import girder_worker
 import traceback as tb
-from celery import Celery, Task, __version__
+import celery
+from celery import Celery, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success, worker_ready)
 from .utils import JobStatus
 
 
-class GWTask(Task):
+class Task(celery.Task):
     """Girder Worker Task object"""
 
     _girder_job_title = None
     _girder_job_type = None
     _girder_job_public = False
-    _girder_job_handler = "celery_handler"
+    _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
 
     def job_description(self, user=None, args=(), kwargs=()):
@@ -22,14 +23,14 @@ class GWTask(Task):
         # the job from being accidentally scheduled and being
         # passed to the 'worker_handler' code
         return {
-            "title": self._girder_job_title,
-            "type": self._girder_job_type,
-            "handler": self._girder_job_handler,
-            "public": self._girder_job_public,
-            "user": user,
-            "args": args,
-            "kwargs": kwargs,
-            "otherFields": self._girder_job_other_fields
+            'title': self._girder_job_title,
+            'type': self._girder_job_type,
+            'handler': self._girder_job_handler,
+            'public': self._girder_job_public,
+            'user': user,
+            'args': args,
+            'kwargs': kwargs,
+            'otherFields': self._girder_job_other_fields
         }
 
     def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
@@ -40,9 +41,6 @@ class GWTask(Task):
             from girder.utility.model_importer import ModelImporter
             from girder.plugins.worker import utils
             from girder.api.rest import getCurrentUser
-
-
-            print(args)
 
             job_model = ModelImporter.model('job', 'jobs')
 
@@ -66,7 +64,7 @@ class GWTask(Task):
             else:
                 options['headers'] = headers
 
-            async_result = super(GWTask, self).apply_async(
+            async_result = super(Task, self).apply_async(
                 args=args, kwargs=kwargs, task_id=task_id, producer=producer,
                 link=link, link_error=link_error, shadow=shadow, **options)
 
@@ -77,7 +75,7 @@ class GWTask(Task):
             # TODO: Check for self.job_manager to see if we have
             #       tokens etc to contact girder and create a job model
             #       we may be in a chain or a chord or some-such
-            async_result = super(GWTask, self).apply_async(
+            async_result = super(Task, self).apply_async(
                 args=args, kwargs=kwargs, task_id=task_id, producer=producer,
                 link=link, link_error=link_error, shadow=shadow, **options)
 
@@ -212,6 +210,6 @@ app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
     backend=girder_worker.config.get('celery', 'broker'),
     broker=girder_worker.config.get('celery', 'broker'),
-    task_cls="girder_worker.app:GWTask")
+    task_cls='girder_worker.app:Task')
 
 app.config_from_object(_CeleryConfig)
