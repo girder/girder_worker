@@ -20,6 +20,8 @@ def process_node(vtknode, node):
             if 'edge_data' in n:
                 dict_to_vtkrow(n['edge_data'], vtk_builder.GetEdgeData())
             process_node(vtkchild, n)
+
+
 vtk_builder.AddVertex()
 dict_to_vtkrow(input['node_data'], vtk_builder.GetVertexData())
 process_node(0, input)

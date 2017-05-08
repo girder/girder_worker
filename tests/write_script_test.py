@@ -13,6 +13,7 @@ def _mockTempfile():
     _tmpfiles.append(out)
     return out
 
+
 girder_worker.core.executors.python.tempfile.mktemp = _mockTempfile
 
 

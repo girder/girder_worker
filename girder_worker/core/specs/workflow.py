@@ -21,6 +21,7 @@ class StepSpec(Spec):
     def __init__(self, *args, **kwargs):
         super(StepSpec, self).__init__(*args, **kwargs)
 
+
 StepSpec.make_property('name', 'Name of the step in the workflow')
 StepSpec.make_property('task', 'Workflow task associated with this step')
 
@@ -28,6 +29,7 @@ StepSpec.make_property('task', 'Workflow task associated with this step')
 class ConnectionSpec(Spec):
     def __init__(self, *args, **kwargs):
         super(ConnectionSpec, self).__init__(*args, **kwargs)
+
 
 ConnectionSpec.make_property(
     'name', 'Workflow external facing input or output name')
@@ -320,5 +322,6 @@ class Workflow(MutableMapping):
             del self._defaults[node_name]
         except KeyError:
             pass
+
 
 __all__ = ('Workflow', 'StepSpec', 'ConnectionSpec')

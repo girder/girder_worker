@@ -81,5 +81,6 @@ class TestNumber(unittest.TestCase):
         self.assertEqual(outputs['c']['data'], u'hi, there')
         self.assertIsInstance(outputs['c']['data'], unicode)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -4,7 +4,7 @@ from Bio.Phylo import BaseTree
 
 
 def recursive_attr(obj):
-    """recursively parase through phyloXML data that is not a Clade"""
+    """Recursively parase through phyloXML data that is not a Clade"""
     dictionary = {}
     try:
         # if obj has subobjects, parse throuh them and insert in a dictionary
@@ -22,7 +22,7 @@ def recursive_attr(obj):
 
 
 def recursive_clade(obj, data_coll, tree_coll=None):
-    """recursively parse through phyloXML"""
+    """Recursively parse through phyloXML"""
     # instantiate variables
     clade_children = []
     tempDict = {}

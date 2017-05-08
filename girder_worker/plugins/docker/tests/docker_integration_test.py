@@ -5,6 +5,7 @@ import six
 import stat
 import sys
 import unittest
+import docker
 
 import girder_worker
 from girder_worker.core import run, io
@@ -135,7 +136,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
-        message = '%s\n' % self._test_message
+        message = '%s\r\n' % self._test_message
         self.assertTrue(message not in lines)
         self.assertEqual(out['_stdout']['data'], message)
 
@@ -272,3 +273,76 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue(os.path.exists(pipe))
         self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))
         self.assertEqual(output['_stdout']['data'].rstrip(), self._test_message)
+
+    def testDockerModeRemoveContainer(self):
+        """
+        Test automatic container removal
+        """
+        task = {
+            'mode': 'docker',
+            'docker_image': test_image,
+            'pull_image': True,
+            'container_args': ['$input{test_mode}', '$input{message}'],
+            'inputs': [{
+                'id': 'test_mode',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }, {
+                'id': 'message',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }],
+            'outputs': []
+        }
+
+        inputs = {
+            'test_mode': {
+                'format': 'string',
+                'data': 'stdio'
+            },
+            'message': {
+                'format': 'string',
+                'data': self._test_message
+            }
+        }
+
+        docker_client = docker.from_env()
+        containers = docker_client.containers.list(limit=1)
+        last_container_id = containers[0].id if len(containers) > 0 else None
+
+        run(
+            task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+            auto_convert=False)
+
+        def _fetch_new_containers(last_container_id):
+            if last_container_id:
+                filters = {
+                    'since': last_container_id
+                }
+                new_containers = docker_client.containers.list(all=True, filters=filters)
+            else:
+                new_containers = docker_client.containers.list(all=True)
+
+            return new_containers
+
+        new_containers = _fetch_new_containers(last_container_id)
+        # Now assert that the container was removed
+        self.assertEqual(len(new_containers), 0)
+
+        # Now confirm that the container doesn't get removed if we set
+        # _rm_container = False
+        girder_worker.config.set('docker', 'gc', 'True')
+        # Stop GC removing anything
+        girder_worker.config.set('docker', 'cache_timeout', str(sys.maxint))
+
+        task['_rm_container'] = False
+        run(
+            task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+            auto_convert=False, _rm_containers=False)
+        new_containers = _fetch_new_containers(last_container_id)
+        self.assertEqual(len(new_containers), 1)
+        self.assertEqual(new_containers[0].attrs.get('Config', {})['Image'], test_image)
+        # Clean it up
+        new_containers[0].remove()

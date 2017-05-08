@@ -59,5 +59,6 @@ class TestR(unittest.TestCase):
             self.function_in, inputs={'input': outputs['output']})
         self.assertEqual(outputs['output']['data'], 16)
 
+
 if __name__ == '__main__':
     unittest.main()

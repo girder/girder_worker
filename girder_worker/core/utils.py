@@ -2,6 +2,7 @@ import contextlib
 import errno
 import functools
 import imp
+import json
 import os
 import girder_worker
 import girder_worker.plugins
@@ -196,7 +197,7 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr):
+def _close_pipes(rds, wds, input_pipes, output_pipes, close_output_pipe):
     """
     Helper to close remaining input and output adapters after the subprocess
     completes.
@@ -205,7 +206,7 @@ def _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr):
     for fd in rds:
         if fd in output_pipes:
             output_pipes[fd].close()
-            if fd not in (stdout, stderr):
+            if close_output_pipe(fd):
                 os.close(fd)
 
     # close any remaining input adapters
@@ -214,7 +215,7 @@ def _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr):
             os.close(fd)
 
 
-def _setup_input_pipes(input_pipes, stdin):
+def _setup_input_pipes(input_pipes):
     """
     Given a mapping of input pipes, return a tuple with 2 elements. The first is
     a list of file descriptors to pass to ``select`` as writeable descriptors.
@@ -227,10 +228,6 @@ def _setup_input_pipes(input_pipes, stdin):
         if isinstance(pipe, int):
             # This is assumed to be an open system-level file descriptor
             wds.append(pipe)
-        elif pipe == '_stdin':
-            # Special case for binding to standard input
-            input_pipes[stdin] = input_pipes['_stdin']
-            wds.append(stdin)
         else:
             if not os.path.exists(pipe):
                 raise Exception('Input pipe does not exist: %s' % pipe)
@@ -260,6 +257,83 @@ def _open_ipipes(wds, fifos, input_pipes):
     return wds, fifos, input_pipes
 
 
+def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
+                outputs=None, inputs=None):
+    """
+    Run a select loop for a set of input and output pipes
+
+    :param exit_condition: A function to evaluate to determine if the select
+        loop should terminate if all pipes are empty.
+    :type exit_condition: function
+    :param close_output: A function to use to test whether a output
+        should be closed when EOF is reached. Certain output pipes such as
+        stdout, stderr should not be closed.
+    :param outputs: This should be a dictionary mapping pipe descriptors
+        to instances of ``StreamPushAdapter`` that should handle the data from
+        the stream. The keys of this dictionary are open file descriptors,
+        which are integers.
+    :type outputs: dict
+    :param inputs: This should be a dictionary mapping pipe descriptors
+        to instances of ``StreamFetchAdapter`` that should handle sending
+        input data in chunks. Keys in this dictionary can be either open file
+        descriptors (integers) or a string representing a path to an existing
+        fifo on the filesystem. This second case supports the use of named
+        pipes, since they must be opened for reading before they can be opened
+        for writing
+    :type inputs: dict
+    """
+
+    BUF_LEN = 65536
+    inputs = inputs or {}
+    outputs = outputs or {}
+
+    rds = [fd for fd in outputs.keys() if isinstance(fd, int)]
+    wds, fifos = _setup_input_pipes(inputs)
+
+    try:
+        while True:
+            # We evaluate this first so that we get one last iteration of
+            # of the loop before breaking out of the loop.
+            exit = exit_condition()
+
+            # get ready pipes, timeout of 100 ms
+            readable, writable, _ = select.select(rds, wds, (), 0.1)
+
+            for ready_fd in readable:
+                buf = os.read(ready_fd, BUF_LEN)
+
+                if buf:
+                    outputs[ready_fd].write(buf)
+                else:
+                    outputs[ready_fd].close()
+                    # Should we close this pipe? In the case of stdout or stderr
+                    # bad things happen if parent closes
+                    if close_output(ready_fd):
+                        os.close(ready_fd)
+                    rds.remove(ready_fd)
+            for ready_fd in writable:
+                # TODO for now it's OK for the input reads to block since
+                # input generally happens first, but we should consider how to
+                # support non-blocking stream inputs in the future.
+                buf = inputs[ready_fd].read(BUF_LEN)
+
+                if buf:
+                    os.write(ready_fd, buf)
+                else:   # end of stream
+                    wds.remove(ready_fd)
+                    os.close(ready_fd)
+
+            wds, fifos, inputs = _open_ipipes(wds, fifos, inputs)
+            # all pipes empty?
+            empty = (not rds or not readable) and (not wds or not writable)
+
+            if (empty and exit):
+                break
+
+    finally:
+        _close_pipes(rds, wds, inputs, outputs, close_output)
+
+
 def run_process(command, output_pipes=None, input_pipes=None):
     """
     Run a subprocess, and listen for its outputs on various pipes.
@@ -285,11 +359,12 @@ def run_process(command, output_pipes=None, input_pipes=None):
         must be opened for reading before they can be opened for writing
     :type input_pipes: dict
     """
-    BUF_LEN = 65536
-    input_pipes = input_pipes or {}
-    output_pipes = output_pipes or {}
+
     p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
+    input_pipes = input_pipes or {}
+    output_pipes = output_pipes or {}
 
     # we now know subprocess stdout and stderr filenos, so bind the adapters
     stdout = p.stdout.fileno()
@@ -300,51 +375,24 @@ def run_process(command, output_pipes=None, input_pipes=None):
     output_pipes[stderr] = output_pipes.get(
         '_stderr', WritePipeAdapter({}, sys.stderr))
 
-    rds = [fd for fd in output_pipes.keys() if isinstance(fd, int)]
-    wds, fifos = _setup_input_pipes(input_pipes, stdin)
+    # Special case for _stdin
+    if '_stdin' in input_pipes:
+        input_pipes[stdin] = input_pipes['_stdin']
+
+    def exit_condition():
+        status = p.poll()
+        return status is not None
+
+    def close_output_pipe(pipe):
+        return pipe not in (stdout, stderr)
 
     try:
-        while True:
-            status = p.poll()
-            # get ready pipes
-            readable, writable, _ = select.select(rds, wds, (), 0)
-
-            for ready_pipe in readable:
-                buf = os.read(ready_pipe, BUF_LEN)
-
-                if buf:
-                    output_pipes[ready_pipe].write(buf)
-                else:
-                    output_pipes[ready_pipe].close()
-                    if ready_pipe not in (stdout, stderr):
-                        # bad things happen if parent closes stdout or stderr
-                        os.close(ready_pipe)
-                    rds.remove(ready_pipe)
-            for ready_pipe in writable:
-                # TODO for now it's OK for the input reads to block since
-                # input generally happens first, but we should consider how to
-                # support non-blocking stream inputs in the future.
-                buf = input_pipes[ready_pipe].read(BUF_LEN)
-
-                if buf:
-                    os.write(ready_pipe, buf)
-                else:   # end of stream
-                    wds.remove(ready_pipe)
-                    os.close(ready_pipe)
-
-            wds, fifos, input_pipes = _open_ipipes(wds, fifos, input_pipes)
-            empty = (not rds or not readable) and (not wds or not writable)
-            if empty and status is not None:
-                # all pipes are empty and the process has returned, we are done
-                break
-            elif not rds and not wds and status is None:
-                # all pipes are closed but the process is still running
-                p.wait()
+        select_loop(exit_condition=exit_condition,
+                    close_output=close_output_pipe,
+                    outputs=output_pipes, inputs=input_pipes)
     except Exception:
         p.kill()  # kill child process if something went wrong on our end
         raise
-    finally:
-        _close_pipes(rds, wds, input_pipes, output_pipes, stdout, stderr)
 
     return p
 
@@ -450,3 +498,39 @@ class AccumulateDictAdapter(StreamPushAdapter):
 
     def write(self, buf):
         self.dictionary[self.key] += buf
+
+
+class JobProgressAdapter(StreamPushAdapter):
+    def __init__(self, job_manager):
+        """
+        This reads structured JSON documents one line at a time and sends
+        them as progress events via the JobManager.
+
+        :param job_manager: The job manager to use to send the progress events.
+        :type job_manager: girder_worker.utils.JobManager
+        """
+        super(JobProgressAdapter, self).__init__(None)
+
+        self.job_manager = job_manager
+        self._buf = b''
+
+    def write(self, buf):
+        lines = buf.split(b'\n')
+        if self._buf:
+            lines[0] = self._buf + lines[0]
+        self._buf = lines[-1]
+
+        for line in lines[:-1]:
+            self._parse(line)
+
+    def _parse(self, line):
+        try:
+            doc = json.loads(line.decode('utf8'))
+        except ValueError:
+            return  # TODO log?
+
+        if not isinstance(doc, dict):
+            return  # TODO log?
+
+        self.job_manager.updateProgress(
+            total=doc.get('total'), current=doc.get('current'), message=doc.get('message'))
