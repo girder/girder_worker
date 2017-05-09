@@ -185,7 +185,7 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(args[1][-1], '--bar')
 
             args, kwargs = run2
-            self.assertEqual(args[0], 'busybox')
+            self.assertEqual(args[0], 'busybox:latest')
 
             self.assertTrue(kwargs['remove'])
             six.assertRegex(self, kwargs['volumes'].keys()[0], _tmp + '/.*')
@@ -238,8 +238,6 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
             args = docker_client_mock.containers.run.call_args_list[0][0]
             self.assertEqual(args[0], 'test/test:latest')
-            #             self.assertEqual(mockPopen.call_count, 3)
-#             cmd2 = mockPopen.call_args_list[1][1]['args']
             self.assertEqual(args[1], [
                 '-f',
                 '/mnt/girder_worker/data/file.txt',
