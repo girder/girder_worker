@@ -103,7 +103,7 @@ def task_cleanup(e):
         args = ['chmod', '-R', 'a+rw', DATA_VOLUME]
 
         try:
-            client.containers.run('busybox', args, **config)
+            client.containers.run('busybox:latest', args, **config)
         except DockerException as dex:
             logger.error('Error setting perms on docker tempdir %s.' % tmpdir)
             logger.exception(dex)
