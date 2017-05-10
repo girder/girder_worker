@@ -16,7 +16,7 @@ def _pull_image(image):
     """
     Pulls the specified Docker image onto this worker.
     """
-    client = docker.from_env()
+    client = docker.from_env(version='auto')
     try:
         client.images.pull(image)
     except DockerException as dex:
@@ -163,7 +163,7 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, p
 
 def _run_container(image, args, **kwargs):
     # TODO we could allow configuration of non default socket
-    client = docker.from_env()
+    client = docker.from_env(version='auto')
 
     logger.info('Running container: image: %s args: %s kwargs: %s' % (image, args, kwargs))
     try:
