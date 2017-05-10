@@ -88,7 +88,7 @@ def task_cleanup(e):
     from .executor import DATA_VOLUME
     if e.info['task']['mode'] == 'docker' and '_tempdir' in e.info['kwargs']:
         tmpdir = e.info['kwargs']['_tempdir']
-        client = docker.from_env()
+        client = docker.from_env(version='auto')
         config = {
             'tty': True,
             'volumes': {
