@@ -1,7 +1,11 @@
 import girder_client
+import json
 import os
 from girder_worker import config
 from six import StringIO
+
+# Make a sensible limit for metadata outputs
+MAX_METADATA_LENGTH = 4 * 1024 * 1024  # 4MB
 
 
 def _get_cache_settings(spec):
@@ -103,6 +107,61 @@ def fetch_handler(spec, **kwargs):
         raise Exception('Invalid Girder push target: ' + target)
 
 
+def _require_name(name, spec):
+    if not name and not spec.get('name'):
+        raise Exception('Girder output missing "name" field.')
+    return name or spec['name']
+
+
+def _send_to_girder(client, spec, stream, size, reference, name=None):
+    """
+    Send an output to Girder as either a file or as metadata on an item
+    or folder.
+
+    :param client: The Girder client.
+    :param spec: The output binding.
+    :param stream: The stream holding the contents of the output data.
+    :param size: Size in bytes of the output data
+    :param reference: Arbitrary reference string to be passed to the server.
+    :param name: Name of the created resource (not required for metadata outputs).
+    """
+    if spec.get('as_metadata') is True:
+        if size > MAX_METADATA_LENGTH:
+            raise Exception('Girder metadata output too large (%s bytes).' % size)
+
+        try:
+            obj = json.load(stream)
+        except (ValueError, TypeError):
+            raise Exception('Invalid JSON for metadata output')
+
+        if not isinstance(obj, dict):
+            raise Exception('Output must be a JSON Object (got type %s).' % type(obj))
+
+        if 'parent_id' in spec:
+            # We need to create a new item and attach this metadata to it
+            name = _require_name(name, spec)
+            itemId = client.createItem(parentFolderId=spec['parent_id'], name=name)['_id']
+            client.addMetadataToItem(itemId, obj)
+        elif 'item_id' in spec:
+            # We need to attach this as metadata on an existing resource
+            client.addMetadataToItem(spec['item_id'], obj)
+        else:
+            raise Exception('Girder metadata outputs require a parent_id or resource_id.')
+    else:
+        if 'parent_id' not in spec:
+            raise Exception('Must pass parent ID for Girder file outputs.')
+
+        name = _require_name(name, spec)
+
+        parent_type = spec.get('parent_type', 'folder')
+        file = client.uploadFile(
+            parentId=spec['parent_id'], stream=stream, size=size, parentType=parent_type,
+            name=name, reference=reference)
+
+        if 'metadata' in spec:
+            client.addMetadataToItem(file['itemId'], spec['metadata'])
+
+
 def push_handler(data, spec, **kwargs):
     reference = spec.get('reference')
 
@@ -110,30 +169,20 @@ def push_handler(data, spec, **kwargs):
         # Check for reference in the job manager if none in the output spec
         reference = getattr(kwargs.get('_job_manager'), 'reference', None)
 
-    parent_type = spec.get('parent_type', 'folder')
     task_output = kwargs.get('task_output', {})
     target = task_output.get('target', 'filepath')
-
-    if 'parent_id' not in spec:
-        raise Exception('Must pass parent ID for girder outputs.')
 
     client = _init_client(spec, require_token=True)
 
     if target == 'memory':
-        if not spec.get('name'):
-            raise Exception('Girder uploads from memory objects must '
-                            'explicitly pass a "name" field.')
-        fd = StringIO(data)
-        client.uploadFile(parentId=spec['parent_id'], stream=fd, size=len(data),
-                          parentType=parent_type, name=spec['name'],
-                          reference=reference)
+        _send_to_girder(
+            client=client, spec=spec, stream=StringIO(data), size=len(data), reference=reference)
     elif target == 'filepath':
         name = spec.get('name') or os.path.basename(data)
         size = os.path.getsize(data)
         with open(data, 'rb') as fd:
-            client.uploadFile(parentId=spec['parent_id'], stream=fd, size=size,
-                              parentType=parent_type, name=name,
-                              reference=reference)
+            _send_to_girder(
+                client=client, spec=spec, stream=fd, size=size, reference=reference, name=name)
     else:
         raise Exception('Invalid Girder push target: ' + target)
 
