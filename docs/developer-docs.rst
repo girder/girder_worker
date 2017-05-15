@@ -364,7 +364,7 @@ An example of its use is shown below:
     from girder_worker.app import app
     from girder_work.utils import Task
 
-    @app.task(base=Task, bind=True)
+    @app.task(bind=True)
     def my_cancellable_task(task):
       while not self.cancelled:
          # Do work
