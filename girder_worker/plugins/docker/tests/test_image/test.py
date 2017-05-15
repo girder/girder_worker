@@ -1,4 +1,6 @@
 import sys
+import time
+import signal
 
 if len(sys.argv) == 3:
     mode = sys.argv[1]
@@ -12,6 +14,14 @@ if len(sys.argv) == 3:
     elif mode == 'input_pipe':
         with open('/mnt/girder_worker/data/input_pipe', 'r') as fp:
             print(fp.read())
+    elif mode == 'sigkill':
+        time.sleep(30)
+    elif mode == 'sigterm':
+        def _signal_handler(signal, frame):
+            sys.exit(0)
+        # Install signal handler
+        signal.signal(signal.SIGTERM, _signal_handler)
+        time.sleep(30)
     else:
         sys.stderr.write('Invalid test mode: "%s".\n' % mode)
         sys.exit(-1)
