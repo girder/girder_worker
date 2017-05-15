@@ -3,6 +3,7 @@ import re
 import sys
 import docker
 from docker.errors import DockerException
+from requests.exceptions import ReadTimeout
 
 from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
@@ -173,7 +174,7 @@ def _run_container(image, args, **kwargs):
         raise
 
 
-def _run_select_loop(container, opipes, ipipes):
+def _run_select_loop(celery_task, container, opipes, ipipes):
     stdout = None
     stderr = None
     try:
@@ -192,7 +193,7 @@ def _run_select_loop(container, opipes, ipipes):
 
         def exit_condition():
             container.reload()
-            return container.status in ['exited', 'dead']
+            return container.status in ['exited', 'dead'] or celery_task.canceled
 
         def close_output(output):
             return output not in (stdout.fileno(), stderr.fileno())
@@ -205,6 +206,27 @@ def _run_select_loop(container, opipes, ipipes):
         # Run select loop
         utils.select_loop(exit_condition=exit_condition, close_output=close_output,
                           outputs=opipes, inputs=ipipes)
+
+        if celery_task.canceled:
+            try:
+                container.stop()
+            # Catch the ReadTimeout from requests and wait for container to
+            # exit. See https://github.com/docker/docker-py/issues/1374 for
+            # more details.
+            except ReadTimeout:
+                tries = 10
+                while tries > 0:
+                    container.reload()
+                    if container.status == 'exited':
+                        break
+
+                if container.status != 'exited':
+                    msg = 'Unable to stop container: %s' % container.id
+                    logger.error(msg)
+            except DockerException as dex:
+                logger.error(dex)
+                raise
+
     finally:
         # Close our stdout and stderr sockets
         if stdout:
@@ -215,7 +237,7 @@ def _run_select_loop(container, opipes, ipipes):
 
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
-
+    celery_task = kwargs.get('_celery_task')
     if task.get('pull_image', True):
         logger.info('Pulling Docker image: %s', image)
         _pull_image(image)
@@ -261,7 +283,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     container = _run_container(image, args, **run_kwargs)
 
     try:
-        _run_select_loop(container, opipes, ipipes)
+        _run_select_loop(celery_task, container, opipes, ipipes)
     finally:
         if container and kwargs.get('_rm_container'):
             container.remove()
