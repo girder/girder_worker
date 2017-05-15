@@ -4,6 +4,7 @@ from celery import Celery, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success, worker_ready)
+from girder_client import GirderClient
 from .utils import JobStatus
 
 
@@ -83,6 +84,11 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
             raise JobSpecNotFound
 
         task.job_manager = deserialize_job_info_spec(**jobSpec)
+
+        # Trim off the /job/jobId
+        task.api_url = '/'.join(jobSpec['url'].split('/')[:-2])
+        task.girder_client = GirderClient(apiUrl=task.api_url)
+        task.girder_client.token = jobSpec['headers']['Girder-Token']
 
         _update_status(task, JobStatus.RUNNING)
 
