@@ -55,28 +55,29 @@ class TestGirderIo(unittest.TestCase):
                     'created': '2000-01-01 00:00:00',
                     'size': 13
                 }])
-            elif url.path == api_root + '/item/new_item_id/files':
+            if url.path == api_root + '/item/new_item_id/files':
                 return '[]'
-            elif url.path == api_root + '/file/file_id/download':
+            if url.path == api_root + '/file/file_id/download':
                 file_downloaded.append(1)
                 return 'file_contents'
-            elif url.path == api_root + '/file' and request.method == 'POST':
+            if url.path == api_root + '/file' and request.method == 'POST':
                 upload_initialized.append(1)
                 return json.dumps({
                     '_id': 'upload_id',
                     'created': '2000-01-01 00:00:00',
                 })
-            elif (url.path == api_root + '/file/chunk' and
-                  request.method == 'POST'):
+            if url.path == api_root + '/file/chunk' and request.method == 'POST':
                 file_uploaded.append(1)
                 return json.dumps({
                     '_id': 'new_file_id',
                     'created': '2000-01-01 00:00:00',
                     'name': 'test.txt'
                 })
-            else:
-                raise Exception('Unexpected %s request to %s.' % (
-                    request.method, url.path))
+            if url.path == api_root + '/describe' and request.method == 'GET':
+                return json.dumps({
+                    'info': {'version': '2.2.0'}
+                })
+            raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
 
         inputs = {
             'input': {
@@ -152,18 +153,17 @@ class TestGirderIo(unittest.TestCase):
                     'created': '2000-01-01 00:00:00',
                     'size': 13
                 }])
-            elif url.path == api_root + '/item/new_item_id/files':
+            if url.path == api_root + '/item/new_item_id/files':
                 return '[]'
-            elif url.path == api_root + '/file/file_id/download':
+            if url.path == api_root + '/file/file_id/download':
                 return 'file_contents'
-            elif url.path == api_root + '/file' and request.method == 'POST':
+            if url.path == api_root + '/file' and request.method == 'POST':
                 upload_initialized.append(1)
                 return json.dumps({
                     '_id': 'upload_id',
                     'created': '2000-01-01 00:00:00',
                 })
-            elif (url.path == api_root + '/file/chunk' and
-                  request.method == 'POST'):
+            if url.path == api_root + '/file/chunk' and request.method == 'POST':
                 self.assertTrue('file_contents' in request.body)
                 chunk_sent.append(1)
                 return json.dumps({
@@ -171,9 +171,11 @@ class TestGirderIo(unittest.TestCase):
                     'created': '2000-01-01 00:00:00',
                     'name': 'test.txt'
                 })
-            else:
-                raise Exception('Unexpected %s request to %s.' % (
-                    request.method, url.path))
+            if url.path == api_root + '/describe' and request.method == 'GET':
+                return json.dumps({
+                    'info': {'version': '2.2.0'}
+                })
+            raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
 
         inputs = {
             'input': {
@@ -225,8 +227,7 @@ class TestGirderIo(unittest.TestCase):
         }
 
         with httmock.HTTMock(girder_mock):
-            outputs = girder_worker.tasks.run(task, inputs=inputs,
-                                              outputs=outputs)
+            girder_worker.tasks.run(task, inputs=inputs, outputs=outputs)
             self.assertEqual(chunk_sent, [1])
             self.assertEqual(upload_initialized, [1])
 
@@ -263,26 +264,27 @@ class TestGirderIo(unittest.TestCase):
                     'created': '2000-01-01 00:00:00',
                     'size': 13
                 }])
-            elif url.path == api_root + '/item/new_item_id/files':
+            if url.path == api_root + '/item/new_item_id/files':
                 return '[]'
-            elif url.path == api_root + '/file/file_id/download':
+            if url.path == api_root + '/file/file_id/download':
                 return 'file_contents'
-            elif url.path == api_root + '/file' and request.method == 'POST':
+            if url.path == api_root + '/file' and request.method == 'POST':
                 return json.dumps({
                     '_id': 'upload_id',
                     'created': '2000-01-01 00:00:00',
                 })
-            elif (url.path == api_root + '/file/chunk' and
-                  request.method == 'POST'):
+            if url.path == api_root + '/file/chunk' and request.method == 'POST':
                 self.assertTrue('file_contents' in request.body)
                 return json.dumps({
                     '_id': 'new_file_id',
                     'created': '2000-01-01 00:00:00',
                     'name': 'test.txt'
                 })
-            else:
-                raise Exception('Unexpected %s request to %s.' % (
-                    request.method, url.path))
+            if url.path == api_root + '/describe' and request.method == 'GET':
+                return json.dumps({
+                    'info': {'version': '2.2.0'}
+                })
+            raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
 
         # Test that api_url overrides the other values
         self.api_root = '/foo/bar/api'
@@ -417,9 +419,11 @@ class TestGirderIo(unittest.TestCase):
                 return 'file_contents'
             if url.path == api_root + '/file/file2_id/download':
                 return 'foo'
-            else:
-                raise Exception('Unexpected %s request to %s.' % (
-                    request.method, url.path))
+            if url.path == api_root + '/describe' and request.method == 'GET':
+                return json.dumps({
+                    'info': {'version': '2.2.0'}
+                })
+            raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
 
         with httmock.HTTMock(girder_mock):
             outputs = girder_worker.tasks.run(task, inputs=inputs,
