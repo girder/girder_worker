@@ -443,6 +443,102 @@ class TestGirderIo(unittest.TestCase):
             with open(file1_path, 'rb') as fd:
                 self.assertEqual(fd.read(), 'file_contents')
 
+    def test_metadata_output(self):
+        task = {
+            'inputs': [{'name': 'input', 'type': 'string', 'format': 'text'}],
+            'outputs': [{'name': 'out', 'type': 'string', 'format': 'text', 'target': 'memory'}],
+            'script': 'out = input',
+            'mode': 'python'
+        }
+
+        inputs = {
+            'input': {
+                'mode': 'inline',
+                'data': json.dumps({
+                    'hello': 'world'
+                })
+            }
+        }
+
+        # Test adding an output as metadata on an item
+        outputs = {
+            'out': {
+                'mode': 'girder',
+                'as_metadata': True,
+                'item_id': 'my_item_id',
+                'api_url': 'https://hello.com:1234/foo/bar/api',
+                'token': 'foo'
+            }
+        }
+
+        metadata_updates = []
+        file_creates = []
+
+        @httmock.all_requests
+        def girder_mock(url, request):
+            api_root = '/foo/bar/api'
+
+            if url.path == api_root + '/file/chunk' and request.method == 'POST':
+                return json.dumps({
+                    '_id': 'my_file_id',
+                    'itemId': 'my_item_id',
+                    'size': 9,
+                    'name': 'file name'
+                })
+            if url.path == api_root + '/file' and request.method == 'POST':
+                file_creates.append(request)
+                return json.dumps({
+                    '_id': 'my_file_id',
+                    'offset': 0
+                })
+            if url.path == api_root + '/item/my_item_id/metadata':
+                metadata_updates.append(json.loads(request.body))
+                return '{}'  # we don't look at the return value for the moment
+            if url.path == api_root + '/describe' and request.method == 'GET':
+                return json.dumps({
+                    'info': {'version': '2.2.0'}
+                })
+            raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
+
+        with httmock.HTTMock(girder_mock):
+            girder_worker.tasks.run(
+                task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
+
+            self.assertEqual(metadata_updates, [{
+                'hello': 'world'
+            }])
+
+        # Test adding metadata on an item output
+        metadata_updates = []
+
+        inputs['input'] = {
+            'mode': 'inline',
+            'data': 'file data'
+        }
+
+        outputs['out'] = {
+            'mode': 'girder',
+            'metadata': {
+                'some': 'other',
+                'metadata': 'values'
+            },
+            'parent_id': 'my_folder_id',
+            'parent_type': 'folder',
+            'api_url': 'https://hello.com:1234/foo/bar/api',
+            'name': 'my item',
+            'token': 'foo'
+        }
+
+        with httmock.HTTMock(girder_mock):
+            girder_worker.tasks.run(
+                task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
+
+            self.assertEqual(len(file_creates), 1)
+            self.assertEqual(metadata_updates, [{
+                'some': 'other',
+                'metadata': 'values'
+            }])
+
 
 if __name__ == '__main__':
     unittest.main()
