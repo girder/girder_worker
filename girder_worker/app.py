@@ -17,7 +17,7 @@ class Task(celery.Task):
     _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
 
-    def job_description(self, user=None, args=(), kwargs=()):
+    def job_description(self, user=None, args=(), kwargs=(), task_id=None):
         # Note that celery_handler should not be bound
         # to any schedule event in girder. This prevents
         # the job from being accidentally scheduled and being
@@ -30,7 +30,8 @@ class Task(celery.Task):
             'user': user,
             'args': args,
             'kwargs': kwargs,
-            'otherFields': self._girder_job_other_fields
+            'otherFields': dict(celeryTaskId=task_id,
+                                **self._girder_job_other_fields)
         }
 
     def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
@@ -47,7 +48,8 @@ class Task(celery.Task):
             user = options.pop('girder_user', getCurrentUser())
             token = options.pop('girder_token', None)
 
-            job = job_model.createJob(**self.job_description(user, args, kwargs))
+            job = job_model.createJob(**self.job_description(
+                user, args, kwargs, task_id))
 
             # If we don't have a token from girder_token kwarg,  use
             # the job token instead. Otherwise no token
