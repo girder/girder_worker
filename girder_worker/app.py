@@ -4,8 +4,38 @@ import celery
 from celery import Celery, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
-                            task_failure, task_success, worker_ready)
+                            task_failure, task_success,
+                            worker_ready, before_task_publish)
+from celery.result import AsyncResult
 from .utils import JobStatus
+
+
+class GirderAsyncResult(AsyncResult):
+    def __init__(self, *args, **kwargs):
+        self._job = None
+        super(GirderAsyncResult, self).__init__(*args, **kwargs)
+
+    @property
+    def job(self):
+        if self._job is None:
+            try:
+                from girder.utility.model_importer import ModelImporter
+                job_model = ModelImporter.model('job', 'jobs')
+
+                try:
+                    return list(job_model.find({'celeryTaskId': self.task_id}))[0]
+                except IndexError:
+                    return None
+
+            except ImportError:
+                # Make a rest request to get the job info
+                return None
+
+        return self._job
+
+    @job.setter
+    def job(self, value):
+        self._job = value
 
 
 class Task(celery.Task):
@@ -17,25 +47,42 @@ class Task(celery.Task):
     _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
 
-    def job_description(self, user=None, args=(), kwargs=(), task_id=None):
-        # Note that celery_handler should not be bound
-        # to any schedule event in girder. This prevents
-        # the job from being accidentally scheduled and being
-        # passed to the 'worker_handler' code
-        return {
-            'title': self._girder_job_title,
-            'type': self._girder_job_type,
-            'handler': self._girder_job_handler,
-            'public': self._girder_job_public,
-            'user': user,
-            'args': args,
-            'kwargs': kwargs,
-            'otherFields': dict(celeryTaskId=task_id,
-                                **self._girder_job_other_fields)
-        }
+    def AsyncResult(self, task_id, **kwargs):
+        return GirderAsyncResult(task_id, backend=self.backend,
+                                 task_name=self.name, **kwargs)
 
     def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
                     link=None, link_error=None, shadow=None, **options):
+
+        # Pass girder related job information through to
+        # the signals by adding this information to options['headers']
+        headers = {}
+
+        if 'girder_user' in options:
+            headers['girder_user'] = options.pop('girder_user')
+
+        headers['girder_token'] = options.pop('girder_token', None)
+        headers['girder_job_title'] = self._girder_job_title
+        headers['girder_job_type'] = self._girder_job_type
+        headers['girder_job_public'] = self._girder_job_public
+        headers['girder_job_handler'] = self._girder_job_handler
+        headers['girder_job_other_fields'] = self._girder_job_other_fields
+
+        if 'headers' in options:
+            options['headers'].update(headers)
+        else:
+            options['headers'] = headers
+
+        return super(Task, self).apply_async(
+            args=args, kwargs=kwargs, task_id=task_id, producer=producer,
+            link=link, link_error=link_error, shadow=shadow, **options)
+
+
+@before_task_publish.connect
+def girder_before_task_publish(sender=None, body=None, exchange=None,
+                               routing_key=None, headers=None, properties=None,
+                               declare=None, retry_policy=None, **kwargs):
+    if 'jobInfoSpec' not in headers:
         try:
             # If we can import these we assume our producer is girder
             # We can create the job model's directly
@@ -45,44 +92,35 @@ class Task(celery.Task):
 
             job_model = ModelImporter.model('job', 'jobs')
 
-            user = options.pop('girder_user', getCurrentUser())
-            token = options.pop('girder_token', None)
+            user = headers.pop('girder_user', getCurrentUser())
+            token = headers.pop('girder_token', None)
 
-            job = job_model.createJob(**self.job_description(
-                user, args, kwargs, task_id))
+            task_args, task_kwargs = body[0], body[1]
 
+            job = job_model.createJob(
+                **{'title': headers.get('girder_job_title', Task._girder_job_title),
+                   'type': headers.get('girder_job_type', Task._girder_job_type),
+                   'handler': headers.get('girder_job_handler', Task._girder_job_handler),
+                   'public': headers.get('girder_job_public', Task._girder_job_public),
+                   'user': user,
+                   'args': task_args,
+                   'kwargs': task_kwargs,
+                   'otherFields': dict(celeryTaskId=headers['id'],
+                                       **headers.get('girder_job_other_fields',
+                                                     Task._girder_job_other_fields))})
             # If we don't have a token from girder_token kwarg,  use
             # the job token instead. Otherwise no token
             if token is None:
                 token = job.get('token', None)
 
-            headers = {
-                'jobInfoSpec': utils.jobInfoSpec(job, token),
-                'apiUrl': utils.getWorkerApiUrl()
-            }
-
-            if 'headers' in options:
-                options['headers'].update(headers)
-            else:
-                options['headers'] = headers
-
-            async_result = super(Task, self).apply_async(
-                args=args, kwargs=kwargs, task_id=task_id, producer=producer,
-                link=link, link_error=link_error, shadow=shadow, **options)
-
-            async_result.job = job
-            return async_result
+            headers['jobInfoSpec'] = utils.jobInfoSpec(job, token)
+            headers['apiUrl'] = utils.getWorkerApiUrl()
 
         except ImportError:
             # TODO: Check for self.job_manager to see if we have
             #       tokens etc to contact girder and create a job model
             #       we may be in a chain or a chord or some-such
-            async_result = super(Task, self).apply_async(
-                args=args, kwargs=kwargs, task_id=task_id, producer=producer,
-                link=link, link_error=link_error, shadow=shadow, **options)
-
-            async_result.job = None
-            return async_result
+            pass
 
 
 @worker_ready.connect
