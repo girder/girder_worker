@@ -47,6 +47,8 @@ class Task(celery.Task):
     _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
 
+    special_headers = ['girder_token', 'girder_user']
+
     def AsyncResult(self, task_id, **kwargs):
         return GirderAsyncResult(task_id, backend=self.backend,
                                  task_name=self.name, **kwargs)
@@ -58,10 +60,16 @@ class Task(celery.Task):
         # the signals by adding this information to options['headers']
         headers = {}
 
-        if 'girder_user' in options:
-            headers['girder_user'] = options.pop('girder_user')
+        # Certain keys may show up in either kwargs (e.g. via .delay(girder_token='foo')
+        # or in options (e.g.  .apply_async(args=(), kwargs={}, girder_token='foo')
+        # For those special headers,  pop them out of kwargs or options and put them
+        # in headers so they can be picked up by the before_task_publish signal.
+        for key in self.special_headers:
+            if key in kwargs:
+                headers[key] = kwargs.pop(key)
+            if key in options:
+                headers[key] = options.pop(key)
 
-        headers['girder_token'] = options.pop('girder_token', None)
         headers['girder_job_title'] = self._girder_job_title
         headers['girder_job_type'] = self._girder_job_type
         headers['girder_job_public'] = self._girder_job_public
