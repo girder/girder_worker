@@ -65,7 +65,7 @@ class Task(celery.Task):
         # For those special headers,  pop them out of kwargs or options and put them
         # in headers so they can be picked up by the before_task_publish signal.
         for key in self.special_headers:
-            if key in kwargs:
+            if kwargs is not None and key in kwargs:
                 headers[key] = kwargs.pop(key)
             if key in options:
                 headers[key] = options.pop(key)
