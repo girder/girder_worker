@@ -19,11 +19,18 @@ class GirderAsyncResult(AsyncResult):
     def job(self):
         if self._job is None:
             try:
+                # GirderAsyncResult() objects may be instantiated in either a girder REST
+                # request,  or in some other context (e.g. from a running girder_worker
+                # instance if there is a chain).  If we are in a REST request we should
+                # have access to the girder package and can directly access the database
+                # If we are in a girder_worker context (or even in python console or a
+                # testing context) then we should get an ImportError and we can make a REST
+                # request to get the information we need.
                 from girder.utility.model_importer import ModelImporter
                 job_model = ModelImporter.model('job', 'jobs')
 
                 try:
-                    return list(job_model.find({'celeryTaskId': self.task_id}))[0]
+                    return job_model.findOne({'celeryTaskId': self.task_id})
                 except IndexError:
                     return None
 
@@ -32,10 +39,6 @@ class GirderAsyncResult(AsyncResult):
                 return None
 
         return self._job
-
-    @job.setter
-    def job(self, value):
-        self._job = value
 
 
 class Task(celery.Task):
@@ -92,8 +95,11 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                                declare=None, retry_policy=None, **kwargs):
     if 'jobInfoSpec' not in headers:
         try:
-            # If we can import these we assume our producer is girder
-            # We can create the job model's directly
+            # Note: If we can import these objects from the girder packages we
+            # assume our producer is in a girder REST request. This allows
+            # us to create the job model's directly. Otherwise there will be an
+            # ImportError and we can create the job via a REST request using
+            # the jobInfoSpec in headers.
             from girder.utility.model_importer import ModelImporter
             from girder.plugins.worker import utils
             from girder.api.rest import getCurrentUser
