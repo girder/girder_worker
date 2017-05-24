@@ -54,7 +54,7 @@ class Task(celery.Task):
 
     def AsyncResult(self, task_id, **kwargs):
         return GirderAsyncResult(task_id, backend=self.backend,
-                                 task_name=self.name, **kwargs)
+                                 task_name=self.name, app=self.app, **kwargs)
 
     def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
                     link=None, link_error=None, shadow=None, **options):
