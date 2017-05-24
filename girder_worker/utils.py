@@ -3,6 +3,36 @@ import time
 import sys
 
 
+def girder_job(title=None, type=None, public=False,
+               handler='celery_handler', otherFields=None):
+    """Decorator that populates a girder_worker celery task with
+    girder's job metadata.
+
+    :param title: The title of the job in girder.
+    :type title: str
+    :param type: The type of the job in girder.
+    :type type: str
+    :param public: Public read access flag for girder.
+    :type public: bool
+    :param handler: If this job should be handled by a specific handler,
+        'celery_handler' by default cannot be scheduled in girder.
+    :param otherFields: Any additional fields to set on the job in girder.
+    :type otherFields: dict
+    """
+
+    otherFields = otherFields or {}
+
+    def _girder_job(task_obj):
+        task_obj._girder_job_title = title
+        task_obj._girder_job_type = type
+        task_obj._girder_job_public = public
+        task_obj._girder_job_handler = handler
+        task_obj._girder_job_other_fields = otherFields
+        return task_obj
+
+    return _girder_job
+
+
 class JobStatus(object):
     INACTIVE = 0
     QUEUED = 1
