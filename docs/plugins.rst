@@ -289,6 +289,65 @@ new item with the same name as the file), or into an existing item.
         (, "reference": <arbitrary reference string to pass to the server>)
     }
 
+Metadata outputs
+****************
+
+In addition to outputting blob data into Girder files, you may also output structured
+metadata that can be attached to an item. You can upload an output *as* metadata onto a
+new or existing item, or attach a pre-defined set of metadata to an output item that is uploaded as
+a file.
+
+To push an output as the metadata on an *existing* item, use the ``as_metadata`` field with the
+``item_id`` field set in your output binding:
+
+.. code-block:: none
+
+    {
+        "mode": "girder",
+        "as_metadata": true,
+        "item_id": <ID of the target item>,
+        "api_url": "...",
+        "token": "..."
+    }
+
+To push an output as the metadata on a *new* item, use ``as_metadata`` with the ``parent_id``
+field set, and a ``name`` field. The ``name`` is not required if the corresponding task output has
+``"target": "filepath"``, in which case the filename will be used as the name for the new item.
+
+.. code-block:: none
+
+    {
+        "mode": "girder",
+        "as_metadata": true,
+        "parent_id": <ID of the parent folder>,
+        "name": "My new metadata item",
+        "api_url": "...",
+        "token": "..."
+    }
+
+
+.. note:: The ``as_metadata`` behavior will only work if your output data is a JSON Object.
+
+To add additional pre-defined metadata fields to a normal Girder IO output, you can use the
+``metadata`` field on a normal Girder IO output. The ``metadata`` field must contain a JSON object,
+and its value will be set as the metadata on the output item.
+
+.. code-block:: none
+
+    {
+        "mode": "girder",
+        "metadata": {
+            "some": "other",
+            "metadata": "values"
+        },
+        "parent_id": <ID of the parent folder>,
+        "parent_type": "folder",
+        "name": "My output data",
+        "token": "...",
+        "api_url": "..."
+    }
+
+
 Cache Configuration
 *******************
 
