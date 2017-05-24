@@ -498,6 +498,10 @@ class TestGirderIo(unittest.TestCase):
                 return json.dumps({
                     'info': {'version': '2.2.0'}
                 })
+            if url.path == api_root + '/item' and request.method == 'POST':
+                return json.dumps({
+                    '_id': 'my_item_id'
+                })
             raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
 
         with httmock.HTTMock(girder_mock):
@@ -538,6 +542,36 @@ class TestGirderIo(unittest.TestCase):
                 'some': 'other',
                 'metadata': 'values'
             }])
+
+        # Test filepath target metadata output
+        task['outputs'][0]['target'] = 'filepath'
+        path = os.path.join(_tmp, 'out.txt')
+        with open(path, 'w') as fd:
+            json.dump({
+                'filepath': 'test'
+            }, fd)
+
+        inputs['input'] = {
+            'mode': 'inline',
+            'data': path
+        }
+
+        outputs['out'] = {
+            'mode': 'girder',
+            'as_metadata': True,
+            'parent_id': 'my_folder_id',
+            'parent_type': 'folder',
+            'api_url': 'https://hello.com:1234/foo/bar/api',
+            'token': 'foo'
+        }
+
+        metadata_updates = []
+
+        with httmock.HTTMock(girder_mock):
+            girder_worker.tasks.run(
+                task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
+
+            self.assertEqual(metadata_updates, [{'filepath': 'test'}])
 
 
 if __name__ == '__main__':
