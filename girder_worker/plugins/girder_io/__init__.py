@@ -146,7 +146,7 @@ def _send_to_girder(client, spec, stream, size, reference, name=None):
             # We need to attach this as metadata on an existing resource
             client.addMetadataToItem(spec['item_id'], obj)
         else:
-            raise Exception('Girder metadata outputs require a parent_id or resource_id.')
+            raise Exception('Girder metadata outputs require a parent_id or item_id.')
     else:
         if 'parent_id' not in spec:
             raise Exception('Must pass parent ID for Girder file outputs.')
