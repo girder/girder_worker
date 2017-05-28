@@ -1,2 +1,17 @@
 FROM girder/girder_worker:latest
 MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
+
+USER root
+
+RUN sed -i  's|^broker =.*$|broker = amqp://guest:guest@rabbit/|' /girder_worker/girder_worker/worker.local.cfg
+
+RUN apt update && apt install -y sudo
+RUN pip install docker
+
+# Make sure the egg-link is installed in site-packages at build-time
+ADD common_tasks /girder_worker/tests/integration/common_tasks
+RUN pip install -e /girder_worker/tests/integration/common_tasks
+
+VOLUME /girder_worker
+
+ENTRYPOINT ["sudo", "-u", "worker", "python", "-m", "girder_worker", "-l", "info"]a

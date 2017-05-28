@@ -1,14 +1,24 @@
-version: "3"
+version: '3'
 services:
   girder:
     image: girder/girder:gw_integration_test
+    container_name: gw_integration_test_girder
     volumes:
       - './integration_test_endpoints/:/girder/plugins/integration_test_endpoints'
       - './scripts:/scripts'
+      - '../../:/girder_worker'
     ports:
       - 8989:8989
     depends_on:
-      - "mongo"
+      - 'mongo'
+
+  girder_worker:
+    image: girder/girder_worker:gw_integration_test
+    container_name: gw_integration_test_girder_worker
+    volumes:
+      - '../../:/girder_worker'
+    depends_on:
+      - 'rabbit'
 
   rabbit:
     image: rabbitmq:management

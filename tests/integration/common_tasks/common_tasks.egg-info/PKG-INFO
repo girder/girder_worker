@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: common-tasks
+Version: 0.0.0
+Summary: An example girder worker extension
+Home-page: UNKNOWN
+Author: Chris Kotfila
+Author-email: chris.kotfila@kitware.com
+License: Apache v2
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: License :: OSI Approved :: Apache Software LicenseNatural Language :: English
+Classifier: Programming Language :: Python

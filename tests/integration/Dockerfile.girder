@@ -9,10 +9,28 @@ RUN sed -i 's|^server.socket_port = 8080$|server.socket_port = 8989|' /girder/gi
 RUN pip install ansible girder-client
 RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/roles girder.girder
 
+# NOTE:  Change this to COPY before final commit
 # COPY . /scripts
 VOLUME /scripts
 
 COPY ./integration_test_endpoints /girder/girder/plugins/
 RUN girder-install web --all-plugins
+
+# Allow mounting integration_test_endpoints from host environment
+# e.g. for developing test endpoints
+VOLUME /girder/girder/plugins/integration_test_endpoints
+
+
+RUN mkdir /girder_worker
+
+# Allow moutning /girder_worker
+VOLUME /girder_worker
+
+# Make sure egg-link is installed in local dist-packages
+COPY ./common_tasks /girder_worker/tests/integration/common_tasks
+RUN pip install -e /girder_worker/tests/integration/common_tasks
+
+# Allow directly mounting common_tasks
+VOLUME /girder_worker/tests/integration/common_tasks
 
 ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/entrypoint.sh"]
