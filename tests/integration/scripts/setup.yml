@@ -1,0 +1,60 @@
+---
+- hosts: girder
+  vars:
+    girder_port: 8989
+    girder_user: "admin"
+    girder_pass: "letmein"
+  tasks:
+    - name: Create 'admin' User with password 'letmein'
+      girder:
+        port: "{{ girder_port }}"
+        user:
+          firstName: "Admin"
+          lastName: "Admin"
+          login: "admin"
+          password: "letmein"
+          email: "admin@example.com"
+          admin: yes
+        state: present
+
+    - name: Create filesystem assetstore
+      girder:
+        username: "{{ girder_user }}"
+        password: "{{ girder_pass }}"
+        port: "{{ girder_port }}"
+        assetstore:
+          name: "Filesystem Assetstore"
+          type: "filesystem"
+          root: "/data/"
+          current: true
+        state: present
+
+    - name: Enable integration test endpoints plugin
+      girder:
+        username: "{{ girder_user }}"
+        password: "{{ girder_pass }}"
+        port: "{{ girder_port }}"
+        plugins:
+          - integration_test_endpoints
+        state: present
+      register: plugins
+
+    - name: Restart the server
+      girder:
+        username: "{{ girder_user }}"
+        password: "{{ girder_pass }}"
+        port: "{{ girder_port }}"
+        put:
+          path: "system/restart"
+      when: plugins.changed
+
+    - name: Wait until server restarts
+      wait_for:
+        port: "{{ girder_port }}"
+        delay: 5
+      when: plugins.changed
+
+    - name: Include additional setup tasks
+      include: "{{ item }}"
+      with_fileglob:
+        - "setup.d/*.yml"

@@ -1,0 +1,2 @@
+FROM girder/girder_worker:latest
+MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>

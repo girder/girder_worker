@@ -1,0 +1,18 @@
+FROM girder/girder:latest
+MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
+
+VOLUME /girder/plugins/integration_test_endpoints
+
+RUN sed -i 's|^uri = "mongodb://localhost:27017/girder"$|uri = "mongodb://mongo:27017/girder"|' /girder/girder/conf/girder.local.cfg
+RUN sed -i 's|^server.socket_port = 8080$|server.socket_port = 8989|' /girder/girder/conf/girder.local.cfg
+
+RUN pip install ansible girder-client
+RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/roles girder.girder
+
+# COPY . /scripts
+VOLUME /scripts
+
+COPY ./integration_test_endpoints /girder/girder/plugins/
+RUN girder-install web --all-plugins
+
+ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/entrypoint.sh"]
