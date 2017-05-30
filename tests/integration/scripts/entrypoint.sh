@@ -8,7 +8,7 @@
 until grep -qi 'engine bus started' entrypoint.log; do sleep 1; done;
 
 
-# Provision the running instance
+# Provision the running instance of girder
 pushd /scripts
 ansible-playbook -i inventory setup.yml
 popd

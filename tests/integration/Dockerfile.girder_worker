@@ -14,4 +14,4 @@ RUN pip install -e /girder_worker/tests/integration/common_tasks
 
 VOLUME /girder_worker
 
-ENTRYPOINT ["sudo", "-u", "worker", "python", "-m", "girder_worker", "-l", "info"]a
+ENTRYPOINT ["sudo", "-u", "worker", "python", "-m", "girder_worker", "-l", "info"]
