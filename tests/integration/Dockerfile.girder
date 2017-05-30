@@ -33,4 +33,7 @@ RUN pip install -e /girder_worker/tests/integration/common_tasks
 # Allow directly mounting common_tasks
 VOLUME /girder_worker/tests/integration/common_tasks
 
+# Make sure remote debugging is available
+RUN pip install rpdb
+
 ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/entrypoint.sh"]

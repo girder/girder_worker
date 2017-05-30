@@ -5,16 +5,22 @@ services:
     container_name: gw_integration_test_girder
     volumes:
       - './integration_test_endpoints/:/girder/plugins/integration_test_endpoints'
+      # Note: this should be removed before merging
       - './scripts:/scripts'
       - '../../:/girder_worker'
+    # Note: 4444 is for debugging with rpdb
     ports:
       - 8989:8989
+      - 4444:4444
     depends_on:
       - 'mongo'
 
   girder_worker:
     image: girder/girder_worker:gw_integration_test
     container_name: gw_integration_test_girder_worker
+    # Note: 4444 is for debugging with rpdb
+    ports:
+      - 4445:4444
     volumes:
       - '../../:/girder_worker'
     depends_on:

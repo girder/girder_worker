@@ -14,4 +14,7 @@ RUN pip install -e /girder_worker/tests/integration/common_tasks
 
 VOLUME /girder_worker
 
+# Make sure remote debugging is available
+RUN pip install rpdb
+
 ENTRYPOINT ["sudo", "-u", "worker", "python", "-m", "girder_worker", "-l", "info"]
