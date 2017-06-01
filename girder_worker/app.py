@@ -5,11 +5,14 @@ from celery import Celery, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success,
-                            worker_ready, before_task_publish)
+                            worker_ready, before_task_publish, task_revoked)
 from celery.result import AsyncResult
 from celery.task.control import inspect
 
+from requests import HTTPError
+
 from .utils import JobStatus
+from girder_worker.core.specs.spec import _update
 
 
 class GirderAsyncResult(AsyncResult):
@@ -158,6 +161,8 @@ def deserialize_job_info_spec(**kwargs):
 class JobSpecNotFound(Exception):
     pass
 
+class StateTransitionException(Exception):
+    pass
 
 # ::: NOTE :::
 # This is a transitional function for managing compatability between
@@ -172,17 +177,26 @@ class JobSpecNotFound(Exception):
 # transition to Celery 4, this function exists to temporarily provide
 # backwards compatability with Celery 3.X while projects transition.
 def _update_status(task, status):
-    # Celery 4.X
-    if hasattr(task.request, 'parent_id'):
-        # For now,  only automatically update status if this is
-        # not a child task. Otherwise child tasks completion will
-        # update the parent task's jobModel in girder.
-        if task.request.parent_id is None:
+    try:
+        # Celery 4.X
+        if hasattr(task.request, 'parent_id'):
+            # For now,  only automatically update status if this is
+            # not a child task. Otherwise child tasks completion will
+            # update the parent task's jobModel in girder.
+            if task.request.parent_id is None:
+                task.job_manager.updateStatus(status)
+        # Celery 3.X
+        else:
             task.job_manager.updateStatus(status)
-    # Celery 3.X
-    else:
-        task.job_manager.updateStatus(status)
-
+    except HTTPError as hex:
+        if hex.response.status_code == 400:
+            json_response = hex.response.json()
+            if 'field' in json_response and json_response['field'] == 'status':
+                raise StateTransitionException(hex)
+            else:
+                raise
+        else:
+            raise
 
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,
@@ -221,18 +235,28 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     except JobSpecNotFound:
         task.job_manager = None
         print('Warning: No jobInfoSpec. Setting job_manager to None.')
+    except StateTransitionException:
+        # Fetch the current status of the job
+        status = task.job_manager.refreshStatus()
+        # If we are canceling we want to stay in that state
+        if status != JobStatus.CANCELING:
+            raise
 
 
 @task_success.connect
 def gw_task_success(sender=None, **rest):
     try:
-        status = JobStatus.SUCCESS
-        if is_revoked(sender):
-            status = JobStatus.CANCELED
-        _update_status(sender, status)
+        _update_status(sender, JobStatus.SUCCESS)
     except AttributeError:
         pass
-
+    except StateTransitionException:
+        # Fetch the current status of the job
+        status = sender.job_manager.refreshStatus()
+        # If we are in CANCELING move to CANCELED
+        if status == JobStatus.CANCELING:
+            _update_status(sender, JobStatus.CANCELED)
+        else:
+            raise
 
 @task_failure.connect
 def gw_task_failure(sender=None, exception=None,
@@ -257,6 +281,14 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
     try:
         task.job_manager._flush()
         task.job_manager._redirectPipes(False)
+    except AttributeError:
+        pass
+
+
+@task_revoked.connect
+def gw_task_revoked(sender=None, **rest):
+    try:
+        _update_status(sender, JobStatus.CANCELED)
     except AttributeError:
         pass
 

@@ -45,6 +45,7 @@ class JobStatus(object):
     CONVERTING_INPUT = 821
     CONVERTING_OUTPUT = 822
     PUSHING_OUTPUT = 823
+    CANCELING = 824
 
 
 class JobManager(object):
@@ -164,11 +165,13 @@ class JobManager(object):
         # Ensure that the logs are flushed before the status is changed
         self._flush()
         self.status = status
-        self._redirectPipes(False)
-        req = requests.request(self.method.upper(), self.url, headers=self.headers,
-                               data={'status': status}, allow_redirects=True)
-        req.raise_for_status()
-        self._redirectPipes(True)
+        try:
+            self._redirectPipes(False)
+            req = requests.request(self.method.upper(), self.url, headers=self.headers,
+                                   data={'status': status}, allow_redirects=True)
+            req.raise_for_status()
+        finally:
+            self._redirectPipes(True)
 
     def updateProgress(self, total=None, current=None, message=None,
                        forceFlush=False):
@@ -195,3 +198,16 @@ class JobManager(object):
         if forceFlush or time.time() - self._last > self.interval:
             self._flush()
             self._last = time.time()
+
+    def refreshStatus(self):
+        """
+        Refresh the status field from Girder
+        """
+        try:
+            self._redirectPipes(False)
+            r = requests.get(self.url, headers=self.headers, allow_redirects=True)
+            self.status = r.json()['status']
+
+            return self.status
+        finally:
+            self._redirectPipes(True)
