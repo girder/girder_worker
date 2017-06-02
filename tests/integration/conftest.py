@@ -10,8 +10,8 @@ from datetime import timedelta, datetime
 
 @pytest.fixture(scope='module')
 def api_url():
-    def _api_url(uri=''):
-        return 'http://127.0.0.1:8989/api/v1/{}'.format(uri)
+    def _api_url(uri=u''):
+        return u'http://127.0.0.1:8989/api/v1/' + uri
     return _api_url
 
 
@@ -26,13 +26,13 @@ def session(api_url, request):
                              auth=login)
         except requests.ConnectionError:
             raise Exception(
-                'Unable to connect to {}.'.format(api_url()))
+                'Unable to connect to {}.' % api_url())
 
         try:
             s.headers['Girder-Token'] = r.json()['authToken']['token']
         except KeyError:
             raise Exception(
-                'Unable to login with user "{}", password "{}"'.format(*login))
+                'Unable to login with user "{}", password "{}"' % login)
 
         yield s
 
@@ -46,7 +46,7 @@ def wait_for(session, api_url):
         timeout = True
 
         while datetime.utcnow() < then:
-            r = session.get(api_url('job/{}'.format(job_id)))
+            r = session.get(api_url('job/' + job_id))
 
             if predicate(r.json()):
                 timeout = False
@@ -54,13 +54,12 @@ def wait_for(session, api_url):
 
             time.sleep(interval)
 
-        r = session.get(api_url('job/{}'.format(job_id)))
+        r = session.get(api_url('job/' + job_id))
 
         if timeout:
             if on_timeout is None:
                 def on_timeout(j):
-                    return 'Timed out waiting for {}'.format(
-                        api_url('job/{}'.format(j['_id'])))
+                    return 'Timed out waiting for {}' % api_url('job/{}' % j['_id'])
 
             warnings.warn(on_timeout(r.json()))
 
@@ -73,8 +72,7 @@ def wait_for(session, api_url):
 def wait_for_success(wait_for, api_url):
 
     def on_timeout(j):
-        return 'Timed out waiting for {} to move into success state'.format(
-            api_url('job/{}'.format(j['_id'])))
+        return 'Timed out waiting for {} to move into success state' % api_url('job/{}' % j['_id'])
 
     return functools.partial(
         wait_for,
@@ -86,8 +84,7 @@ def wait_for_success(wait_for, api_url):
 def wait_for_error(wait_for, api_url):
 
     def on_timeout(j):
-        return 'Timed out waiting for {} to move into error state'.format(
-            api_url('job/{}'.format(j['_id'])))
+        return 'Timed out waiting for {} to move into error state' % api_url('job/{}' % (j['_id']))
 
     return functools.partial(
         wait_for,
