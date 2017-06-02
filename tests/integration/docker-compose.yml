@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 services:
   girder:
     image: girder/girder:gw_integration_test
@@ -18,10 +18,11 @@ services:
   girder_worker:
     image: girder/girder_worker:gw_integration_test
     container_name: gw_integration_test_girder_worker
-    # Note: 4444 is for debugging with rpdb
+    # Note: 4445 is for debugging with rpdb
     ports:
       - 4445:4444
     volumes:
+      - './scripts:/scripts'
       - '../../:/girder_worker'
     depends_on:
       - 'rabbit'

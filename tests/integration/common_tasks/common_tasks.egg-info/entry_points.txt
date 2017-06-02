@@ -1,3 +1,0 @@
-[girder_worker_plugins]
-common_tasks = common_tasks:CommonTasksPlugin
-

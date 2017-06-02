@@ -20,20 +20,11 @@ RUN girder-install web --all-plugins
 # e.g. for developing test endpoints
 VOLUME /girder/girder/plugins/integration_test_endpoints
 
-
-RUN mkdir /girder_worker
-
 # Allow moutning /girder_worker
+RUN mkdir /girder_worker
 VOLUME /girder_worker
-
-# Make sure egg-link is installed in local dist-packages
-COPY ./common_tasks /girder_worker/tests/integration/common_tasks
-RUN pip install -e /girder_worker/tests/integration/common_tasks
-
-# Allow directly mounting common_tasks
-VOLUME /girder_worker/tests/integration/common_tasks
 
 # Make sure remote debugging is available
 RUN pip install rpdb
 
-ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/entrypoint.sh"]
+ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/girder_entrypoint.sh"]

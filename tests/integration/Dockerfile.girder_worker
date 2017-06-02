@@ -8,13 +8,14 @@ RUN sed -i  's|^broker =.*$|broker = amqp://guest:guest@rabbit/|' /girder_worker
 RUN apt update && apt install -y sudo
 RUN pip install docker
 
-# Make sure the egg-link is installed in site-packages at build-time
-ADD common_tasks /girder_worker/tests/integration/common_tasks
-RUN pip install -e /girder_worker/tests/integration/common_tasks
 
 VOLUME /girder_worker
 
 # Make sure remote debugging is available
 RUN pip install rpdb
 
-ENTRYPOINT ["sudo", "-u", "worker", "python", "-m", "girder_worker", "-l", "info"]
+# NOTE:  Change this to COPY before final commit
+# COPY . /scripts
+VOLUME /scripts
+
+ENTRYPOINT ["/scripts/wait-for-it.sh", "rabbit:5672", "--", "/scripts/gw_entrypoint.sh"]
