@@ -13,7 +13,7 @@ def fibonacci(n, **kwargs):
 @app.task(bind=True)
 def fib_seq(task, n, **kwargs):
     if n < 0:
-        raise Exception("Must pass in positive integer!")
+        raise Exception('Must pass in positive integer!')
 
     for _n in range(1, n+1):
-        print "%s: %s" % (_n, fibonacci(_n))
+        print '%s: %s' % (_n, fibonacci(_n))

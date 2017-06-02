@@ -95,7 +95,6 @@ def wait_for_error(wait_for, api_url):
         on_timeout=on_timeout)
 
 
-
 # pytest hook for ordering test items after they have been
 # collected. This uses 'priority' mark objects to order the
 # tests, defaulting the priority of non-marked tests to 100.

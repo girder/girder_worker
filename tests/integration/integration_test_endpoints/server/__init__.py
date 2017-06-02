@@ -3,6 +3,7 @@ from girder.api.describe import Description, describeRoute
 from girder.api.rest import Resource
 from common_tasks.test_tasks.fib import fibonacci
 
+
 class IntegrationTestEndpoints(Resource):
     def __init__(self):
         super(IntegrationTestEndpoints, self).__init__()
