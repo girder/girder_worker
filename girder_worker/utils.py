@@ -107,7 +107,7 @@ class JobManager(object):
                 self._progressCurrent is not None:
             self._redirectPipes(False)
 
-            requests.request(
+            req = requests.request(
                 self.method.upper(), self.url, allow_redirects=True,
                 headers=self.headers, data={
                     'log': self._buf,
@@ -115,6 +115,7 @@ class JobManager(object):
                     'progressCurrent': self._progressCurrent,
                     'progressMessage': self._progressMessage
                 })
+            req.raise_for_status()
             self._buf = ''
 
             self._redirectPipes(True)
@@ -164,8 +165,9 @@ class JobManager(object):
         self._flush()
         self.status = status
         self._redirectPipes(False)
-        requests.request(self.method.upper(), self.url, headers=self.headers,
+        req = requests.request(self.method.upper(), self.url, headers=self.headers,
                          data={'status': status}, allow_redirects=True)
+        req.raise_for_status()
         self._redirectPipes(True)
 
     def updateProgress(self, total=None, current=None, message=None,
