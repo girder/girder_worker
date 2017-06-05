@@ -166,7 +166,7 @@ class JobManager(object):
         self.status = status
         self._redirectPipes(False)
         req = requests.request(self.method.upper(), self.url, headers=self.headers,
-                         data={'status': status}, allow_redirects=True)
+                               data={'status': status}, allow_redirects=True)
         req.raise_for_status()
         self._redirectPipes(True)
 
