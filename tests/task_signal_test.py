@@ -187,7 +187,7 @@ class TestSignals(unittest.TestCase):
 
         task.job_manager._flush.assert_called_once()
         task.job_manager._redirectPipes.assert_called_once_with(False)
-#
+
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_prerun_canceling(self, jm):
         task = mock.MagicMock()
