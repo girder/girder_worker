@@ -51,7 +51,6 @@
 
     - name: Set the server root setting
       girder:
-        port: 8080
         username: "{{ girder_user }}"
         password: "{{ girder_pass }}"
         port: "{{ girder_port }}"

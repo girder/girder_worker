@@ -7,8 +7,10 @@ RUN sed -i 's|^uri = "mongodb://localhost:27017/girder"$|uri = "mongodb://mongo:
 RUN sed -i 's|^server.socket_port = 8080$|server.socket_port = 8989|' /girder/girder/conf/girder.local.cfg
 
 RUN pip install ansible girder-client
+
+COPY ./scripts /scripts
 RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/roles girder.girder
-COPY . /scripts
+
 
 COPY ./integration_test_endpoints /girder/girder/plugins/
 RUN girder-install web --all-plugins

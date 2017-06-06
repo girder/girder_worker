@@ -14,6 +14,6 @@ VOLUME /girder_worker
 # Make sure remote debugging is available
 RUN pip install rpdb
 
-COPY . /scripts
+COPY ./scripts /scripts
 
 ENTRYPOINT ["/scripts/wait-for-it.sh", "rabbit:5672", "--", "/scripts/gw_entrypoint.sh"]
