@@ -8,10 +8,7 @@ RUN sed -i 's|^server.socket_port = 8080$|server.socket_port = 8989|' /girder/gi
 
 RUN pip install ansible girder-client
 RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/roles girder.girder
-
-# NOTE:  Change this to COPY before final commit
-# COPY . /scripts
-VOLUME /scripts
+COPY . /scripts
 
 COPY ./integration_test_endpoints /girder/girder/plugins/
 RUN girder-install web --all-plugins
