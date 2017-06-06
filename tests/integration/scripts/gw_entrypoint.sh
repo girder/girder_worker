@@ -16,4 +16,4 @@ if [ -e /girder_worker/tests/integration/common_tasks/setup.py ]; then
     pip install -e /girder_worker/tests/integration/common_tasks/
 fi
 
-sudo -u worker python -m girder_worker -l info
+sudo -u worker python -m girder_worker -l info -b amqp://guest:guest@rabbit/
