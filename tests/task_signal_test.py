@@ -241,12 +241,15 @@ class TestSignals(unittest.TestCase):
         # We should move into SUCCESS
         task.job_manager.updateStatus.assert_called_once_with(JobStatus.SUCCESS)
 
-    def test_task_revoke(self):
+    @mock.patch('girder_worker.utils.JobManager')
+    def test_task_revoke(self, jm):
         task = mock.MagicMock()
-        task.request.jobInfoSpec = self.headers['jobInfoSpec']
+        request = mock.MagicMock()
+        request.message.headers = {
+            'jobInfoSpec': self.headers['jobInfoSpec']
+        }
         task.request.parent_id = None
-        task.job_manager = mock.MagicMock()
 
-        gw_task_revoked(sender=task)
+        gw_task_revoked(sender=task, request=request)
 
         task.job_manager.updateStatus.assert_called_once_with(JobStatus.CANCELED)
