@@ -196,6 +196,30 @@ def _update_status(task, status):
         else:
             raise
 
+
+def _job_manager(request=None, headers=None, kwargs=None):
+    # Celery 4.x API
+    if request is not None and hasattr(request, 'jobInfoSpec'):
+        jobSpec = request.jobInfoSpec
+
+    # Celery 3.X API or we are being called from revoked signal
+    elif headers is not None and \
+            'jobInfoSpec' in headers:
+        jobSpec = headers['jobInfoSpec']
+
+    # Deprecated: This method of passing job information
+    # to girder_worker is deprecated. Newer versions of girder
+    # pass this information automatically as apart of the
+    # header metadata in the worker scheduler.
+    elif 'jobInfo' in kwargs:
+        jobSpec = kwargs.pop('jobInfo', {})
+
+    else:
+        raise JobSpecNotFound
+
+    return deserialize_job_info_spec(**jobSpec)
+
+
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,
                    args=None, kwargs=None, **rest):
@@ -207,27 +231,8 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     updating their status in girder.
     """
     try:
-        # Celery 4.x API
-        if hasattr(task.request, 'jobInfoSpec'):
-            jobSpec = task.request.jobInfoSpec
-
-        # Celery 3.X API
-        elif task.request.headers is not None and \
-                'jobInfoSpec' in task.request.headers:
-            jobSpec = task.request.headers['jobInfoSpec']
-
-        # Deprecated: This method of passing job information
-        # to girder_worker is deprecated. Newer versions of girder
-        # pass this information automatically as apart of the
-        # header metadata in the worker scheduler.
-        elif 'jobInfo' in kwargs:
-            jobSpec = kwargs.pop('jobInfo', {})
-
-        else:
-            raise JobSpecNotFound
-
-        task.job_manager = deserialize_job_info_spec(**jobSpec)
-
+        task.job_manager = _job_manager(task.request, task.request.headers,
+                                        kwargs)
         _update_status(task, JobStatus.RUNNING)
 
     except JobSpecNotFound:
