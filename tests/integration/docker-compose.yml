@@ -31,14 +31,14 @@ services:
     image: rabbitmq:management
     container_name: gw_integration_test_rabbit
     ports:
-      - 5672:5672
-      - 35197:35197
-      - 4369:4369
-      - 25672:25672
-      - 15672:15672
+      - 5673:5672
+      - 35198:35197
+      - 4370:4369
+      - 25673:25672
+      - 15673:15672
 
   mongo:
     image: mongo:latest
     container_name: gw_integration_test_mongo
     ports:
-      - 27017:27017
+      - 27018:27017
