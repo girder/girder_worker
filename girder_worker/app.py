@@ -92,6 +92,15 @@ class Task(celery.Task):
             args=args, kwargs=kwargs, task_id=task_id, producer=producer,
             link=link, link_error=link_error, shadow=shadow, **options)
 
+    @property
+    def canceled(self):
+        """
+        A property to indicate if a task has been canceled.
+
+        :returns True is this task has been canceled, False otherwise.
+        """
+        return is_revoked(self)
+
 
 @before_task_publish.connect
 def girder_before_task_publish(sender=None, body=None, exchange=None,
@@ -327,17 +336,6 @@ def is_revoked(task):
             otherwise.
     """
     return task.request.id in _revoked_tasks(task)
-
-
-class Task(celery.Task):
-    @property
-    def canceled(self):
-        """
-        A property to indicate if a task has been canceled.
-
-        :returns True is this task has been canceled, False otherwise.
-        """
-        return is_revoked(self)
 
 
 class _CeleryConfig:
