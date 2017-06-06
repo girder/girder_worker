@@ -14,6 +14,7 @@ from requests import HTTPError
 
 from .utils import JobStatus
 
+
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
         self._job = None
@@ -169,8 +170,10 @@ def deserialize_job_info_spec(**kwargs):
 class JobSpecNotFound(Exception):
     pass
 
+
 class StateTransitionException(Exception):
     pass
+
 
 # ::: NOTE :::
 # This is a transitional function for managing compatibility between
@@ -271,6 +274,7 @@ def gw_task_success(sender=None, **rest):
         else:
             raise
 
+
 @task_failure.connect
 def gw_task_failure(sender=None, exception=None,
                     traceback=None, **rest):
@@ -308,6 +312,7 @@ def gw_task_revoked(sender=None, request=None, **rest):
         pass
     except JobSpecNotFound:
         logger.warn('No jobInfoSpec. Unable to move \'%s\' into CANCELED state.')
+
 
 # Access to the correct "Inspect" instance for this worker
 _inspector = None

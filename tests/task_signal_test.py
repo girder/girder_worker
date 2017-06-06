@@ -213,7 +213,6 @@ class TestSignals(unittest.TestCase):
 
         task.job_manager.updateStatus.assert_called_once_with(JobStatus.RUNNING)
 
-
     def test_task_success_canceling(self):
         task = mock.MagicMock()
         task.request.jobInfoSpec = self.headers['jobInfoSpec']
