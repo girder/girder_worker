@@ -8,6 +8,16 @@ from girder_worker.utils import JobStatus
 from datetime import timedelta, datetime
 
 
+def pytest_addoption(parser):
+        parser.addoption('--girder', action='store', default='http://127.0.0.1:8989',
+                         help='my option: type1 or type2')
+
+
+@pytest.fixture(scope='module')
+def girder_url(request):
+        return request.config.getoption('--girder')
+
+
 @pytest.fixture(scope='module')
 def api_url():
     def _api_url(uri=u''):
@@ -26,13 +36,13 @@ def session(api_url, request):
                              auth=login)
         except requests.ConnectionError:
             raise Exception(
-                'Unable to connect to {}.' % api_url())
+                'Unable to connect to %s.' % api_url())
 
         try:
             s.headers['Girder-Token'] = r.json()['authToken']['token']
         except KeyError:
             raise Exception(
-                'Unable to login with user "{}", password "{}"' % login)
+                'Unable to login with user "%s", password "%s"' % login)
 
         yield s
 
@@ -59,7 +69,7 @@ def wait_for(session, api_url):
         if timeout:
             if on_timeout is None:
                 def on_timeout(j):
-                    return 'Timed out waiting for {}' % api_url('job/{}' % j['_id'])
+                    return 'Timed out waiting for %s' % api_url('job/%s' % j['_id'])
 
             warnings.warn(on_timeout(r.json()))
 
@@ -72,7 +82,7 @@ def wait_for(session, api_url):
 def wait_for_success(wait_for, api_url):
 
     def on_timeout(j):
-        return 'Timed out waiting for {} to move into success state' % api_url('job/{}' % j['_id'])
+        return 'Timed out waiting for %s to move into success state' % api_url('job/%s' % j['_id'])
 
     return functools.partial(
         wait_for,
@@ -84,7 +94,7 @@ def wait_for_success(wait_for, api_url):
 def wait_for_error(wait_for, api_url):
 
     def on_timeout(j):
-        return 'Timed out waiting for {} to move into error state' % api_url('job/{}' % (j['_id']))
+        return 'Timed out waiting for %s to move into error state' % api_url('job/%s' % (j['_id']))
 
     return functools.partial(
         wait_for,
