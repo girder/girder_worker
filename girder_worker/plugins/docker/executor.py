@@ -238,7 +238,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         ep_args = []
 
     run_kwargs = {
-        'tty': True,
+        'tty': False,
         'volumes': {
             tempdir: {
                 'bind': DATA_VOLUME,
