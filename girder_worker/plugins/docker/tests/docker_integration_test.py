@@ -346,3 +346,52 @@ class TestDockerMode(unittest.TestCase):
         self.assertEqual(new_containers[0].attrs.get('Config', {})['Image'], test_image)
         # Clean it up
         new_containers[0].remove()
+
+    def testDockerModeStdErrStdOut(self):
+        """
+        Test writing to stdout and stderr.
+        """
+
+        task = {
+            'mode': 'docker',
+            'docker_image': test_image,
+            'pull_image': True,
+            'container_args': ['$input{test_mode}', '$input{message}'],
+            'inputs': [{
+                'id': 'test_mode',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }, {
+                'id': 'message',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }],
+            'outputs': [{
+                'id': '_stdout',
+                'format': 'string',
+            '    type': 'string'
+            }, {
+               'id': '_stderr',
+               'format': 'string',
+                'type': 'string'
+            }]
+        }
+
+        inputs = {
+            'test_mode': {
+                'format': 'string',
+                'data': 'stdout_stderr'
+            },
+            'message': {
+                'format': 'string',
+                'data': self._test_message
+            }
+        }
+
+        out = run(
+            task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+            auto_convert=False)
+
+        print out
