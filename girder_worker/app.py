@@ -238,7 +238,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
     except JobSpecNotFound:
         task.job_manager = None
-        print('Warning: No jobInfoSpec. Setting job_manager to None.')
+        logger.warn('No jobInfoSpec. Setting job_manager to None.')
     except StateTransitionException:
         # Fetch the current status of the job
         status = task.job_manager.refreshStatus()
