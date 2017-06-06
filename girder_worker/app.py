@@ -163,7 +163,7 @@ class StateTransitionException(Exception):
     pass
 
 # ::: NOTE :::
-# This is a transitional function for managing compatability between
+# This is a transitional function for managing compatibility between
 # Celery 3.X and 4.X. The issue is how child tasks,  spawned from
 # girder-worker, handle their status updates and logging. In Celery 3.X
 # there is no easy way to determine if a task was spawned by another
@@ -173,7 +173,7 @@ class StateTransitionException(Exception):
 # Celery 3.X child tasks report everything to the same girder JobModel.
 # This is not an ideal situation, and while the path forward is to
 # transition to Celery 4, this function exists to temporarily provide
-# backwards compatability with Celery 3.X while projects transition.
+# backwards compatibility with Celery 3.X while projects transition.
 def _update_status(task, status):
     try:
         # Celery 4.X
