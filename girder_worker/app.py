@@ -1,4 +1,5 @@
 import girder_worker
+from girder_worker import logger
 import traceback as tb
 import celery
 from celery import Celery, __version__
@@ -289,12 +290,15 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
 
 
 @task_revoked.connect
-def gw_task_revoked(sender=None, **rest):
+def gw_task_revoked(sender=None, request=None, **rest):
     try:
+        sender.job_manager = _job_manager(headers=request.message.headers,
+                                          kwargs=request.kwargsrepr)
         _update_status(sender, JobStatus.CANCELED)
     except AttributeError:
         pass
-
+    except JobSpecNotFound:
+        logger.warn('No jobInfoSpec. Unable to move \'%s\' into CANCELED state.')
 
 # Access to the correct "Inspect" instance for this worker
 _inspector = None
