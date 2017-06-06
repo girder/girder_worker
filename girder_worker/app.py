@@ -12,8 +12,6 @@ from celery.task.control import inspect
 from requests import HTTPError
 
 from .utils import JobStatus
-from girder_worker.core.specs.spec import _update
-
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
