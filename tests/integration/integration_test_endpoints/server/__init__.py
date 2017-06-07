@@ -4,6 +4,7 @@ from girder.api.rest import Resource
 from common_tasks.test_tasks.fib import fibonacci
 from girder_worker.app import app
 
+
 class IntegrationTestEndpoints(Resource):
     def __init__(self):
         super(IntegrationTestEndpoints, self).__init__()
