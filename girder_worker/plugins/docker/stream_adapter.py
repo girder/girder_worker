@@ -40,8 +40,8 @@ class DockerStreamPushAdapter(StreamPushAdapter):
 
     def _read_payload(self):
         """
-        Read the payload or part of the payload. The data is write directly to the wrapped
-        adapter.
+        Read the payload or part of the payload. The data is written directly to
+        the wrapped adapter.
         """
         bytes_to_read = min(self._payload_size - self._payload_bytes_read,
                             self._data_length-self._data_offset)
