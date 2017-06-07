@@ -9,7 +9,14 @@ __license__ = 'Apache 2.0'
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Read the configuration files
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
-config = SafeConfigParser(os.environ)
+
+
+config = SafeConfigParser({
+    'RABBITMQ_USER': os.environ.get('RABBITMQ_USER', 'guest'),
+    'RABBITMQ_PASS': os.environ.get('RABBITMQ_PASS', 'guest'),
+    'RABBITMQ_HOST': os.environ.get('RABBITMQ_HOST', 'localhost')
+})
+
 config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Create and configure our logger
