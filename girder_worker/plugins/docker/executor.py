@@ -8,6 +8,7 @@ from requests.exceptions import ReadTimeout
 from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
+from girder_worker.plugins.docker.stream_adapter import DockerStreamPushAdapter
 
 DATA_VOLUME = '/mnt/girder_worker/data'
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
@@ -198,10 +199,10 @@ def _run_select_loop(celery_task, container, opipes, ipipes):
         def close_output(output):
             return output not in (stdout.fileno(), stderr.fileno())
 
-        opipes[stdout.fileno()] = opipes.get(
-            '_stdout', utils.WritePipeAdapter({}, sys.stdout))
-        opipes[stderr.fileno()] = opipes.get(
-            '_stderr', utils.WritePipeAdapter({}, sys.stderr))
+        opipes[stdout.fileno()] = DockerStreamPushAdapter(opipes.get(
+            '_stdout', utils.WritePipeAdapter({}, sys.stdout)))
+        opipes[stderr.fileno()] = DockerStreamPushAdapter(opipes.get(
+            '_stderr', utils.WritePipeAdapter({}, sys.stderr)))
 
         # Run select loop
         utils.select_loop(exit_condition=exit_condition, close_output=close_output,
@@ -260,7 +261,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         ep_args = []
 
     run_kwargs = {
-        'tty': True,
+        'tty': False,
         'volumes': {
             tempdir: {
                 'bind': DATA_VOLUME,

@@ -15,8 +15,9 @@ from girder_worker.plugins.docker.executor import DATA_VOLUME
 
 _tmp = None
 OUT_FD, ERR_FD = 100, 200
-_out = six.StringIO('output message\n')
-_err = six.StringIO('error message\n')
+# 12345678 simulate the payload header added by docker
+_out = six.StringIO('12345678output message\n')
+_err = six.StringIO('12345678error message\n')
 
 stdout_socket_mock = mock.Mock()
 stdout_socket_mock.fileno.return_value = OUT_FD
@@ -465,4 +466,4 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue('detach' in kwargs)
         self.assertTrue(kwargs['detach'])
         self.assertTrue('tty' in kwargs)
-        self.assertTrue(kwargs['tty'])
+        self.assertFalse(kwargs['tty'])

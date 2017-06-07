@@ -22,6 +22,9 @@ if len(sys.argv) == 3:
         # Install signal handler
         signal.signal(signal.SIGTERM, _signal_handler)
         time.sleep(30)
+    elif mode == 'stdout_stderr':
+        sys.stdout.write('this is stdout data\n')
+        sys.stderr.write('this is stderr data\n')
     else:
         sys.stderr.write('Invalid test mode: "%s".\n' % mode)
         sys.exit(-1)

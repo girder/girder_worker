@@ -13,7 +13,7 @@ import time
 import girder_worker
 from girder_worker.core import run, io
 
-TEST_IMAGE = 'girder/girder_worker_test:0.1.0'
+TEST_IMAGE = 'girder/girder_worker_test:latest'
 
 
 def setUpModule():
@@ -141,7 +141,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
-        message = '%s\r\n' % self._test_message
+        message = '%s\n' % self._test_message
         self.assertTrue(message not in lines)
         self.assertEqual(out['_stdout']['data'], message)
 
@@ -544,3 +544,53 @@ class TestDockerMode(unittest.TestCase):
             if _old_stdout is not None:
                 sys.stdout = _old_stdout
             run_thread.join()
+
+def testDockerModeStdErrStdOut(self):
+        """
+        Test writing to stdout and stderr.
+        """
+
+        task = {
+            'mode': 'docker',
+            'docker_image': test_image,
+            'pull_image': True,
+            'container_args': ['$input{test_mode}', '$input{message}'],
+            'inputs': [{
+                'id': 'test_mode',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }, {
+                'id': 'message',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }],
+            'outputs': [{
+                'id': '_stdout',
+                'format': 'string',
+                'type': 'string'
+            }, {
+                'id': '_stderr',
+                'format': 'string',
+                'type': 'string'
+            }]
+        }
+
+        inputs = {
+            'test_mode': {
+                'format': 'string',
+                'data': 'stdout_stderr'
+            },
+            'message': {
+                'format': 'string',
+                'data': self._test_message
+            }
+        }
+
+        out = run(
+            task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+            auto_convert=False)
+
+        self.assertEqual(out['_stdout']['data'], 'this is stdout data\n')
+        self.assertEqual(out['_stderr']['data'], 'this is stderr data\n')
