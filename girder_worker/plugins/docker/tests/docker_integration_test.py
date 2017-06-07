@@ -545,6 +545,7 @@ class TestDockerMode(unittest.TestCase):
                 sys.stdout = _old_stdout
             run_thread.join()
 
+
 def testDockerModeStdErrStdOut(self):
         """
         Test writing to stdout and stderr.
@@ -552,7 +553,7 @@ def testDockerModeStdErrStdOut(self):
 
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{
