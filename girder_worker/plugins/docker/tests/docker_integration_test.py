@@ -136,7 +136,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
-        message = '%s\r\n' % self._test_message
+        message = '%s\n' % self._test_message
         self.assertTrue(message not in lines)
         self.assertEqual(out['_stdout']['data'], message)
 
@@ -371,10 +371,10 @@ class TestDockerMode(unittest.TestCase):
             'outputs': [{
                 'id': '_stdout',
                 'format': 'string',
-            '    type': 'string'
+                'type': 'string'
             }, {
-               'id': '_stderr',
-               'format': 'string',
+                'id': '_stderr',
+                'format': 'string',
                 'type': 'string'
             }]
         }
@@ -394,4 +394,5 @@ class TestDockerMode(unittest.TestCase):
             task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
             auto_convert=False)
 
-        print out
+        self.assertEqual(out['_stdout']['data'], 'this is stdout data\n')
+        self.assertEqual(out['_stderr']['data'], 'this is stderr data\n')
