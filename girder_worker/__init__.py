@@ -9,7 +9,7 @@ __license__ = 'Apache 2.0'
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Read the configuration files
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
-config = SafeConfigParser()
+config = SafeConfigParser(os.environ)
 config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 
 # Create and configure our logger
