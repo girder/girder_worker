@@ -5,7 +5,7 @@ USER root
 
 RUN sed -i  's|^broker.*=.*$|broker = amqp://guest:guest@rabbit/|' /girder_worker/girder_worker/worker.local.cfg
 
-RUN apt update && apt install -y sudo
+RUN apt-get update && apt-get install -y sudo
 RUN pip install docker
 
 
