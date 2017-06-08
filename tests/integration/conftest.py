@@ -25,6 +25,14 @@ def api_url():
     return _api_url
 
 
+@pytest.fixture
+def get_result(session, api_url):
+    def _get_result(celery_id):
+        r = session.post(api_url('integration_tests/result'), data={'celery_id': celery_id})
+        return r.text
+    return _get_result
+
+
 # TODO: test with admin and non-admin user - are there (should there be)
 # differences between girder-worker functionality between the two?
 @pytest.fixture(scope='module')
