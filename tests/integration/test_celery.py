@@ -11,10 +11,42 @@ def test_session(session, api_url):
     assert r.json()['status'] == 'enabled'
 
 
-def test_celery_task_delay(session, api_url, wait_for_success):
-    r = session.post(api_url('integration_tests/test_celery_task_delay'))
+@pytest.mark.parametrize('endpoint', [
+    'integration_tests/celery/test_task_delay',
+    'integration_tests/celery/test_task_apply_async',
+    'integration_tests/celery/test_task_signature_delay',
+    'integration_tests/celery/test_task_signature_apply_async'],
+    ids=['delay',
+         'apply_async',
+         'signature_delay',
+         'signature_apply_async'])
+def test_celery_task_success(session, api_url, wait_for_success, get_result, endpoint):
+    r = session.post(api_url(endpoint))
     assert r.status_code == 200
 
     with wait_for_success(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+        assert 'celeryTaskId' in job
+        assert get_result(job['celeryTaskId']) == '6765'
+
+
+@pytest.mark.parametrize('endpoint', [
+    'integration_tests/celery/test_task_delay_fails',
+    'integration_tests/celery/test_task_apply_async_fails',
+    'integration_tests/celery/test_task_signature_delay_fails',
+    'integration_tests/celery/test_task_signature_apply_async_fails'],
+    ids=['delay',
+         'apply_async',
+         'signature_delay',
+         'signature_apply_async'])
+def test_celery_task_fails(session, api_url, wait_for_error, endpoint):
+    r = session.post(api_url(endpoint))
+    assert r.status_code == 200
+
+    with wait_for_error(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.ERROR]
+
+        assert job['log'][0].startswith('Exception: Intentionally failed after 0.5 seconds')

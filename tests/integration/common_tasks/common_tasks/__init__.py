@@ -23,4 +23,5 @@ class CommonTasksPlugin(GirderWorkerPluginABC):
     def task_imports(self):
         # Return a list of python importable paths to the
         # plugin's path directory
-        return ['common_tasks.test_tasks.fib']
+        return ['common_tasks.test_tasks.fib',
+                'common_tasks.test_tasks.fail']
