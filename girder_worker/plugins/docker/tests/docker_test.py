@@ -30,7 +30,7 @@ docker_container_mock.attach_socket.side_effect = [stdout_socket_mock, stderr_so
 docker_container_mock.status = 'exited'
 
 docker_client_mock = mock.Mock()
-docker_client_mock.containers.run.return_value = docker_container_mock
+docker_client_mock.containers.run = mock.Mock(return_value=docker_container_mock)
 
 process_mock = mock.Mock()
 process_mock.configure_mock(**{
@@ -459,3 +459,54 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue(kwargs['detach'])
         self.assertTrue('tty' in kwargs)
         self.assertFalse(kwargs['tty'])
+
+    @mock.patch('docker.from_env', return_value=docker_client_mock)
+    def testOutputTemplate(self, from_env):
+        task = {
+            'mode': 'docker',
+            'docker_image': 'test/test:latest',
+            'container_args': ['$output{foo}'],
+            'inputs': [],
+            'outputs': [{
+                'id': 'foo',
+                'format': 'string',
+                'type': 'string',
+                'target': 'filepath',
+                'path': '$output{foo}'
+            }]
+        }
+
+        outputs = {
+            'foo': {
+                'mode': 'http',
+                'url': 'http://foo.com',
+                'format': 'string',
+                'name': 'file.txt'
+            }
+        }
+
+        reqs = []
+
+        @httmock.all_requests
+        def handle_http(url, request):
+            reqs.append(request)
+            return ''
+
+        tmp = os.path.join(_tmp, 'simulated_output')
+        if not os.path.isdir(tmp):
+            os.makedirs(tmp)
+        path = os.path.join(tmp, 'file.txt')
+        with open(path, 'w') as f:
+            f.write('simulated output')
+
+        with httmock.HTTMock(handle_http):
+            run(task, outputs=outputs, _tempdir=tmp)
+
+            self.assertEqual(len(reqs), 1)
+            self.assertEqual(reqs[0].method, 'POST')
+            self.assertEqual(reqs[0].url, 'http://foo.com/')
+
+            self.assertGreater(len(docker_client_mock.containers.run.mock_calls), 0)
+            self.assertEqual(
+                docker_client_mock.containers.run.call_args_list[0][0],
+                ('test/test:latest', [os.path.join(DATA_VOLUME, 'file.txt')]))
