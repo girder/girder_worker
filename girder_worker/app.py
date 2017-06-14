@@ -7,6 +7,7 @@ from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success,
                             worker_ready, before_task_publish)
 from celery.result import AsyncResult
+from six.moves import configparser
 from .utils import JobStatus
 
 
@@ -260,10 +261,15 @@ class _CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
 
 
+broker_uri = girder_worker.config.get('celery', 'broker')
+try:
+    backend_uri = girder_worker.config.get('celery', 'backend')
+except configparser.NoOptionError:
+    backend_uri = broker_uri
+
 app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
-    backend=girder_worker.config.get('celery', 'broker'),
-    broker=girder_worker.config.get('celery', 'broker'),
+    backend=backend_uri, broker=broker_uri,
     task_cls='girder_worker.app:Task')
 
 app.config_from_object(_CeleryConfig)
