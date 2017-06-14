@@ -13,7 +13,7 @@ RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/role
 
 
 COPY ./integration_test_endpoints /girder/girder/plugins/
-RUN girder-install web --all-plugins
+RUN girder-install web --plugins=integration_test_endpoints
 
 # Allow mounting integration_test_endpoints from host environment
 # e.g. for developing test endpoints
