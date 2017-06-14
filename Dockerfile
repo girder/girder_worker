@@ -26,10 +26,17 @@ COPY girder_worker /girder_worker/girder_worker
 RUN pip install -r requirements.txt -e .
 
 RUN useradd -D --shell=/bin/bash && useradd -m worker
-RUN sed -i girder_worker/worker.local.cfg \
-   -e '/^broker/ s/guest@localhost/%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/'
+
+RUN cp girder_worker/worker.dist.cfg girder_worker/worker.local.cfg && \
+    sed -i girder_worker/worker.local.cfg \
+    -e '/^broker/ s/guest@localhost/%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/'
+
 RUN girder-worker-config set girder_worker tmp_root /tmp
+
+COPY devops/docker-entrypoint.sh /girder_worker/docker-entrypoint.sh
+
+RUN chown -R worker:worker /girder_worker
 
 USER worker
 
-ENTRYPOINT ["python", "-m", "girder_worker"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
