@@ -20,11 +20,11 @@ def test_session(session):
          'apply_async',
          'signature_delay',
          'signature_apply_async'])
-def test_celery_task_success(session, wait_for_success, endpoint):
+def test_celery_task_success(session, endpoint):
     r = session.post(endpoint)
     assert r.status_code == 200
 
-    with wait_for_success(r.json()['_id']) as job:
+    with session.wait_for_success(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.RUNNING, JobStatus.SUCCESS]
 
@@ -41,11 +41,11 @@ def test_celery_task_success(session, wait_for_success, endpoint):
          'apply_async',
          'signature_delay',
          'signature_apply_async'])
-def test_celery_task_fails(session, wait_for_error, endpoint):
+def test_celery_task_fails(session, endpoint):
     r = session.post(endpoint)
     assert r.status_code == 200
 
-    with wait_for_error(r.json()['_id']) as job:
+    with session.wait_for_error(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.RUNNING, JobStatus.ERROR]
 

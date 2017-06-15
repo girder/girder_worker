@@ -1,20 +1,6 @@
-import warnings
 import pytest
 import requests
-import contextlib
-import time
-import functools
-from girder_worker.utils import JobStatus
-from datetime import timedelta, datetime
-
-from requests_toolbelt.sessions import BaseUrlSession
-
-
-class GirderSession(BaseUrlSession):
-    def get_result(self, celery_id):
-        r = self.post('integration_tests/result', data={
-            'celery_id': celery_id})
-        return r.text
+from .utilities import GirderSession
 
 
 def pytest_addoption(parser):
@@ -49,61 +35,6 @@ def session(request, api_url):
                 'Unable to login with user "%s", password "%s"' % (username, password))
 
         yield s
-
-
-@pytest.fixture
-def wait_for(session):
-
-    @contextlib.contextmanager
-    def _wait_for(job_id, predicate, timeout=20, interval=0.3, on_timeout=None):
-        then = datetime.utcnow() + timedelta(seconds=timeout)
-        timeout = True
-
-        while datetime.utcnow() < then:
-            r = session.get('job/' + job_id)
-
-            if predicate(r.json()):
-                timeout = False
-                break
-
-            time.sleep(interval)
-
-        r = session.get('job/' + job_id)
-
-        if timeout:
-            if on_timeout is None:
-                def on_timeout(j):
-                    return 'Timed out waiting for %s' % 'job/%s' % j['_id']
-
-            warnings.warn(on_timeout(r.json()))
-
-        yield r.json()
-
-    return _wait_for
-
-
-@pytest.fixture
-def wait_for_success(wait_for):
-
-    def on_timeout(j):
-        return 'Timed out waiting for %s to move into success state' % 'job/%s' % j['_id']
-
-    return functools.partial(
-        wait_for,
-        predicate=lambda j: j['status'] == JobStatus.SUCCESS,
-        on_timeout=on_timeout)
-
-
-@pytest.fixture
-def wait_for_error(wait_for):
-
-    def on_timeout(j):
-        return 'Timed out waiting for %s to move into error state' % 'job/%s' % (j['_id'])
-
-    return functools.partial(
-        wait_for,
-        predicate=lambda j: j['status'] == JobStatus.ERROR,
-        on_timeout=on_timeout)
 
 
 # pytest hooks for ordering test items after they have been collected

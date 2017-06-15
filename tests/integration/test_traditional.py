@@ -13,12 +13,11 @@ import pytest
     ('integration_tests/traditional/test_girder_worker_run_as_celery_task',
      [JobStatus.RUNNING,
       JobStatus.SUCCESS])], ids=['traditional', 'celery'])
-def test_girder_worker_run(session, wait_for_success,
-                           endpoint, standard_statuses):
+def test_girder_worker_run(session, endpoint, standard_statuses):
     r = session.post(endpoint)
     assert r.status_code == 200
 
-    with wait_for_success(r.json()['_id']) as job:
+    with session.wait_for_success(r.json()['_id']) as job:
 
         assert [ts['status'] for ts in job['timestamps']
                 if ts['status'] in standard_statuses] == standard_statuses
@@ -38,23 +37,22 @@ def test_girder_worker_run(session, wait_for_success,
     ('integration_tests/traditional/test_girder_worker_run_as_celery_task_fails',
      [JobStatus.RUNNING,
       JobStatus.ERROR])], ids=['traditional', 'celery'])
-def test_girder_worker_run_fails(session, wait_for_error,
-                                 endpoint, standard_statuses):
+def test_girder_worker_run_fails(session, endpoint, standard_statuses):
     r = session.post(endpoint)
     assert r.status_code == 200
 
-    with wait_for_error(r.json()['_id']) as job:
+    with session.wait_for_error(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']
                 if ts['status'] in standard_statuses] == standard_statuses
 
         assert job['log'][0].startswith('Exception: invalid syntax (<string>, line 1)')
 
 
-def test_custom_task_name(session, wait_for_success):
+def test_custom_task_name(session):
     r = session.post('integration_tests/traditional/test_job_custom_task_name')
     assert r.status_code == 200
 
-    with wait_for_success(r.json()['_id']) as job:
+    with session.wait_for_success(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.SUCCESS]
 
@@ -62,11 +60,11 @@ def test_custom_task_name(session, wait_for_success):
         assert session.get_result(job['celeryTaskId']) == '6765'
 
 
-def test_custom_task_name_fails(session, wait_for_error):
+def test_custom_task_name_fails(session):
     r = session.post('integration_tests/traditional/test_job_custom_task_name_fails')
     assert r.status_code == 200
 
-    with wait_for_error(r.json()['_id']) as job:
+    with session.wait_for_error(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.ERROR]
 
