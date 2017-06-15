@@ -16,7 +16,7 @@ fi
 
 
 # Start up Girder in the background
-(python -m girder "$@" > girder_entrypoint.log 2>&1) &
+(python -m girder -p 8989 -d "mongodb://mongo:27017/girder" "$@" > girder_entrypoint.log 2>&1) &
 
 # Wait for it to be done starting
 until grep -qi 'engine bus started' girder_entrypoint.log; do sleep 1; done;
@@ -32,4 +32,4 @@ popd
 kill $(pgrep -f girder)
 
 # Start Girder for the container process
-python -m girder "$@"
+python -m girder -p 8989 -d "mongodb://mongo:27017/girder" "$@"

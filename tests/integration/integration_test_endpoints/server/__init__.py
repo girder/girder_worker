@@ -73,7 +73,7 @@ class IntegrationTestEndpoints(Resource):
 
     @access.token
     @describeRoute(
-        Description('Utility endpoint to get an asyn result from a celery id')
+        Description('Utility endpoint to get an async result from a celery id')
         .param('celery_id', 'celery async ID', dataType='string'))
     def get_result(self, params):
         cid = params['celery_id']

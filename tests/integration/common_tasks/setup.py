@@ -2,9 +2,9 @@ from setuptools import setup
 
 setup(name='common_tasks',
       version='0.0.0',
-      description='An example girder worker extension',
-      author='Chris Kotfila',
-      author_email='chris.kotfila@kitware.com',
+      description='A girder_worker extension with common tasks for testing',
+      author='Kitware Inc.',
+      author_email='kitware@kitware.com',
       license='Apache v2',
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',

@@ -3,9 +3,6 @@ MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
 
 VOLUME /girder/plugins/integration_test_endpoints
 
-RUN sed -i 's|^uri = "mongodb://localhost:27017/girder"$|uri = "mongodb://mongo:27017/girder"|' /girder/girder/conf/girder.local.cfg
-RUN sed -i 's|^server.socket_port = 8080$|server.socket_port = 8989|' /girder/girder/conf/girder.local.cfg
-
 RUN pip install ansible girder-client
 
 COPY ./scripts /scripts
@@ -19,7 +16,7 @@ RUN girder-install web --plugins=integration_test_endpoints
 # e.g. for developing test endpoints
 VOLUME /girder/girder/plugins/integration_test_endpoints
 
-# Allow moutning /girder_worker
+# Allow mounting /girder_worker
 RUN mkdir /girder_worker
 VOLUME /girder_worker
 

@@ -4,13 +4,13 @@ from .utilities import GirderSession
 
 
 def pytest_addoption(parser):
-    parser.addoption('--girder', action='store', default='http://127.0.0.1:8989/',
+    parser.addoption('--girder', action='store', default='http://127.0.0.1:8989/api/v1/',
                      help='Specify a different server to run against')
 
 
 @pytest.fixture(scope='module')
 def api_url(request):
-    return request.config.getoption('--girder') + 'api/v1/'
+    return request.config.getoption('--girder')
 
 
 # TODO: test with admin and non-admin user - are there (should there be)
@@ -22,8 +22,7 @@ def session(request, api_url):
     username, password = request.param
     with GirderSession(base_url=api_url) as s:
         try:
-            r = s.get('user/authentication',
-                      auth=(username, password))
+            r = s.get('user/authentication', auth=(username, password))
         except requests.ConnectionError:
             raise Exception(
                 'Unable to connect to %s.' % api_url)

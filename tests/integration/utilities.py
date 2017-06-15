@@ -32,11 +32,24 @@ class GirderSession(BaseUrlSession):
 
     @contextlib.contextmanager
     def wait_for(self, job_id, predicate, timeout=20, interval=0.3, on_timeout=None):
+        """A generic context manager that handles waiting on properties of a job.
+
+        :param job_id: ID of the job to wait on
+        :param predicate: function that takes the job JSON and returns a boolean.
+                          Return true to break out of the loop.
+        :param timeout: Timeout after a fixed number of seconds
+        :param interval: How often to check the job's status
+        :param on_timeout: What to do if the function times out.
+        :returns: (on success) yield's the job's JSON as a dict
+        :rtype: dict
+
+        """
         then = datetime.utcnow() + timedelta(seconds=timeout)
         timeout = True
 
         while datetime.utcnow() < then:
             r = self.get('job/' + job_id)
+            r.raise_for_status()
 
             if predicate(r.json()):
                 timeout = False
