@@ -13,9 +13,9 @@ import pytest
     ('integration_tests/traditional/test_girder_worker_run_as_celery_task',
      [JobStatus.RUNNING,
       JobStatus.SUCCESS])], ids=['traditional', 'celery'])
-def test_girder_worker_run(session, api_url, wait_for_success, get_result,
+def test_girder_worker_run(session, wait_for_success,
                            endpoint, standard_statuses):
-    r = session.post(api_url(endpoint))
+    r = session.post(endpoint)
     assert r.status_code == 200
 
     with wait_for_success(r.json()['_id']) as job:
@@ -24,7 +24,7 @@ def test_girder_worker_run(session, api_url, wait_for_success, get_result,
                 if ts['status'] in standard_statuses] == standard_statuses
 
         assert 'celeryTaskId' in job
-        assert get_result(job['celeryTaskId']) == '{"c": {"data": 3, "format": "integer"}}'
+        assert session.get_result(job['celeryTaskId']) == '{"c": {"data": 3, "format": "integer"}}'
 
 
 # Note: This may create custom statuses that it is hard to test for.
@@ -38,9 +38,9 @@ def test_girder_worker_run(session, api_url, wait_for_success, get_result,
     ('integration_tests/traditional/test_girder_worker_run_as_celery_task_fails',
      [JobStatus.RUNNING,
       JobStatus.ERROR])], ids=['traditional', 'celery'])
-def test_girder_worker_run_fails(session, api_url, wait_for_error,
+def test_girder_worker_run_fails(session, wait_for_error,
                                  endpoint, standard_statuses):
-    r = session.post(api_url(endpoint))
+    r = session.post(endpoint)
     assert r.status_code == 200
 
     with wait_for_error(r.json()['_id']) as job:
@@ -50,8 +50,8 @@ def test_girder_worker_run_fails(session, api_url, wait_for_error,
         assert job['log'][0].startswith('Exception: invalid syntax (<string>, line 1)')
 
 
-def test_custom_task_name(session, api_url, wait_for_success, get_result):
-    r = session.post(api_url('integration_tests/traditional/test_job_custom_task_name'))
+def test_custom_task_name(session, wait_for_success):
+    r = session.post('integration_tests/traditional/test_job_custom_task_name')
     assert r.status_code == 200
 
     with wait_for_success(r.json()['_id']) as job:
@@ -59,11 +59,11 @@ def test_custom_task_name(session, api_url, wait_for_success, get_result):
             [JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.SUCCESS]
 
         assert 'celeryTaskId' in job
-        assert get_result(job['celeryTaskId']) == '6765'
+        assert session.get_result(job['celeryTaskId']) == '6765'
 
 
-def test_custom_task_name_fails(session, api_url, wait_for_error, get_result):
-    r = session.post(api_url('integration_tests/traditional/test_job_custom_task_name_fails'))
+def test_custom_task_name_fails(session, wait_for_error):
+    r = session.post('integration_tests/traditional/test_job_custom_task_name_fails')
     assert r.status_code == 200
 
     with wait_for_error(r.json()['_id']) as job:

@@ -7,56 +7,40 @@ import functools
 from girder_worker.utils import JobStatus
 from datetime import timedelta, datetime
 
-
-def pytest_addoption(parser):
-        parser.addoption('--girder', action='store', default='http://127.0.0.1:8989',
-                         help='my option: type1 or type2')
+from requests_toolbelt.sessions import BaseUrlSession
 
 
-@pytest.fixture(scope='module')
-def girder_url(request):
-        return request.config.getoption('--girder')
-
-
-@pytest.fixture(scope='module')
-def api_url():
-    def _api_url(uri=u''):
-        return u'http://127.0.0.1:8989/api/v1/' + uri
-    return _api_url
-
-
-@pytest.fixture
-def get_result(session, api_url):
-    def _get_result(celery_id):
-        r = session.post(api_url('integration_tests/result'), data={'celery_id': celery_id})
+class GirderSession(BaseUrlSession):
+    def get_result(self, celery_id):
+        r = self.post('integration_tests/result', data={
+                'celery_id': celery_id})
         return r.text
-    return _get_result
-
 
 # TODO: test with admin and non-admin user - are there (should there be)
 # differences between girder-worker functionality between the two?
-@pytest.fixture(scope='module')
-def session(api_url, request):
-    login = ('admin', 'letmein')
-    with requests.Session() as s:
+@pytest.fixture(scope='module',
+                params=[['admin', 'letmein', 'http://127.0.0.1:8989/api/v1/']])
+def session(request):
+    username, password, api_url = request.param
+    with GirderSession(base_url=api_url) as s:
         try:
-            r = requests.get(api_url('user/authentication'),
-                             auth=login)
+            r = s.get('user/authentication',
+                      auth=(username, password))
         except requests.ConnectionError:
             raise Exception(
-                'Unable to connect to %s.' % api_url())
+                    'Unable to connect to %s.' % api_url)
 
         try:
             s.headers['Girder-Token'] = r.json()['authToken']['token']
         except KeyError:
             raise Exception(
-                'Unable to login with user "%s", password "%s"' % login)
+                'Unable to login with user "%s", password "%s"' % (username, password))
 
         yield s
 
 
 @pytest.fixture
-def wait_for(session, api_url):
+def wait_for(session):
 
     @contextlib.contextmanager
     def _wait_for(job_id, predicate, timeout=20, interval=0.3, on_timeout=None):
@@ -64,7 +48,7 @@ def wait_for(session, api_url):
         timeout = True
 
         while datetime.utcnow() < then:
-            r = session.get(api_url('job/' + job_id))
+            r = session.get('job/' + job_id)
 
             if predicate(r.json()):
                 timeout = False
@@ -72,12 +56,12 @@ def wait_for(session, api_url):
 
             time.sleep(interval)
 
-        r = session.get(api_url('job/' + job_id))
+        r = session.get('job/' + job_id)
 
         if timeout:
             if on_timeout is None:
                 def on_timeout(j):
-                    return 'Timed out waiting for %s' % api_url('job/%s' % j['_id'])
+                    return 'Timed out waiting for %s' % 'job/%s' % j['_id']
 
             warnings.warn(on_timeout(r.json()))
 
@@ -87,10 +71,10 @@ def wait_for(session, api_url):
 
 
 @pytest.fixture
-def wait_for_success(wait_for, api_url):
+def wait_for_success(wait_for):
 
     def on_timeout(j):
-        return 'Timed out waiting for %s to move into success state' % api_url('job/%s' % j['_id'])
+        return 'Timed out waiting for %s to move into success state' % 'job/%s' % j['_id']
 
     return functools.partial(
         wait_for,
@@ -99,10 +83,10 @@ def wait_for_success(wait_for, api_url):
 
 
 @pytest.fixture
-def wait_for_error(wait_for, api_url):
+def wait_for_error(wait_for):
 
     def on_timeout(j):
-        return 'Timed out waiting for %s to move into error state' % api_url('job/%s' % (j['_id']))
+        return 'Timed out waiting for %s to move into error state' % 'job/%s' % (j['_id'])
 
     return functools.partial(
         wait_for,

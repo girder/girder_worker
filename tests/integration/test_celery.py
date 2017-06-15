@@ -3,8 +3,8 @@ import pytest
 
 
 @pytest.mark.priority(10)
-def test_session(session, api_url):
-    r = session.get(api_url('user/me'))
+def test_session(session):
+    r = session.get('user/me')
     assert r.status_code == 200
     assert r.json()['login'] == 'admin'
     assert r.json()['admin'] is True
@@ -20,8 +20,8 @@ def test_session(session, api_url):
          'apply_async',
          'signature_delay',
          'signature_apply_async'])
-def test_celery_task_success(session, api_url, wait_for_success, get_result, endpoint):
-    r = session.post(api_url(endpoint))
+def test_celery_task_success(session, wait_for_success, endpoint):
+    r = session.post(endpoint)
     assert r.status_code == 200
 
     with wait_for_success(r.json()['_id']) as job:
@@ -29,7 +29,7 @@ def test_celery_task_success(session, api_url, wait_for_success, get_result, end
             [JobStatus.RUNNING, JobStatus.SUCCESS]
 
         assert 'celeryTaskId' in job
-        assert get_result(job['celeryTaskId']) == '6765'
+        assert session.get_result(job['celeryTaskId']) == '6765'
 
 
 @pytest.mark.parametrize('endpoint', [
@@ -41,8 +41,8 @@ def test_celery_task_success(session, api_url, wait_for_success, get_result, end
          'apply_async',
          'signature_delay',
          'signature_apply_async'])
-def test_celery_task_fails(session, api_url, wait_for_error, endpoint):
-    r = session.post(api_url(endpoint))
+def test_celery_task_fails(session, wait_for_error, endpoint):
+    r = session.post(endpoint)
     assert r.status_code == 200
 
     with wait_for_error(r.json()['_id']) as job:
