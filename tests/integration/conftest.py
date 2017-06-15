@@ -110,12 +110,23 @@ def wait_for_error(wait_for, api_url):
         on_timeout=on_timeout)
 
 
-# pytest hook for ordering test items after they have been
-# collected. This uses 'priority' mark objects to order the
-# tests, defaulting the priority of non-marked tests to 100.
+# pytest hooks for ordering test items after they have been collected
+# and ensuring tests marked with sanitycheck run first.
+# pytest_runtest_makereport and pytest_runtest_setup are used to xfail
+# all tests if any of the sanitychecks fail.
 def pytest_collection_modifyitems(items):
-    def _get_priority(i):
-        if i.get_marker('priority'):
-            return i.get_marker('priority').args[0]
-        return 100
-    items.sort(key=_get_priority)
+    items.sort(key=lambda i: -1 if i.get_marker('sanitycheck') else 1)
+
+
+def pytest_runtest_makereport(item, call):
+    if 'sanitycheck' in item.keywords:
+        if call.excinfo is not None:
+            session = item.parent.parent
+            session._sanitycheckfailed = item
+
+
+def pytest_runtest_setup(item):
+        session = item.parent.parent
+        sanitycheckfailed = getattr(session, '_sanitycheckfailed', None)
+        if sanitycheckfailed is not None:
+            pytest.xfail('previous test failed (%s)' % sanitycheckfailed.name)

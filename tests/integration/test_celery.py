@@ -2,7 +2,7 @@ from girder_worker.utils import JobStatus
 import pytest
 
 
-@pytest.mark.priority(10)
+@pytest.mark.sanitycheck
 def test_session(session, api_url):
     r = session.get(api_url('user/me'))
     assert r.status_code == 200
