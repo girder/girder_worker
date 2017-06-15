@@ -71,6 +71,8 @@ def _expand_args(args, inputs, taskInputs, outputs, tmpDir):
                 arg = arg.replace('$input{%s}' % inputId, str(transformed))
             elif inputId == '_tempdir':
                 arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
+            else:
+                raise Exception('Could not expand token: $input{%s}.' % inputId)
         for inputId in _flagRe.findall(arg):
             if inputId in inputs and inputs[inputId]['script_data']:
                 val = taskInputs[inputId].get('arg', inputId)
@@ -282,12 +284,14 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath' and not spec.get('stream'):
-            path = spec.get('path', name)
+            path = spec.get('path', '$output{%s}' % name)
             for outputId in _outputRe.findall(path):
                 if outputId in outputs and 'name' in outputs[outputId]:
                     path = path.replace('$output{%s}' % outputId, outputs[outputId]['name'])
-                else:
+                elif 'path' in spec:
                     raise Exception('Could not expand token: $output{%s}.' % outputId)
+                else:
+                    path = name
 
             if not path.startswith('/'):
                 # Assume relative paths are relative to the data volume

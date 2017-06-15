@@ -424,7 +424,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': 'test/test:latest',
             'container_args': [
-                '-f', '$input{foo}', '--temp-dir=$input{_tempdir}',
+                '-f', '--temp-dir=$input{_tempdir}',
                 '$flag{bar}'
             ],
             'docker_run_args': {
