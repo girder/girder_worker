@@ -1,0 +1,26 @@
+FROM girder/girder:latest
+MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
+
+VOLUME /girder/plugins/integration_test_endpoints
+
+RUN pip install ansible girder-client
+
+COPY ./scripts /scripts
+RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/roles girder.girder
+
+
+COPY ./integration_test_endpoints /girder/girder/plugins/
+RUN girder-install web --plugins=integration_test_endpoints
+
+# Allow mounting integration_test_endpoints from host environment
+# e.g. for developing test endpoints
+VOLUME /girder/girder/plugins/integration_test_endpoints
+
+# Allow mounting /girder_worker
+RUN mkdir /girder_worker
+VOLUME /girder_worker
+
+# Make sure remote debugging is available
+RUN pip install rpdb
+
+ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/girder_entrypoint.sh"]

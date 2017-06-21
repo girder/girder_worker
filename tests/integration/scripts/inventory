@@ -1,0 +1,8 @@
+[girder]
+localhost ansible_connection=local
+
+[mongo]
+mongo
+
+[rabbit]
+rabbit

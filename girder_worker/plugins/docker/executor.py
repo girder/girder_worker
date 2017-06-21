@@ -13,6 +13,10 @@ from girder_worker.plugins.docker.stream_adapter import DockerStreamPushAdapter
 DATA_VOLUME = '/mnt/girder_worker/data'
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
+_inputRe = re.compile(r'\$input\{([^}]+)\}')
+_outputRe = re.compile(r'\$output\{([^}]+)\}')
+_flagRe = re.compile(r'\$flag\{([^}]+)\}')
+
 
 def _pull_image(image):
     """
@@ -44,28 +48,33 @@ def _transform_path(inputs, taskInputs, inputId, tmpDir):
     raise Exception('No task input found with id = ' + inputId)
 
 
-def _expand_args(args, inputs, taskInputs, tmpDir):
+def _expand_args(args, inputs, taskInputs, outputs, tmpDir):
     """
-    Expands arguments to the container execution if they reference input
+    Expands arguments to the container execution if they reference input or output
     data. For example, if an input has id=foo, then a container arg of the form
-    $input{foo} would be expanded to the runtime value of that input. If that
+    ``$input{foo}`` would be expanded to the runtime value of that input. If that
     input is a filepath target, the file path will be transformed into the
     location that it will be available inside the running container.
+
+    Output file paths can be referenced using ``$output{foo}``. That will expand
+    to use the "name" field of the corresponding output binding for this task invocation.
+    TODO(zach) add example of task output and corresponding output binding. This
+    expansion will use the absolute path format with DATA_VOLUME as the base path.
     """
     newArgs = []
-    inputRe = re.compile(r'\$input\{([^}]+)\}')
-    flagRe = re.compile(r'\$flag\{([^}]+)\}')
 
     for arg in args:
         skip = False
-        for inputId in re.findall(inputRe, arg):
+        for inputId in _inputRe.findall(arg):
             if inputId in inputs:
                 transformed = _transform_path(
                     inputs, taskInputs, inputId, tmpDir)
                 arg = arg.replace('$input{%s}' % inputId, str(transformed))
             elif inputId == '_tempdir':
                 arg = arg.replace('$input{_tempdir}', DATA_VOLUME)
-        for inputId in re.findall(flagRe, arg):
+            else:
+                raise Exception('Could not expand token: $input{%s}.' % inputId)
+        for inputId in _flagRe.findall(arg):
             if inputId in inputs and inputs[inputId]['script_data']:
                 val = taskInputs[inputId].get('arg', inputId)
             else:
@@ -73,6 +82,12 @@ def _expand_args(args, inputs, taskInputs, tmpDir):
             arg = arg.replace('$flag{%s}' % inputId, val)
             if not arg:
                 skip = True
+        for outputId in _outputRe.findall(arg):
+            if outputId in outputs and 'name' in outputs[outputId]:
+                arg = arg.replace(
+                    '$output{%s}' % outputId, os.path.join(DATA_VOLUME, outputs[outputId]['name']))
+            else:
+                raise Exception('Could not expand token: $output{%s}.' % outputId)
         if not skip:
             newArgs.append(arg)
 
@@ -247,7 +262,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     tempdir = kwargs.get('_tempdir')
     job_mgr = kwargs.get('_job_manager')
-    args = _expand_args(task.get('container_args', []), inputs, task_inputs, tempdir)
+    args = _expand_args(task.get('container_args', []), inputs, task_inputs, outputs, tempdir)
 
     ipipes, opipes = _setup_pipes(
         task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe)
@@ -291,7 +306,15 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath' and not spec.get('stream'):
-            path = spec.get('path', name)
+            path = spec.get('path', '$output{%s}' % name)
+            for outputId in _outputRe.findall(path):
+                if outputId in outputs and 'name' in outputs[outputId]:
+                    path = path.replace('$output{%s}' % outputId, outputs[outputId]['name'])
+                elif 'path' in spec:
+                    raise Exception('Could not expand token: $output{%s}.' % outputId)
+                else:
+                    path = name
+
             if not path.startswith('/'):
                 # Assume relative paths are relative to the data volume
                 path = os.path.join(DATA_VOLUME, path)
