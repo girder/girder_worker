@@ -376,7 +376,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', 'message'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -460,7 +460,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', 'message'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',

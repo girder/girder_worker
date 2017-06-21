@@ -508,7 +508,7 @@ class TestDockerMode(unittest.TestCase):
             f.write('simulated output')
 
         with httmock.HTTMock(handle_http):
-            run(task, outputs=outputs, _tempdir=tmp)
+            run(task, outputs=outputs, _tempdir=tmp, _celery_task=celery_task)
 
             self.assertEqual(len(reqs), 1)
             self.assertEqual(reqs[0].method, 'POST')
