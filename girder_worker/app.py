@@ -8,6 +8,7 @@ from celery.signals import (task_prerun, task_postrun,
                             worker_ready, before_task_publish)
 from celery.result import AsyncResult
 from six.moves import configparser
+import sys
 from .utils import JobStatus
 
 
@@ -141,13 +142,9 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
 @worker_ready.connect
 def check_celery_version(*args, **kwargs):
     if LooseVersion(__version__) < LooseVersion('4.0.0'):
-        print("""You are running Celery {}.
+        sys.exit("""You are running Celery {}.
 
-Celery 3.X is being deprecated in girder-worker!
-
-Common APIs are compatible so we do not expect significant disruption.
-Please verify that your system works with Celery 4.X as soon as possible."""
-              .format(__version__))
+girder-worker requires celery>=4.0.0""".format(__version__))
 
 
 def deserialize_job_info_spec(**kwargs):
