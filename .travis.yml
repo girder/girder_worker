@@ -17,7 +17,6 @@ cache:
   directories:
     - $HOME/local
     - $HOME/swift-0.96.1
-    - $HOME/julia-0.4.2
     - $HOME/vtk-precise64
     - $HOME/cmake-3.2.2-Linux-x86_64
 
@@ -50,11 +49,6 @@ before_install:
   - export PATH=$PATH:$HOME/swift-0.96.2/bin
   - swift --version || curl -L https://data.kitware.com/api/v1/file/588b61cf8d777f4f3f30c770/download | tar zx -C ~
   - swift --version
-  # install julia
-  - export JULIA_INSTALL_HOME=$HOME/julia-0.4.2
-  - export PATH=$PATH:$JULIA_INSTALL_HOME/bin
-  - julia --version || mkdir -p $JULIA_INSTALL_HOME && curl https://julialang.s3.amazonaws.com/bin/linux/x64/0.4/julia-0.4.2-linux-x86_64.tar.gz | tar zx -C $JULIA_INSTALL_HOME --strip-components 1
-  - julia --version
 
 # install dependencies
 install:
