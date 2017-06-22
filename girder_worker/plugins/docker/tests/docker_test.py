@@ -217,16 +217,16 @@ class TestDockerMode(unittest.TestCase):
 
             # Make sure we can pass empty values
             task['inputs'].append({
-                'id': 'baz',
-                'format': 'string',
-                'type': 'string',
+                'id': 'baz'
             })
             task['container_args'].extend(['--baz', '$input{baz}'])
             inputs['baz'] = {
                 'data': '',
-                'format': 'string',
-                'mode': 'inline',
-                'type': 'string'
+                'mode': 'inline'
+            }
+            inputs['foo'] = {
+                'mode': 'http',
+                'url': 'https://foo.com/file.txt'
             }
             run(task, inputs=inputs, validate=False, auto_convert=False)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
@@ -242,7 +242,14 @@ class TestDockerMode(unittest.TestCase):
 
             # And non-empty values
             _reset_mocks()
-            inputs['baz']['data'] = 'parameter1'
+            inputs['baz'] = {
+                'data': 'parameter1',
+                'mode': 'inline'
+            }
+            inputs['foo'] = {
+                'mode': 'http',
+                'url': 'https://foo.com/file.txt'
+            }
             run(task, inputs=inputs, validate=False, auto_convert=False)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
             args = docker_client_mock.containers.run.call_args_list[0][0]
@@ -421,9 +428,7 @@ class TestDockerMode(unittest.TestCase):
             'pull_image': True,
             'inputs': [],
             'outputs': [{
-                'id': '_stderr',
-                'format': 'string',
-                'type': 'string'
+                'id': '_stderr'
             }]
         }
         run(task, inputs={}, cleanup=False, validate=False,
@@ -457,8 +462,6 @@ class TestDockerMode(unittest.TestCase):
             'inputs': [],
             'outputs': [{
                 'id': 'foo',
-                'format': 'string',
-                'type': 'string',
                 'target': 'filepath',
                 'path': '$output{foo}'
             }]
@@ -468,7 +471,6 @@ class TestDockerMode(unittest.TestCase):
             'foo': {
                 'mode': 'http',
                 'url': 'http://foo.com',
-                'format': 'string',
                 'name': 'file.txt'
             }
         }
