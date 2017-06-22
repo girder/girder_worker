@@ -56,7 +56,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):  # noqa
     for step in task['steps']:
         if 'visualization' not in step or not step['visualization']:
             continue
-        print('WE GOT TO THE NEW CODE!!!')
         vis_bindings = {}
         for b, value in bindings[step['name']].iteritems():
             value['script_data'] = value['data']
