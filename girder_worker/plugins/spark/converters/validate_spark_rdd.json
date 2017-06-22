@@ -1,6 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "collection", "format": "spark.rdd"}],
-    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
-    "script": "from pyspark.rdd import RDD\noutput = isinstance(input, RDD)",
-    "mode": "spark.python"
-}

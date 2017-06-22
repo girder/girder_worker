@@ -77,7 +77,7 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 An individual plugin can be installed through pip, in editable mode, like so: ::
 
-    pip install -U -e .[spark]
+    pip install -U -e .[r]
 
 You can run this command at any time to install dependencies of other plugins, even if
 the worker is already installed.

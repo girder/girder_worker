@@ -391,25 +391,6 @@ R
       these are set as the row names of the data frame.
     * ``tree/r.apetree``: A tree in the R package ``ape`` format.
 
-Spark
------
-
-* **Plugin ID:** ``spark``
-* **Description:** Adds a new execution mode ``spark.python`` that allows tasks to
-  run inside a pyspark environment with a
-  `SparkContext <http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext>`_
-  variable automatically exposed. That is, each task will have a variable exposed
-  in its Python runtime called ``sc`` that is a valid SparkContext. This plugin exposes
-  a new type, ``collection``, referring to something that can be represented by
-  a Spark `RDD <http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD>`_.
-* **Converters added:**
-    * ``collection/json`` |ba| ``collection/spark.rdd``: Convert between a JSON list and an RDD created
-      from calling ``sc.parallelize`` on the list.
-
-* **Validators added:**
-    * ``collection/json``
-    * ``collection/spark.rdd``
-
 VTK
 ---
 
