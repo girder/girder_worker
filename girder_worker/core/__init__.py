@@ -363,5 +363,14 @@ def run(task, inputs=None, outputs=None, auto_convert=True, validate=True,
         events.trigger('run.after', info)
 
         return outputs
+    except StateTransitionException as stex:
+        if job_mgr:
+            status = job_mgr.refreshStatus()
+            # If we are canceling we want to stay in that state, otherwise raise
+            # the exception
+            if status != JobStatus.CANCELING:
+                raise
+        else:
+            raise
     finally:
         events.trigger('run.finally', info)
