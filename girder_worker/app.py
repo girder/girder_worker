@@ -12,6 +12,7 @@ from celery.result import AsyncResult
 from celery.task.control import inspect
 
 from six.moves import configparser
+import sys
 from .utils import JobStatus, StateTransitionException
 
 
@@ -154,13 +155,9 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
 @worker_ready.connect
 def check_celery_version(*args, **kwargs):
     if LooseVersion(__version__) < LooseVersion('4.0.0'):
-        print("""You are running Celery {}.
+        sys.exit("""You are running Celery {}.
 
-Celery 3.X is being deprecated in girder-worker!
-
-Common APIs are compatible so we do not expect significant disruption.
-Please verify that your system works with Celery 4.X as soon as possible."""
-              .format(__version__))
+girder-worker requires celery>=4.0.0""".format(__version__))
 
 
 def deserialize_job_info_spec(**kwargs):
@@ -171,40 +168,9 @@ class JobSpecNotFound(Exception):
     pass
 
 
-# ::: NOTE :::
-# This is a transitional function for managing compatibility between
-# Celery 3.X and 4.X. The issue is how child tasks,  spawned from
-# girder-worker, handle their status updates and logging. In Celery 3.X
-# there is no easy way to determine if a task was spawned by another
-# task and so all status updates/logs are sent to the same girder job
-# model.  In Celery 4.X task ancestry is handled through the parent_id
-# attribute. So for Celery 4.X child tasks will report nothing,  for
-# Celery 3.X child tasks report everything to the same girder JobModel.
-# This is not an ideal situation, and while the path forward is to
-# transition to Celery 4, this function exists to temporarily provide
-# backwards compatibility with Celery 3.X while projects transition.
-def _update_status(task, status):
-    # Celery 4.X
-    if hasattr(task.request, 'parent_id'):
-        # For now,  only automatically update status if this is
-        # not a child task. Otherwise child tasks completion will
-        # update the parent task's jobModel in girder.
-        if task.request.parent_id is None:
-            task.job_manager.updateStatus(status)
-    # Celery 3.X
-    else:
-        task.job_manager.updateStatus(status)
-
-
 def _job_manager(request=None, headers=None, kwargs=None):
-    # Celery 4.x API
-    if request is not None and hasattr(request, 'jobInfoSpec'):
+    if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
-
-    # Celery 3.X API or we are being called from revoked signal
-    elif headers is not None and \
-            'jobInfoSpec' in headers:
-        jobSpec = headers['jobInfoSpec']
 
     # Deprecated: This method of passing job information
     # to girder_worker is deprecated. Newer versions of girder
@@ -218,6 +184,12 @@ def _job_manager(request=None, headers=None, kwargs=None):
 
     return deserialize_job_info_spec(**jobSpec)
 
+def _update_status(task, status):
+    # For now,  only automatically update status if this is
+    # not a child task. Otherwise child tasks completion will
+    # update the parent task's jobModel in girder.
+    if task.request.parent_id is None:
+        task.job_manager.updateStatus(status)
 
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,
@@ -271,8 +243,8 @@ def gw_task_failure(sender=None, exception=None,
             ''.join(tb.format_tb(traceback)))
 
         sender.job_manager.write(msg)
-
         _update_status(sender, JobStatus.ERROR)
+
     except AttributeError:
         pass
 
