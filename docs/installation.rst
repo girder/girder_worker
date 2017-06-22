@@ -83,7 +83,7 @@ The core configuration parameters are outlined below.
     it can use if it needs filesystem storage. This config setting points to the
     root directory under which these temporary directories will be created.
   * ``girder_worker.plugins_enabled``: This is a comma-separated list of plugin IDs that
-    will be enabled at runtime, e.g. ``r,vtk``.
+    will be enabled at runtime, e.g. ``r,docker``.
   * ``girder_worker.plugin_load_path``: If you have any external plugins that are not
     inside the **girder_worker/plugins** package directory, set this value to a
     colon-separated list of directories to search for external plugins that need to

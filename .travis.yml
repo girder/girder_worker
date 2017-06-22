@@ -16,12 +16,11 @@ addons:
 cache:
   directories:
     - $HOME/local
-    - $HOME/vtk-precise64
     - $HOME/cmake-3.2.2-Linux-x86_64
 
 # environment variables
 env:
-  - PYTHONPATH=~/vtk-precise64/lib/python2.7/site-packages:~/vtk-precise64/lib LD_LIBRARY_PATH=~/vtk-precise64/lib:~/local/lib:~/local/lib/R/lib
+  - LD_LIBRARY_PATH=~/local/lib:~/local/lib/R/lib
 
 before_script:
   - "export DISPLAY=:99.0"
@@ -35,8 +34,6 @@ before_install:
   - cd cmake-*/bin && export PATH="${PWD}:${PATH}"
   - popd
   - cmake --version
-  # download VTK
-  - if [ ! -f $HOME/vtk-precise64/bin/vtkpython ] ; then curl -L https://data.kitware.com/api/v1/file/588b62958d777f4f3f30c773/download | tar zx -C ~ ; fi
   # install R
   - mkdir -p $HOME/local
   - if [ ! -f $HOME/local/env-arbor ] ; then curl -L https://data.kitware.com/api/v1/file/588b63c68d777f4f3f30c776/download | tar jx -C $HOME/local/ ; mv $HOME/local/env $HOME/local/env-arbor ; fi
