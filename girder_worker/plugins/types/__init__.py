@@ -1,6 +1,7 @@
 from networkx import NetworkXNoPath
 
-from girder_worker.core import events, io, run, set_job_status, utils
+from girder_worker import utils
+from girder_worker.core import events, io, run, set_job_status
 from .format import conv_graph, converter_path, get_validator_analysis, Validator
 
 
