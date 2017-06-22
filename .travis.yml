@@ -16,7 +16,6 @@ addons:
 cache:
   directories:
     - $HOME/local
-    - $HOME/swift-0.96.1
     - $HOME/vtk-precise64
     - $HOME/cmake-3.2.2-Linux-x86_64
 
@@ -44,11 +43,6 @@ before_install:
   - source $HOME/local/env-arbor
   - R --version
   - R -e '.libPaths(); sessionInfo()'
-
-  # install swift
-  - export PATH=$PATH:$HOME/swift-0.96.2/bin
-  - swift --version || curl -L https://data.kitware.com/api/v1/file/588b61cf8d777f4f3f30c770/download | tar zx -C ~
-  - swift --version
 
 # install dependencies
 install:
