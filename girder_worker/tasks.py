@@ -15,6 +15,3 @@ def run(_celery_task, *pargs, **kwargs):
     kwargs['status'] = JobStatus.RUNNING
 
     return core.run(*pargs, **kwargs)
-
-
-
