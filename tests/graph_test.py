@@ -129,5 +129,6 @@ class TestGraph(unittest.TestCase):
                           self.test_input['distances']['data'],
                           edge_match=numerical_edge_match('distance', 1)))
 
+
 if __name__ == '__main__':
     unittest.main()

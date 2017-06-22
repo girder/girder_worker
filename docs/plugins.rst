@@ -98,6 +98,14 @@ If you want to pass additional command line options to ``docker run`` that shoul
 come before the container name, pass them as a list via the ``"docker_run_args"``
 key.
 
+.. note::
+
+   The Docker plugin currently does not support running ``dockerd``
+   with the option ``--selinux-enabled``.  Running with this option
+   may result in an error like: ::
+
+     Exception: Docker tempdir chmod returned code 1.
+
 Outputs from Docker tasks
 *************************
 
@@ -155,6 +163,66 @@ Paths that are specified as relative paths are assumed to be relative to ``/mnt/
 If you specify an absolute path, it must start with ``/mnt/girder_worker/data/``, otherwise an exception
 will be thrown before the task is run. These conventions apply whether the path
 is specified in the ``id`` or ``path`` field.
+
+Progress reporting from docker tasks
+************************************
+
+Docker tasks have the option of reporting progress back to Girder via a special named pipe. If
+you want to do this, specify ``"progress_pipe": true"`` in your docker task specification. This
+will create a special named pipe at ``/mnt/girder_worker/data/.girder_progress``. In your container
+logic, you may write progress notification messages to this named pipe, one per line.
+Progress messages should be JSON objects with the following fields, all of which are optional:
+
+  * ``message`` (string): A human-readable message about the current task progress.
+  * ``current`` (number): A numeric value representing current progress, which should always be
+    less than or equal to the ``total`` value.
+  * ``total`` (number): A numeric value representing the maximum progress value, i.e. the value
+    of ``current`` when the task is complete. Only pass this field if the total is changing or being
+    initially set.
+
+An example progress notification string: ::
+
+    {"message": "Halfway there!", "total": 100, "current": 50}
+
+.. note:: When writing to the named pipe, you should explicitly call ``flush`` on the file
+   descriptor afterward, otherwise the messages may sit in a buffer and may not reach the
+   Girder server as you write them.
+
+.. note:: This feature may not work on Docker on non-Linux platforms, and the call to open the
+   pipe for writing from within the container may block indefinitely.
+
+Management of Docker Containers and Images
+******************************************
+
+Docker images may be pulled when a task is run.  By default, these images are
+never removed.  Docker containers are automatically removed when the task is
+complete.
+
+As an alternative, a 'garbage collection' process can be used instead.  It can
+be enabled by modifying settings in the ``[docker]`` section of the config
+file, which can be done using the command:
+
+.. code-block :: none
+
+  girder-worker-config set docker gc True
+
+When the ``gc`` config value is set to ``True``, containers are not removed
+when the task ends.  Instead, periodically, any images not associated with a
+container will be removed, and then any stopped containers will be removed.
+This will free disk space associated with the images, but may remove images
+that are not directly related to Girder Worker.
+
+When garbage collection is turned on, images can be excluded from the process
+by setting ``exclude_images`` to a comma-separated list of image names.  For
+instance:
+
+.. code-block :: none
+
+  girder-worker-config set docker exclude_images dsarchive/histomicstk,rabbitmq
+
+Only containers that have been stopped longer than a certain time are removed.
+This time defaults to an hour, and can be specified as any number of seconds
+via the ``cache_timeout`` setting.
 
 Girder IO
 ---------
@@ -220,6 +288,65 @@ new item with the same name as the file), or into an existing item.
         (, "parent_type": <"folder" or "item", default is "folder">)
         (, "reference": <arbitrary reference string to pass to the server>)
     }
+
+Metadata outputs
+****************
+
+In addition to outputting blob data into Girder files, you may also output structured
+metadata that can be attached to an item. You can upload an output *as* metadata onto a
+new or existing item, or attach a pre-defined set of metadata to an output item that is uploaded as
+a file.
+
+To push an output as the metadata on an *existing* item, use the ``as_metadata`` field with the
+``item_id`` field set in your output binding:
+
+.. code-block:: none
+
+    {
+        "mode": "girder",
+        "as_metadata": true,
+        "item_id": <ID of the target item>,
+        "api_url": "...",
+        "token": "..."
+    }
+
+To push an output as the metadata on a *new* item, use ``as_metadata`` with the ``parent_id``
+field set, and a ``name`` field. The ``name`` is not required if the corresponding task output has
+``"target": "filepath"``, in which case the filename will be used as the name for the new item.
+
+.. code-block:: none
+
+    {
+        "mode": "girder",
+        "as_metadata": true,
+        "parent_id": <ID of the parent folder>,
+        "name": "My new metadata item",
+        "api_url": "...",
+        "token": "..."
+    }
+
+
+.. note:: The ``as_metadata`` behavior will only work if your output data is a JSON Object.
+
+To add additional pre-defined metadata fields to a normal Girder IO output, you can use the
+``metadata`` field on a normal Girder IO output. The ``metadata`` field must contain a JSON object,
+and its value will be set as the metadata on the output item.
+
+.. code-block:: none
+
+    {
+        "mode": "girder",
+        "metadata": {
+            "some": "other",
+            "metadata": "values"
+        },
+        "parent_id": <ID of the parent folder>,
+        "parent_type": "folder",
+        "name": "My output data",
+        "token": "...",
+        "api_url": "..."
+    }
+
 
 Cache Configuration
 *******************

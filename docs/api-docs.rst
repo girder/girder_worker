@@ -53,6 +53,7 @@ such as ``pdb``.
         (, "entrypoint": <custom override for container entry point>)
         (, "inputs": [<TASK_INPUT> (, <TASK_INPUT>, ...)])
         (, "outputs": [<TASK_OUTPUT> (, <TASK_OUTPUT>, ...)])
+        (, "progress_pipe": <set to true to create a channel for progress notifications>)
     }
 
     <WORKFLOW_TASK> ::= {
@@ -235,6 +236,7 @@ return value of :py:func:`girder_worker.run`.
         "url": <url to upload data to>,
         (, "headers": <dict of HTTP headers to send with the request>)
         (, "method": <http method to use, default is "POST">)
+        (, "params": <dict of HTTP query parameters to send with the request>)
     }
 
     <OUTPUT_BINDING_LOCAL> ::= {

@@ -1,11 +1,14 @@
 import copy
 import httmock
 import os
-import girder_worker
 import shutil
 import unittest
 
-from girder_worker.core.utils import JobStatus
+import girder_worker
+from girder_worker.utils import JobStatus
+
+import girder_worker.core
+
 
 _tmp = None
 
@@ -144,11 +147,12 @@ with open(file) as f:
                 'type': 'string',
                 'url': 'https://output.com/location.out',
                 'headers': {'foo': 'bar'},
+                'params': {'queryParam': 'value'},
                 'method': 'PUT'
             }
         }
 
-        job_mgr = girder_worker.core.utils.JobManager(
+        job_mgr = girder_worker.utils.JobManager(
             True, url='http://jobstatus/')
 
         received = []
@@ -160,6 +164,7 @@ with open(file) as f:
                 # The input fetch request
                 return 'dummy file contents'
             elif url.netloc == 'output.com' and url.path == '/location.out':
+                self.assertEqual(url.query, 'queryParam=value')
                 received.append(request.body)
                 return ''
             elif (url.netloc == 'jobstatus' and url.path == '/' and
@@ -231,7 +236,7 @@ with open(file) as f:
         self.assertRegexpMatches(outputs['_tempdir']['data'], _tmp + '.+')
 
     def testConvertingStatus(self):
-        job_mgr = girder_worker.core.utils.JobManager(
+        job_mgr = girder_worker.utils.JobManager(
             True, url='http://jobstatus/')
 
         status_changes = []

@@ -1,0 +1,30 @@
+# whether to install directly from pypi or from git
+# if installed from git, the pip install will be editable
+girder_worker_install_source: "pypi" # must be one of pypi, git
+
+# versions to install, pypi will default to latest
+girder_worker_pypi_version: null
+girder_worker_git_version: "master"
+
+# path to virtualenv to install into, will be created if it doesn't exist
+# girder_worker_virtualenv: null
+
+# only useful if girder_worker_install_source is git, otherwise pip installs to relevant
+# site-packages dir.
+girder_worker_path: "{{ ansible_user_dir }}/girder_worker"
+
+# whether or not to update the install
+# this corresponds to ansible's git pull and pips present/latest state
+girder_worker_update: no
+
+# list of girder worker plugins to install
+girder_worker_plugins: []
+
+# daemon options for running girder worker
+girder_worker_start: yes
+girder_worker_daemonize: yes
+girder_worker_enabled: yes
+
+# the user to run the girder-worker daemon under
+# unused if girder_worker_daemonize is false
+girder_worker_user: "{{ ansible_user_id }}"

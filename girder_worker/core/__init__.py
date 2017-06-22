@@ -7,6 +7,7 @@ from executors.python import run as python_run
 from executors.workflow import run as workflow_run
 from . import utils
 
+from girder_worker.utils import JobStatus
 from girder_worker import config, PACKAGE_DIR
 
 # Maps task modes to their implementation
@@ -38,6 +39,20 @@ def unregister_executor(name):
     :type name: str
     """
     del _task_map[name]
+
+register_executor('python', python_run)
+register_executor('workflow', workflow_run)
+
+# Load plugins that are enabled in the config file or env var
+_plugins = os.environ.get('WORKER_PLUGINS_ENABLED',
+                          config.get('girder_worker', 'plugins_enabled'))
+_plugins = [p.strip() for p in _plugins.split(',') if p.strip()]
+_paths = os.environ.get(
+    'WORKER_PLUGIN_LOAD_PATH', config.get(
+        'girder_worker', 'plugin_load_path')).split(':')
+_paths = [p for p in _paths if p.strip()]
+_paths.append(os.path.join(PACKAGE_DIR, 'plugins'))
+utils.load_plugins(_plugins, _paths, quiet=True)
 
 
 def _resolve_scripts(task):
@@ -155,8 +170,8 @@ def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
                 continue  # this input will be fetched as a stream
 
             if fetch:
-                if status == utils.JobStatus.RUNNING and 'data' not in d:
-                    set_job_status(job_mgr, utils.JobStatus.FETCHING_INPUT)
+                if status == JobStatus.RUNNING and 'data' not in d:
+                    set_job_status(job_mgr, JobStatus.FETCHING_INPUT)
                 d['data'] = io.fetch(d, **dict({'task_input': task_input}, **kwargs))
 
             events.trigger('run.handle_input', {
@@ -197,8 +212,8 @@ def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
             if not e.default_prevented:
                 data = outputs[name]['script_data']
 
-                if status == utils.JobStatus.RUNNING:
-                    set_job_status(job_mgr, utils.JobStatus.PUSHING_OUTPUT)
+                if status == JobStatus.RUNNING:
+                    set_job_status(job_mgr, JobStatus.PUSHING_OUTPUT)
                 io.push(data, outputs[name], **dict({'task_output': task_output}, **kwargs))
 
             output.pop('script_data', None)

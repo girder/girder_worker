@@ -148,7 +148,7 @@ setuptools.setup(
         'girder_worker': [
             'worker.dist.cfg',
             'worker.local.cfg',
-            'format/**/*'
+            'core/format/**/*'
         ] + plugin_data
     },
     cmdclass={
@@ -159,6 +159,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'girder-worker = girder_worker.__main__:main',
+            'girder-worker-cleanup = girder_worker.core.cleanup:main',
             'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [

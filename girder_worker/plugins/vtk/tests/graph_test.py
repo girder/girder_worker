@@ -120,5 +120,6 @@ class TestGraph(unittest.TestCase):
                           (0, 2, {'Weights': 2.0}),
                           (1, 2, {'Weights': 1.0})])
 
+
 if __name__ == '__main__':
     unittest.main()

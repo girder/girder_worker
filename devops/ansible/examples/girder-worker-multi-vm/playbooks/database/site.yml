@@ -1,0 +1,14 @@
+- hosts: all
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      become: yes
+      become_user: root
+
+  roles:
+    - role: Stouts.mongodb
+      mongodb_conf_bind_ip: 0.0.0.0
+      become: yes
+      become_user: root

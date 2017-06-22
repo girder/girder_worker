@@ -4,6 +4,7 @@ import doctest
 
 from base import TestCase  # noqa
 
+
 if __name__ == '__main__':
 
     error = 0

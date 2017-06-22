@@ -1,0 +1,5 @@
+name: Fibonacci Job
+description: A test plugin that provides a REST endpoint to fire off a fib job
+version: 0.0.0
+dependencies:
+  - worker

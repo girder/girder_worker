@@ -1,4 +1,3 @@
-
 def set_nested(obj, path, v):
     key = path.pop()
 
@@ -8,6 +7,7 @@ def set_nested(obj, path, v):
 
     obj[key] = {}
     set_nested(obj[key], path, v)
+
 
 output = []
 for row in input['rows']:

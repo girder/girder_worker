@@ -38,6 +38,13 @@ if(PYTHON_STYLE_TESTS)
   add_python_flake8_test(flake8_style_tests "${PROJECT_SOURCE_DIR}/tests")
 endif()
 
+add_test(
+  NAME packaging
+  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+  COMMAND "${PROJECT_SOURCE_DIR}/tests/packaging_test.sh"
+          "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}"
+)
+
 add_python_test(config)
 add_python_test(format PLUGINS_ENABLED types)
 add_python_test(graph PLUGINS_ENABLED types,vtk)
@@ -58,6 +65,7 @@ add_python_test(spec PLUGINS_ENABLED types)
 add_python_test(stream)
 add_python_test(directory PLUGINS_ENABLED types)
 add_python_test(task_plugin)
+add_python_test(task_signal)
 
 add_docstring_test(girder_worker.core.specs.spec)
 add_docstring_test(girder_worker.core.specs.task)

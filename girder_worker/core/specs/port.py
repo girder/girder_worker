@@ -229,6 +229,7 @@ class Port(Spec):
             ))
         return _spec
 
+
 Port.make_property('name', 'The name of the port')
 Port.make_property('type', 'The data type of the port', 'python')
 Port.make_property('format', 'The data format of the port', 'object')

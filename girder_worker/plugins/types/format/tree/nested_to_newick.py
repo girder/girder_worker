@@ -8,6 +8,7 @@ def populate_tree(node, children):
         n = node.add_child(name=name, dist=dist)
         populate_tree(n, c.get('children', []))
 
+
 t = Tree()
 populate_tree(t, input.get('children', []))
 output = t.write(format=1)
