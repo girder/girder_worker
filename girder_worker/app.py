@@ -11,9 +11,8 @@ from celery.result import AsyncResult
 
 from celery.task.control import inspect
 
-from requests import HTTPError
 from six.moves import configparser
-from .utils import JobStatus
+from .utils import JobStatus, StateTransitionException
 
 
 class GirderAsyncResult(AsyncResult):
@@ -172,10 +171,6 @@ class JobSpecNotFound(Exception):
     pass
 
 
-class StateTransitionException(Exception):
-    pass
-
-
 # ::: NOTE :::
 # This is a transitional function for managing compatibility between
 # Celery 3.X and 4.X. The issue is how child tasks,  spawned from
@@ -189,26 +184,16 @@ class StateTransitionException(Exception):
 # transition to Celery 4, this function exists to temporarily provide
 # backwards compatibility with Celery 3.X while projects transition.
 def _update_status(task, status):
-    try:
-        # Celery 4.X
-        if hasattr(task.request, 'parent_id'):
-            # For now,  only automatically update status if this is
-            # not a child task. Otherwise child tasks completion will
-            # update the parent task's jobModel in girder.
-            if task.request.parent_id is None:
-                task.job_manager.updateStatus(status)
-        # Celery 3.X
-        else:
+    # Celery 4.X
+    if hasattr(task.request, 'parent_id'):
+        # For now,  only automatically update status if this is
+        # not a child task. Otherwise child tasks completion will
+        # update the parent task's jobModel in girder.
+        if task.request.parent_id is None:
             task.job_manager.updateStatus(status)
-    except HTTPError as hex:
-        if hex.response.status_code == 400:
-            json_response = hex.response.json()
-            if 'field' in json_response and json_response['field'] == 'status':
-                raise StateTransitionException(hex)
-            else:
-                raise
-        else:
-            raise
+    # Celery 3.X
+    else:
+        task.job_manager.updateStatus(status)
 
 
 def _job_manager(request=None, headers=None, kwargs=None):

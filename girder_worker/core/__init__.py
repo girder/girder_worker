@@ -11,7 +11,7 @@ from executors.workflow import run as workflow_run
 from networkx import NetworkXNoPath
 from . import utils
 
-from girder_worker.utils import JobStatus
+from girder_worker.utils import JobStatus, StateTransitionException
 from girder_worker import config, PACKAGE_DIR
 
 # Maps task modes to their implementation

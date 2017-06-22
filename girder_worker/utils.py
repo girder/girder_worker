@@ -1,6 +1,7 @@
 import requests
 import time
 import sys
+from requests import HTTPError
 
 
 def girder_job(title=None, type=None, public=False,
@@ -47,6 +48,8 @@ class JobStatus(object):
     PUSHING_OUTPUT = 823
     CANCELING = 824
 
+class StateTransitionException(Exception):
+    pass
 
 class JobManager(object):
     """
@@ -170,6 +173,16 @@ class JobManager(object):
             req = requests.request(self.method.upper(), self.url, headers=self.headers,
                                    data={'status': status}, allow_redirects=True)
             req.raise_for_status()
+        except HTTPError as hex:
+            if hex.response.status_code == 400:
+                json_response = hex.response.json()
+                if 'field' in json_response and json_response['field'] == 'status':
+                    print(json_response['message'])
+                    raise StateTransitionException(json_response['message'], hex)
+                else:
+                    raise
+            else:
+                raise
         finally:
             self._redirectPipes(True)
 
