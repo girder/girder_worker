@@ -243,8 +243,8 @@ def gw_task_failure(sender=None, exception=None,
             ''.join(tb.format_tb(traceback)))
 
         sender.job_manager.write(msg)
-        _update_status(sender, JobStatus.ERROR)
 
+        _update_status(sender, JobStatus.ERROR)
     except AttributeError:
         pass
 
