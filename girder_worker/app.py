@@ -189,12 +189,14 @@ def _job_manager(request=None, headers=None, kwargs=None):
 
     return deserialize_job_info_spec(**jobSpec)
 
+
 def _update_status(task, status):
     # For now,  only automatically update status if this is
     # not a child task. Otherwise child tasks completion will
     # update the parent task's jobModel in girder.
     if task.request.parent_id is None:
         task.job_manager.updateStatus(status)
+
 
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,

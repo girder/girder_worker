@@ -48,8 +48,10 @@ class JobStatus(object):
     PUSHING_OUTPUT = 823
     CANCELING = 824
 
+
 class StateTransitionException(Exception):
     pass
+
 
 class JobManager(object):
     """
