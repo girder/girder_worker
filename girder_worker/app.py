@@ -209,8 +209,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     updating their status in girder.
     """
     try:
-        task.job_manager = _job_manager(task.request, task.request.headers,
-                                        kwargs)
+        task.job_manager = _job_manager(task.request, task.request.headers)
         _update_status(task, JobStatus.RUNNING)
 
     except JobSpecNotFound:

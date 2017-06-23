@@ -188,58 +188,72 @@ class TestSignals(unittest.TestCase):
         task.job_manager._flush.assert_called_once()
         task.job_manager._redirectPipes.assert_called_once_with(False)
 
-    @mock.patch('girder_worker.utils.JobManager')
-    def test_task_prerun_canceling(self, jm):
+    @mock.patch('girder_worker.utils.requests.request')
+    @mock.patch('girder_worker.utils.JobManager.refreshStatus')
+    def test_task_prerun_canceling(self, refreshStatus, request):
         task = mock.MagicMock()
         task.request.jobInfoSpec = self.headers['jobInfoSpec']
         task.request.parent_id = None
 
         validation_error = {
-            'field': 'status'
+            'field': 'status',
+            'message': 'invalid state'
         }
-        jm_instance = jm.return_value
-        jm_instance.updateStatus.side_effect = MockHTTPError(400, validation_error)
-        jm_instance.refreshStatus.return_value = JobStatus.CANCELING
+        r = request.return_value
+        r.raise_for_status.side_effect = [MockHTTPError(400, validation_error)]
+
+        refreshStatus.return_value = JobStatus.CANCELING
 
         gw_task_prerun(task=task)
-        # We should stay in the CANCELING state
-        task.job_manager.updateStatus.assert_called_once_with(JobStatus.RUNNING)
+
+        refreshStatus.assert_called_once()
+        self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
 
         # Now try with QUEUED
-        task.job_manager.reset_mock()
-        task.job_manager.updateStatus.side_effect = [None]
+        request.reset_mock()
+        refreshStatus.reset_mock()
+        r.raise_for_status.side_effect = [None]
+        refreshStatus.return_value = JobStatus.QUEUED
 
         gw_task_prerun(task=task)
 
-        task.job_manager.updateStatus.assert_called_once_with(JobStatus.RUNNING)
+        refreshStatus.assert_not_called()
+        self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
 
-    def test_task_success_canceling(self):
+    @mock.patch('girder_worker.utils.requests.request')
+    @mock.patch('girder_worker.utils.JobManager.refreshStatus')
+    def test_task_success_canceling(self, refreshStatus, request):
         task = mock.MagicMock()
         task.request.jobInfoSpec = self.headers['jobInfoSpec']
         task.request.parent_id = None
-        task.job_manager = mock.MagicMock()
 
         validation_error = {
-            'field': 'status'
+            'field': 'status',
+            'message': 'invalid'
         }
-        task.job_manager.updateStatus.side_effect = [MockHTTPError(400, validation_error), None]
-        task.job_manager.refreshStatus.return_value = JobStatus.CANCELING
+        r = request.return_value
+        r.raise_for_status.side_effect = [None, MockHTTPError(400, validation_error),
+                                          None]
+        refreshStatus.return_value = JobStatus.CANCELING
 
+        gw_task_prerun(task)
         gw_task_success(sender=task)
 
         # We where in the canceling state so we should move into CANCELED
-        self.assertEqual(task.job_manager.updateStatus.call_args_list[1],
-                         mock.call(JobStatus.CANCELED))
+        refreshStatus.assert_called_once()
+        self.assertEqual(request.call_args_list[2][1]['data']['status'], JobStatus.CANCELED)
 
         # Now try with RUNNING
-        task.job_manager.reset_mock()
-        task.job_manager.updateStatus.side_effect = [None]
-        task.job_manager.refreshStatus.return_value = JobStatus.RUNNING
+        request.reset_mock()
+        refreshStatus.reset_mock()
+        r.raise_for_status.side_effect = [None, None]
 
+        gw_task_prerun(task)
         gw_task_success(sender=task)
 
         # We should move into SUCCESS
-        task.job_manager.updateStatus.assert_called_once_with(JobStatus.SUCCESS)
+        refreshStatus.assert_not_called()
+        self.assertEqual(request.call_args_list[1][1]['data']['status'], JobStatus.SUCCESS)
 
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_revoke(self, jm):
