@@ -56,6 +56,6 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
                 outputs[name]['script_data'] = output_file.read()
 
             # Deal with converting from string - assume JSON
-            if task_output['type'] in ('number', 'boolean'):
+            if task_output.get('type') in ('number', 'boolean'):
                 outputs[name]['script_data'] = json.loads(
                     outputs[name]['script_data'])

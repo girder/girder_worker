@@ -1,6 +1,7 @@
 import bson
 import os
-from girder_worker.tasks import run, convert
+from girder_worker.tasks import run
+from girder_worker.plugins.types import convert
 import unittest
 
 

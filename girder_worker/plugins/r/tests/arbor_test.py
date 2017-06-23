@@ -12,7 +12,7 @@ class TestArbor(unittest.TestCase):
         os.chdir(cur_path)
 
         self.arbor_path = os.path.abspath(
-            cur_path + '/../../../../' + 'analysis/arbor')
+            cur_path + '/../../../../analysis/arbor')
 
     def test_pgls(self):
         pgls = load(os.path.join(self.arbor_path, 'pgls.json'))

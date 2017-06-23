@@ -87,9 +87,7 @@ specified to :py:func:`girder_worker.run`.
 .. code-block:: none
 
     <TASK_INPUT> ::= {
-        "id": <string, the variable name>,
-        "type": <data type>,
-        "format": <data format>
+        "id": <string, the variable name>
         (, "default": <default value if none is bound at runtime>)
         (, "target": <INPUT_TARGET_TYPE>)   ; default is "memory"
         (, "filename": <name of file if target="filepath">)
@@ -100,8 +98,6 @@ specified to :py:func:`girder_worker.run`.
 
     <TASK_OUTPUT> ::= {
         "id": <string, the variable name>,
-        "type": <data type>,
-        "format": <data format>
         (, "target": <INPUT_TARGET_TYPE>)   ; default is "memory"
         (, "stream": <set to true to indicate a streaming output>)
     }
@@ -133,7 +129,6 @@ each task input) to its data binding for this execution.
 
     <INPUT_BINDING_HTTP> ::= {
         "mode": "http",
-        "format": <data format>,
         "url": <url of data to download>
         (, "params": <dict of URL parameters to encode>)
         (, "headers": <dict of HTTP headers to send when fetching>)
@@ -150,7 +145,6 @@ variable will be set to the path of that file.
 
     <INPUT_BINDING_LOCAL> ::= {
         "mode": "local",
-        "format": <data format>,
         "path": <path on local filesystem to the file>
     }
 
@@ -161,7 +155,6 @@ contents will be read into memory and the variable will point to those contents.
 
     <INPUT_BINDING_MONGODB> ::= {
         "mode": "mongodb",
-        "format": <data format>,
         "db": <the database to use>,
         "collection": <the collection to fetch from>
         (, "host": <mongodb host, default is "localhost">)
@@ -175,18 +168,11 @@ variable.
 
     <INPUT_BINDING_INLINE> ::= {
         "mode": "inline",
-        "format": <data format>,
         "data": <data to bind to the variable>
     }
 
 The inline input mode simply passes the data directly in the input binding dictionary
 as the value of the "data" key. Do not use this for any data that could be large.
-
-*Note:* The ``type`` field is not required when sending an input to a task.
-Any supplied ``type`` will be ignored, since the task specification declares the type of
-each input. However, the ``format`` field is required because the format is allowed
-to differ from the task specification. If a different format is supplied, the data
-will be auto-converted before running the task.
 
 *Note:* The ``mode`` field is inferred in a few special cases. If there is a ``url`` field,
 the ``mode`` is assumed to be ``"http"``, and if there is a ``data`` field, the ``mode``
@@ -196,7 +182,6 @@ are equivalent:
 .. code-block:: none
 
     {
-        'format': 'png',
         'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
     }
 
@@ -204,7 +189,6 @@ are equivalent:
 
     {
         'mode': 'http',
-        'format': 'png',
         'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
     }
 
@@ -213,7 +197,6 @@ The following two specifications are also equivalent:
 .. code-block:: none
 
     {
-        'format': 'text',
         'data': 'hello'
     }
 
@@ -221,7 +204,6 @@ The following two specifications are also equivalent:
 
     {
         'mode': 'inline',
-        'format': 'text',
         'data': 'hello'
     }
 
@@ -252,7 +234,6 @@ return value of :py:func:`girder_worker.run`.
     <OUTPUT_BINDING_HTTP> ::= {
         "mode": "http",
         "url": <url to upload data to>,
-        "format": <data format>
         (, "headers": <dict of HTTP headers to send with the request>)
         (, "method": <http method to use, default is "POST">)
         (, "params": <dict of HTTP query parameters to send with the request>)
@@ -260,7 +241,6 @@ return value of :py:func:`girder_worker.run`.
 
     <OUTPUT_BINDING_LOCAL> ::= {
         "mode": "local",
-        "format": <data format>,
         "path": <path to write data on the local filesystem>
     }
 
@@ -271,7 +251,6 @@ The local output mode writes the data to the specified path on the local filesys
     <OUTPUT_BINDING_MONGODB> ::= {
         "mode": "mongodb",
         "db": <mongo database to write to>,
-        "format": <data format>,
         "collection": <mongo collection to write to>
         (, "host": <mongo host to connect to>)
     }
@@ -289,7 +268,7 @@ Script execution
 Formats
 -------
 
-.. automodule:: girder_worker.core.format
+.. automodule:: girder_worker.plugins.types.format
    :members:
 
 Pythonic task API

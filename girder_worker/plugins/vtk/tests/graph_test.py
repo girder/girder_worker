@@ -1,5 +1,5 @@
 import os
-from girder_worker.tasks import convert
+from girder_worker.plugins.types import convert
 import vtk
 import networkx as nx
 import unittest

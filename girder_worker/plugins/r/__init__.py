@@ -2,7 +2,8 @@ import os
 
 
 def load(params):
-    from girder_worker.core import register_executor, format
+    from girder_worker.core import register_executor
+    from girder_worker.plugins.types import format
     from . import executor
 
     register_executor('r', executor.run)
