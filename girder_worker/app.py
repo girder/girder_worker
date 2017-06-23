@@ -172,6 +172,11 @@ def _job_manager(request=None, headers=None, kwargs=None):
     if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
 
+    # We are being called from revoked signal
+    elif headers is not None and \
+            'jobInfoSpec' in headers:
+        jobSpec = headers['jobInfoSpec']
+
     # Deprecated: This method of passing job information
     # to girder_worker is deprecated. Newer versions of girder
     # pass this information automatically as apart of the
