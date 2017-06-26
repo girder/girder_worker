@@ -100,7 +100,7 @@ class DescribeDecoratorTest(TestCase):
                 'arg2': {'data': 'invalid'}
             })
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             complex_func.call_item_task({
                 'arg1': {'data': 'value'},
                 'arg2': {'data': 'a'},
