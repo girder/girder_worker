@@ -95,7 +95,7 @@ class Task(celery.Task):
     def describe(self):
         return describe_task(self)
 
-    def apply_item_task(self, inputs, outputs={}):
+    def call_item_task(self, inputs, outputs={}):
         args, kwargs = parse_inputs(self, inputs)
         return self(*args, **kwargs)
 

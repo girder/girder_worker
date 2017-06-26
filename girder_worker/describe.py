@@ -66,7 +66,10 @@ def get_input_data(arg, input):
     if input.get('mode', 'inline') != 'inline' or\
        'data' not in input:
         raise ValueError('Unhandled input mode')
-    return arg.deserialize(input['data'])
+
+    value = arg.deserialize(input['data'])
+    arg.validate(value)
+    return value
 
 
 def parse_inputs(task, inputs):

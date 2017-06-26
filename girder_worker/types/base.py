@@ -24,6 +24,8 @@ class Base(object):
             copy.setdefault('default', {
                 'data': self.serialize(self.parameter.default)
             })
+        if self.help is not None:
+            copy['description'] = self.help
         return copy
 
     def serialize(self, value):
