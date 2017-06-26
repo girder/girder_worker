@@ -1,5 +1,4 @@
 from copy import deepcopy
-from uuid import uuid4
 
 
 class Base(object):
@@ -7,7 +6,7 @@ class Base(object):
     description = {}
 
     def __init__(self, name, **kwargs):
-        self.id = str(uuid4())
+        self.id = kwargs.get('id', name)
         self.name = name
         self.help = kwargs.get('help')
 

@@ -6,8 +6,6 @@ try:
 except ImportError:
     from funcsigs import signature
 
-from . import types
-
 
 class MissingDescriptionException(Exception):
     pass
@@ -24,28 +22,26 @@ def get_description_attribute(func):
     return description
 
 
-def argument(name, type):
+def argument(name, type, *args, **kwargs):
     """Describe an argument to a task."""
 
     if not isinstance(name, six.string_types):
         raise TypeError('Expected argument name to be a string')
 
-    if isinstance(type, six.string_types):
-        if type not in types:
-            raise ValueError('Unknown argument type "%s"' % type)
-
-        type = types[type](name)
+    if callable(type):
+        type = type(name, *args, **kwargs)
 
     def argument_wrapper(func):
         func._girder_description = getattr(func, '_girder_description', {})
-        args = func._girder_description.setdefault('arguments', {})
+        args = func._girder_description.setdefault('arguments', [])
         sig = signature(func)
 
         if name not in sig.parameters:
             raise ValueError('Invalid argument name "%s"' % name)
 
         type.set_parameter(sig.parameters[name], signature=sig)
-        args[name] = type
+        args.insert(0, type)
+        return func
 
     return argument_wrapper
 
@@ -66,10 +62,18 @@ def describe_task(task):
     return spec
 
 
+def get_input_data(arg, input):
+    if input.get('mode', 'inline') != 'inline' or\
+       'data' not in input:
+        raise ValueError('Unhandled input mode')
+    return arg.deserialize(input['data'])
+
+
 def parse_inputs(task, inputs):
     func = task.run
     description = get_description_attribute(func)
     arguments = description.get('arguments', [])
+    args = []
     kwargs = {}
     for arg in arguments:
         desc = arg.describe()
@@ -78,5 +82,5 @@ def parse_inputs(task, inputs):
         if id not in inputs and not arg.has_default():
             raise MissingInputException('Required input "%s" not provided' % name)
         if id in inputs:
-            kwargs[name] = arg.deserialize(inputs[id])
-    return kwargs
+            kwargs[name] = get_input_data(arg, inputs[id])
+    return args, kwargs

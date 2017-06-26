@@ -9,10 +9,9 @@ from girder_worker import types
 
 class BaseTypeTest(TestCase):
 
-    def test_unique_id(self):
-        arg1 = types.base.Base('arg')
-        arg2 = types.base.Base('arg')
-        self.assertNotEqual(arg1, arg2)
+    def test_id(self):
+        arg1 = types.base.Base('arg1', id='id')
+        self.assertEqual(arg1.id, 'id')
 
     def test_serialize(self):
         arg = types.base.Base('arg')

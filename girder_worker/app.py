@@ -10,6 +10,8 @@ from celery.result import AsyncResult
 from six.moves import configparser
 import sys
 from .utils import JobStatus
+from describe import argument, describe_task, parse_inputs
+import types
 
 
 class GirderAsyncResult(AsyncResult):
@@ -89,6 +91,13 @@ class Task(celery.Task):
         return super(Task, self).apply_async(
             args=args, kwargs=kwargs, task_id=task_id, producer=producer,
             link=link, link_error=link_error, shadow=shadow, **options)
+
+    def describe(self):
+        return describe_task(self)
+
+    def apply_item_task(self, inputs, outputs={}):
+        args, kwargs = parse_inputs(self, inputs)
+        return self(*args, **kwargs)
 
 
 @before_task_publish.connect
@@ -246,4 +255,6 @@ app = Celery(
     backend=backend_uri, broker=broker_uri,
     task_cls='girder_worker.app:Task')
 
+app.argument = argument
+app.types = types
 app.config_from_object(_CeleryConfig)
