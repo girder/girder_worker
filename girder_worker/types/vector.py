@@ -4,9 +4,15 @@ from .base import Base
 
 
 class Vector(Base):
+    """Define a base class that accepts an iterable object."""
 
+    #: The explicit type provided by the subclass
     paramType = None
+
+    #: The class of the elements of the vector
     elementClass = None
+
+    #: A list seperator for serialization
     seperator = ','
 
     def __init__(self, *args, **kwargs):

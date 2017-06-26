@@ -1,14 +1,29 @@
 import numbers
-import six
 
 from .base import Base
 
 
 class Number(Base):
+    """Define a numeric parameter type optionally in a given range.
 
+    Values accepted by this parameter can be any numeric value.
+    If min/max/step are provided, then the values must be a float
+    or int.
+
+    >>> @app.argument('value', app.types.Number, min=10, max=100, step=10)
+    ... @app.task
+    ... def func(value):
+    ...     pass
+    """
     paramType = 'number'
 
     def __init__(self, *args, **kwargs):
+        """Construct a new numeric parameter type.
+
+        :param float min: The minimum valid value
+        :param float max: The maximum valid value
+        :param float step: The resolution of valid values
+        """
         super(Number, self).__init__(*args, **kwargs)
         self.min = kwargs.get('min')
         self.max = kwargs.get('max')
@@ -45,6 +60,8 @@ class Number(Base):
         return value
 
     def deserialize(self, value):
-        if isinstance(value, six.string_types):
+        try:
             value = float(value)
+        except ValueError:
+            pass
         return value

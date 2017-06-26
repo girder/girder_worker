@@ -2,11 +2,19 @@ from .base import Base
 
 
 class Choice(Base):
+    """Define base functionality for multi choice parameter."""
 
+    #: The explicit type provided by the subclass
     paramType = None
-    multiple = False  # more than one value to be selected
+
+    #: Whether the parameter accepts multiple values from the choices
+    multiple = False
 
     def __init__(self, *args, **kwargs):
+        """Construct a choice parameter.
+
+        :param list choices: A list of valid values.
+        """
         self.choices = kwargs.get('choices', [])
         super(Choice, self).__init__(*args, **kwargs)
 

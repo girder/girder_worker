@@ -8,14 +8,15 @@ except ImportError:
 
 
 class MissingDescriptionException(Exception):
-    pass
+    """Raised when a task is missing description decorators."""
 
 
 class MissingInputException(Exception):
-    pass
+    """Raised when a required input is missing."""
 
 
 def get_description_attribute(func):
+    """Get the private description attribute from a function."""
     description = getattr(func, '_girder_description', None)
     if description is None:
         raise MissingDescriptionException('Task is missing description decorators')
@@ -23,7 +24,13 @@ def get_description_attribute(func):
 
 
 def argument(name, type, *args, **kwargs):
-    """Describe an argument to a task."""
+    """Describe an argument to a task as a function decorator.
+
+    Additional arguments are passed to the type class constructor.
+
+    :param str name: The parameter name from the function declaration
+    :param type: A type class derived from ``girder_worker.types.Base``
+    """
 
     if not isinstance(name, six.string_types):
         raise TypeError('Expected argument name to be a string')
@@ -47,6 +54,7 @@ def argument(name, type, *args, **kwargs):
 
 
 def describe_task(task):
+    """Return a json description from a decorated task method."""
     func = task.run
     description = get_description_attribute(func)
 
@@ -63,6 +71,16 @@ def describe_task(task):
 
 
 def get_input_data(arg, input):
+    """Parse an input binding from a task argument description.
+
+    Currently, this only handles ``inline`` input bindings, but
+    could be extended to support all kinds of input bindings
+    provided by girder's item_tasks plugin.
+
+    :param arg: An instantiated type description
+    :param input: An input binding object
+    :returns: The parameter value
+    """
     if input.get('mode', 'inline') != 'inline' or\
        'data' not in input:
         raise ValueError('Unhandled input mode')
@@ -73,6 +91,12 @@ def get_input_data(arg, input):
 
 
 def parse_inputs(task, inputs):
+    """Parse an object of input bindings from item_tasks.
+
+    :param task: The task method
+    :param dict inputs: The input task bindings object
+    :returns: args and kwargs objects to call the task with
+    """
     func = task.run
     description = get_description_attribute(func)
     arguments = description.get('arguments', [])
