@@ -14,12 +14,6 @@ class TestTree(unittest.TestCase):
             'outputs': [{'name': 'b', 'type': 'tree', 'format': 'nested'}],
             'script': 'b = a'
         }
-        self.analysis_vtk = {
-            'name': 'tree_copy',
-            'inputs': [{'name': 'a', 'type': 'tree', 'format': 'vtktree'}],
-            'outputs': [{'name': 'b', 'type': 'tree', 'format': 'vtktree'}],
-            'script': 'b = a'
-        }
         self.analysis_r = {
             'name': 'tree_copy_r',
             'inputs': [{'name': 'a', 'type': 'tree', 'format': 'r.apetree'}],
@@ -111,15 +105,6 @@ END;"""
 
         self.assertEqual(
             outputs['b']['data'], expected)
-
-    def test_vtktree(self):
-        outputs = run(
-            self.analysis_vtk,
-            inputs={'a': {'format': 'newick', 'data': self.newick}},
-            outputs={'b': {'format': 'newick'}}
-        )
-        self.assertEqual(outputs['b']['format'], 'newick')
-        self.assertEqual(outputs['b']['data'], self.newick)
 
     def test_r_apetree(self):
         outputs = run(

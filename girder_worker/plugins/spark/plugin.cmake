@@ -1,5 +1,0 @@
-set(SPARK_TEST_MASTER_URL  "" CACHE STRING "Spark master URL")
-if (SPARK_TEST_MASTER_URL)
-  add_python_test(spark PLUGIN spark PLUGINS_ENABLED spark,types)
-  set_property(TEST plugins.spark.spark APPEND PROPERTY ENVIRONMENT "SPARK_TEST_MASTER_URL=${SPARK_TEST_MASTER_URL}")
-endif()

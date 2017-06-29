@@ -1,7 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "table", "format": "vtktable.serialized"}],
-    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
-    "script": "output = isinstance(input, (str, unicode))",
-    "extensions": ["vtktable", "vtk"],
-    "mode": "python"
-}

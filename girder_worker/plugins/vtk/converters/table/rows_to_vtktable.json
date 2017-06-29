@@ -1,7 +1,0 @@
-{
-    "name": "Rows to vtkTable",
-    "inputs": [{"name": "input", "type": "table", "format": "rows"}],
-    "outputs": [{"name": "output", "type": "table", "format": "vtktable"}],
-    "script_uri": "file://rows_to_vtktable.py",
-    "mode": "python"
-}

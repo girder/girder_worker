@@ -9,7 +9,7 @@ Girder Worker is a Python application for generic task execution. It can be run 
 distributed batch job execution platform.
 
 The application can run tasks in a variety of languages and environments, including
-Python, R, Spark, and Docker, all via a single Python or Celery broker interface. Tasks
+Python, R, and Docker, all via a single Python or Celery broker interface. Tasks
 can be chained together into workflows, and these workflows can actually span multiple
 languages and environments seamlessly. Data flowing between tasks can be automatically
 converted into a format understandable in the target environment. For example, a Python
