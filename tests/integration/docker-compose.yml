@@ -1,14 +1,19 @@
 version: '2'
 services:
+  girder_worker_data_volume:
+    container_name: girder_worker_data_volume
+    build:
+      context: ../../
+      dockerfile: ./tests/integration/Dockerfile.girder_worker_data_volume
+
   girder:
     build:
       context: ./
       dockerfile: Dockerfile.girder
     image: girder/girder:gw_integration_test
     container_name: gw_integration_test_girder
-    volumes:
-      - './integration_test_endpoints/:/girder/plugins/integration_test_endpoints'
-      - '../../:/girder_worker'
+    volumes_from:
+      - girder_worker_data_volume:rw
     # Note: 4444 is for debugging with rpdb
     ports:
       - 8989:8989
@@ -25,10 +30,11 @@ services:
     # Note: 4445 is for debugging with rpdb
     ports:
       - 4445:4444
-    volumes:
-      - '../../:/girder_worker'
+    volumes_from:
+      - girder_worker_data_volume:rw
     depends_on:
       - 'rabbit'
+      - 'girder_worker_data_volume'
 
   rabbit:
     image: rabbitmq:management
