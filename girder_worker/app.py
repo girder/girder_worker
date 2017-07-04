@@ -10,7 +10,7 @@ from celery.result import AsyncResult
 from six.moves import configparser
 import sys
 from .utils import JobStatus
-from describe import argument, describe_task, parse_inputs
+from describe import argument, describe_function
 import types
 
 
@@ -93,11 +93,10 @@ class Task(celery.Task):
             link=link, link_error=link_error, shadow=shadow, **options)
 
     def describe(self):
-        return describe_task(self)
+        return describe_function(self.run)
 
     def call_item_task(self, inputs, outputs={}):
-        args, kwargs = parse_inputs(self, inputs)
-        return self(*args, **kwargs)
+        return self.run.call_item_task(inputs, outputs)
 
 
 @before_task_publish.connect

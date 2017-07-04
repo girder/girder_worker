@@ -36,6 +36,12 @@ def complex_func(arg1, arg2, kwarg1=('one',), kwarg2=4, kwarg3=(1, 2)):
     }
 
 
+@app.argument('arg1', app.types.String)
+def bare_func(arg1):
+    """Bare function."""
+    return arg1
+
+
 class DescribeDecoratorTest(TestCase):
 
     def test_positional_argument(self):
@@ -131,3 +137,13 @@ class DescribeDecoratorTest(TestCase):
             'kwarg2': 10,
             'kwarg3': (1, 4)
         })
+
+    def test_bare_function(self):
+        desc = bare_func.describe()
+        self.assertEqual(desc['name'], 'bare_func')
+        self.assertEqual(desc['description'], 'Bare function.')
+        self.assertEqual(len(desc['inputs']), 1)
+        self.assertEqual(desc['inputs'][0]['type'], 'string')
+
+        returned = bare_func.call_item_task({'arg1': {'data': 'value'}})
+        self.assertEqual(returned, 'value')

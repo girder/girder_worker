@@ -8,7 +8,7 @@ except ImportError:
 
 
 class MissingDescriptionException(Exception):
-    """Raised when a task is missing description decorators."""
+    """Raised when a function is missing description decorators."""
 
 
 class MissingInputException(Exception):
@@ -19,12 +19,12 @@ def get_description_attribute(func):
     """Get the private description attribute from a function."""
     description = getattr(func, '_girder_description', None)
     if description is None:
-        raise MissingDescriptionException('Task is missing description decorators')
+        raise MissingDescriptionException('Function is missing description decorators')
     return description
 
 
 def argument(name, type, *args, **kwargs):
-    """Describe an argument to a task as a function decorator.
+    """Describe an argument to a function as a function decorator.
 
     Additional arguments are passed to the type class constructor.
 
@@ -48,19 +48,28 @@ def argument(name, type, *args, **kwargs):
 
         type.set_parameter(sig.parameters[name], signature=sig)
         args.insert(0, type)
+
+        def call_item_task(inputs, outputs={}):
+            args, kwargs = parse_inputs(func, inputs)
+            return func(*args, **kwargs)
+
+        def describe():
+            return describe_function(func)
+
+        func.call_item_task = call_item_task
+        func.describe = describe
         return func
 
     return argument_wrapper
 
 
-def describe_task(task):
-    """Return a json description from a decorated task method."""
-    func = task.run
+def describe_function(func):
+    """Return a json description from a decorated function."""
     description = get_description_attribute(func)
 
     inputs = [arg.describe() for arg in description.get('arguments', [])]
     spec = {
-        'name': description.get('name', task.name),
+        'name': description.get('name', func.__name__),
         'inputs': inputs
     }
     desc = description.get('description', getdoc(func))
@@ -71,7 +80,7 @@ def describe_task(task):
 
 
 def get_input_data(arg, input):
-    """Parse an input binding from a task argument description.
+    """Parse an input binding from a function argument description.
 
     Currently, this only handles ``inline`` input bindings, but
     could be extended to support all kinds of input bindings
@@ -90,14 +99,13 @@ def get_input_data(arg, input):
     return value
 
 
-def parse_inputs(task, inputs):
+def parse_inputs(func, inputs):
     """Parse an object of input bindings from item_tasks.
 
-    :param task: The task method
+    :param func: The task function
     :param dict inputs: The input task bindings object
-    :returns: args and kwargs objects to call the task with
+    :returns: args and kwargs objects to call the function with
     """
-    func = task.run
     description = get_description_attribute(func)
     arguments = description.get('arguments', [])
     args = []
