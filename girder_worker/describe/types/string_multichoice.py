@@ -7,8 +7,7 @@ class StringMultichoice(Choice):
     Values of this type are iterable sequences of strings
     all of which must be an element of a predefined set.
 
-    >>> @app.argument('people', app.types.StringMultichoice, choices=('alice', 'bob', 'charlie'))
-    ... @app.task
+    >>> @argument('people', types.StringMultichoice, choices=('alice', 'bob', 'charlie'))
     ... def func(people=('alice', 'bob')):
     ...     pass
     """

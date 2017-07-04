@@ -1,11 +1,11 @@
 from unittest import TestCase
 
 from girder_worker.app import app
-from girder_worker.describe import MissingInputException
+from girder_worker.describe import MissingInputException, argument, types
 
 
 @app.task
-@app.argument('n', app.types.Integer, help='The element to return')
+@argument('n', types.Integer, help='The element to return')
 def fibonacci(n):
     """Compute a fibonacci number."""
     if n <= 2:
@@ -14,18 +14,18 @@ def fibonacci(n):
 
 
 @app.task
-@app.argument('val', app.types.String, help='The value to return')
+@argument('val', types.String, help='The value to return')
 def keyword_func(val='test'):
     """Return a value."""
     return val
 
 
 @app.task
-@app.argument('arg1', app.types.String)
-@app.argument('arg2', app.types.StringChoice, choices=('a', 'b'))
-@app.argument('kwarg1', app.types.StringVector)
-@app.argument('kwarg2', app.types.Number, min=0, max=10)
-@app.argument('kwarg3', app.types.NumberMultichoice, choices=(1, 2, 3, 4, 5))
+@argument('arg1', types.String)
+@argument('arg2', types.StringChoice, choices=('a', 'b'))
+@argument('kwarg1', types.StringVector)
+@argument('kwarg2', types.Number, min=0, max=10)
+@argument('kwarg3', types.NumberMultichoice, choices=(1, 2, 3, 4, 5))
 def complex_func(arg1, arg2, kwarg1=('one',), kwarg2=4, kwarg3=(1, 2)):
     return {
         'arg1': arg1,
@@ -36,7 +36,7 @@ def complex_func(arg1, arg2, kwarg1=('one',), kwarg2=4, kwarg3=(1, 2)):
     }
 
 
-@app.argument('arg1', app.types.String)
+@argument('arg1', types.String)
 def bare_func(arg1):
     """Bare function."""
     return arg1

@@ -6,8 +6,7 @@ from .base import Base
 class String(Base):
     """Define a parameter that can be an arbitrary string.
 
-    >>> @app.argument('person', app.types.String)
-    ... @app.task
+    >>> @argument('person', types.String)
     ... def func(person='eve'):
     ...     pass
     """

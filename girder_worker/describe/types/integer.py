@@ -4,8 +4,7 @@ from .number import Number
 class Integer(Number):
     """Define an integer task parameter.
 
-    >>> @app.argument('iterations', app.types.Integer)
-    ... @app.task
+    >>> @argument('iterations', types.Integer)
     ... def func(iterations=3):
     ...     pass
     """

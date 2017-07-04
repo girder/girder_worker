@@ -7,8 +7,7 @@ class NumberMultichoice(Choice):
     Values of this type are iterable sequences of numbers
     all of which must be an element of a predefined set.
 
-    >>> @app.argument('images', app.types.NumberMultichoice, choices=(5, 10, 15))
-    ... @app.task
+    >>> @argument('images', types.NumberMultichoice, choices=(5, 10, 15))
     ... def func(images=(5, 10)):
     ...     pass
     """

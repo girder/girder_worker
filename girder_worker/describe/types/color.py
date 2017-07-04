@@ -4,8 +4,7 @@ from .base import Base
 class Color(Base):
     """Define a task parameter expecting a color value.
 
-    >>> @app.argument('background', app.types.Color)
-    ... @app.task
+    >>> @argument('background', types.Color)
     ... def func(background):
     ...     pass
     """

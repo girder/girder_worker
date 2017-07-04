@@ -4,8 +4,7 @@ from .base import Base
 class Boolean(Base):
     """Define a boolean task parameter.
 
-    >>> @app.argument('debug', app.types.Boolean)
-    ... @app.task
+    >>> @argument('debug', types.Boolean)
     ... def func(debug=False):
     ...     pass
     """

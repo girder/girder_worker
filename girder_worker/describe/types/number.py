@@ -10,8 +10,7 @@ class Number(Base):
     If min/max/step are provided, then the values must be a float
     or int.
 
-    >>> @app.argument('value', app.types.Number, min=10, max=100, step=10)
-    ... @app.task
+    >>> @argument('value', types.Number, min=10, max=100, step=10)
     ... def func(value):
     ...     pass
     """

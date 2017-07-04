@@ -5,8 +5,7 @@ from .number import Number
 class NumberVector(Vector):
     """Define a parameter accepting a list of numbers.
 
-    >>> @app.argument('value', app.types.NumberVector, min=10, max=100, step=10)
-    ... @app.task
+    >>> @argument('value', types.NumberVector, min=10, max=100, step=10)
     ... def func(value=(10, 11)):
     ...     pass
     """

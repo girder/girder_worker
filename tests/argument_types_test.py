@@ -4,7 +4,7 @@ try:
 except ImportError:
     from funcsigs import signature
 
-from girder_worker import types
+from girder_worker.describe import types
 
 
 class BaseTypeTest(TestCase):
