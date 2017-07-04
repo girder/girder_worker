@@ -23,7 +23,7 @@ def get_description_attribute(func):
     return description
 
 
-def argument(name, type, *args, **kwargs):
+def argument(name, data_type, *args, **kwargs):
     """Describe an argument to a function as a function decorator.
 
     Additional arguments are passed to the type class constructor.
@@ -35,8 +35,8 @@ def argument(name, type, *args, **kwargs):
     if not isinstance(name, six.string_types):
         raise TypeError('Expected argument name to be a string')
 
-    if callable(type):
-        type = type(name, *args, **kwargs)
+    if callable(data_type):
+        data_type = data_type(name, *args, **kwargs)
 
     def argument_wrapper(func):
         func._girder_description = getattr(func, '_girder_description', {})
@@ -46,8 +46,8 @@ def argument(name, type, *args, **kwargs):
         if name not in sig.parameters:
             raise ValueError('Invalid argument name "%s"' % name)
 
-        type.set_parameter(sig.parameters[name], signature=sig)
-        args.insert(0, type)
+        data_type.set_parameter(sig.parameters[name], signature=sig)
+        args.insert(0, data_type)
 
         def call_item_task(inputs, outputs={}):
             args, kwargs = parse_inputs(func, inputs)
@@ -79,7 +79,7 @@ def describe_function(func):
     return spec
 
 
-def get_input_data(arg, input):
+def get_input_data(arg, input_binding):
     """Parse an input binding from a function argument description.
 
     Currently, this only handles ``inline`` input bindings, but
@@ -87,14 +87,14 @@ def get_input_data(arg, input):
     provided by girder's item_tasks plugin.
 
     :param arg: An instantiated type description
-    :param input: An input binding object
+    :param input_binding: An input binding object
     :returns: The parameter value
     """
-    if input.get('mode', 'inline') != 'inline' or\
-       'data' not in input:
+    if input_binding.get('mode', 'inline') != 'inline' or\
+       'data' not in input_binding:
         raise ValueError('Unhandled input mode')
 
-    value = arg.deserialize(input['data'])
+    value = arg.deserialize(input_binding['data'])
     arg.validate(value)
     return value
 
@@ -112,10 +112,10 @@ def parse_inputs(func, inputs):
     kwargs = {}
     for arg in arguments:
         desc = arg.describe()
-        id = desc['id']
+        input_id = desc['id']
         name = desc['name']
-        if id not in inputs and not arg.has_default():
+        if input_id not in inputs and not arg.has_default():
             raise MissingInputException('Required input "%s" not provided' % name)
-        if id in inputs:
-            kwargs[name] = get_input_data(arg, inputs[id])
+        if input_id in inputs:
+            kwargs[name] = get_input_data(arg, inputs[input_id])
     return args, kwargs
