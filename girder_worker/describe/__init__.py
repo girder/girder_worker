@@ -82,19 +82,18 @@ def describe_function(func):
 def get_input_data(arg, input_binding):
     """Parse an input binding from a function argument description.
 
-    Currently, this only handles ``inline`` input bindings, but
-    could be extended to support all kinds of input bindings
-    provided by girder's item_tasks plugin.
-
     :param arg: An instantiated type description
     :param input_binding: An input binding object
     :returns: The parameter value
     """
-    if input_binding.get('mode', 'inline') != 'inline' or\
-       'data' not in input_binding:
+    mode = input_binding.get('mode', 'inline')
+    if mode == 'inline' and 'data' in input_binding:
+        value = arg.deserialize(input_binding['data'])
+    elif mode == 'girder':
+        value = input_binding.get('id')
+    else:
         raise ValueError('Unhandled input mode')
 
-    value = arg.deserialize(input_binding['data'])
     arg.validate(value)
     return value
 

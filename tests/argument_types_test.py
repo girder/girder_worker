@@ -371,3 +371,31 @@ class StringVectorTypeTest(TestCase):
 
         with self.assertRaises(TypeError):
             v.validate((1,))
+
+
+class GirderItemTypeTest(TestCase):
+
+    def test_describe_girder_item(self):
+        def func(item):
+            pass
+        sig = signature(func)
+
+        v = types.GirderItem('item')
+        v.set_parameter(sig.parameters['item'])
+        desc = v.describe()
+
+        self.assertEqual(desc['type'], 'file')
+
+
+class GirderFolderTypeTest(TestCase):
+
+    def test_describe_girder_folder(self):
+        def func(folder):
+            pass
+        sig = signature(func)
+
+        v = types.GirderFolder('folder')
+        v.set_parameter(sig.parameters['folder'])
+        desc = v.describe()
+
+        self.assertEqual(desc['type'], 'directory')

@@ -42,6 +42,12 @@ def bare_func(arg1):
     return arg1
 
 
+@argument('item', types.GirderItem)
+@argument('folder', types.GirderFolder)
+def girder_types_func(item, folder):
+    return item, folder
+
+
 class DescribeDecoratorTest(TestCase):
 
     def test_positional_argument(self):
@@ -147,3 +153,21 @@ class DescribeDecoratorTest(TestCase):
 
         returned = bare_func.call_item_task({'arg1': {'data': 'value'}})
         self.assertEqual(returned, 'value')
+
+    def test_girder_input_mode(self):
+        item, folder = girder_types_func.call_item_task({
+            'item': {
+                'mode': 'girder',
+                'id': 'itemid',
+                'resource_type': 'item',
+                'fileName': 'file.txt'
+            },
+            'folder': {
+                'mode': 'girder',
+                'id': 'folderid',
+                'resource_type': 'folder'
+            }
+        })
+
+        self.assertEqual(item, 'itemid')
+        self.assertEqual(folder, 'folderid')
