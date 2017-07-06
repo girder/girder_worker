@@ -39,6 +39,11 @@ class IntegrationTestEndpoints(Resource):
         self.route('POST', ('celery', 'test_task_signature_apply_async_fails', ),
                    self.test_celery_task_signature_apply_async_fails)
 
+        self.route('POST', ('celery', 'test_task_delay_with_custom_job_options', ),
+                   self.test_celery_task_delay_with_custom_job_options)
+        self.route('POST', ('celery', 'test_task_apply_async_with_custom_job_options', ),
+                   self.test_celery_task_apply_async_with_custom_job_options)
+
         self.route('POST', ('traditional', 'test_job_girder_worker_run'),
                    self.test_traditional_job_girder_worker_run)
         self.route('POST', ('traditional', 'test_job_custom_task_name'),
@@ -91,6 +96,26 @@ class IntegrationTestEndpoints(Resource):
         except TimeoutError:
             return None
 
+    # Testing custom job option API for celery tasks
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test celery task delay with custom job options'))
+    def test_celery_task_delay_with_custom_job_options(self, params):
+        result = fibonacci.delay(20, girder_job_title='TEST DELAY TITLE')
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test celery task apply_async with custom job options'))
+    def test_celery_task_apply_async_with_custom_job_options(self, params):
+        result = fibonacci.apply_async((20,), {}, girder_job_title='TEST APPLY_ASYNC TITLE')
+        return result.job
+
+    # Testing basic celery API
+
     @access.token
     @filtermodel(model='job', plugin='jobs')
     @describeRoute(
@@ -112,7 +137,7 @@ class IntegrationTestEndpoints(Resource):
     @describeRoute(
         Description('Test celery task apply_async'))
     def test_celery_task_apply_async(self, params):
-        result = fibonacci.apply_async((20,))
+        result = fibonacci.apply_async((20,), {})
         return result.job
 
     @access.token

@@ -46,13 +46,27 @@ class GirderAsyncResult(AsyncResult):
 class Task(celery.Task):
     """Girder Worker Task object"""
 
-    _girder_job_title = None
+    _girder_job_title = '<unnamed job>'
     _girder_job_type = None
     _girder_job_public = False
     _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
 
-    special_headers = ['girder_token', 'girder_user']
+    # These keys will be removed from apply_async's kwargs or options and
+    # transfered into the headers of the message.
+    special_headers = [
+        'girder_client_token',
+        'girder_api_url']
+
+    # These keys will be available in the 'properties' dictionary inside
+    # girder_before_task_publish() but will not be passed along in the message
+    special_options = [
+        'girder_user',
+        'girder_job_title',
+        'girder_job_type',
+        'girder_job_public',
+        'girder_job_handler',
+        'girder_job_other_fields']
 
     def AsyncResult(self, task_id, **kwargs):
         return GirderAsyncResult(task_id, backend=self.backend,
@@ -69,17 +83,11 @@ class Task(celery.Task):
         # or in options (e.g.  .apply_async(args=(), kwargs={}, girder_token='foo')
         # For those special headers,  pop them out of kwargs or options and put them
         # in headers so they can be picked up by the before_task_publish signal.
-        for key in self.special_headers:
+        for key in self.special_headers + self.special_options:
             if kwargs is not None and key in kwargs:
                 headers[key] = kwargs.pop(key)
             if key in options:
                 headers[key] = options.pop(key)
-
-        headers['girder_job_title'] = self._girder_job_title
-        headers['girder_job_type'] = self._girder_job_type
-        headers['girder_job_public'] = self._girder_job_public
-        headers['girder_job_handler'] = self._girder_job_handler
-        headers['girder_job_other_fields'] = self._girder_job_other_fields
 
         if 'headers' in options:
             options['headers'].update(headers)
@@ -118,34 +126,53 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             job_model = ModelImporter.model('job', 'jobs')
 
             user = headers.pop('girder_user', getCurrentUser())
-            token = headers.pop('girder_token', None)
-
             task_args, task_kwargs = body[0], body[1]
 
             job = job_model.createJob(
-                **{'title': headers.get('girder_job_title', Task._girder_job_title),
-                   'type': headers.get('girder_job_type', Task._girder_job_type),
-                   'handler': headers.get('girder_job_handler', Task._girder_job_handler),
-                   'public': headers.get('girder_job_public', Task._girder_job_public),
+                **{'title': headers.pop('girder_job_title', Task._girder_job_title),
+                   'type': headers.pop('girder_job_type', Task._girder_job_type),
+                   'handler': headers.pop('girder_job_handler', Task._girder_job_handler),
+                   'public': headers.pop('girder_job_public', Task._girder_job_public),
                    'user': user,
                    'args': task_args,
                    'kwargs': task_kwargs,
                    'otherFields': dict(celeryTaskId=headers['id'],
-                                       **headers.get('girder_job_other_fields',
+                                       **headers.pop('girder_job_other_fields',
                                                      Task._girder_job_other_fields))})
-            # If we don't have a token from girder_token kwarg,  use
-            # the job token instead. Otherwise no token
-            if token is None:
-                token = job.get('token', None)
 
-            headers['jobInfoSpec'] = utils.jobInfoSpec(job, token)
-            headers['apiUrl'] = utils.getWorkerApiUrl()
+            headers['jobInfoSpec'] = utils.jobInfoSpec(job)
 
         except ImportError:
             # TODO: Check for self.job_manager to see if we have
             #       tokens etc to contact girder and create a job model
             #       we may be in a chain or a chord or some-such
             pass
+
+    if 'girder_api_url' not in headers:
+        try:
+            from girder.plugins.worker import utils
+            headers['girder_api_url'] = utils.getWorkerApiUrl()
+        except ImportError:
+            # TODO: handle situation where girder_worker is producing the message
+            #       Note - this may not come up at all depending on how we pass
+            #       girder_api_url through to the next task (e.g. in the context
+            #       of chaining events)
+            pass
+
+    if 'girder_client_token' not in headers:
+        try:
+            from girder.utility.model_importer import ModelImporter
+            headers['girder_client_token'] = ModelImporter.model('token').createToken()
+        except ImportError:
+            # TODO: handle situation where girder_worker is producing the message
+            #       Note - this may not come up at all depending on how we pass
+            #       girder_token through to the next task (e.g. in the context
+            #       of chaining events)
+            pass
+
+    # Finally,  remove all special_options from headers
+    for key in Task.special_options:
+        headers.pop(key)
 
 
 @worker_ready.connect
