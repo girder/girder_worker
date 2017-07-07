@@ -3,7 +3,7 @@ import time
 import sys
 
 
-def girder_job(title=None, type=None, public=False,
+def girder_job(title=None, type='celery', public=False,
                handler='celery_handler', otherFields=None):
     """Decorator that populates a girder_worker celery task with
     girder's job metadata.

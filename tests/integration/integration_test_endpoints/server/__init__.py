@@ -197,7 +197,7 @@ class IntegrationTestEndpoints(Resource):
 
         job = jobModel.createJob(
             title='test_traditional_job_custom_task_name',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False, args=(number,), kwargs={},
             otherFields={
                 'celeryTaskName': 'common_tasks.test_tasks.fib.fibonacci'
@@ -219,7 +219,7 @@ class IntegrationTestEndpoints(Resource):
 
         job = jobModel.createJob(
             title='test_traditional_job_custom_task_name_fails',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False, args=(), kwargs={},
             otherFields={
                 'celeryTaskName': 'common_tasks.test_tasks.fail.fail_after'
@@ -241,7 +241,7 @@ class IntegrationTestEndpoints(Resource):
         jobModel = self.model('job', 'jobs')
         job = jobModel.createJob(
             title='test_traditional_job_girder_worker_run',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False, args=(self.girder_worker_run_analysis,),
             kwargs={'inputs': self.girder_worker_run_inputs,
                     'outputs': self.girder_worker_run_outputs})
@@ -262,7 +262,7 @@ class IntegrationTestEndpoints(Resource):
         jobModel = self.model('job', 'jobs')
         job = jobModel.createJob(
             title='test_traditional_job_girder_worker_run_fails',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False,
             args=(self.girder_worker_run_failing_analysis,),
             kwargs={'inputs': self.girder_worker_run_inputs,

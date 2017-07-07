@@ -47,7 +47,7 @@ class Task(celery.Task):
     """Girder Worker Task object"""
 
     _girder_job_title = '<unnamed job>'
-    _girder_job_type = None
+    _girder_job_type = 'celery'
     _girder_job_public = False
     _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
@@ -77,7 +77,15 @@ class Task(celery.Task):
 
         # Pass girder related job information through to
         # the signals by adding this information to options['headers']
-        headers = {}
+        # This sets defaults for reserved_options based on the class defaults,
+        # or values defined by the girder_job() dectorator
+        headers = {
+            'girder_job_title': self._girder_job_title,
+            'girder_job_type': self._girder_job_type,
+            'girder_job_public': self._girder_job_public,
+            'girder_job_handler': self._girder_job_handler,
+            'girder_job_other_fields': self._girder_job_other_fields,
+        }
 
         # Certain keys may show up in either kwargs (e.g. via .delay(girder_token='foo')
         # or in options (e.g.  .apply_async(args=(), kwargs={}, girder_token='foo')
