@@ -74,7 +74,7 @@ class TestSignals(unittest.TestCase):
         gcu.assert_called_once()
         create_job.assert_called_once_with(
             **{'title': '<unnamed job>',
-               'type': None,
+               'type': 'celery',
                'handler': 'celery_handler',
                'public': False,
                'user': gcu.return_value,

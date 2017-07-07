@@ -9,6 +9,7 @@ from girder.plugins.worker.constants import PluginSettings
 
 from common_tasks.test_tasks.fib import fibonacci
 from common_tasks.test_tasks.fail import fail_after
+from common_tasks.test_tasks.girder_client import request_private_path
 
 from girder_worker.app import app
 from celery.exceptions import TimeoutError
@@ -43,6 +44,11 @@ class IntegrationTestEndpoints(Resource):
                    self.test_celery_task_delay_with_custom_job_options)
         self.route('POST', ('celery', 'test_task_apply_async_with_custom_job_options', ),
                    self.test_celery_task_apply_async_with_custom_job_options)
+
+        self.route('POST', ('celery', 'test_girder_client_generation', ),
+                   self.test_celery_girder_client_generation)
+        self.route('POST', ('celery', 'test_girder_client_bad_token_fails', ),
+                   self.test_celery_girder_client_bad_token_fails)
 
         self.route('POST', ('traditional', 'test_job_girder_worker_run'),
                    self.test_traditional_job_girder_worker_run)
@@ -182,6 +188,30 @@ class IntegrationTestEndpoints(Resource):
     def test_celery_task_signature_apply_async_fails(self, params):
         signature = fail_after.s(0.5)
         result = signature.apply_async()
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test girder client is generated and can request scoped endpoints'))
+    def test_celery_girder_client_generation(self, params):
+
+        token = ModelImporter.model('token').createToken(
+            user=self.getCurrentUser())
+
+        result = request_private_path.delay(
+            'admin', girder_client_token=str(token['_id']))
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test girder client with no token can\'t access protected resources'))
+    def test_celery_girder_client_bad_token_fails(self, params):
+
+        result = request_private_path.delay('admin', girder_client_token='')
+
         return result.job
 
     # Traditional endpoints

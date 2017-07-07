@@ -10,6 +10,7 @@ from celery.result import AsyncResult
 from six.moves import configparser
 import sys
 from .utils import JobStatus
+from girder_client import GirderClient
 
 
 class GirderAsyncResult(AsyncResult):
@@ -234,6 +235,12 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     except JobSpecNotFound:
         task.job_manager = None
         print('Warning: No jobInfoSpec. Setting job_manager to None.')
+
+    try:
+        task.girder_client = GirderClient(apiUrl=task.request.girder_api_url)
+        task.girder_client.token = task.request.girder_client_token
+    except AttributeError:
+        task.girder_client = None
 
 
 @task_success.connect
