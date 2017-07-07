@@ -54,13 +54,13 @@ class Task(celery.Task):
 
     # These keys will be removed from apply_async's kwargs or options and
     # transfered into the headers of the message.
-    special_headers = [
+    reserved_headers = [
         'girder_client_token',
         'girder_api_url']
 
     # These keys will be available in the 'properties' dictionary inside
     # girder_before_task_publish() but will not be passed along in the message
-    special_options = [
+    reserved_options = [
         'girder_user',
         'girder_job_title',
         'girder_job_type',
@@ -83,7 +83,7 @@ class Task(celery.Task):
         # or in options (e.g.  .apply_async(args=(), kwargs={}, girder_token='foo')
         # For those special headers,  pop them out of kwargs or options and put them
         # in headers so they can be picked up by the before_task_publish signal.
-        for key in self.special_headers + self.special_options:
+        for key in self.reserved_headers + self.reserved_options:
             if kwargs is not None and key in kwargs:
                 headers[key] = kwargs.pop(key)
             if key in options:
@@ -170,9 +170,9 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             #       of chaining events)
             pass
 
-    # Finally,  remove all special_options from headers
-    for key in Task.special_options:
-        headers.pop(key)
+    # Finally,  remove all reserved_options from headers
+    for key in Task.reserved_options:
+        headers.pop(key, None)
 
 
 @worker_ready.connect
