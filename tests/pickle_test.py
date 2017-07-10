@@ -3,7 +3,8 @@ import unittest
 import tempfile
 import six
 
-from girder_worker.tasks import convert, run
+from girder_worker.tasks import run
+from girder_worker.plugins.types import convert
 
 
 class TestPickle(unittest.TestCase):

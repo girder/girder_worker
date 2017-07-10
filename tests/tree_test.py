@@ -1,6 +1,7 @@
 import bson
 import os
-from girder_worker.tasks import run, convert
+from girder_worker.tasks import run
+from girder_worker.plugins.types import convert
 import unittest
 
 
@@ -11,12 +12,6 @@ class TestTree(unittest.TestCase):
             'name': 'tree_copy',
             'inputs': [{'name': 'a', 'type': 'tree', 'format': 'nested'}],
             'outputs': [{'name': 'b', 'type': 'tree', 'format': 'nested'}],
-            'script': 'b = a'
-        }
-        self.analysis_vtk = {
-            'name': 'tree_copy',
-            'inputs': [{'name': 'a', 'type': 'tree', 'format': 'vtktree'}],
-            'outputs': [{'name': 'b', 'type': 'tree', 'format': 'vtktree'}],
             'script': 'b = a'
         }
         self.analysis_r = {
@@ -110,15 +105,6 @@ END;"""
 
         self.assertEqual(
             outputs['b']['data'], expected)
-
-    def test_vtktree(self):
-        outputs = run(
-            self.analysis_vtk,
-            inputs={'a': {'format': 'newick', 'data': self.newick}},
-            outputs={'b': {'format': 'newick'}}
-        )
-        self.assertEqual(outputs['b']['format'], 'newick')
-        self.assertEqual(outputs['b']['data'], self.newick)
 
     def test_r_apetree(self):
         outputs = run(

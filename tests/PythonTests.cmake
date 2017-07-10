@@ -72,6 +72,8 @@ function(add_python_test case)
 endfunction()
 
 function(add_docstring_test module)
+  cmake_parse_arguments(fn "" "PLUGINS_ENABLED" "${_multival_args}" ${ARGN})
+
   set(name doctest:${module})
   if(PYTHON_COVERAGE)
     add_test(
@@ -90,5 +92,14 @@ function(add_docstring_test module)
   if(PYTHON_COVERAGE)
     set_property(TEST ${name} APPEND PROPERTY DEPENDS py_coverage_reset)
     set_property(TEST py_coverage_combine APPEND PROPERTY DEPENDS ${name})
+  endif()
+  if(fn_PLUGINS_ENABLED)
+    set_property(TEST ${name} PROPERTY ENVIRONMENT
+      "WORKER_PLUGINS_ENABLED=${fn_PLUGINS_ENABLED}"
+    )
+  else()
+    set_property(TEST ${name} PROPERTY ENVIRONMENT
+      "WORKER_PLUGINS_ENABLED="
+    )
   endif()
 endfunction()

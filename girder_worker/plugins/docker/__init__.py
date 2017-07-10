@@ -13,7 +13,7 @@ MIN_GC_INTERVAL = 600
 
 def before_run(e):
     import executor
-    if e.info['task']['mode'] == 'docker':
+    if e.info['task'].get('mode') == 'docker':
         executor.validate_task_outputs(e.info['task_outputs'])
     if not _read_bool_from_config('gc', False):
         e.info.setdefault('kwargs', {})['_rm_container'] = True

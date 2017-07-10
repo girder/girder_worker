@@ -1,10 +1,10 @@
-from girder_worker.tasks import run, convert
+from girder_worker.tasks import run
+from girder_worker.plugins.types import convert
 from girder_worker.core import load
 import os
 import tempfile
 import unittest
 import collections
-import vtk
 import json
 import math
 
@@ -183,22 +183,6 @@ class TestTable(unittest.TestCase):
         self.assertEqual(outputs['c']['format'], 'tsv')
         self.assertEqual(outputs['c']['data'].splitlines(),
                          ['a\tb\tc', '1\t2\t3', '4\t5\t6'])
-
-    def test_vtktable(self):
-        outputs = run(
-            self.analysis,
-            inputs=self.test_input,
-            outputs={
-                'c': {'format': 'vtktable'}
-            })
-        self.assertEqual(outputs['c']['format'], 'vtktable')
-        t = outputs['c']['data']
-        self.assertEqual(t.GetNumberOfRows(), 2)
-        self.assertEqual(t.GetNumberOfColumns(), 2)
-        self.assertEqual(t.GetValueByName(0, 'aa'), 1)
-        self.assertEqual(t.GetValueByName(1, 'aa'), 3)
-        self.assertEqual(t.GetValueByName(0, 'bb'), 2)
-        self.assertEqual(t.GetValueByName(1, 'bb'), 4)
 
     def test_mongo_to_python(self):
         outputs = run(
@@ -432,42 +416,6 @@ class TestTable(unittest.TestCase):
                 if isinstance(row[field], float):
                     self.assertFalse(math.isnan(row[field]))
                     self.assertFalse(math.isinf(row[field]))
-
-    def test_vector(self):
-        rows = {
-            'fields': ['a', 'b'],
-            'rows': [
-                {'a': [1, 2, 3], 'b': ['1', '2']},
-                {'a': [4, 5, 6], 'b': ['3', '4']}
-            ]
-        }
-
-        # Conversion to vtkTable
-        vtktable = convert(
-            'table',
-            {'format': 'rows', 'data': rows},
-            {'format': 'vtktable'}
-        )['data']
-        self.assertEqual(vtktable.GetNumberOfRows(), 2)
-        self.assertEqual(vtktable.GetNumberOfColumns(), 2)
-        a = vtktable.GetColumnByName('a')
-        b = vtktable.GetColumnByName('b')
-        self.assertEqual(a.GetNumberOfComponents(), 3)
-        self.assertEqual(b.GetNumberOfComponents(), 2)
-        self.assertTrue(isinstance(a, vtk.vtkDoubleArray))
-        self.assertTrue(isinstance(b, vtk.vtkStringArray))
-        for i in range(6):
-            self.assertEqual(a.GetValue(i), i + 1)
-        for i in range(4):
-            self.assertEqual(b.GetValue(i), str(i + 1))
-
-        # Conversion back to rows
-        rows2 = convert(
-            'table',
-            {'format': 'vtktable', 'data': vtktable},
-            {'format': 'rows'}
-        )['data']
-        self.assertEqual(rows2, rows)
 
     def test_objectlist(self):
         rows = {

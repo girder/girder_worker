@@ -383,6 +383,7 @@ class TestWorkflow(unittest.TestCase):
             'inputs': {
                 'x': {
                     'format': 'number',
+                    'type': 'number',
                     'data': (2*2)+(3*3)
                 }
             }

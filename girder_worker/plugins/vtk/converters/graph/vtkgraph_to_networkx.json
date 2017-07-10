@@ -1,7 +1,0 @@
-{
-    "name": "vtkGraph to NetworkX",
-    "inputs": [{"name": "input", "type": "graph", "format": "vtkgraph"}],
-    "outputs": [{"name": "output", "type": "graph", "format": "networkx"}],
-    "script_uri": "file://vtkgraph_to_networkx.py",
-    "mode": "python"
-}

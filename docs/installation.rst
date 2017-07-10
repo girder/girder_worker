@@ -17,9 +17,9 @@ Next, the following command will install the core dependencies: ::
 That will install the core girder-worker library, but not the third-party dependencies for
 any of its plugins. If you want to enable a set of plugins, their IDs should be included as
 extras to the pip install command. For instance, if you are planning to use the R plugin
-and the spark plugin, you would run: ::
+and the girder_io plugin, you would run: ::
 
-    pip install girder-worker[r,spark]
+    pip install girder-worker[r,girder_io]
 
 You can run this command at any time to install dependencies of other plugins, even if
 the girder worker is already installed.
@@ -83,7 +83,7 @@ The core configuration parameters are outlined below.
     it can use if it needs filesystem storage. This config setting points to the
     root directory under which these temporary directories will be created.
   * ``girder_worker.plugins_enabled``: This is a comma-separated list of plugin IDs that
-    will be enabled at runtime, e.g. ``spark,vtk``.
+    will be enabled at runtime, e.g. ``r,docker``.
   * ``girder_worker.plugin_load_path``: If you have any external plugins that are not
     inside the **girder_worker/plugins** package directory, set this value to a
     colon-separated list of directories to search for external plugins that need to

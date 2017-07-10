@@ -15,7 +15,11 @@ In this example we will:
 
 .. testsetup::
 
+   import os
    import girder_worker.tasks
+   from girder_worker import PACKAGE_DIR, core
+   core.utils.load_plugin('types', [os.path.join(PACKAGE_DIR, 'plugins')])
+
 
 Obtain the dataset
 ~~~~~~~~~~~~~~~~~~~
