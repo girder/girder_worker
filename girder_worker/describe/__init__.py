@@ -7,6 +7,15 @@ except ImportError:
     from funcsigs import signature
 
 
+#: This is used as a registry of wrapped functions
+_described_tasks = {}
+
+
+def _function_name(func):
+    """Return a unique name for a function based on it's module path."""
+    return '%s.%s' % (func.__module__, func.__name__)
+
+
 class MissingDescriptionException(Exception):
     """Raised when a function is missing description decorators."""
 
@@ -58,6 +67,9 @@ def argument(name, data_type, *args, **kwargs):
 
         func.call_item_task = call_item_task
         func.describe = describe
+
+        # register the function in the internal object
+        _described_tasks[_function_name(func)] = func
         return func
 
     return argument_wrapper
@@ -118,3 +130,18 @@ def parse_inputs(func, inputs):
         if input_id in inputs:
             kwargs[name] = get_input_data(arg, inputs[input_id])
     return args, kwargs
+
+
+def describe_all():
+    """Return a json description of all functions that were described by this module."""
+    tasks = []
+    for import_, func in six.iteritems(_described_tasks):
+        desc = func.describe()
+        desc['import'] = import_
+        tasks.append(desc)
+    return tasks
+
+
+def get_registered_function(name):
+    """Return a function from its unique module path."""
+    return _described_tasks[name]
