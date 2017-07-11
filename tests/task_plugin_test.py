@@ -1,6 +1,7 @@
 import unittest
 import mock
 import girder_worker
+from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from pkg_resources import EntryPoint
 
@@ -17,7 +18,7 @@ def mock_plugin(task_list):
 
 
 class TestTaskPlugin(unittest.TestCase):
-    @mock.patch('girder_worker.__main__.pr')
+    @mock.patch('girder_worker.entrypoint.pr')
     @mock.patch('girder_worker.__main__.app')
     def test_core_plugin(self, app, pr):
         ep = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
@@ -30,7 +31,7 @@ class TestTaskPlugin(unittest.TestCase):
                                          ['girder_worker.tasks']})
         app.conf.update.assert_any_call({'CELERY_INCLUDE': []})
 
-    @mock.patch('girder_worker.__main__.pr')
+    @mock.patch('girder_worker.entrypoint.pr')
     @mock.patch('girder_worker.__main__.app')
     def test_core_and_other_plugin(self, app, pr):
 
@@ -49,7 +50,7 @@ class TestTaskPlugin(unittest.TestCase):
         app.conf.update.assert_any_call({'CELERY_INCLUDE':
                                          ['mock.plugin.tasks']})
 
-    @mock.patch('girder_worker.__main__.pr')
+    @mock.patch('girder_worker.entrypoint.pr')
     @mock.patch('girder_worker.__main__.app')
     def test_multiple_plugins(self, app, pr):
 
@@ -73,7 +74,7 @@ class TestTaskPlugin(unittest.TestCase):
                                          ['mock.plugin.tasks',
                                           'mock.plugin2.tasks']})
 
-    @mock.patch('girder_worker.__main__.pr')
+    @mock.patch('girder_worker.entrypoint.pr')
     @mock.patch('girder_worker.__main__.app')
     @mock.patch('girder_worker.__main__.config')
     def test_exclude_core_tasks(self, config, app, pr):
@@ -88,7 +89,7 @@ class TestTaskPlugin(unittest.TestCase):
         # Called once with no plugins,  ie.  core_tasks were not added
         app.conf.update.assert_called_once_with({'CELERY_INCLUDE': []})
 
-    @mock.patch('girder_worker.__main__.pr')
+    @mock.patch('girder_worker.entrypoint.pr')
     @mock.patch('girder_worker.__main__.app')
     def test_plugin_throws_import_error(self, app, pr):
         core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
@@ -100,7 +101,7 @@ class TestTaskPlugin(unittest.TestCase):
 
         app.conf.update.assert_any_call({'CELERY_IMPORTS': []})
 
-    @mock.patch('girder_worker.__main__.pr')
+    @mock.patch('girder_worker.entrypoint.pr')
     @mock.patch('girder_worker.__main__.app')
     def test_plugin_task_imports_throws_exception(self, app, pr):
         core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
@@ -114,3 +115,32 @@ class TestTaskPlugin(unittest.TestCase):
         main()
 
         app.conf.update.assert_any_call({'CELERY_IMPORTS': []})
+
+    @mock.patch('girder_worker.entrypoint.pr')
+    @mock.patch('girder_worker.entrypoint.import_module')
+    def test_import_all_task_modules(self, import_module, pr):
+        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
+        core.load = mock.Mock(return_value=girder_worker.GirderWorkerPlugin)
+
+        plugin = EntryPoint.parse('mock = mockplugin:MockPlugin')
+        plugin.load = mock.Mock(return_value=mock_plugin(['mock.plugin.tasks']))
+
+        pr.iter_entry_points.return_value = [core, plugin]
+
+        entrypoint.import_all_includes()
+        import_module.assert_any_call('mock.plugin.tasks')
+
+    @mock.patch('girder_worker.entrypoint.pr')
+    @mock.patch('girder_worker.entrypoint.import_module')
+    def test_failed_import(self, import_module, pr):
+        import_module.side_effect = ImportError('Intentionally throw import error')
+        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
+        core.load = mock.Mock(return_value=girder_worker.GirderWorkerPlugin)
+
+        plugin = EntryPoint.parse('mock = mockplugin:MockPlugin')
+        plugin.load = mock.Mock(return_value=mock_plugin(['mock.plugin.tasks']))
+
+        pr.iter_entry_points.return_value = [core, plugin]
+
+        entrypoint.import_all_includes()
+        import_module.assert_any_call('mock.plugin.tasks')
