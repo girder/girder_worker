@@ -10,7 +10,6 @@ from celery.result import AsyncResult
 from six.moves import configparser
 import sys
 from .utils import JobStatus
-from describe import describe_function
 
 
 class GirderAsyncResult(AsyncResult):
@@ -92,6 +91,9 @@ class Task(celery.Task):
             link=link, link_error=link_error, shadow=shadow, **options)
 
     def describe(self):
+        # The describe module indirectly depends on this module, so to
+        # avoid circular imports, we import describe_function here.
+        from describe import describe_function
         return describe_function(self.run)
 
     def call_item_task(self, inputs, outputs={}):

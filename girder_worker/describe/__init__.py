@@ -6,6 +6,7 @@ try:
 except ImportError:
     from funcsigs import signature
 
+from girder_worker.entrypoint import import_all_includes
 
 #: This is used as a registry of wrapped functions
 _described_tasks = {}
@@ -134,6 +135,7 @@ def parse_inputs(func, inputs):
 
 def describe_all():
     """Return a json description of all functions that were described by this module."""
+    import_all_includes()
     tasks = []
     for import_, func in six.iteritems(_described_tasks):
         desc = func.describe()
@@ -144,4 +146,5 @@ def describe_all():
 
 def get_registered_function(name):
     """Return a function from its unique module path."""
+    import_all_includes()
     return _described_tasks[name]
