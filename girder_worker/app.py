@@ -226,14 +226,20 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 @task_success.connect
 def gw_task_success(sender=None, **rest):
     try:
-        _update_status(sender, JobStatus.SUCCESS)
+
+        if not is_revoked(sender):
+            _update_status(sender, JobStatus.SUCCESS)
+
+        # For tasks revoked directly
+        else:
+            _update_status(sender, JobStatus.CANCELED)
     except AttributeError:
         pass
     except StateTransitionException:
         # Fetch the current status of the job
         status = sender.job_manager.refreshStatus()
         # If we are in CANCELING move to CANCELED
-        if status == JobStatus.CANCELING:
+        if status == JobStatus.CANCELING or is_revoked(sender):
             _update_status(sender, JobStatus.CANCELED)
         else:
             raise
