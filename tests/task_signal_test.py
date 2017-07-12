@@ -148,11 +148,13 @@ class TestSignals(unittest.TestCase):
         task.job_manager.updateStatus.assert_called_once_with(
             JobStatus.RUNNING)
 
+    @mock.patch('girder_worker.app.is_revoked')
     @mock.patch('girder_worker.utils.JobManager')
-    def test_task_success(self, jm):
+    def test_task_success(self, jm,  is_revoked):
         task = mock.MagicMock()
         task.request.parent_id = None
         task.job_manager = jm(**self.headers)
+        is_revoked.return_value = False
 
         gw_task_success(sender=task)
 
@@ -220,9 +222,10 @@ class TestSignals(unittest.TestCase):
         refreshStatus.assert_not_called()
         self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
 
+    @mock.patch('girder_worker.app.is_revoked')
     @mock.patch('girder_worker.utils.requests.request')
     @mock.patch('girder_worker.utils.JobManager.refreshStatus')
-    def test_task_success_canceling(self, refreshStatus, request):
+    def test_task_success_canceling(self, refreshStatus, request, is_revoked):
         task = mock.MagicMock()
         task.request.jobInfoSpec = self.headers['jobInfoSpec']
         task.request.parent_id = None
@@ -232,19 +235,20 @@ class TestSignals(unittest.TestCase):
             'message': 'invalid'
         }
         r = request.return_value
-        r.raise_for_status.side_effect = [None, MockHTTPError(400, validation_error),
-                                          None]
+        r.raise_for_status.side_effect = [None, MockHTTPError(400, validation_error)]
         refreshStatus.return_value = JobStatus.CANCELING
+        is_revoked.return_value = True
 
         gw_task_prerun(task)
         gw_task_success(sender=task)
 
         # We where in the canceling state so we should move into CANCELED
         refreshStatus.assert_called_once()
-        self.assertEqual(request.call_args_list[2][1]['data']['status'], JobStatus.CANCELED)
+        self.assertEqual(request.call_args_list[1][1]['data']['status'], JobStatus.CANCELED)
 
         # Now try with RUNNING
         request.reset_mock()
+        is_revoked.return_value = False
         refreshStatus.reset_mock()
         r.raise_for_status.side_effect = [None, None]
 
