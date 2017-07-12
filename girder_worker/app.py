@@ -298,7 +298,7 @@ def _worker_inspector(task):
 
 # Get this list of currently revoked tasks for this worker
 def _revoked_tasks(task):
-    return _worker_inspector(task).revoked()[task.request.hostname]
+    return _worker_inspector(task).revoked().get(task.request.hostname, [])
 
 
 def is_revoked(task):
