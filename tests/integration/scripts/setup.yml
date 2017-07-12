@@ -1,7 +1,7 @@
 ---
 - hosts: girder
   vars:
-    girder_port: 8989
+    girder_port: 8999
     girder_user: "admin"
     girder_pass: "letmein"
   tasks:
@@ -56,7 +56,7 @@
         port: "{{ girder_port }}"
         setting:
           key: "core.server_root"
-          value: "http://girder:{{ girder_port }}/"
+          value: "http://girder:8989/"
 
     - name: Restart the server
       girder:

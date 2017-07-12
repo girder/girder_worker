@@ -1,0 +1,9 @@
+FROM alpine:3.6
+
+COPY . /girder_worker
+
+RUN sed -i  's|^broker.*=.*$|broker = amqp://guest:guest@rabbit/|' /girder_worker/girder_worker/worker.dist.cfg
+
+VOLUME /girder_worker
+
+CMD /bin/true
