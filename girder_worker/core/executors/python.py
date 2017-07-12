@@ -9,6 +9,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     custom.__dict__['_job_manager'] = kwargs.get('_job_manager')
     custom.__dict__['_tempdir'] = kwargs.get('_tempdir')
+    custom.__dict__['_celery_task'] = kwargs.get('_celery_task')
 
     for name in inputs:
         custom.__dict__[name] = inputs[name]['script_data']
