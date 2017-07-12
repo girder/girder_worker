@@ -83,7 +83,8 @@ def describe_function(func):
     inputs = [arg.describe() for arg in description.get('arguments', [])]
     spec = {
         'name': description.get('name', func.__name__),
-        'inputs': inputs
+        'inputs': inputs,
+        'mode': 'girder_worker'
     }
     desc = description.get('description', getdoc(func))
     if desc:
