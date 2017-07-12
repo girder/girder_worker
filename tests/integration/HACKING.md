@@ -444,6 +444,10 @@ The first is the ```job_manager``` which provides an API for interacting with th
 
 The second channel for interacting with Girder from within a task is through the ```girder_client``` attribute.  Like the ```job_manager``` it is available on the Celery task object (so you must set bind equal to true to access it). The girder\_client is an instance of ```girder_client.GirderClient```. It provides an authenticated session for making REST requests against the Girder API. The authentication is handled through a token provided to the task through the reserved keyword ```girder_client_token```. This will allow the girder\_client within the task to act with the same permissions granted to the token. By default the girder\_client\_token is None,  meaning the girder\_client instance within the task will have the permissions of an unauthenticated user.
 
+
+# Integration Testing with Girder Worker
+TODO
+
 # Architectural notes for Developers (and Masochists)
 
 The following sections contain information about the implementation details of Girder Worker. They are not meant for general consumption,  but may be useful in explaining some of the design decisions that were made for developers who wish to extend or contribute to Girder Worker.
