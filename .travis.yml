@@ -45,6 +45,7 @@ before_install:
 install:
   # install Python packages for core and all plugins
   - python scripts/install_requirements.py --mode=dev --all
+  - python setup.py develop
 
 # run tests
 script:
