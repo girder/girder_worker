@@ -1,0 +1,38 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: python:2.7.13
+    working_directory: /root/girder_worker
+    steps:
+      - checkout
+      - run:
+          name: Install Docker client
+          command: |
+            set -x
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://get.docker.com/builds/Linux/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            mv /tmp/docker/* /usr/bin
+      - run:
+          name: Install Docker Compose
+          command: |
+            set -x
+            curl -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+            chmod +x /usr/local/bin/docker-compose
+      - setup_remote_docker
+      - run:
+          name: Get the environment up and running with Docker Compose
+          command: |
+            cd tests/integration && docker-compose up -d
+            # Test if girder is up and running on port 8989
+            docker run --network container:gw_integration_test_girder appropriate/curl --retry 30 --retry-delay 1 --retry-connrefused http://localhost:8989
+      - run:
+          name: Run integration tests
+          command: |
+            # Create a new container with a volume attached
+            docker create -v /cfg --name configs alpine:3.4 /bin/true
+            # Copy the repository to this volume
+            docker cp /root/girder_worker configs:/cfg
+            # Run the integration tests after installing requirements
+            docker run --volumes-from configs --network container:gw_integration_test_girder python:2.7.13 /bin/bash -c "cd /cfg/girder_worker/tests/integration; pip install -r requirements.txt; pytest -v -n 4"

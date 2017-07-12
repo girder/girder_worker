@@ -16,4 +16,7 @@ if [ -e /girder_worker/tests/integration/common_tasks/setup.py ]; then
     pip install -e /girder_worker/tests/integration/common_tasks/
 fi
 
+mkdir tmp
+chmod 777 tmp
+
 sudo -u worker python -m girder_worker -l info

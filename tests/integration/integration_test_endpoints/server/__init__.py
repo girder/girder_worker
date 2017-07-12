@@ -332,21 +332,6 @@ class IntegrationTestEndpoints(Resource):
 
 
 def load(info):
-
-    # Note: within the context of the executing docker test
-    # environment the RabbitMQ server is addressable as 'rabbit.'
-    # Usually we statically configure the broker url in
-    # worker.local.cfg or fall back to worker.dist.cfg.  In this case
-    # however we are mounting the local girder_worker checkout inside
-    # the docker containers and don't want to surprise users by
-    # programatically modifying their configuration from the docker
-    # container's entrypoint. To solve this we set the broker URL for
-    # the girder_worker app inside the girder container here.
-
-    app.conf.update({
-        'broker_url': 'amqp://guest:guest@rabbit/'
-    })
-
     # Note: Some endpoints rely on the celery application defined in
     # the worker plugin rather than the one defined in
     # girder_worker. This means we need to make sure the
