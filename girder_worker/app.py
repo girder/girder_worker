@@ -90,6 +90,15 @@ class Task(celery.Task):
             args=args, kwargs=kwargs, task_id=task_id, producer=producer,
             link=link, link_error=link_error, shadow=shadow, **options)
 
+    def describe(self):
+        # The describe module indirectly depends on this module, so to
+        # avoid circular imports, we import describe_function here.
+        from describe import describe_function
+        return describe_function(self.run)
+
+    def call_item_task(self, inputs, outputs={}):
+        return self.run.call_item_task(inputs, outputs)
+
 
 @before_task_publish.connect
 def girder_before_task_publish(sender=None, body=None, exchange=None,

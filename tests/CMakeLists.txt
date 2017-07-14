@@ -66,6 +66,8 @@ add_python_test(stream)
 add_python_test(directory PLUGINS_ENABLED types)
 add_python_test(task_plugin)
 add_python_test(task_signal)
+add_python_test(argument_types)
+add_python_test(describe)
 
 add_docstring_test(girder_worker.core.specs.spec)
 add_docstring_test(girder_worker.core.specs.task)

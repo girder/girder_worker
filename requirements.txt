@@ -1,5 +1,6 @@
 celery==4.0.2
 ete3==3.0.0b35
+funcsigs==1.0.2 ; python_version < '3.3'
 networkx==1.11
 Pillow==3.2.0
 pymongo==3.2.2
