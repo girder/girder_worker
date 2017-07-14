@@ -1,116 +1,75 @@
-import unittest
+import functools
 import mock
-import girder_worker
+from StringIO import StringIO
+import unittest
+
+from girder_worker import entrypoint
 from girder_worker.__main__ import main
-from pkg_resources import EntryPoint
 
 
-def mock_plugin(task_list):
-    class _MockPlugin(girder_worker.GirderWorkerPluginABC):
-        def __init__(self, app, *args, **kwargs):
-            pass
+class set_namespace(object):
+    def __init__(self, namespace):
+        self.namespace = namespace
 
-        def task_imports(self):
-            return task_list
-
-    return _MockPlugin
+    def __call__(self, func):
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):
+            original = entrypoint.NAMESPACE
+            entrypoint.NAMESPACE = self.namespace
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                entrypoint.NAMESPACE = original
+            return result
+        return wrapped
 
 
 class TestTaskPlugin(unittest.TestCase):
-    @mock.patch('girder_worker.__main__.pr')
+    @set_namespace('girder_worker.test.valid_plugins')
+    def test_get_extension_manager(self):
+        mgr = entrypoint.get_extension_manager()
+        names = sorted(mgr.names())
+        self.assertEqual(names, ['core', 'plugin1', 'plugin2'])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    def test_get_core_task_modules(self):
+        modules = entrypoint.get_core_task_modules()
+        self.assertEqual(modules, ['os.path'])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.entrypoint.import_module')
+    def test_import_all_includes(self, imp):
+        entrypoint.import_all_includes()
+        imp.assert_has_calls(
+            (mock.call('os.path'), mock.call('json'), mock.call('sys')),
+            any_order=True
+        )
+
+    @set_namespace('girder_worker.test.invalid_plugins')
+    @mock.patch('sys.stderr', new_callable=StringIO)
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_invalid_plugins(self, stdout, stderr):
+        entrypoint.get_plugin_task_modules()
+        lines = stdout.getvalue().splitlines()
+        self.assertEqual(len(lines), 4)
+        for line in lines:
+            self.assertRegexpMatches(
+                line, '^Problem.*(exception[12]|invalid|import), skipping$'
+            )
+
+        self.assertEqual(entrypoint.get_core_task_modules(), ['os.path'])
+
     @mock.patch('girder_worker.__main__.app')
-    def test_core_plugin(self, app, pr):
-        ep = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        ep.load = mock.Mock(return_value=girder_worker.GirderWorkerPlugin)
-        pr.iter_entry_points.return_value = [ep]
-
+    def test_core_plugin(self, app):
         main()
-
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                          ['girder_worker.tasks']})
-        app.conf.update.assert_any_call({'CELERY_INCLUDE': []})
 
-    @mock.patch('girder_worker.__main__.pr')
+    @set_namespace('girder_worker.test.valid_plugins')
     @mock.patch('girder_worker.__main__.app')
-    def test_core_and_other_plugin(self, app, pr):
-
-        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        core.load = mock.Mock(return_value=girder_worker.GirderWorkerPlugin)
-
-        plugin = EntryPoint.parse('mock = mockplugin:MockPlugin')
-        plugin.load = mock.Mock(return_value=mock_plugin(['mock.plugin.tasks']))
-
-        pr.iter_entry_points.return_value = [core, plugin]
-
+    def test_external_plugins(self, app):
         main()
-
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
-                                         ['girder_worker.tasks']})
+                                         ['os.path']})
         app.conf.update.assert_any_call({'CELERY_INCLUDE':
-                                         ['mock.plugin.tasks']})
-
-    @mock.patch('girder_worker.__main__.pr')
-    @mock.patch('girder_worker.__main__.app')
-    def test_multiple_plugins(self, app, pr):
-
-        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        core.load = mock.Mock(return_value=girder_worker.GirderWorkerPlugin)
-
-        plugin = EntryPoint.parse('mock = mockplugin:MockPlugin')
-        plugin.load = mock.Mock(return_value=mock_plugin(['mock.plugin.tasks']))
-
-        plugin2 = EntryPoint.parse('mock = mockplugin:MockPlugin')
-        plugin2.load = mock.Mock(return_value=mock_plugin(
-            ['mock.plugin2.tasks']))
-
-        pr.iter_entry_points.return_value = [core, plugin, plugin2]
-
-        main()
-
-        app.conf.update.assert_any_call({'CELERY_IMPORTS':
-                                         ['girder_worker.tasks']})
-        app.conf.update.assert_any_call({'CELERY_INCLUDE':
-                                         ['mock.plugin.tasks',
-                                          'mock.plugin2.tasks']})
-
-    @mock.patch('girder_worker.__main__.pr')
-    @mock.patch('girder_worker.__main__.app')
-    @mock.patch('girder_worker.__main__.config')
-    def test_exclude_core_tasks(self, config, app, pr):
-
-        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        core.load = mock.Mock(return_value=girder_worker.GirderWorkerPlugin)
-        pr.iter_entry_points.return_value = [core]
-        config.getboolean.return_value = False
-
-        main()
-
-        # Called once with no plugins,  ie.  core_tasks were not added
-        app.conf.update.assert_called_once_with({'CELERY_INCLUDE': []})
-
-    @mock.patch('girder_worker.__main__.pr')
-    @mock.patch('girder_worker.__main__.app')
-    def test_plugin_throws_import_error(self, app, pr):
-        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        core.load = mock.Mock(side_effect=ImportError(
-            'Intentionally throw import error'))
-        pr.iter_entry_points.return_value = [core]
-
-        main()
-
-        app.conf.update.assert_any_call({'CELERY_IMPORTS': []})
-
-    @mock.patch('girder_worker.__main__.pr')
-    @mock.patch('girder_worker.__main__.app')
-    def test_plugin_task_imports_throws_exception(self, app, pr):
-        core = EntryPoint.parse('core = girder_worker:GirderWorkerPlugin')
-        MockPlugin = mock_plugin([])
-        MockPlugin.task_imports = mock.Mock(side_effect=Exception(
-            'Intentionally throw exception'))
-
-        core.load = mock.Mock(return_value=MockPlugin)
-        pr.iter_entry_points.return_value = [core]
-
-        main()
-
-        app.conf.update.assert_any_call({'CELERY_IMPORTS': []})
+                                         ['sys', 'json']})
