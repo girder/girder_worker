@@ -1,8 +1,7 @@
 from importlib import import_module
 
 from stevedore import extension
-
-from app import app
+import celery
 
 #: Defines the namespace used for plugin entrypoints
 NAMESPACE = 'girder_worker_plugins'
@@ -22,8 +21,11 @@ def _handle_entrypoint_errors(mgr, entrypoint, exc):
     print('Problem loading plugin %s, skipping' % entrypoint.name)
 
 
-def get_extension_manager():
+def get_extension_manager(app=None):
     """Get an extension manager for the plugin namespace."""
+    if app is None:
+        app = celery.current_app
+
     return extension.ExtensionManager(
         namespace=NAMESPACE,
         invoke_on_load=True,
@@ -44,15 +46,15 @@ def get_task_imports(ext):
     return includes
 
 
-def get_core_task_modules():
+def get_core_task_modules(app=None):
     """Return task modules defined by core."""
-    return get_task_imports(get_extension_manager()['core'])
+    return get_task_imports(get_extension_manager(app=app)['core'])
 
 
-def get_plugin_task_modules():
+def get_plugin_task_modules(app=None):
     """Return task modules defined by plugins."""
     includes = []
-    for ext in get_extension_manager():
+    for ext in get_extension_manager(app=app):
         if ext.name != 'core':
             includes.extend(get_task_imports(ext))
     return includes
