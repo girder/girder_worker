@@ -143,7 +143,7 @@ class IntegrationTestEndpoints(Resource):
     @describeRoute(
         Description('Test celery task apply_async'))
     def test_celery_task_apply_async(self, params):
-        result = fibonacci.apply_async((20,), {})
+        result = fibonacci.apply_async((20,))
         return result.job
 
     @access.token
@@ -195,7 +195,6 @@ class IntegrationTestEndpoints(Resource):
     @describeRoute(
         Description('Test girder client is generated and can request scoped endpoints'))
     def test_celery_girder_client_generation(self, params):
-
         token = ModelImporter.model('token').createToken(
             user=self.getCurrentUser())
 
@@ -209,7 +208,6 @@ class IntegrationTestEndpoints(Resource):
     @describeRoute(
         Description('Test girder client with no token can\'t access protected resources'))
     def test_celery_girder_client_bad_token_fails(self, params):
-
         result = request_private_path.delay('admin', girder_client_token='')
 
         return result.job
