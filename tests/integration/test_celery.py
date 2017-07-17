@@ -50,3 +50,37 @@ def test_celery_task_fails(session, endpoint):
             [JobStatus.RUNNING, JobStatus.ERROR]
 
         assert job['log'][0].startswith('Exception: Intentionally failed after 0.5 seconds')
+
+
+def test_celery_delay_custom_job_options(session):
+    r = session.post('integration_tests/celery/test_task_delay_with_custom_job_options')
+    assert r.status_code == 200
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert job['title'] == 'TEST DELAY TITLE'
+
+
+def test_celery_apply_async_custom_job_options(session):
+    r = session.post('integration_tests/celery/test_task_apply_async_with_custom_job_options')
+    assert r.status_code == 200
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert job['title'] == 'TEST APPLY_ASYNC TITLE'
+
+
+def test_celery_girder_client_generation(session):
+    r = session.post('integration_tests/celery/test_girder_client_generation')
+    assert r.status_code == 200
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+
+def test_celery_girder_client_bad_token_fails(session):
+    r = session.post('integration_tests/celery/test_girder_client_bad_token_fails')
+    assert r.status_code == 200
+
+    with session.wait_for_error(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.ERROR]

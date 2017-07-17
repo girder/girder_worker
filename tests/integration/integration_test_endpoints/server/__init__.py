@@ -9,6 +9,7 @@ from girder.plugins.worker.constants import PluginSettings
 
 from common_tasks.test_tasks.fib import fibonacci
 from common_tasks.test_tasks.fail import fail_after
+from common_tasks.test_tasks.girder_client import request_private_path
 
 from girder_worker.app import app
 from celery.exceptions import TimeoutError
@@ -38,6 +39,16 @@ class IntegrationTestEndpoints(Resource):
                    self.test_celery_task_signature_apply_async)
         self.route('POST', ('celery', 'test_task_signature_apply_async_fails', ),
                    self.test_celery_task_signature_apply_async_fails)
+
+        self.route('POST', ('celery', 'test_task_delay_with_custom_job_options', ),
+                   self.test_celery_task_delay_with_custom_job_options)
+        self.route('POST', ('celery', 'test_task_apply_async_with_custom_job_options', ),
+                   self.test_celery_task_apply_async_with_custom_job_options)
+
+        self.route('POST', ('celery', 'test_girder_client_generation', ),
+                   self.test_celery_girder_client_generation)
+        self.route('POST', ('celery', 'test_girder_client_bad_token_fails', ),
+                   self.test_celery_girder_client_bad_token_fails)
 
         self.route('POST', ('traditional', 'test_job_girder_worker_run'),
                    self.test_traditional_job_girder_worker_run)
@@ -90,6 +101,26 @@ class IntegrationTestEndpoints(Resource):
             return a1.get(timeout=0.2)
         except TimeoutError:
             return None
+
+    # Testing custom job option API for celery tasks
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test celery task delay with custom job options'))
+    def test_celery_task_delay_with_custom_job_options(self, params):
+        result = fibonacci.delay(20, girder_job_title='TEST DELAY TITLE')
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test celery task apply_async with custom job options'))
+    def test_celery_task_apply_async_with_custom_job_options(self, params):
+        result = fibonacci.apply_async((20,), {}, girder_job_title='TEST APPLY_ASYNC TITLE')
+        return result.job
+
+    # Testing basic celery API
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -159,6 +190,28 @@ class IntegrationTestEndpoints(Resource):
         result = signature.apply_async()
         return result.job
 
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test girder client is generated and can request scoped endpoints'))
+    def test_celery_girder_client_generation(self, params):
+        token = ModelImporter.model('token').createToken(
+            user=self.getCurrentUser())
+
+        result = request_private_path.delay(
+            'admin', girder_client_token=str(token['_id']))
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test girder client with no token can\'t access protected resources'))
+    def test_celery_girder_client_bad_token_fails(self, params):
+        result = request_private_path.delay('admin', girder_client_token='')
+
+        return result.job
+
     # Traditional endpoints
 
     @access.token
@@ -172,7 +225,7 @@ class IntegrationTestEndpoints(Resource):
 
         job = jobModel.createJob(
             title='test_traditional_job_custom_task_name',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False, args=(number,), kwargs={},
             otherFields={
                 'celeryTaskName': 'common_tasks.test_tasks.fib.fibonacci'
@@ -194,7 +247,7 @@ class IntegrationTestEndpoints(Resource):
 
         job = jobModel.createJob(
             title='test_traditional_job_custom_task_name_fails',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False, args=(), kwargs={},
             otherFields={
                 'celeryTaskName': 'common_tasks.test_tasks.fail.fail_after'
@@ -216,7 +269,7 @@ class IntegrationTestEndpoints(Resource):
         jobModel = self.model('job', 'jobs')
         job = jobModel.createJob(
             title='test_traditional_job_girder_worker_run',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False, args=(self.girder_worker_run_analysis,),
             kwargs={'inputs': self.girder_worker_run_inputs,
                     'outputs': self.girder_worker_run_outputs})
@@ -237,7 +290,7 @@ class IntegrationTestEndpoints(Resource):
         jobModel = self.model('job', 'jobs')
         job = jobModel.createJob(
             title='test_traditional_job_girder_worker_run_fails',
-            type='worker', handler='worker_handler',
+            type='traditional', handler='worker_handler',
             user=self.getCurrentUser(), public=False,
             args=(self.girder_worker_run_failing_analysis,),
             kwargs={'inputs': self.girder_worker_run_inputs,
