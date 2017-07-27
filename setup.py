@@ -164,6 +164,18 @@ setuptools.setup(
         ],
         'girder_worker_plugins': [
             'core = girder_worker:GirderWorkerPlugin'
+        ],
+        'girder_worker.test.valid_plugins': [
+            'core = girder_worker.tests.plugins:TestCore',
+            'plugin1 = girder_worker.tests.plugins:TestPlugin1',
+            'plugin2 = girder_worker.tests.plugins:TestPlugin2'
+        ],
+        'girder_worker.test.invalid_plugins': [
+            'core = girder_worker.tests.plugins:TestCore',
+            'exception1 = girder_worker.tests.plugins:TestPluginException1',
+            'exception2 = girder_worker.tests.plugins:TestPluginException2',
+            'import = girder_worker.tests.plugins:TestPluginInvalidModule',
+            'invalid = girder_worker.tests.plugins:NotAValidClass'
         ]
     }
 )

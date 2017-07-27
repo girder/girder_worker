@@ -2,7 +2,15 @@ FROM alpine:3.6
 
 COPY . /girder_worker
 
-RUN sed -i  's|^broker.*=.*$|broker = amqp://guest:guest@rabbit/|' /girder_worker/girder_worker/worker.dist.cfg
+# Change broker_url to amqp://guest:guest@rabbit/ in either
+# worker.local.cfg (if it exsits)  or worker.dist.cfg.
+RUN BASE=/girder_worker/girder_worker/; \
+    CMD='s|^broker.*=.*$|broker = amqp://guest:guest@rabbit/|'; \
+    if [ -e  $BASE/worker.local.cfg ]; then \
+       sed -i "$CMD" $BASE/worker.local.cfg; \
+    elif [ -e $BASE/worker.dist.cfg ]; then \
+       sed -i "$CMD" $BASE/worker.dist.cfg; \
+    fi
 
 VOLUME /girder_worker
 

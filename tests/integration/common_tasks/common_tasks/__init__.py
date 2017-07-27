@@ -10,4 +10,5 @@ class CommonTasksPlugin(GirderWorkerPluginABC):
         # plugin's path directory
         return ['common_tasks.test_tasks.fib',
                 'common_tasks.test_tasks.fail',
-                'common_tasks.test_tasks.cancel']
+                'common_tasks.test_tasks.cancel',
+                'common_tasks.test_tasks.girder_client']
