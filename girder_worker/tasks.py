@@ -12,6 +12,8 @@ def run(_celery_task, *pargs, **kwargs):
     kwargs['_job_manager'] = _celery_task.job_manager \
         if hasattr(_celery_task, 'job_manager') else None
 
+    kwargs['_celery_task'] = _celery_task
+
     kwargs['status'] = JobStatus.RUNNING
 
     return core.run(*pargs, **kwargs)

@@ -84,3 +84,23 @@ def test_celery_girder_client_bad_token_fails(session):
     with session.wait_for_error(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.RUNNING, JobStatus.ERROR]
+
+
+def test_celery_task_revoke(session):
+    url = 'integration_tests/celery/test_task_revoke'
+    r = session.post(url)
+    assert r.status_code == 200
+
+    with session.wait_for_canceled(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.CANCELED]
+
+
+def test_celery_task_revoke_in_queue(session):
+    url = 'integration_tests/celery/test_task_revoke_in_queue'
+    r = session.post(url)
+    assert r.status_code == 200
+
+    with session.wait_for_canceled(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.CANCELED]

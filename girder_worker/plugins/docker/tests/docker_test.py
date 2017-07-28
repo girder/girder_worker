@@ -68,6 +68,9 @@ def _mockOsRead(fd, *args, **kwargs):
 
 girder_worker.plugins.docker.executor.os.read = _mockOsRead
 
+celery_task = mock.MagicMock()
+celery_task.canceled = False
+
 
 def setUpModule():
     global _tmp
@@ -143,7 +146,7 @@ class TestDockerMode(unittest.TestCase):
             sys.stdout = mockedStdOut
             out = run(
                 task, inputs=inputs, cleanup=False, validate=False,
-                auto_convert=False)
+                auto_convert=False, _celery_task=celery_task)
             sys.stdout = _old
 
             # We didn't specify _stdout as an output, so it should just get
@@ -199,7 +202,8 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'inline',
                 'data': False
             }
-            run(task, inputs=inputs, validate=False, auto_convert=False)
+            run(task, inputs=inputs, validate=False, auto_convert=False,
+                _celery_task=celery_task)
 
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
             args, kwargs = docker_client_mock.containers.run.call_args_list[0]
@@ -228,7 +232,8 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            run(task, inputs=inputs, validate=False, auto_convert=False)
+            run(task, inputs=inputs, validate=False, auto_convert=False,
+                _celery_task=celery_task)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
             args = docker_client_mock.containers.run.call_args_list[0][0]
             self.assertEqual(args[0], 'test/test:latest')
@@ -250,7 +255,8 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            run(task, inputs=inputs, validate=False, auto_convert=False)
+            run(task, inputs=inputs, validate=False, auto_convert=False,
+                _celery_task=celery_task)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
             args = docker_client_mock.containers.run.call_args_list[0][0]
             self.assertEqual(args[0], 'test/test:latest')
@@ -274,7 +280,8 @@ class TestDockerMode(unittest.TestCase):
                 'mode': 'http',
                 'url': 'https://foo.com/file.txt'
             }
-            run(task, inputs=inputs, validate=False, auto_convert=False)
+            run(task, inputs=inputs, validate=False, auto_convert=False,
+                _celery_task=celery_task)
 
             # Assert no call to images.pull
             self.assertEqual(docker_client_mock.images.pull.call_count, 0)
@@ -344,7 +351,7 @@ class TestDockerMode(unittest.TestCase):
         path = os.path.join(_tmp, '.*', 'valid_path\.txt')
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
-            run(task)
+            run(task, _celery_task=celery_task)
         # Make sure docker stuff actually got called in this case.
 
         self.assertEqual(docker_client_mock.containers.run.call_count, 2)
@@ -357,7 +364,7 @@ class TestDockerMode(unittest.TestCase):
         with open(path, 'w') as f:
             f.write('simulated output')
         _reset_mocks()
-        outputs = run(task, _tempdir=tmp)
+        outputs = run(task, _tempdir=tmp, _celery_task=celery_task)
         self.assertEqual(outputs, {
             'file_output_1': {
                 'data': path
@@ -369,7 +376,7 @@ class TestDockerMode(unittest.TestCase):
         path = os.path.join(_tmp, '.*', 'file_output_1')
         msg = r'^Output filepath %s does not exist\.$' % path
         with self.assertRaisesRegexp(Exception, msg):
-            run(task)
+            run(task, _celery_task=celery_task)
 
     @mock.patch('docker.from_env')
     def testNamedPipes(self, from_env):
@@ -404,7 +411,8 @@ class TestDockerMode(unittest.TestCase):
         if not os.path.isdir(tmp):
             os.makedirs(tmp)
 
-        run(task, inputs={}, outputs=outputs, _tempdir=tmp, cleanup=False)
+        run(task, inputs={}, outputs=outputs, _tempdir=tmp, cleanup=False,
+            _celery_task=celery_task)
 
         # Make sure pipe was created inside the temp dir
         pipe = os.path.join(tmp, 'named_pipe')
@@ -432,7 +440,7 @@ class TestDockerMode(unittest.TestCase):
             }]
         }
         run(task, inputs={}, cleanup=False, validate=False,
-            auto_convert=False)
+            auto_convert=False, _celery_task=celery_task)
 
         kwargs = docker_client_mock.containers.run.call_args_list[0][1]
         self.assertTrue('network_disabled' in kwargs)
@@ -445,7 +453,7 @@ class TestDockerMode(unittest.TestCase):
             'tty': False
         }
         run(task, inputs={}, cleanup=False, validate=False,
-            auto_convert=False)
+            auto_convert=False, _celery_task=celery_task)
 
         kwargs = docker_client_mock.containers.run.call_args_list[0][1]
         self.assertTrue('detach' in kwargs)
@@ -490,7 +498,7 @@ class TestDockerMode(unittest.TestCase):
             f.write('simulated output')
 
         with httmock.HTTMock(handle_http):
-            run(task, outputs=outputs, _tempdir=tmp)
+            run(task, outputs=outputs, _tempdir=tmp, _celery_task=celery_task)
 
             self.assertEqual(len(reqs), 1)
             self.assertEqual(reqs[0].method, 'POST')

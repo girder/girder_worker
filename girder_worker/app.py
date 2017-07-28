@@ -1,15 +1,19 @@
 import girder_worker
+from girder_worker import logger
 import traceback as tb
 import celery
 from celery import Celery, __version__
 from distutils.version import LooseVersion
 from celery.signals import (task_prerun, task_postrun,
                             task_failure, task_success,
-                            worker_ready, before_task_publish)
+                            worker_ready, before_task_publish, task_revoked)
 from celery.result import AsyncResult
+
+from celery.task.control import inspect
+
 from six.moves import configparser
 import sys
-from .utils import JobStatus
+from .utils import JobStatus, StateTransitionException
 from girder_client import GirderClient
 
 
@@ -107,6 +111,15 @@ class Task(celery.Task):
             args=args, kwargs=kwargs, task_id=task_id, producer=producer,
             link=link, link_error=link_error, shadow=shadow, **options)
 
+    @property
+    def canceled(self):
+        """
+        A property to indicate if a task has been canceled.
+
+        :returns True is this task has been canceled, False otherwise.
+        """
+        return is_revoked(self)
+
     def describe(self):
         # The describe module indirectly depends on this module, so to
         # avoid circular imports, we import describe_function here.
@@ -200,6 +213,36 @@ class JobSpecNotFound(Exception):
     pass
 
 
+def _job_manager(request=None, headers=None, kwargs=None):
+    if hasattr(request, 'jobInfoSpec'):
+        jobSpec = request.jobInfoSpec
+
+    # We are being called from revoked signal
+    elif headers is not None and \
+            'jobInfoSpec' in headers:
+        jobSpec = headers['jobInfoSpec']
+
+    # Deprecated: This method of passing job information
+    # to girder_worker is deprecated. Newer versions of girder
+    # pass this information automatically as apart of the
+    # header metadata in the worker scheduler.
+    elif 'jobInfo' in kwargs:
+        jobSpec = kwargs.pop('jobInfo', {})
+
+    else:
+        raise JobSpecNotFound
+
+    return deserialize_job_info_spec(**jobSpec)
+
+
+def _update_status(task, status):
+    # For now,  only automatically update status if this is
+    # not a child task. Otherwise child tasks completion will
+    # update the parent task's jobModel in girder.
+    if task.request.parent_id is None:
+        task.job_manager.updateStatus(status)
+
+
 @task_prerun.connect
 def gw_task_prerun(task=None, sender=None, task_id=None,
                    args=None, kwargs=None, **rest):
@@ -211,30 +254,18 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     updating their status in girder.
     """
     try:
-        if hasattr(task.request, 'jobInfoSpec'):
-            jobSpec = task.request.jobInfoSpec
-
-        # Deprecated: This method of passing job information
-        # to girder_worker is deprecated. Newer versions of girder
-        # pass this information automatically as apart of the
-        # header metadata in the worker scheduler.
-        elif 'jobInfo' in kwargs:
-            jobSpec = kwargs.pop('jobInfo', {})
-
-        else:
-            raise JobSpecNotFound
-
-        task.job_manager = deserialize_job_info_spec(**jobSpec)
-
-        # For now,  only automatically update status if this is
-        # not a child task. Otherwise child tasks completion will
-        # update the parent task's jobModel in girder.
-        if task.request.parent_id is None:
-            task.job_manager.updateStatus(JobStatus.RUNNING)
+        task.job_manager = _job_manager(task.request, task.request.headers)
+        _update_status(task, JobStatus.RUNNING)
 
     except JobSpecNotFound:
         task.job_manager = None
-        print('Warning: No jobInfoSpec. Setting job_manager to None.')
+        logger.warn('No jobInfoSpec. Setting job_manager to None.')
+    except StateTransitionException:
+        # Fetch the current status of the job
+        status = task.job_manager.refreshStatus()
+        # If we are canceling we want to stay in that state
+        if status != JobStatus.CANCELING:
+            raise
 
     try:
         task.girder_client = GirderClient(apiUrl=task.request.girder_api_url)
@@ -246,11 +277,23 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 @task_success.connect
 def gw_task_success(sender=None, **rest):
     try:
-        if sender.request.parent_id is None:
-            sender.job_manager.updateStatus(JobStatus.SUCCESS)
 
+        if not is_revoked(sender):
+            _update_status(sender, JobStatus.SUCCESS)
+
+        # For tasks revoked directly
+        else:
+            _update_status(sender, JobStatus.CANCELED)
     except AttributeError:
         pass
+    except StateTransitionException:
+        # Fetch the current status of the job
+        status = sender.job_manager.refreshStatus()
+        # If we are in CANCELING move to CANCELED
+        if status == JobStatus.CANCELING or is_revoked(sender):
+            _update_status(sender, JobStatus.CANCELED)
+        else:
+            raise
 
 
 @task_failure.connect
@@ -264,9 +307,7 @@ def gw_task_failure(sender=None, exception=None,
 
         sender.job_manager.write(msg)
 
-        if sender.request.parent_id is None:
-            sender.job_manager.updateStatus(JobStatus.ERROR)
-
+        _update_status(sender, JobStatus.ERROR)
     except AttributeError:
         pass
 
@@ -280,6 +321,47 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
         task.job_manager._redirectPipes(False)
     except AttributeError:
         pass
+
+
+@task_revoked.connect
+def gw_task_revoked(sender=None, request=None, **rest):
+    try:
+        sender.job_manager = _job_manager(headers=request.message.headers,
+                                          kwargs=request.kwargsrepr)
+        _update_status(sender, JobStatus.CANCELED)
+    except AttributeError:
+        pass
+    except JobSpecNotFound:
+        logger.warn('No jobInfoSpec. Unable to move \'%s\' into CANCELED state.')
+
+
+# Access to the correct "Inspect" instance for this worker
+_inspector = None
+
+
+def _worker_inspector(task):
+    global _inspector
+    if _inspector is None:
+        _inspector = inspect([task.request.hostname])
+
+    return _inspector
+
+
+# Get this list of currently revoked tasks for this worker
+def _revoked_tasks(task):
+    return _worker_inspector(task).revoked().get(task.request.hostname, [])
+
+
+def is_revoked(task):
+    """
+    Utility function to check is a task has been revoked.
+
+    :param task: The task.
+    :type task: celery.app.task.Task
+    :return True, if this task is in the revoked list for this worker, False
+            otherwise.
+    """
+    return task.request.id in _revoked_tasks(task)
 
 
 class _CeleryConfig:

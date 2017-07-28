@@ -7,7 +7,7 @@ from executors.python import run as python_run
 from executors.workflow import run as workflow_run
 from . import utils
 
-from girder_worker.utils import JobStatus
+from girder_worker.utils import JobStatus, StateTransitionException
 from girder_worker import config, PACKAGE_DIR
 
 # Maps task modes to their implementation
@@ -207,6 +207,15 @@ def run(task, inputs=None, outputs=None, fetch=True, status=None, **kwargs):
         events.trigger('run.after', info)
 
         return outputs
+    except StateTransitionException:
+        if job_mgr:
+            status = job_mgr.refreshStatus()
+            # If we are canceling we want to stay in that state, otherwise raise
+            # the exception
+            if status != JobStatus.CANCELING:
+                raise
+        else:
+            raise
     finally:
         events.trigger('run.finally', info)
 

@@ -6,11 +6,14 @@ import stat
 import sys
 import unittest
 import docker
+import mock
+import threading
+import time
 
 import girder_worker
 from girder_worker.core import run, io
 
-test_image = 'girder/girder_worker_test:latest'
+TEST_IMAGE = 'girder/girder_worker_test:latest'
 
 
 def setUpModule():
@@ -53,7 +56,7 @@ class TestDockerMode(unittest.TestCase):
 
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{
@@ -80,20 +83,22 @@ class TestDockerMode(unittest.TestCase):
                 'data': self._test_message
             }
         }
+        celery_task = mock.MagicMock()
+        celery_task.canceled = False
 
         _old = sys.stdout
         stdout_captor = six.StringIO()
         sys.stdout = stdout_captor
         run(
             task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
-            auto_convert=False)
+            auto_convert=False, _celery_task=celery_task)
         sys.stdout = _old
         lines = stdout_captor.getvalue().splitlines()
         self.assertEqual(lines[-1], self._test_message)
 
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{
@@ -114,7 +119,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = stdout_captor
         run(
             task, inputs=inputs, cleanup=True, validate=False,
-            auto_convert=False)
+            auto_convert=False, _celery_task=celery_task)
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
@@ -132,7 +137,7 @@ class TestDockerMode(unittest.TestCase):
         sys.stdout = stdout_captor
         out = run(
             task, inputs=inputs, cleanup=False, validate=False,
-            auto_convert=False)
+            auto_convert=False, _celery_task=celery_task)
         sys.stdout = _old
 
         lines = stdout_captor.getvalue().splitlines()
@@ -146,7 +151,7 @@ class TestDockerMode(unittest.TestCase):
         """
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{
@@ -195,8 +200,12 @@ class TestDockerMode(unittest.TestCase):
         # Mock out the stream adapter
         io.register_stream_push_adapter('capture', CaptureAdapter)
 
+        celery_task = mock.MagicMock()
+        celery_task.canceled = False
+
         outputs = run(
-            task, inputs=inputs, outputs=outputs, _tempdir=self._tmp, cleanup=False)
+            task, inputs=inputs, outputs=outputs, _tempdir=self._tmp, cleanup=False,
+            _celery_task=celery_task)
 
         # Make sure pipe was created inside the temp dir
         pipe = os.path.join(self._tmp, 'output_pipe')
@@ -212,7 +221,7 @@ class TestDockerMode(unittest.TestCase):
 
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{
@@ -265,8 +274,12 @@ class TestDockerMode(unittest.TestCase):
 
         io.register_stream_fetch_adapter('static', StaticAdapter)
 
+        celery_task = mock.MagicMock()
+        celery_task.canceled = False
+
         output = run(
-            task, inputs=inputs, outputs={}, _tempdir=self._tmp, cleanup=True)
+            task, inputs=inputs, outputs={}, _tempdir=self._tmp, cleanup=True,
+            _celery_task=celery_task)
 
         # Make sure pipe was created inside the temp dir
         pipe = os.path.join(self._tmp, 'input_pipe')
@@ -278,9 +291,10 @@ class TestDockerMode(unittest.TestCase):
         """
         Test automatic container removal
         """
+        container_name = 'testDockerModeRemoveContainer'
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{
@@ -294,7 +308,10 @@ class TestDockerMode(unittest.TestCase):
                 'format': 'string',
                 'type': 'string'
             }],
-            'outputs': []
+            'outputs': [],
+            'docker_run_args': {
+                'name': container_name
+            }
         }
 
         inputs = {
@@ -309,52 +326,234 @@ class TestDockerMode(unittest.TestCase):
         }
 
         docker_client = docker.from_env()
-        containers = docker_client.containers.list(limit=1)
-        last_container_id = containers[0].id if len(containers) > 0 else None
 
-        run(
-            task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
-            auto_convert=False)
+        celery_task = mock.MagicMock()
+        celery_task.canceled = False
+        containers = []
 
-        def _fetch_new_containers(last_container_id):
-            if last_container_id:
-                filters = {
-                    'since': last_container_id
-                }
-                new_containers = docker_client.containers.list(all=True, filters=filters)
-            else:
-                new_containers = docker_client.containers.list(all=True)
+        def _cleanup():
+            for container in containers:
+                container.remove()
 
-            return new_containers
+        try:
+            girder_worker.config.set('docker', 'gc', 'False')
+            run(
+                task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+                auto_convert=False, _celery_task=celery_task)
 
-        new_containers = _fetch_new_containers(last_container_id)
-        # Now assert that the container was removed
-        self.assertEqual(len(new_containers), 0)
+            containers = docker_client.containers.list(all=True, filters={
+                'name': container_name
+            })
+            # Now assert that the container was removed
+            self.assertEqual(len(containers), 0)
+        finally:
+            _cleanup()
 
-        # Now confirm that the container doesn't get removed if we set
-        # _rm_container = False
+        try:
+            # Now confirm that the container doesn't get removed if we set
+            # _rm_container = False
+            girder_worker.config.set('docker', 'gc', 'True')
+            # Stop GC removing anything
+            girder_worker.config.set('docker', 'cache_timeout', str(sys.maxint))
+
+            task['_rm_container'] = False
+            run(
+                task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+                auto_convert=False, _rm_containers=False, _celery_task=celery_task)
+            containers = docker_client.containers.list(all=True, filters={
+                'name': container_name
+            })
+            self.assertEqual(len(containers), 1)
+        finally:
+            _cleanup()
+
+    def testDockerModeCancelKill(self):
+        """
+        Test container cancellation, requiring a sigkill
+        """
+        container_name = 'testDockerModeCancelKill'
+        task = {
+            'mode': 'docker',
+            'docker_image': TEST_IMAGE,
+            'pull_image': True,
+            'container_args': ['$input{test_mode}', 'message'],
+            'inputs': [{
+                'id': 'test_mode',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }],
+            'outputs': [],
+            '_rm_container': False,
+            'docker_run_args': {
+                'name': container_name
+            }
+        }
+
+        inputs = {
+            'test_mode': {
+                'format': 'string',
+                'data': 'sigkill'
+            }
+        }
+
+        # We this set to True, so we can over the value for _rm_container
         girder_worker.config.set('docker', 'gc', 'True')
         # Stop GC removing anything
         girder_worker.config.set('docker', 'cache_timeout', str(sys.maxint))
 
-        task['_rm_container'] = False
-        run(
-            task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
-            auto_convert=False, _rm_containers=False)
-        new_containers = _fetch_new_containers(last_container_id)
-        self.assertEqual(len(new_containers), 1)
-        self.assertEqual(new_containers[0].attrs.get('Config', {})['Image'], test_image)
-        # Clean it up
-        new_containers[0].remove()
+        celery_task = mock.MagicMock()
+        celery_task.canceled = False
 
-    def testDockerModeStdErrStdOut(self):
+        def _run():
+            run(
+                task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+                auto_convert=False, _celery_task=celery_task)
+
+        run_thread = threading.Thread(target=_run)
+        run_thread.start()
+
+        docker_client = docker.from_env()
+
+        # Wait for container to run
+        tries = 15
+        while tries > 0:
+            containers = docker_client.containers.list(limit=1, filters={
+                'name': container_name,
+                'status': 'running'
+            })
+
+            if len(containers) > 0:
+                break
+            tries -= 1
+            time.sleep(1)
+
+        self.assertEqual(len(containers), 1)
+        container = None
+        try:
+            container = containers[0]
+            self.assertEqual(container.status, 'running')
+
+            # Now switch canceled property and check that the container is stopped
+            celery_task.canceled = True
+
+            # Now wait for container to stop
+            tries = 15
+            while tries > 0:
+                container.reload()
+                if container.status == 'exited':
+                    break
+                tries -= 1
+                time.sleep(1)
+
+            self.assertEqual(container.status, 'exited')
+        finally:
+            if container is not None:
+                container.remove()
+
+    def testDockerModeCancelSigTerm(self):
+        """
+        Test container cancellation, using sigint
+        """
+        container_name = 'testDockerModeCancelSigTerm'
+        task = {
+            'mode': 'docker',
+            'docker_image': TEST_IMAGE,
+            'pull_image': True,
+            'container_args': ['$input{test_mode}', 'message'],
+            'inputs': [{
+                'id': 'test_mode',
+                'name': '',
+                'format': 'string',
+                'type': 'string'
+            }],
+            'outputs': [],
+            '_rm_container': False,
+            'docker_run_args': {
+                'name': container_name
+            }
+        }
+
+        inputs = {
+            'test_mode': {
+                'format': 'string',
+                'data': 'sigterm'
+            }
+        }
+
+        # We this set to True, so we can over the value for _rm_container
+        girder_worker.config.set('docker', 'gc', 'True')
+        # Stop GC removing anything
+        girder_worker.config.set('docker', 'cache_timeout', str(sys.maxint))
+
+        celery_task = mock.MagicMock()
+        celery_task.canceled = False
+
+        container = None
+        _old_stdout = None
+        try:
+            _old_stdout = sys.stdout
+            stdout_captor = six.StringIO()
+            sys.stdout = stdout_captor
+
+            def _run():
+                run(
+                    task, inputs=inputs, _tempdir=self._tmp, cleanup=True, validate=False,
+                    auto_convert=False, _celery_task=celery_task)
+
+            run_thread = threading.Thread(target=_run)
+            run_thread.start()
+
+            docker_client = docker.from_env()
+
+            # Wait for container to run
+            tries = 15
+            while tries > 0:
+                containers = docker_client.containers.list(limit=1, filters={
+                    'name': container_name,
+                    'status': 'running'
+                })
+
+                if len(containers) > 0:
+                    break
+                tries -= 1
+                time.sleep(1)
+
+            self.assertEqual(len(containers), 1)
+
+            container = containers[0]
+            self.assertEqual(container.status, 'running')
+
+            # Now switch canceled property and check that the container is stopped
+            celery_task.canceled = True
+
+            # Now wait for container to stop
+            tries = 15
+            while tries > 0:
+                container.reload()
+                if container.status == 'exited':
+                    break
+                tries -= 1
+                time.sleep(1)
+
+            self.assertEqual(container.status, 'exited')
+
+        finally:
+            if container is not None:
+                container.remove()
+            if _old_stdout is not None:
+                sys.stdout = _old_stdout
+            run_thread.join()
+
+
+def testDockerModeStdErrStdOut(self):
         """
         Test writing to stdout and stderr.
         """
 
         task = {
             'mode': 'docker',
-            'docker_image': test_image,
+            'docker_image': TEST_IMAGE,
             'pull_image': True,
             'container_args': ['$input{test_mode}', '$input{message}'],
             'inputs': [{

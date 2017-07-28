@@ -1,12 +1,14 @@
 import unittest
 import mock
+import requests
 
 from girder_worker.app import (
     girder_before_task_publish,
     gw_task_prerun,
     gw_task_success,
     gw_task_failure,
-    gw_task_postrun)
+    gw_task_postrun,
+    gw_task_revoked)
 
 from contextlib import contextmanager
 from girder_worker.utils import JobStatus
@@ -26,6 +28,13 @@ def mock_worker_plugin_utils():
                             'girder.plugins.worker': girder_plugins}):
         with mock.patch.object(girder_plugins, 'utils') as utils:
             yield utils
+
+
+class MockHTTPError(requests.HTTPError):
+    def __init__(self, status_code, json_response):
+        self.response = mock.MagicMock()
+        self.response.status_code = status_code
+        self.response.json.return_value = json_response
 
 
 class TestSignals(unittest.TestCase):
@@ -139,11 +148,13 @@ class TestSignals(unittest.TestCase):
         task.job_manager.updateStatus.assert_called_once_with(
             JobStatus.RUNNING)
 
+    @mock.patch('girder_worker.app.is_revoked')
     @mock.patch('girder_worker.utils.JobManager')
-    def test_task_success(self, jm):
+    def test_task_success(self, jm,  is_revoked):
         task = mock.MagicMock()
         task.request.parent_id = None
         task.job_manager = jm(**self.headers)
+        is_revoked.return_value = False
 
         gw_task_success(sender=task)
 
@@ -178,3 +189,85 @@ class TestSignals(unittest.TestCase):
 
         task.job_manager._flush.assert_called_once()
         task.job_manager._redirectPipes.assert_called_once_with(False)
+
+    @mock.patch('girder_worker.utils.requests.request')
+    @mock.patch('girder_worker.utils.JobManager.refreshStatus')
+    def test_task_prerun_canceling(self, refreshStatus, request):
+        task = mock.MagicMock()
+        task.request.jobInfoSpec = self.headers['jobInfoSpec']
+        task.request.parent_id = None
+
+        validation_error = {
+            'field': 'status',
+            'message': 'invalid state'
+        }
+        r = request.return_value
+        r.raise_for_status.side_effect = [MockHTTPError(400, validation_error)]
+
+        refreshStatus.return_value = JobStatus.CANCELING
+
+        gw_task_prerun(task=task)
+
+        refreshStatus.assert_called_once()
+        self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
+
+        # Now try with QUEUED
+        request.reset_mock()
+        refreshStatus.reset_mock()
+        r.raise_for_status.side_effect = [None]
+        refreshStatus.return_value = JobStatus.QUEUED
+
+        gw_task_prerun(task=task)
+
+        refreshStatus.assert_not_called()
+        self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
+
+    @mock.patch('girder_worker.app.is_revoked')
+    @mock.patch('girder_worker.utils.requests.request')
+    @mock.patch('girder_worker.utils.JobManager.refreshStatus')
+    def test_task_success_canceling(self, refreshStatus, request, is_revoked):
+        task = mock.MagicMock()
+        task.request.jobInfoSpec = self.headers['jobInfoSpec']
+        task.request.parent_id = None
+
+        validation_error = {
+            'field': 'status',
+            'message': 'invalid'
+        }
+        r = request.return_value
+        r.raise_for_status.side_effect = [None, MockHTTPError(400, validation_error)]
+        refreshStatus.return_value = JobStatus.CANCELING
+        is_revoked.return_value = True
+
+        gw_task_prerun(task)
+        gw_task_success(sender=task)
+
+        # We where in the canceling state so we should move into CANCELED
+        refreshStatus.assert_called_once()
+        self.assertEqual(request.call_args_list[1][1]['data']['status'], JobStatus.CANCELED)
+
+        # Now try with RUNNING
+        request.reset_mock()
+        is_revoked.return_value = False
+        refreshStatus.reset_mock()
+        r.raise_for_status.side_effect = [None, None]
+
+        gw_task_prerun(task)
+        gw_task_success(sender=task)
+
+        # We should move into SUCCESS
+        refreshStatus.assert_not_called()
+        self.assertEqual(request.call_args_list[1][1]['data']['status'], JobStatus.SUCCESS)
+
+    @mock.patch('girder_worker.utils.JobManager')
+    def test_task_revoke(self, jm):
+        task = mock.MagicMock()
+        request = mock.MagicMock()
+        request.message.headers = {
+            'jobInfoSpec': self.headers['jobInfoSpec']
+        }
+        task.request.parent_id = None
+
+        gw_task_revoked(sender=task, request=request)
+
+        task.job_manager.updateStatus.assert_called_once_with(JobStatus.CANCELED)

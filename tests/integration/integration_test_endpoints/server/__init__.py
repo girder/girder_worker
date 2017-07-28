@@ -8,11 +8,14 @@ from girder.plugins.worker import utils
 from girder.plugins.worker.constants import PluginSettings
 
 from common_tasks.test_tasks.fib import fibonacci
+from common_tasks.test_tasks.cancel import cancelable, sleep
 from common_tasks.test_tasks.fail import fail_after
 from common_tasks.test_tasks.girder_client import request_private_path
 
 from girder_worker.app import app
 from celery.exceptions import TimeoutError
+import multiprocessing
+from girder_worker.utils import JobStatus
 
 
 class IntegrationTestEndpoints(Resource):
@@ -39,6 +42,10 @@ class IntegrationTestEndpoints(Resource):
                    self.test_celery_task_signature_apply_async)
         self.route('POST', ('celery', 'test_task_signature_apply_async_fails', ),
                    self.test_celery_task_signature_apply_async_fails)
+        self.route('POST', ('celery', 'test_task_revoke', ),
+                   self.test_celery_task_revoke)
+        self.route('POST', ('celery', 'test_task_revoke_in_queue', ),
+                   self.test_celery_task_revoke_in_queue)
 
         self.route('POST', ('celery', 'test_task_delay_with_custom_job_options', ),
                    self.test_celery_task_delay_with_custom_job_options)
@@ -62,6 +69,10 @@ class IntegrationTestEndpoints(Resource):
                    self.test_traditional_girder_worker_run_as_celery_task)
         self.route('POST', ('traditional', 'test_girder_worker_run_as_celery_task_fails'),
                    self.test_traditional_girder_worker_run_as_celery_task_fails)
+        self.route('POST', ('traditional', 'test_task_cancel', ),
+                   self.test_traditional_task_cancel)
+        self.route('POST', ('traditional', 'test_task_cancel_in_queue', ),
+                   self.test_traditional_task_cancel_in_queue)
 
         self.girder_worker_run_analysis = {
             'name': 'add',
@@ -81,6 +92,18 @@ class IntegrationTestEndpoints(Resource):
                                          'b': {'format': 'integer', 'data': 2}}
 
         self.girder_worker_run_outputs = {'c': {'format': 'integer'}}
+
+        self.girder_worker_run_cancelable = {
+            'name': 'cancelable',
+            'inputs': [
+            ],
+            'outputs': [],
+            'script': 'import time\n'
+                      'count = 0\n' +
+                      'while not _celery_task.canceled and count < 20:\n' +
+                      '  time.sleep(1)\n' +
+                      '  count += 1\n',
+            'mode': 'python'}
 
     @access.token
     @describeRoute(
@@ -209,6 +232,30 @@ class IntegrationTestEndpoints(Resource):
         Description('Test girder client with no token can\'t access protected resources'))
     def test_celery_girder_client_bad_token_fails(self, params):
         result = request_private_path.delay('admin', girder_client_token='')
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test revoking a task directly'))
+    def test_celery_task_revoke(self, params):
+        result = cancelable.delay()
+        result.revoke()
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test revoking a task directly when in queue'))
+    def test_celery_task_revoke_in_queue(self, params):
+        # Fill up queue
+        for x in range(0, multiprocessing.cpu_count()):
+            sleep.delay()
+
+        result = cancelable.delay()
+        result.revoke()
 
         return result.job
 
@@ -382,6 +429,64 @@ class IntegrationTestEndpoints(Resource):
         a = girder_worker_run.delay(analysis, inputs=inputs, outputs=outputs)
 
         return a.job
+
+    def _wait_for_status(self, job, status):
+        jobModel = self.model('job', 'jobs')
+        retries = 0
+
+        while retries < 10:
+            job = jobModel.load(job['_id'], user=self.getCurrentUser())
+            if job['status'] == status:
+                return True
+
+        return False
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test canceling a running task'))
+    def test_traditional_task_cancel(self, params):
+        jobModel = self.model('job', 'jobs')
+        job = jobModel.createJob(
+            title='test_traditional_task_cancel',
+            type='worker', handler='worker_handler',
+            user=self.getCurrentUser(), public=False, args=(self.girder_worker_run_cancelable,),
+            kwargs={'inputs': {},
+                    'outputs': {}})
+
+        job['kwargs']['jobInfo'] = utils.jobInfoSpec(job)
+
+        jobModel.save(job)
+        jobModel.scheduleJob(job)
+        assert self._wait_for_status(job, JobStatus.RUNNING)
+        jobModel.cancelJob(job)
+
+        return job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test canceling a queued task'))
+    def test_traditional_task_cancel_in_queue(self, params):
+        # Fill up queue
+        for x in range(0, multiprocessing.cpu_count()):
+            sleep.delay()
+
+        jobModel = self.model('job', 'jobs')
+        job = jobModel.createJob(
+            title='test_traditional_task_cancel',
+            type='worker', handler='worker_handler',
+            user=self.getCurrentUser(), public=False, args=(self.girder_worker_run_cancelable,),
+            kwargs={'inputs': {},
+                    'outputs': {}})
+
+        job['kwargs']['jobInfo'] = utils.jobInfoSpec(job)
+
+        jobModel.save(job)
+        jobModel.scheduleJob(job)
+        jobModel.cancelJob(job)
+
+        return job
 
 
 def load(info):

@@ -66,6 +66,7 @@ add_python_test(stream)
 add_python_test(directory PLUGINS_ENABLED types)
 add_python_test(task_plugin)
 add_python_test(task_signal)
+add_python_test(task_cancellation)
 add_python_test(argument_types)
 add_python_test(describe)
 

@@ -69,3 +69,24 @@ def test_custom_task_name_fails(session):
             [JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.ERROR]
 
         assert job['log'][0].startswith('Exception: Intentionally failed after 0.5 seconds')
+
+
+def test_task_cancel(session):
+    url = 'integration_tests/traditional/test_task_cancel'
+    r = session.post(url)
+    assert r.status_code == 200
+
+    with session.wait_for_canceled(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.CANCELING,
+             JobStatus.CANCELED]
+
+
+def test_task_cancel_in_queue(session):
+    url = 'integration_tests/traditional/test_task_cancel_in_queue'
+    r = session.post(url)
+    assert r.status_code == 200
+
+    with session.wait_for_canceled(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.QUEUED, JobStatus.CANCELING, JobStatus.CANCELED]

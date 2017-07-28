@@ -25,6 +25,13 @@ class GirderSession(BaseUrlSession):
             on_timeout=lambda j:
                 'Timed out waiting for job/%s to move into error state' % j['_id'])
 
+        self.wait_for_canceled = functools.partial(
+            self.wait_for,
+            predicate=lambda j:
+                j['status'] == JobStatus.CANCELED,
+            on_timeout=lambda j:
+                'Timed out waiting for job/%s to move into canceled state' % j['_id'])
+
     def get_result(self, celery_id):
         r = self.post('integration_tests/result', data={
             'celery_id': celery_id})

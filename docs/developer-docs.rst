@@ -300,3 +300,28 @@ Finally, by default the core girder\_worker tasks (``run``, ``convert``,
 prevent these tasks from being loaded inside the celery instance, you
 can configure ``core_tasks=false`` in ``worker.local.cfg`` under the
 ``[girder_worker]`` section of the configuration.
+
+Writing cancelable tasks
+========================
+
+girder_worker provides support for signaling that a task should be canceled using
+Celery's `revoke <http://docs.celeryproject.org/en/latest/userguide/workers.html#revoke-revoking-tasks>`_
+mechanism. In order for a task to be able to be canceled cleanly it must periodically
+check if it has been canceled, if it has then is can do any necessary cleanup and
+return. girder_worker provides a task base class (``girder_worker.utils.Task`` )
+that provides a property that can be used to check if the task has been canceled.
+An example of its use is shown below:
+
+
+.. code:: python
+
+    from girder_worker.app import app
+    from girder_work.utils import Task
+
+    @app.task(bind=True)
+    def my_cancellable_task(task):
+      while not self.cancelled:
+         # Do work
+
+The Girder job model associated with the canceled task will be moved into the
+``JobStatus.CANCELED`` state.
