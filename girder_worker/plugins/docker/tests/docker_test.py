@@ -95,10 +95,8 @@ class TestDockerMode(unittest.TestCase):
     def setUp(self):
         _reset_mocks()
 
-    @mock.patch('docker.from_env')
-    def testDockerMode(self, from_env):
-        from_env.return_value = docker_client_mock
-
+    @mock.patch('docker.from_env', return_value=docker_client_mock)
+    def testDockerMode(self, *args):
         task = {
             'mode': 'docker',
             'docker_image': 'test/test:latest',
@@ -287,10 +285,9 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(docker_client_mock.images.pull.call_count, 0)
             self.assertEqual(docker_client_mock.containers.run.call_count, 2)
 
-    @mock.patch('subprocess.Popen')
+    @mock.patch('subprocess.Popen', return_value=process_mock)
     def testCleanupHook(self, mockPopen):
         os.makedirs(_tmp)
-        mockPopen.return_value = process_mock
         girder_worker.config.set('docker', 'gc', 'True')
         girder_worker.config.set('docker', 'cache_timeout', '123456')
         girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
@@ -306,13 +303,11 @@ class TestDockerMode(unittest.TestCase):
         self.assertEqual(env['GRACE_PERIOD_SECONDS'], '123456')
         six.assertRegex(self, env['EXCLUDE_FROM_GC'], r'\.docker-gc-exclude$')
 
-    @mock.patch('subprocess.Popen')
+    @mock.patch('subprocess.Popen', return_value=process_mock)
     def testCleanupHookWithoutOptIn(self, mockPopen):
-        mockPopen.return_value = process_mock
         cleanup.main()
         self.assertEqual(mockPopen.call_count, 0)
         # Now with explicit settings
-        mockPopen.return_value = process_mock
         girder_worker.config.set('docker', 'gc', 'False')
         girder_worker.config.set('docker', 'cache_timeout', '123456')
         girder_worker.config.set('docker', 'exclude_images', 'test/test:latest')
@@ -320,10 +315,8 @@ class TestDockerMode(unittest.TestCase):
         cleanup.main()
         self.assertEqual(mockPopen.call_count, 0)
 
-    @mock.patch('docker.from_env')
-    def testOutputValidation(self, from_env):
-        from_env.return_value = docker_client_mock
-
+    @mock.patch('docker.from_env', return_value=docker_client_mock)
+    def testOutputValidation(self, *args):
         task = {
             'mode': 'docker',
             'docker_image': 'test/test',
@@ -378,10 +371,8 @@ class TestDockerMode(unittest.TestCase):
         with self.assertRaisesRegexp(Exception, msg):
             run(task, _celery_task=celery_task)
 
-    @mock.patch('docker.from_env')
-    def testNamedPipes(self, from_env):
-        from_env.return_value = docker_client_mock
-
+    @mock.patch('docker.from_env', return_value=docker_client_mock)
+    def testNamedPipes(self, *args):
         task = {
             'mode': 'docker',
             'docker_image': 'test/test',
@@ -419,10 +410,8 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue(os.path.exists(pipe))
         self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))
 
-    @mock.patch('docker.from_env')
-    def testDockerRunArgs(self, from_env):
-        from_env.return_value = docker_client_mock
-
+    @mock.patch('docker.from_env', return_value=docker_client_mock)
+    def testDockerRunArgs(self, *args):
         task = {
             'mode': 'docker',
             'docker_image': 'test/test:latest',

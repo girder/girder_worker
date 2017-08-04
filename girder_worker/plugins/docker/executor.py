@@ -9,6 +9,7 @@ from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 from girder_worker.plugins.docker.stream_adapter import DockerStreamPushAdapter
+from . import nvidia
 
 DATA_VOLUME = '/mnt/girder_worker/data'
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
@@ -181,6 +182,8 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, p
 def _run_container(image, args, **kwargs):
     # TODO we could allow configuration of non default socket
     client = docker.from_env(version='auto')
+    if nvidia.is_nvidia_image(client.api, image):
+        client = nvidia.NvidiaDockerClient.from_env(version='auto')
 
     logger.info('Running container: image: %s args: %s kwargs: %s' % (image, args, kwargs))
     try:
@@ -289,7 +292,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     if ep_args:
         run_kwargs['entrypoint'] = ep_args
 
-    # Allow run args to overriden
+    # Allow run args to overridden
     extra_run_kwargs = task.get('docker_run_args', {})
     # Filter out any we don't want to override
     extra_run_kwargs = {k: v for k, v in extra_run_kwargs.items() if k not
