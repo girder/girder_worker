@@ -15,7 +15,7 @@ import pytest
       JobStatus.SUCCESS])], ids=['traditional', 'celery'])
 def test_girder_worker_run(session, endpoint, standard_statuses):
     r = session.post(endpoint)
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
 
@@ -39,7 +39,7 @@ def test_girder_worker_run(session, endpoint, standard_statuses):
       JobStatus.ERROR])], ids=['traditional', 'celery'])
 def test_girder_worker_run_fails(session, endpoint, standard_statuses):
     r = session.post(endpoint)
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
 
     with session.wait_for_error(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']
@@ -50,7 +50,7 @@ def test_girder_worker_run_fails(session, endpoint, standard_statuses):
 
 def test_custom_task_name(session):
     r = session.post('integration_tests/traditional/test_job_custom_task_name')
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
@@ -62,7 +62,7 @@ def test_custom_task_name(session):
 
 def test_custom_task_name_fails(session):
     r = session.post('integration_tests/traditional/test_job_custom_task_name_fails')
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
 
     with session.wait_for_error(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
@@ -74,7 +74,7 @@ def test_custom_task_name_fails(session):
 def test_task_cancel(session):
     url = 'integration_tests/traditional/test_task_cancel'
     r = session.post(url)
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
 
     with session.wait_for_canceled(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
@@ -85,7 +85,7 @@ def test_task_cancel(session):
 def test_task_cancel_in_queue(session):
     url = 'integration_tests/traditional/test_task_cancel_in_queue'
     r = session.post(url)
-    assert r.status_code == 200
+    assert r.status_code == 200, r.content
 
     with session.wait_for_canceled(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
