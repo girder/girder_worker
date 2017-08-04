@@ -6,6 +6,19 @@ import time
 from requests_toolbelt.sessions import BaseUrlSession
 from datetime import timedelta, datetime
 
+class GirderResponseStatusCode(object):
+    def __init__(self, status_code, response):
+        self.status_code = status_code
+        self.response = response
+
+    def __eq__(self, other):
+        return isinstance(other, int) and self.status_code == other
+
+    def __str__(self, *args, **kwargs):
+        return str(self.status_code)
+
+    def __repr__(self, *args, **kwargs):
+        return str(self.status_code)
 
 class GirderSession(BaseUrlSession):
     def __init__(self, *args, **kwargs):
@@ -74,3 +87,10 @@ class GirderSession(BaseUrlSession):
             warnings.warn(on_timeout(r.json()))
 
         yield r.json()
+
+    # Override implemention so we can inject GirderResponseStatusCode
+    def request(self, *args, **kwargs):
+        response = super(GirderSession, self).request(*args, **kwargs)
+        response.status_code = GirderResponseStatusCode(response.status_code, response)
+
+        return response

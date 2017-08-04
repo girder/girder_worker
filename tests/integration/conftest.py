@@ -1,7 +1,6 @@
 import pytest
 import requests
-from .utilities import GirderSession
-
+from .utilities import GirderSession, GirderResponseStatusCode
 
 def pytest_addoption(parser):
     parser.addoption('--girder', action='store', default='http://127.0.0.1:8989/api/v1/',
@@ -56,3 +55,9 @@ def pytest_runtest_setup(item):
         sanitycheckfailed = getattr(session, '_sanitycheckfailed', None)
         if sanitycheckfailed is not None:
             pytest.xfail('previous test failed (%s)' % sanitycheckfailed.name)
+
+def pytest_assertrepr_compare(config, op, left, right):
+    if isinstance(left, GirderResponseStatusCode):
+        return [
+            '%d != %d' % (left.status_code, right),
+            'Response content: ', left.response.content]
