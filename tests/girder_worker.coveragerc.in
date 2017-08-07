@@ -1,3 +1,4 @@
 # Configuration for Python coverage
 [run]
 branch = @_py_branch_cov@
+omit = */tests/*

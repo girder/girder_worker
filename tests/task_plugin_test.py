@@ -41,7 +41,7 @@ class TestTaskPlugin(unittest.TestCase):
     def test_import_all_includes(self, imp):
         entrypoint.import_all_includes()
         imp.assert_has_calls(
-            (mock.call('os.path'), mock.call('json'), mock.call('sys')),
+            (mock.call('os.path'), mock.call('girder_worker.tests.tasks')),
             any_order=True
         )
 
@@ -72,4 +72,40 @@ class TestTaskPlugin(unittest.TestCase):
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                          ['os.path']})
         app.conf.update.assert_any_call({'CELERY_INCLUDE':
-                                         ['sys', 'json']})
+                                         ['girder_worker.tests.tasks']})
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_extensions(self, app):
+        main()
+        extensions = sorted(entrypoint.get_extensions())
+        self.assertEqual(extensions, ['core', 'plugin1', 'plugin2'])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_module_tasks(self, app):
+        main()
+        extensions = sorted(entrypoint.get_module_tasks('girder_worker.tests.tasks'))
+        self.assertEqual(extensions, [
+            'girder_worker.tests.tasks.celery_task',
+            'girder_worker.tests.tasks.function_task'
+        ])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_extension_tasks(self, app):
+        main()
+        extensions = sorted(entrypoint.get_extension_tasks('plugin2'))
+        self.assertEqual(extensions, [
+            'girder_worker.tests.tasks.celery_task',
+            'girder_worker.tests.tasks.function_task'
+        ])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_extension_tasks_celery(self, app):
+        main()
+        extensions = sorted(entrypoint.get_extension_tasks('plugin2', celery_only=True))
+        self.assertEqual(extensions, [
+            'girder_worker.tests.tasks.celery_task'
+        ])
