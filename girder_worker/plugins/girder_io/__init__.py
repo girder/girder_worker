@@ -179,10 +179,13 @@ def push_handler(data, spec, **kwargs):
             client=client, spec=spec, stream=StringIO(data), size=len(data), reference=reference)
     elif target == 'filepath':
         name = spec.get('name') or os.path.basename(data)
-        size = os.path.getsize(data)
-        with open(data, 'rb') as fd:
-            _send_to_girder(
-                client=client, spec=spec, stream=fd, size=size, reference=reference, name=name)
+        if os.path.isdir(data):
+            client.upload(data, spec['parent_id'], spec['parent_type'], reference=reference)
+        else:
+            size = os.path.getsize(data)
+            with open(data, 'rb') as fd:
+                _send_to_girder(
+                    client=client, spec=spec, stream=fd, size=size, reference=reference, name=name)
     else:
         raise Exception('Invalid Girder push target: ' + target)
 
