@@ -15,6 +15,12 @@
   when: girder_worker_virtualenv is defined
 
 - include: configure.yml
+  when: girder_worker_virtualenv is not defined
+  become: yes
+  become_user: root
+
+- include: configure.yml
+  when: girder_worker_virtualenv is defined
 
 - include: daemon.yml
   when: girder_worker_daemonize
