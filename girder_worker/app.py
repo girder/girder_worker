@@ -226,7 +226,7 @@ def _job_manager(request=None, headers=None, kwargs=None):
     # to girder_worker is deprecated. Newer versions of girder
     # pass this information automatically as apart of the
     # header metadata in the worker scheduler.
-    elif 'jobInfo' in kwargs:
+    elif kwargs and 'jobInfo' in kwargs:
         jobSpec = kwargs.pop('jobInfo', {})
 
     else:
