@@ -111,6 +111,11 @@ except Exception:
     pass
 reqs = [unpin_version(req) for req in install_reqs]
 
+# This is a temporary measure to fix installation until a new version
+# of requests is released.  For details see:
+# https://github.com/requests/requests/issues/4222
+reqs.append('idna==2.5')
+
 # Build up extras_require for plugin requirements
 extras_require = {}
 plugins_dir = os.path.join('girder_worker', 'plugins')
