@@ -95,7 +95,7 @@ class GirderBackend(BaseBackend):
 
         result_meta = {
             'status': state,
-            'result': self.encode(result),
+            'result': result,
             'timestamp': datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat(),
             'traceback': self.encode(traceback),
             'children': self.encode(
@@ -141,7 +141,7 @@ class GirderBackend(BaseBackend):
 
     def _group_meta(self, result):
         return {
-            'result': self.encode([i.id for i in result]),
+            'result': [i.id for i in result],
             'timestamp': datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat()
         }
 
@@ -183,7 +183,7 @@ class GirderBackend(BaseBackend):
         return self.meta_from_decoded({
             'task_id': item['name'],
             'status': meta['status'],
-            'result': self.decode(meta['result']),
+            'result': meta['result'],
             'timestamp': meta['timestamp'],
             'traceback': self.decode(meta['traceback']),
             'children': self.decode(meta['children']),
@@ -231,7 +231,7 @@ class GirderBackend(BaseBackend):
             'timestamp': meta['timestamp'],
             'result': [
                 self.app.AsyncResult(task)
-                for task in self.decode(meta['result'])
+                for task in meta['result']
                 ],
         }
 
