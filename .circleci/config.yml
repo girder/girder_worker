@@ -5,6 +5,9 @@ jobs:
       - image: python:2.7.13
     working_directory: /root/girder_worker
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "50:b7:1d:44:fd:c4:f4:06:9a:4c:0f:16:0c:e1:3b:91"
       - checkout
       - run:
           name: Install Docker client
