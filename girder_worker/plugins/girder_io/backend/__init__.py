@@ -100,8 +100,8 @@ class GirderBackend(BaseBackend):
 
         if self._parent_type == 'folder':
             # Change to one call then PR is merged into master
-            item = self._client.createItem(self._parent_id, task_id, reuseExisting=False)
-            self._client.addMetadataToItem(item['_id'], result_meta)
+            item = client.createItem(self._parent_id, task_id, reuseExisting=False)
+            client.addMetadataToItem(item['_id'], result_meta)
 
         return result
 
