@@ -21,44 +21,39 @@ class GirderBackend(BaseBackend):
                  parent_type=None, **kwargs):
         super(GirderBackend, self).__init__(app, url=url,  **kwargs)
 
-        self._girder = None
-        if not self._in_girder:
-            # If we are outside Girder we need a url
-            if self.url is None:
-                raise ImproperlyConfigured(
-                        'url for Girder server must be provided.')
-
         self._token = token
         self._api_key = api_key
         self._parent_id = parent_id
         self._parent_type = parent_type
         self._gclient = None
+        self._girder = None
 
-        parts = urlparse(url)
-        query_params = dict(parse_qsl(parts.query))
+        if url is not None:
+            parts = urlparse(url)
+            query_params = dict(parse_qsl(parts.query))
 
-        # Give precedence to parameter passed in
-        if self._token is None:
-            self._token = query_params.get('token')
+            # Give precedence to parameter passed in
+            if self._token is None:
+                self._token = query_params.get('token')
 
-        if self._api_key is None:
-            self._api_key = query_params.get('apiKey')
+            if self._api_key is None:
+                self._api_key = query_params.get('apiKey')
 
-        if self._parent_id is None:
-            self._parent_id = query_params.get('parentId')
+            if self._parent_id is None:
+                self._parent_id = query_params.get('parentId')
 
-        if self._parent_type is None:
-            self._parent_type = query_params.get('parentType')
+            if self._parent_type is None:
+                self._parent_type = query_params.get('parentType')
 
-        self.url = '%s://%s:%s/api/v1' % (parts.scheme, parts.hostname, parts.port)
+            self.url = '%s://%s:%s/api/v1' % (parts.scheme, parts.hostname, parts.port)
 
-        if self._api_key is None and self._token is None:
-            raise ImproperlyConfigured(
-                'An API key or token for Girder must be provided.')
+            #if self._api_key is None and self._token is None:
+            #    raise ImproperlyConfigured(
+            #        'An API key or token for Girder must be provided.')
 
-        if self._parent_id is None or self._parent_type is None:
-            raise ImproperlyConfigured(
-                'A parent resource must be provided.')
+            #if self._parent_id is None or self._parent_type is None:
+            #    raise ImproperlyConfigured(
+            #        'A parent resource must be provided.')
 
     @property
     def _in_girder(self):
