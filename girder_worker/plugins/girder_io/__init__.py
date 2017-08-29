@@ -43,7 +43,7 @@ def _init_client(spec, require_token=False):
                         'Girder input and output bindings.')
 
     if 'token' in spec:
-        client.token = spec['token']
+        client.setToken(spec['token'])
     elif require_token:
         raise Exception('You must pass a token for Girder authentication.')
 
