@@ -241,6 +241,8 @@ class IntegrationTestEndpoints(Resource):
         Description('Test revoking a task directly'))
     def test_celery_task_revoke(self, params):
         result = cancelable.delay()
+        # Make sure we are running before we revoke
+        assert self._wait_for_status(result.job, JobStatus.RUNNING)
         result.revoke()
 
         return result.job
