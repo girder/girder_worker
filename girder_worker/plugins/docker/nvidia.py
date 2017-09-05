@@ -37,8 +37,8 @@ def get_nvidia_configuration():
 
 
 def is_nvidia_image(api, image):
-    return (api.inspect_image(image).get('Config', {}).get('Labels', {}).
-            get('com.nvidia.volumes.needed') == 'nvidia_driver')
+    labels = api.inspect_image(image).get('Config', {}).get('Labels')
+    return labels and labels.get('com.nvidia.volumes.needed') == 'nvidia_driver'
 
 
 def add_nvidia_docker_to_config(container_config):
