@@ -8,7 +8,7 @@ from girder.plugins.worker import utils
 from girder.plugins.worker.constants import PluginSettings
 
 from common_tasks.test_tasks.fib import fibonacci
-from common_tasks.test_tasks.cancel import cancelable, sleep
+from common_tasks.test_tasks.cancel import cancelable
 from common_tasks.test_tasks.fail import fail_after
 from common_tasks.test_tasks.girder_client import request_private_path
 
@@ -253,11 +253,18 @@ class IntegrationTestEndpoints(Resource):
         Description('Test revoking a task directly when in queue'))
     def test_celery_task_revoke_in_queue(self, params):
         # Fill up queue
-        for x in range(0, multiprocessing.cpu_count()):
-            sleep.delay()
+        blockers = []
+        for _ in range(0, multiprocessing.cpu_count()):
+            blockers .append(cancelable.delay(sleep_interval=0.1))
 
         result = cancelable.delay()
         result.revoke()
+
+        assert self._wait_for_status(result.job, JobStatus.CANCELED)
+
+        # Now clean up the blockers
+        for blocker in blockers:
+            blocker.revoke()
 
         return result.job
 
@@ -471,8 +478,9 @@ class IntegrationTestEndpoints(Resource):
         Description('Test canceling a queued task'))
     def test_traditional_task_cancel_in_queue(self, params):
         # Fill up queue
-        for x in range(0, multiprocessing.cpu_count()):
-            sleep.delay()
+        blockers = []
+        for _ in range(0, multiprocessing.cpu_count()):
+            blockers .append(cancelable.delay(sleep_interval=0.1))
 
         jobModel = self.model('job', 'jobs')
         job = jobModel.createJob(
@@ -487,6 +495,10 @@ class IntegrationTestEndpoints(Resource):
         jobModel.save(job)
         jobModel.scheduleJob(job)
         jobModel.cancelJob(job)
+
+        # Now clean up the blockers
+        for blocker in blockers:
+            blocker.revoke()
 
         return job
 
