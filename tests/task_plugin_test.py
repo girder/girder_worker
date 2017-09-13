@@ -3,8 +3,9 @@ import mock
 from StringIO import StringIO
 import unittest
 
-from girder_worker import entrypoint
+from girder_worker import entrypoint, describe
 from girder_worker.__main__ import main
+from girder_worker.app import app
 
 
 class set_namespace(object):
@@ -41,7 +42,7 @@ class TestTaskPlugin(unittest.TestCase):
     def test_import_all_includes(self, imp):
         entrypoint.import_all_includes()
         imp.assert_has_calls(
-            (mock.call('os.path'), mock.call('json'), mock.call('sys')),
+            (mock.call('os.path'), mock.call('girder_worker.tests.tasks')),
             any_order=True
         )
 
@@ -72,4 +73,64 @@ class TestTaskPlugin(unittest.TestCase):
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                          ['os.path']})
         app.conf.update.assert_any_call({'CELERY_INCLUDE':
-                                         ['sys', 'json']})
+                                         ['girder_worker.tests.tasks']})
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_extensions(self, app):
+        main()
+        extensions = sorted(entrypoint.get_extensions())
+        self.assertEqual(extensions, ['core', 'plugin1', 'plugin2'])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_module_tasks(self, app):
+        main()
+        extensions = sorted(entrypoint.get_module_tasks('girder_worker.tests.tasks'))
+        self.assertEqual(extensions, [
+            'girder_worker.tests.tasks.celery_task',
+            'girder_worker.tests.tasks.function_task'
+        ])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_extension_tasks(self, app):
+        main()
+        extensions = sorted(entrypoint.get_extension_tasks('plugin2'))
+        self.assertEqual(extensions, [
+            'girder_worker.tests.tasks.celery_task',
+            'girder_worker.tests.tasks.function_task'
+        ])
+
+    @set_namespace('girder_worker.test.valid_plugins')
+    @mock.patch('girder_worker.__main__.app')
+    def test_get_extension_tasks_celery(self, app):
+        main()
+        extensions = sorted(entrypoint.get_extension_tasks('plugin2', celery_only=True))
+        self.assertEqual(extensions, [
+            'girder_worker.tests.tasks.celery_task'
+        ])
+
+    def test_register_extension(self):
+
+        @describe.argument('n', describe.types.Integer)
+        def echo(n):
+            return n
+
+        @app.task
+        @describe.argument('n', describe.types.Integer)
+        def echo_celery(n):
+            return n
+
+        tasks = {
+            '%s.echo' % __name__: echo,
+            '%s.echo_celery' % __name__: echo_celery
+        }
+        entrypoint.register_extension('echo_tasks', tasks)
+
+        exts = entrypoint.get_extensions()
+        self.assertIn('echo_tasks', exts)
+        self.assertEqual(entrypoint.get_extension_tasks('echo_tasks'), tasks)
+
+        celery_tasks = entrypoint.get_extension_tasks('echo_tasks', celery_only=True)
+        self.assertEqual(celery_tasks.keys(), ['%s.echo_celery' % __name__])
