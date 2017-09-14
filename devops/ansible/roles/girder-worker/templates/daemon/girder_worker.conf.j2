@@ -12,17 +12,9 @@ setuid "{{ girder_worker_user }}"
 setgid "{{ girder_worker_user }}"
 
 script
-{% if girder_worker_virtualenv is defined %}
-  exec "{{ girder_worker_virtualenv }}/bin/girder-worker"
-{% else %}
-  exec girder-worker
-{% endif %}
+  exec "{{ girder_worker_executable }}"
 end script
 
 pre-stop script
-{% if girder_worker_virtualenv is defined %}
-  exec "{{ girder_worker_virtualenv }}/bin/celery multi stopwait worker"
-{% else %}
-  exec celery multi stopwait worker
-{% endif %}
+  exec "{{ celery_executable }} multi stopwait worker"
 end script

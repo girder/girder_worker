@@ -1,20 +1,29 @@
 from importlib import import_module
 
+import six
 from stevedore import extension
 import celery
 
 #: Defines the namespace used for plugin entrypoints
 NAMESPACE = 'girder_worker_plugins'
 
+# Define an internal registry for extensions that aren't associated
+# with an entrypoint.  This registry is primarily useful for testing
+# where one doesn't necessarily want to install a package into the
+# environment for a one off test task.
+_extensions = {}
 
-def _import_module(module):
+
+def _import_module(module_name):
     """Try to import a module given as a string."""
+    module = None
     try:
-        import_module(module)
+        module = import_module(module_name)
     except ImportError:
         import traceback
         traceback.print_exc()
-        print('Problem importing %s' % module)
+        print('Problem importing %s' % module_name)
+    return module
 
 
 def _handle_entrypoint_errors(mgr, entrypoint, exc):
@@ -68,3 +77,82 @@ def import_all_includes(core=True):
 
     for module in get_plugin_task_modules():
         _import_module(module)
+
+
+def get_extensions(app=None):
+    """Get a list of install extensions."""
+    return [ext.name for ext in get_extension_manager(app)] + \
+        _extensions.keys()
+
+
+def get_module_tasks(module_name):
+    """Get all tasks defined in a python module.
+
+    :param str module_name: The importable module name
+    """
+    # Import inside the function scope to prevent circular dependencies.
+    from . import describe
+
+    module = _import_module(module_name)
+    tasks = {}
+
+    if module is None:
+        return tasks
+
+    for name, func in six.iteritems(vars(module)):
+        full_name = '%s.%s' % (module_name, name)
+        if not hasattr(func, '__call__'):
+            # filter out objects that are not callable
+            continue
+
+        try:
+            describe.get_description_attribute(func)
+            tasks[full_name] = func
+        except describe.MissingDescriptionException:
+            pass
+    return tasks
+
+
+def get_extension_tasks(extension, app=None, celery_only=False):
+    """Get the tasks defined by a girder_worker extension.
+
+    :param str extension: The extension name
+    :param app: The celery app instance
+    :param bool celery_only: If true, only return celery tasks
+    """
+
+    tasks = {}
+    if extension in _extensions:
+        tasks = _extensions[extension]
+    else:
+        manager = get_extension_manager(app)
+        imports = get_task_imports(manager[extension])
+        tasks = {}
+        for module_name in imports:
+            tasks.update(get_module_tasks(module_name))
+
+    if celery_only:  # filter celery tasks
+        if app is None:
+            from .app import app
+        tasks = {
+            key: tasks[key] for key in tasks if key in app.tasks
+        }
+
+    return tasks
+
+
+def register_extension(name, tasks):
+    """Register an extension by name.
+
+    This is an alternative to registering extensions via
+    entrypoints.  Its primary use case is for one off tasks
+    used in testing.  Using entrypoint extensions is preferred
+    because they will be automatically registered, and the
+    tasks will have fully resolved python modules that can
+    be reused by other tasks and extensions.
+
+    :param str name: The extension name
+    :param dict tasks: A mapping from task name to the task function
+    """
+    global _extensions
+    _extensions[name] = tasks

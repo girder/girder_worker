@@ -1,3 +1,11 @@
+- name: Install EPEL
+  yum:
+    name: epel-release
+    state: present
+  become: yes
+  become_user: root
+  when: ansible_os_family == "RedHat"
+
 - name: Install Girder Worker system dependencies
   apt:
     name: "{{ item }}"
@@ -9,16 +17,31 @@
     - python-dev
     - python-pip
     - zlib1g-dev
+  when: ansible_os_family == "Debian"
 
 - name: Install Girder Worker system dependencies
-  apt:
+  yum:
+    name: "{{ item }}"
+  become: yes
+  become_user: root
+  with_items:
+    - libjpeg-turbo-devel
+    - openssl-devel
+    - python-devel
+    - python2-pip
+    - zlib-devel
+    - gcc
+  when: ansible_os_family == "RedHat"
+
+- name: Install Girder Worker system dependencies
+  package:
     name: git
   become: yes
   become_user: root
   when: girder_worker_install_source == "git"
 
 - name: Install Girder Worker system dependencies
-  apt:
+  package:
     name: python-virtualenv
   become: yes
   become_user: root

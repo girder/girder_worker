@@ -6,14 +6,8 @@ from girder_worker.app import app
 
 @girder_job(title='Cancelable Job')
 @app.task(bind=True)
-def cancelable(task, **kwargs):
+def cancelable(task, sleep_interval=0.5):
     count = 0
     while not task.canceled and count < 10:
-        time.sleep(0.5)
+        time.sleep(sleep_interval)
         count += 1
-
-
-@girder_job(title='Sleeper Job')
-@app.task(bind=True)
-def sleep(task, **kwargs):
-    time.sleep(0.5)

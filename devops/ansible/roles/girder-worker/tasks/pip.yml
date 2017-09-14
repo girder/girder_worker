@@ -37,3 +37,20 @@
         virtualenv: "{{ girder_worker_virtualenv | default(omit) }}"
       with_items: "{{ girder_worker_plugins }}"
   when: girder_worker_install_source == "git"
+
+- set_fact:
+    celery_executable: "{{ girder_worker_virtualenv }}/bin/celery"
+    girder_worker_executable: "{{ girder_worker_virtualenv }}/bin/girder-worker"
+    girder_worker_config_executable: "{{ girder_worker_virtualenv }}/bin/girder-worker-config"
+  when: girder_worker_virtualenv is defined
+
+- name: Find installed executables
+  command: "which celery girder-worker girder-worker-config"
+  register: executables
+  when: girder_worker_virtualenv is not defined
+
+- set_fact:
+    celery_executable: "{{ executables.stdout_lines[0] }}"
+    girder_worker_executable: "{{ executables.stdout_lines[1] }}"
+    girder_worker_config_executable: "{{ executables.stdout_lines[2] }}"
+  when: girder_worker_virtualenv is not defined

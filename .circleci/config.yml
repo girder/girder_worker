@@ -5,6 +5,9 @@ jobs:
       - image: python:2.7.13
     working_directory: /root/girder_worker
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "50:b7:1d:44:fd:c4:f4:06:9a:4c:0f:16:0c:e1:3b:91"
       - checkout
       - run:
           name: Install Docker client
@@ -36,3 +39,9 @@ jobs:
             docker cp /root/girder_worker configs:/cfg
             # Run the integration tests after installing requirements
             docker run --volumes-from configs --network container:gw_integration_test_girder python:2.7.13 /bin/bash -c "cd /cfg/girder_worker/tests/integration; pip install -r requirements.txt; pytest -v -n 4"
+
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                ./scripts/galaxy_deploy.sh
+            fi

@@ -1,8 +1,9 @@
 - name: Ensure a supported operating system
   fail:
-    msg="ansible-role-girder-worker only supports Ubuntu Trusty/Xenial."
+    msg="ansible-role-girder-worker only supports Ubuntu Trusty/Xenial and Redhat/CentOS 7."
   when: (ansible_distribution_release != "trusty") and
-        (ansible_distribution_release != "xenial")
+        (ansible_distribution_release != "xenial") and
+        (ansible_os_family == "RedHat" and ansible_distribution_major_version != "7")
 
 - include: girder_worker.yml
 
@@ -15,6 +16,12 @@
   when: girder_worker_virtualenv is defined
 
 - include: configure.yml
+  when: girder_worker_virtualenv is not defined
+  become: yes
+  become_user: root
+
+- include: configure.yml
+  when: girder_worker_virtualenv is defined
 
 - include: daemon.yml
   when: girder_worker_daemonize

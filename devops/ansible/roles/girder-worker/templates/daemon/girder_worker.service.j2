@@ -7,16 +7,8 @@ After=network.target
 Type=simple
 User={{ girder_worker_user }}
 Group={{ girder_worker_user }}
-{% if girder_worker_virtualenv is defined %}
-ExecStart={{ girder_worker_virtualenv }}/bin/girder-worker
-{% else %}
-ExecStart={{ lookup('pipe', 'which girder-worker') }}
-{% endif %}
-{% if girder_worker_virtualenv is defined %}
-ExecStop={{ girder_worker_virtualenv }}/bin/celery multi stopwait worker
-{% else %}
-ExecStop={{ lookup('pipe', 'which celery') }} multi stopwait worker
-{% endif %}
+ExecStart={{ girder_worker_executable }}
+ExecStop={{ celery_executable }} multi stopwait worker
 
 [Install]
 WantedBy=multi-user.target

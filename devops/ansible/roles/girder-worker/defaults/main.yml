@@ -3,7 +3,6 @@
 girder_worker_install_source: "pypi" # must be one of pypi, git
 
 # versions to install, pypi will default to latest
-girder_worker_pypi_version: null
 girder_worker_git_version: "master"
 
 # path to virtualenv to install into, will be created if it doesn't exist
