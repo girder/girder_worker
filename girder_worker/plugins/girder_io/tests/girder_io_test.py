@@ -1,6 +1,7 @@
 import copy
 import json
 import httmock
+import mock
 import os
 import girder_worker
 import girder_worker.tasks
@@ -572,6 +573,53 @@ class TestGirderIo(unittest.TestCase):
                 task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
 
             self.assertEqual(metadata_updates, [{'filepath': 'test'}])
+
+    @mock.patch('girder_client.GirderClient.upload')
+    def test_directory_output(self, upload_mock):
+        out_dir = os.path.join(_tmp, 'out_dir')
+        sub_dir = os.path.join(out_dir, 'sub_dir')
+        try:
+            os.makedirs(sub_dir)
+        except OSError:
+            if not os.path.isdir(sub_dir):
+                raise
+
+        with open(os.path.join(sub_dir, 'file.txt'), 'w') as fd:
+            fd.write('hello')
+
+        task = {
+            'inputs': [{'name': 'input'}],
+            'outputs': [{'name': 'out', 'target': 'filepath'}],
+            'script': 'out = input',
+            'mode': 'python'
+        }
+
+        inputs = {
+            'input': {
+                'mode': 'inline',
+                'data': out_dir
+            }
+        }
+
+        outputs = {
+            'out': {
+                'mode': 'girder',
+                'parent_id': 'my_folder_id',
+                'parent_type': 'folder',
+                'api_url': 'https://hello.com:1234/foo/bar/api',
+                'name': 'my folder',
+                'token': 'foo',
+                'reference': 'my reference'
+            }
+        }
+
+        girder_worker.tasks.run(
+            task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
+        self.assertEqual(len(upload_mock.mock_calls), 1)
+        _, args, kwargs = upload_mock.mock_calls[0]
+
+        self.assertEqual(args[0], out_dir)
+        self.assertEqual(kwargs['reference'], 'my reference')
 
 
 if __name__ == '__main__':
