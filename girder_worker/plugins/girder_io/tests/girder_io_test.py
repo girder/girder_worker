@@ -613,7 +613,8 @@ class TestGirderIo(unittest.TestCase):
             }
         }
 
-        girder_worker.tasks.run(task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
+        girder_worker.tasks.run(
+            task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
         self.assertEqual(len(upload_mock.mock_calls), 1)
         _, args, kwargs = upload_mock.mock_calls[0]
 
