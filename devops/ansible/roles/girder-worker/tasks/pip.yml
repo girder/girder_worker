@@ -4,6 +4,12 @@
     state: latest
     virtualenv: "{{ girder_worker_virtualenv | default(omit) }}"
 
+- name: Upgrade setuptools
+  pip:
+    name: setuptools
+    state: latest
+    virtualenv: "{{ girder_worker_virtualenv | default(omit) }}"
+
 # Install from PyPi
 - block:
     - name: Install Girder Worker
