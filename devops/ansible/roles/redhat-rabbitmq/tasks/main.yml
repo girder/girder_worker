@@ -1,0 +1,12 @@
+- rpm_key:
+    state: present
+    key: https://www.rabbitmq.com/rabbitmq-signing-key-public.asc
+
+- name: Install rabbitmq
+  yum:
+    name: https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.1/rabbitmq-server-3.6.1-1.noarch.rpm
+
+- name: Start rabbitmq
+  service:
+    name: rabbitmq-server
+    state: started
