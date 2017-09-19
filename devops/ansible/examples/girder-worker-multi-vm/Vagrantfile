@@ -1,4 +1,5 @@
 Vagrant.configure("2") do |config|
+  vagrant_box = ENV.fetch("VAGRANT_BOX", "ubuntu/trusty64")
   if Vagrant.has_plugin?("vagrant-cachier")
     config.cache.scope = :box
     config.cache.enable :apt
@@ -6,7 +7,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "database" do |database|
-    database.vm.box = "ubuntu/trusty64"
+    database.vm.box = vagrant_box
     database.vm.network "private_network", ip: "192.168.33.10"
 
     database.vm.provision "ansible" do |ansible|
@@ -16,7 +17,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "app" do |app|
-    app.vm.box = "ubuntu/trusty64"
+    app.vm.box = vagrant_box
     app.vm.network "private_network", ip: "192.168.33.11"
     app.vm.network "forwarded_port", guest: 8080, host: 9080
     app.vm.provider :virtualbox do |vb|
@@ -35,7 +36,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "queue" do |queue|
-    queue.vm.box = "ubuntu/trusty64"
+    queue.vm.box = vagrant_box
     queue.vm.network "private_network", ip: "192.168.33.12"
 
     queue.vm.provision "ansible" do |ansible|
@@ -46,7 +47,7 @@ Vagrant.configure("2") do |config|
 
   (1..2).each do |i|
     config.vm.define "worker-#{i}" do |worker|
-      worker.vm.box = "ubuntu/trusty64"
+      worker.vm.box = vagrant_box
       worker.vm.network "private_network", ip: "192.168.33.2#{i}"
 
       worker.vm.provision "ansible" do |ansible|

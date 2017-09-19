@@ -10,6 +10,15 @@
         update_cache: yes
       become: yes
       become_user: root
+      when: ansible_os_family == "Debian"
+
+    - name: Install EPEL
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+        state: present
+      become: yes
+      become_user: root
+      when: ansible_os_family == "RedHat"
 
     - name: Create Worker user
       user:
@@ -21,6 +30,7 @@
     - role: girder-worker
       girder_worker_install_source: "git"
       girder_worker_path: "/home/{{ worker_user }}/girder_worker"
+      girder_worker_user: "{{ worker_user }}"
       become: yes
       become_user: "{{ worker_user }}"
 
