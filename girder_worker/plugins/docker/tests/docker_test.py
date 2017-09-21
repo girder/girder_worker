@@ -212,6 +212,24 @@ class TestDockerMode(unittest.TestCase):
             self.assertEqual(args[1][0:2], ['-f', '%s/file.txt' % DATA_VOLUME])
             _reset_mocks()
 
+            # direct mode files should mount an extra volume
+            inputs['foo'] = {
+                'mode': 'http',
+                'url': 'https://foo.com/file.txt',
+                'script_data': __file__,
+                'direct_path': __file__
+            }
+
+            run(task, inputs=inputs, validate=False, auto_convert=False,
+                _celery_task=celery_task)
+
+            self.assertEqual(docker_client_mock.containers.run.call_count, 2)
+            args, kwargs = docker_client_mock.containers.run.call_args_list[0]
+            self.assertEqual(args[0], 'test/test:latest')
+            self.assertEqual(kwargs['entrypoint'], ['/bin/bash'])
+            self.assertIn(__file__, kwargs['volumes'])
+            _reset_mocks()
+
             # Make sure custom config settings are respected
             girder_worker.config.set('docker', 'cache_timeout', '123456')
             girder_worker.config.set(

@@ -40,7 +40,8 @@ def _transform_path(inputs, taskInputs, inputId, tmpDir):
     for ti in taskInputs.itervalues():
         tiId = ti['id'] if 'id' in ti else ti['name']
         if tiId == inputId:
-            if ti.get('target') == 'filepath':
+            if (ti.get('target') == 'filepath' and
+                    inputs[inputId]['script_data'].startswith(tmpDir.rstrip(os.sep) + os.sep)):
                 rel = os.path.relpath(inputs[inputId]['script_data'], tmpDir)
                 return os.path.join(DATA_VOLUME, rel)
             else:
@@ -254,6 +255,25 @@ def _run_select_loop(celery_task, container, opipes, ipipes):
             stderr.close()
 
 
+def add_input_volumes(inputs, volumes):
+    """
+    For any filepath input that has a direct_path property AND a script_data
+    property that matches, add a read-only volume to the docker volumes record
+    to give access to that path.
+
+    :param inputs: the spec inputs.
+    :param volumes: the docker volumes dictionary to modify.
+    """
+    for input in inputs.itervalues():
+        if 'direct_path' in input and input.get('script_data') == input['direct_path']:
+            volume = input.get('script_data')
+            if volume not in volumes:
+                volumes[volume] = {
+                    'bind': volume,
+                    'mode': 'ro'
+                }
+
+
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
     celery_task = kwargs.get('_celery_task')
@@ -288,7 +308,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
         },
         'detach': True
     }
-
+    add_input_volumes(inputs, run_kwargs['volumes'])
     if ep_args:
         run_kwargs['entrypoint'] = ep_args
 

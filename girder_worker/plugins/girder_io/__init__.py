@@ -76,6 +76,7 @@ def fetch_handler(spec, **kwargs):
     task_input = kwargs.get('task_input', {})
     target = task_input.get('target', 'filepath')
     fetch_parent = spec.get('fetch_parent', False)
+    direct_path = spec.get('direct_path')
 
     if 'id' not in spec:
         raise Exception('Must pass a resource ID for girder inputs.')
@@ -93,6 +94,10 @@ def fetch_handler(spec, **kwargs):
     elif resource_type == 'file':
         if fetch_parent:
             dest = _fetch_parent_item(spec['id'], client, kwargs['_tempdir'])
+        elif direct_path and os.path.isfile(direct_path):
+            # If the specification includes a direct path AND it is a reachable
+            # file, use it.
+            dest = direct_path
         else:
             client.downloadFile(spec['id'], dest)
     else:
