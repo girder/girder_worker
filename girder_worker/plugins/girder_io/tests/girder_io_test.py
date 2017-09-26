@@ -477,14 +477,22 @@ class TestGirderIo(unittest.TestCase):
         def girder_mock(url, request):
             raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
 
+        girder_worker.config.set('girder_io', 'allow_direct_path', 'True')
+
         with httmock.HTTMock(girder_mock):
-            outputs = girder_worker.tasks.run(task, inputs=inputs,
-                                              validate=False,
-                                              auto_convert=False,
-                                              cleanup=False)
+            outputs = girder_worker.tasks.run(
+                task, inputs=inputs, validate=False, auto_convert=False,
+                cleanup=False)
             self.assertIn('out', outputs)
             path = outputs['out']['data']
             self.assertEqual(path, __file__)
+
+        girder_worker.config.set('girder_io', 'allow_direct_path', 'False')
+        with httmock.HTTMock(girder_mock):
+            self.assertRaisesRegexp(
+                Exception, 'Unexpected', girder_worker.tasks.run,
+                task, inputs=inputs, validate=False, auto_convert=False,
+                cleanup=False)
 
     def test_metadata_output(self):
         task = {
