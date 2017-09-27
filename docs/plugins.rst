@@ -1,7 +1,7 @@
 .. _worker-plugins:
 
 Application Plugins
-=======
+===================
 
 The Girder Worker application plugin system is used to extend the core functionality of
 Girder Worker in a number of ways. Application plugins can execute any Python code when
@@ -257,6 +257,7 @@ Girder IO
         (, "token": <girder token used for authentication>)
         (, "resource_type": <"file", "item", or "folder", default is "file">)
         (, "fetch_parent": <whether to download the whole parent resource as well, default is false>)
+        (, "direct_path": <a path on the local file system where a file resource is located>)
     }
 
 .. note :: For historical reasons, task inputs that do not specify a ``target`` field
@@ -367,6 +368,16 @@ configuration.  The following options are available:
     evicting items
   * ``diskcache_large_value_threshold`` (default=1024): cached values below this
     size are stored directly in the cache's sqlite db
+
+Direct Paths
+************
+
+If a input file resource includes a ``direct_path`` value, and that path is a locally accessible file, then Girder Worker can use the file without downloading it.  Depending on deployment, this may not be desired, as it could expose internal file system details to a task, or the path might refer to different files in the context of Girder versus Girder Worker.  To enable using direct paths, there is a configuration option:
+
+  * ``allow_direct_path`` (default=False): if True, enable using direct paths 
+    when they are specified by a input file resource.
+
+Direct paths are not used if the input file resource uses ``fetch_parent``.
 
 R
 -
