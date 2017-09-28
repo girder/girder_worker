@@ -444,6 +444,56 @@ class TestGirderIo(unittest.TestCase):
             with open(file1_path, 'rb') as fd:
                 self.assertEqual(fd.read(), 'file_contents')
 
+    def test_direct_path(self):
+        task = {
+            'inputs': [{
+                'name': 'input',
+                'type': 'string',
+                'format': 'text',
+                'target': 'filepath'
+            }],
+            'outputs': [{
+                'name': 'out',
+                'type': 'string',
+                'format': 'text'
+            }],
+            'script': 'out = input',
+            'mode': 'python',
+            'cleanup': False
+        }
+
+        inputs = {
+            'input': {
+                'mode': 'girder',
+                'api_url': 'https://hello.com:1234/foo/bar/api',
+                'id': 'file1_id',
+                'name': 'text.txt',
+                'resource_type': 'file',
+                'direct_path': __file__
+            }
+        }
+
+        @httmock.all_requests
+        def girder_mock(url, request):
+            raise Exception('Unexpected %s request to %s.' % (request.method, url.path))
+
+        girder_worker.config.set('girder_io', 'allow_direct_path', 'True')
+
+        with httmock.HTTMock(girder_mock):
+            outputs = girder_worker.tasks.run(
+                task, inputs=inputs, validate=False, auto_convert=False,
+                cleanup=False)
+            self.assertIn('out', outputs)
+            path = outputs['out']['data']
+            self.assertEqual(path, __file__)
+
+        girder_worker.config.set('girder_io', 'allow_direct_path', 'False')
+        with httmock.HTTMock(girder_mock):
+            self.assertRaisesRegexp(
+                Exception, 'Unexpected', girder_worker.tasks.run,
+                task, inputs=inputs, validate=False, auto_convert=False,
+                cleanup=False)
+
     def test_metadata_output(self):
         task = {
             'inputs': [{'name': 'input', 'type': 'string', 'format': 'text'}],
