@@ -5,12 +5,18 @@
         (ansible_distribution_release != "xenial") and
         (ansible_os_family == "RedHat" and ansible_distribution_major_version != "7")
 
+- fail:
+    msg="girder_worker_pip and girder_worker_virtualenv are mututally exclusive variables."
+  when: girder_worker_pip is defined and girder_worker_virtualenv is defined
+
+- fail:
+    msg="Setting girder_worker_python requires setting girder_worker_pip."
+  when: girder_worker_python is defined and girder_worker_pip is not defined
+
 - include: girder_worker.yml
 
 - include: pip.yml
   when: girder_worker_virtualenv is not defined
-  become: yes
-  become_user: root
 
 - include: pip.yml
   when: girder_worker_virtualenv is defined
@@ -18,7 +24,7 @@
 - include: configure.yml
   when: girder_worker_virtualenv is not defined
   become: yes
-  become_user: root
+  become_user: "{{ ansible_user_id }}"
 
 - include: configure.yml
   when: girder_worker_virtualenv is defined

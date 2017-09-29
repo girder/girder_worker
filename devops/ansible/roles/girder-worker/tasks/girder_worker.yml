@@ -1,36 +1,53 @@
-- name: Install EPEL
-  yum:
-    name: epel-release
-    state: present
-  become: yes
-  become_user: root
-  when: ansible_os_family == "RedHat"
+- block:
+    - name: Install EPEL
+      yum:
+        name: epel-release
+        state: present
+      become: yes
+      become_user: root
 
-- name: Install Girder Worker system dependencies
-  apt:
-    name: "{{ item }}"
-  become: yes
-  become_user: root
-  with_items:
-    - libjpeg-dev
-    - libssl-dev
-    - python-dev
-    - python-pip
-    - zlib1g-dev
+    - name: Install Girder Worker system dependencies
+      apt:
+        name: "{{ item }}"
+      become: yes
+      become_user: root
+      with_items:
+        - libjpeg-dev
+        - libssl-dev
+        - zlib1g-dev
+
+    - name: Install Python development headers
+      apt:
+        name: python-dev
+      when: girder_worker_python is not defined
+
+    - name: Install pip
+      apt:
+        name: python-pip
+      when: girder_worker_python is not defined and girder_pip is not defined
   when: ansible_os_family == "Debian"
 
-- name: Install Girder Worker system dependencies
-  yum:
-    name: "{{ item }}"
-  become: yes
-  become_user: root
-  with_items:
-    - libjpeg-turbo-devel
-    - openssl-devel
-    - python-devel
-    - python2-pip
-    - zlib-devel
-    - gcc
+- block:
+    - name: Install Girder Worker system dependencies
+      yum:
+        name: "{{ item }}"
+      become: yes
+      become_user: root
+      with_items:
+        - libjpeg-turbo-devel
+        - openssl-devel
+        - zlib-devel
+        - gcc
+
+    - name: Install Python development headers
+      yum:
+        name: python-devel
+      when: girder_python is not defined
+
+    - name: Install pip
+      yum:
+        name: python2-pip
+      when: girder_python is not defined and girder_pip is not defined
   when: ansible_os_family == "RedHat"
 
 - name: Install Girder Worker system dependencies
@@ -40,12 +57,14 @@
   become_user: root
   when: girder_worker_install_source == "git"
 
-- name: Install Girder Worker system dependencies
-  package:
-    name: python-virtualenv
+- name: Install virtualenv
+  pip:
+    name: virtualenv
+    executable: "{{ girder_pip | default(omit) }}"
+    state: latest
   become: yes
   become_user: root
-  when: girder_worker_virtualenv is defined
+  when: girder_virtualenv is defined
 
 - name: Download Girder Worker
   git:
