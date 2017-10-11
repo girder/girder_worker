@@ -3,7 +3,7 @@ prune examples
 prune tests
 include LICENSE
 include setup.py
-include requirements.txt
+include requirements.in
 include README.rst
 include girder_worker/worker.dist.cfg
 recursive-include girder_worker/format *
