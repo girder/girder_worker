@@ -1,5 +1,6 @@
 from importlib import import_module
 
+from girder_worker_utils import decorators
 import six
 from stevedore import extension
 import celery
@@ -90,9 +91,6 @@ def get_module_tasks(module_name):
 
     :param str module_name: The importable module name
     """
-    # Import inside the function scope to prevent circular dependencies.
-    from . import describe
-
     module = _import_module(module_name)
     tasks = {}
 
@@ -106,9 +104,9 @@ def get_module_tasks(module_name):
             continue
 
         try:
-            describe.get_description_attribute(func)
+            decorators.get_description_attribute(func)
             tasks[full_name] = func
-        except describe.MissingDescriptionException:
+        except decorators.MissingDescriptionException:
             pass
     return tasks
 
