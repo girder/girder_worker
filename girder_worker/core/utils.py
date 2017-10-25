@@ -197,68 +197,7 @@ def load_plugin(name, paths):
                 name, '\n   '.join(paths)))
 
 
-def _close_pipes(rds, wds, input_pipes, output_pipes, close_output_pipe):
-    """
-    Helper to close remaining input and output adapters after the subprocess
-    completes.
-    """
-    # close any remaining output adapters
-    for fd in rds:
-        if fd in output_pipes:
-            output_pipes[fd].close()
-            if close_output_pipe(fd):
-                os.close(fd)
-
-    # close any remaining input adapters
-    for fd in wds:
-        if fd in input_pipes:
-            os.close(fd)
-
-
-def _setup_input_pipes(input_pipes):
-    """
-    Given a mapping of input pipes, return a tuple with 2 elements. The first is
-    a list of file descriptors to pass to ``select`` as writeable descriptors.
-    The second is a dictionary mapping paths to existing named pipes to their
-    adapters.
-    """
-    wds = []
-    fifos = {}
-    for pipe, adapter in six.viewitems(input_pipes):
-        if isinstance(pipe, int):
-            # This is assumed to be an open system-level file descriptor
-            wds.append(pipe)
-        else:
-            if not os.path.exists(pipe):
-                raise Exception('Input pipe does not exist: %s' % pipe)
-            if not stat.S_ISFIFO(os.stat(pipe).st_mode):
-                raise Exception('Input pipe must be a fifo object: %s' % pipe)
-            fifos[pipe] = adapter
-
-    return wds, fifos
-
-
-def _open_ipipes(wds, fifos, input_pipes):
-    """
-    This will attempt to open the named pipes in the set of ``fifos`` for
-    writing, which will only succeed if the subprocess has opened them for
-    reading already. This modifies and returns the list of write descriptors,
-    the list of waiting fifo names, and the mapping back to input adapters.
-    """
-    for fifo in fifos.copy():
-        try:
-            fd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
-            input_pipes[fd] = fifos.pop(fifo)
-            wds.append(fd)
-        except OSError as e:
-            if e.errno != errno.ENXIO:
-                raise e
-
-    return wds, fifos, input_pipes
-
-
-def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
-                outputs=None, inputs=None):
+def select_loop(exit_condition=lambda: True, readers=None, writers=None):
     """
     Run a select loop for a set of input and output pipes
 
@@ -284,11 +223,6 @@ def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
     """
 
     BUF_LEN = 65536
-    inputs = inputs or {}
-    outputs = outputs or {}
-
-    rds = [fd for fd in outputs.keys() if isinstance(fd, int)]
-    wds, fifos = _setup_input_pipes(inputs)
 
     try:
         while True:
@@ -296,106 +230,37 @@ def select_loop(exit_condition=lambda: True, close_output=lambda x: True,
             # of the loop before breaking out of the loop.
             exit = exit_condition()
 
+            open_writers = [writer for writer in writers if writer.fileno() is not None]
+
             # get ready pipes, timeout of 100 ms
-            readable, writable, _ = select.select(rds, wds, (), 0.1)
+            readable, writable, _ = select.select(readers, open_writers, (), 0.1)
 
-            for ready_fd in readable:
-                buf = os.read(ready_fd, BUF_LEN)
+            for ready in readable:
+                read = ready.read(BUF_LEN)
+                if read == 0:
+                    readers.remove(ready)
 
-                if buf:
-                    outputs[ready_fd].write(buf)
-                else:
-                    outputs[ready_fd].close()
-                    # Should we close this pipe? In the case of stdout or stderr
-                    # bad things happen if parent closes
-                    if close_output(ready_fd):
-                        os.close(ready_fd)
-                    rds.remove(ready_fd)
-            for ready_fd in writable:
+            for ready in writable:
                 # TODO for now it's OK for the input reads to block since
                 # input generally happens first, but we should consider how to
                 # support non-blocking stream inputs in the future.
-                buf = inputs[ready_fd].read(BUF_LEN)
+                written = ready.write(BUF_LEN)
+                if written == 0:
+                    writers.remove(ready)
 
-                if buf:
-                    os.write(ready_fd, buf)
-                else:   # end of stream
-                    wds.remove(ready_fd)
-                    os.close(ready_fd)
+            need_opening = [writer for writer in writers if writer.fileno() is None]
+            for connector in need_opening:
+                connector.open()
 
-            wds, fifos, inputs = _open_ipipes(wds, fifos, inputs)
             # all pipes empty?
-            empty = (not rds or not readable) and (not wds or not writable)
+            empty = (not readers or not readable) and (not writers or not writable)
 
             if (empty and exit):
                 break
 
     finally:
-        _close_pipes(rds, wds, inputs, outputs, close_output)
-
-
-def run_process(command, output_pipes=None, input_pipes=None):
-    """
-    Run a subprocess, and listen for its outputs on various pipes.
-
-    :param command: The command to run.
-    :type command: list of str
-    :param output_pipes: This should be a dictionary mapping pipe descriptors
-        to instances of ``StreamPushAdapter`` that should handle the data from
-        the stream. Normally, keys of this dictionary are open file descriptors,
-        which are integers. There are two special cases where they are not,
-        which are the keys ``'_stdout'`` and ``'_stderr'``. These special keys
-        correspond to the stdout and stderr pipes that will be created for the
-        subprocess. If these are not set in the ``output_pipes`` map, the
-        default behavior is to direct them to the stdout and stderr of the
-        current process.
-    :type output_pipes: dict
-    :param input_pipes: This should be a dictionary mapping pipe descriptors
-        to instances of ``StreamFetchAdapter`` that should handle sending
-        input data in chunks. Keys in this dictionary can be either open file
-        descriptors (integers), the special value ``'_stdin'`` for standard
-        input, or a string representing a path to an existing fifo on the
-        filesystem. This third case supports the use of named pipes, since they
-        must be opened for reading before they can be opened for writing
-    :type input_pipes: dict
-    """
-
-    p = subprocess.Popen(args=command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-
-    input_pipes = input_pipes or {}
-    output_pipes = output_pipes or {}
-
-    # we now know subprocess stdout and stderr filenos, so bind the adapters
-    stdout = p.stdout.fileno()
-    stderr = p.stderr.fileno()
-    stdin = p.stdin.fileno()
-    output_pipes[stdout] = output_pipes.get(
-        '_stdout', WritePipeAdapter({}, sys.stdout))
-    output_pipes[stderr] = output_pipes.get(
-        '_stderr', WritePipeAdapter({}, sys.stderr))
-
-    # Special case for _stdin
-    if '_stdin' in input_pipes:
-        input_pipes[stdin] = input_pipes['_stdin']
-
-    def exit_condition():
-        status = p.poll()
-        return status is not None
-
-    def close_output_pipe(pipe):
-        return pipe not in (stdout, stderr)
-
-    try:
-        select_loop(exit_condition=exit_condition,
-                    close_output=close_output_pipe,
-                    outputs=output_pipes, inputs=input_pipes)
-    except Exception:
-        p.kill()  # kill child process if something went wrong on our end
-        raise
-
-    return p
-
+        for stream in readers + writers:
+            stream.close()
 
 class StreamFetchAdapter(object):
     """

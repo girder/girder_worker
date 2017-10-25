@@ -4,6 +4,22 @@ import re
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 from .tasks import _docker_run
+from girder_worker.plugins.docker.io import (
+    WriteStreamConnector,
+    NamedPipe,
+    ReadStreamConnector
+)
+
+from .tasks.transform import (
+    ProgressPipe,
+    ContainerStdOut,
+    ContainerStdErr
+)
+from girder_worker.plugins.docker.io import (
+    NamedPipeReader,
+    NamedPipeWriter
+)
+
 
 DATA_VOLUME = '/mnt/girder_worker/data'
 
@@ -96,7 +112,7 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
-def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe):
+def _setup_streams(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe):
     """
     Returns a 2 tuple of input and output pipe mappings. The first element is
     a dict mapping input file descriptors to the corresponding stream adapters,
@@ -105,59 +121,66 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, p
     STDERR mappings, and in the case of non-streaming standard IO pipes, will
     create default bindings for those as well.
     """
-    ipipes = {}
-    opipes = {}
+    #ipipes = {}
+    #opipes = {}
 
-    def make_pipe(id, spec, bindings):
+    stream_connectors = []
+
+
+    def stream_pipe_path(id, spec, bindings):
         """
-        Helper to make a pipe conditionally for valid streaming IO specs. If the
-        given spec is not a streaming spec, returns False. If it is, returns the
-        path to the pipe file that was created.
+        Helper to check for a  valid streaming IO specs. If the
+        given spec is not a streaming spec, returns None. If it is, returns the
+        path.
         """
         if spec.get('stream') and id in bindings and spec.get('target') == 'filepath':
             path = spec.get('path', id)
             if path.startswith('/'):
                 raise Exception('Streaming filepaths must be relative.')
             path = os.path.join(tempdir, path)
-            os.mkfifo(path)
             return path
-        return False
+
+        return None
 
     # handle stream inputs
     for id, spec in task_inputs.iteritems():
-        pipe = make_pipe(id, spec, inputs)
-        if pipe:
+
+        path = stream_pipe_path(id, spec, inputs)
+        # We have a streaming input
+        if path is not None:
+            writer = NamedPipeWriter(NamedPipe(path))
+            connector = WriteStreamConnector(make_stream_fetch_adapter(inputs[id]), writer)
+            stream_connectors.append(connector)
             # Don't open from this side, must be opened for reading first!
-            ipipes[pipe] = make_stream_fetch_adapter(inputs[id])
 
     # handle stream outputs
     for id, spec in task_outputs.iteritems():
-        pipe = make_pipe(id, spec, outputs)
-        if pipe:
-            opipes[os.open(pipe, os.O_RDONLY | os.O_NONBLOCK)] = \
-                make_stream_push_adapter(outputs[id])
+        path = stream_pipe_path(id, spec, outputs)
+        if path is not None:
+            reader = NamedPipeReader(NamedPipe(path))
+            connector = ReadStreamConnector(reader, make_stream_push_adapter(outputs[id]))
+            stream_connectors.append(connector)
 
     # handle special stream output for job progress
     if progress_pipe and job_mgr:
-        path = os.path.join(tempdir, '.girder_progress')
-        os.mkfifo(path)
-        opipes[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = utils.JobProgressAdapter(job_mgr)
+        progress_pipe = ProgressPipe(os.path.join(tempdir, '.girder_progress'))
+        stream_connectors.append(progress_pipe.open())
 
-    # special handling for stdin, stdout, and stderr pipes
-    if '_stdin' in task_inputs and '_stdin' in inputs:
-        if task_inputs['_stdin'].get('stream'):
-            ipipes['_stdin'] = make_stream_fetch_adapter(inputs['_stdin'])
-        else:
-            ipipes['_stdin'] = utils.MemoryFetchAdapter(inputs[id], inputs[id]['data'])
 
-    for id in ('_stdout', '_stderr'):
+    return stream_connectors
+
+def _setup_std_streams(task_outputs, outputs):
+    def push_adapter(id):
+        adapter = None
         if id in task_outputs and id in outputs:
             if task_outputs[id].get('stream'):
-                opipes[id] = make_stream_push_adapter(outputs[id])
+                adapter = make_stream_push_adapter(outputs[id])
             else:
-                opipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
+                adapter = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
-    return ipipes, opipes
+        return adapter
+
+    return (push_adapter('_stdout'), push_adapter('_stderr'))
 
 
 def add_input_volumes(inputs, volumes):
@@ -191,8 +214,18 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     job_mgr = kwargs.get('_job_manager')
     args = _expand_args(task.get('container_args', []), inputs, task_inputs, outputs, tempdir)
 
-    ipipes, opipes = _setup_pipes(
+    stream_connectors = _setup_streams(
         task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe)
+
+    (stdout_fetch_adapter, stderr_fetch_adapter) \
+        = _setup_std_streams(task_outputs, outputs)
+
+    # Connect up stdout and strerr ContainerStdOut() and ContainerStdErr() will be
+    # replaced with the real streams when the container is started.
+    if stdout_fetch_adapter is not None:
+        stream_connectors.append(ReadStreamConnector(ContainerStdOut(), stdout_fetch_adapter))
+    if stderr_fetch_adapter is not None:
+        stream_connectors.append(ReadStreamConnector(ContainerStdErr(), stderr_fetch_adapter))
 
     entrypoint = None
     if 'entrypoint' in task:
@@ -211,7 +244,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
 
     _docker_run(celery_task, image, pull_image=pull_image, entrypoint=entrypoint,
                 container_args=args, volumes=volumes, remove_container=remove_container,
-                output_pipes=opipes, input_pipes=ipipes, **extra_run_kwargs)
+                stream_connectors=stream_connectors, **extra_run_kwargs)
 
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath' and not spec.get('stream'):
