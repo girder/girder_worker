@@ -33,7 +33,7 @@ class GirderSession(BaseUrlSession):
                 'Timed out waiting for job/%s to move into canceled state' % j['_id'])
 
     def get_result(self, celery_id):
-        r = self.post('integration_tests/result', data={
+        r = self.post('integration_tests/common/result', data={
             'celery_id': celery_id})
         return r.text
 
