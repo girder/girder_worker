@@ -1,5 +1,6 @@
 from girder.plugins.jobs.models.job import Job
 
+
 def wait_for_status(user, job, status):
     """
     Utility to wait for a job model to move into a particular state.

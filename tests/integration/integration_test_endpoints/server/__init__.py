@@ -1,16 +1,13 @@
-import copy
 from girder.api import access
 from girder.api.describe import Description, describeRoute
-from girder.api.rest import Resource, filtermodel, Prefix
+from girder.api.rest import Resource, Prefix
 from girder.utility.model_importer import ModelImporter
 
-from girder.plugins.worker import utils
 from girder.plugins.worker.constants import PluginSettings
 
 from girder_worker.app import app
 from celery.exceptions import TimeoutError
-import multiprocessing
-from girder_worker.utils import JobStatus
+
 from .raw import CeleryTestEndpoints
 from .traditional import TraditionalTestEndpoints
 
@@ -41,6 +38,7 @@ class CommonTestEndpoints(Resource):
             return a1.get(timeout=0.2)
         except TimeoutError:
             return None
+
 
 def load(info):
     # Note: Some endpoints rely on the celery application defined in

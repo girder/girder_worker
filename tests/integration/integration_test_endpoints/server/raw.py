@@ -1,22 +1,18 @@
-import copy
 from girder.api import access
 from girder.api.describe import Description, describeRoute
 from girder.api.rest import Resource, filtermodel
 from girder.utility.model_importer import ModelImporter
-
-from girder.plugins.worker import utils
-from girder.plugins.worker.constants import PluginSettings
 
 from common_tasks.test_tasks.fib import fibonacci
 from common_tasks.test_tasks.cancel import cancelable
 from common_tasks.test_tasks.fail import fail_after
 from common_tasks.test_tasks.girder_client import request_private_path
 
-from celery.exceptions import TimeoutError
 import multiprocessing
 from girder_worker.utils import JobStatus
 
 from .utilities import wait_for_status
+
 
 # N.B. Module is named raw to avoid conflict with celery package
 class CeleryTestEndpoints(Resource):

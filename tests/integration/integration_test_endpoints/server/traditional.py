@@ -2,18 +2,16 @@ import copy
 from girder.api import access
 from girder.api.describe import Description, describeRoute
 from girder.api.rest import Resource, filtermodel
-from girder.utility.model_importer import ModelImporter
 
 from girder.plugins.worker import utils
-from girder.plugins.worker.constants import PluginSettings
 
 from common_tasks.test_tasks.cancel import cancelable
 
-from celery.exceptions import TimeoutError
 import multiprocessing
 from girder_worker.utils import JobStatus
 
 from .utilities import wait_for_status
+
 
 class TraditionalTestEndpoints(Resource):
     def __init__(self):
