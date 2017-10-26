@@ -6,14 +6,14 @@ from requests.exceptions import ReadTimeout
 from girder_worker.app import app
 from girder_worker import logger
 from girder_worker.core import utils
-from girder_worker.plugins.docker.stream_adapter import DockerStreamPushAdapter
-from girder_worker.plugins.docker import nvidia
-from girder_worker.plugins.docker.io import (
+from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
+from girder_worker.docker import nvidia
+from girder_worker.docker.io import (
     WriteStreamConnector,
     ReadStreamConnector,
     FileDescriptorReader
 )
-from girder_worker.plugins.docker.tasks.transform import (
+from girder_worker.docker.transform import (
     ContainerStdErr,
     ContainerStdOut,
     Connect

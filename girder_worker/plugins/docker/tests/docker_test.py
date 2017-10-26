@@ -98,7 +98,7 @@ class TestDockerMode(unittest.TestCase):
         _reset_mocks()
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    @mock.patch('girder_worker.plugins.docker.tasks.FileDescriptorReader.close',
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
                 return_value=_close)
     def testDockerMode(self, *args):
         task = {
@@ -338,7 +338,7 @@ class TestDockerMode(unittest.TestCase):
         self.assertEqual(mockPopen.call_count, 0)
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    @mock.patch('girder_worker.plugins.docker.tasks.FileDescriptorReader.close',
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
                 return_value=_close)
     def testOutputValidation(self, *args):
         task = {
@@ -396,7 +396,7 @@ class TestDockerMode(unittest.TestCase):
             run(task, _celery_task=celery_task)
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    @mock.patch('girder_worker.plugins.docker.tasks.FileDescriptorReader.close',
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
                 return_value=_close)
     def testNamedPipes(self, *args):
         task = {
@@ -437,7 +437,7 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    @mock.patch('girder_worker.plugins.docker.tasks.FileDescriptorReader.close',
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
                 return_value=_close)
     def testDockerRunArgs(self, *args):
         task = {
@@ -479,7 +479,7 @@ class TestDockerMode(unittest.TestCase):
         self.assertFalse(kwargs['tty'])
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    @mock.patch('girder_worker.plugins.docker.tasks.FileDescriptorReader.close',
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
                  return_value=_close)
     def testOutputTemplate(self, *args):
         task = {

@@ -1,5 +1,5 @@
 import unittest
-from girder_worker.plugins.docker.stream_adapter import DockerStreamPushAdapter
+from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 
 
 class CaptureAdapter(object):
