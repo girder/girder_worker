@@ -22,52 +22,7 @@ import re
 import setuptools
 import shutil
 
-from pkg_resources import parse_requirements
 from setuptools.command.install import install
-
-# Note to future developers:
-# tl;dr - don't copy this function!
-#
-# This function is a compromise and not a recommended way of approaching this
-# problem. Ideally install_requires should statically define the minimum
-# versions of immediate dependencies allowing developers to experiment with
-# new upstream features. extra_requires should point to separate pip install
-# -able packages for plugins like girder_io, docker, r, etc which should be
-# managed through entry_points or with an entry point based plugin management
-# package like stevedore (https://pypi.python.org/pypi/stevedore). This would
-# allow each application plugin (e.g. girder_io) to manage its own dependencies
-# separately from girder_worker. But - until such time as an approach like this
-# is implemented we directly read requirements.txt files from plugin
-# directories and "unpin" them to ensure developers are not constrained by
-# pinned versions and generally to avoid dependency hell.
-def unpin_version(r):
-    """
-    Generate an identical package requirement string but replace any pinned
-    version (e.g. ==3.2.0)  with unpinned, minimum versions (e.g. >=3.2.0).
-    This function takes a pkg_resources Requirement object and returns a string
-    """
-    try:
-        name = r.name
-        extras = '[{}]'.format(','.join(r.extras)) if r.extras else ''
-        marker = ' ;{}'.format(str(r.marker)) if r.marker else ''
-
-        # version spec OR url,  not both
-        if r.url is not None:
-            # No meaningful way to 'unpin' a URL version
-            version = ' @{}'.format(r.url) if r.url else ''
-
-        else:
-            # Convert any '==' requirements to '>=' requirements
-            version = ' {}'.format(
-                ','.join([">={}".format(version) if op == '==' else op + version
-                          for op, version in r.specs]))
-
-        return str(r.parse("{}{}{}{}".format(
-            name, extras, version, marker
-        )))
-
-    except Exception:
-        return str(r)
 
 
 class CustomInstall(install):
@@ -102,14 +57,8 @@ for root, dirnames, filenames in os.walk('plugins'):
     plugin_data.extend([os.path.join(root, fn) for fn in filenames])
 os.chdir('..')
 
-# parse_requirements() returns generator of pip.req.InstallRequirement objects
-install_reqs = []
-try:
-    with open('requirements.txt') as f:
-        install_reqs = parse_requirements(f.read())
-except Exception:
-    pass
-reqs = [unpin_version(req) for req in install_reqs]
+with open('requirements.in') as f:
+    install_reqs = f.readlines()
 
 # Build up extras_require for plugin requirements
 extras_require = {}
@@ -118,10 +67,7 @@ for name in os.listdir(plugins_dir):
     reqs_file = os.path.join(plugins_dir, name, 'requirements.txt')
     if os.path.isfile(reqs_file):
         with open(reqs_file) as f:
-            plugin_reqs = parse_requirements(f.read())
-        extras_require[name] = [unpin_version(r) for r in plugin_reqs]
-    else:
-        extras_require[name] = []
+            extras_require[name] = f.readlines()
 
 # perform the install
 setuptools.setup(
@@ -154,7 +100,7 @@ setuptools.setup(
     cmdclass={
         'install': CustomInstall
     },
-    install_requires=reqs,
+    install_requires=install_reqs,
     zip_safe=False,
     entry_points={
         'console_scripts': [

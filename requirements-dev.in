@@ -1,0 +1,13 @@
+coverage
+coveralls
+flake8
+flake8-blind-except
+flake8-docstrings
+flake8-quotes
+girder>=2
+httmock
+lxml
+mock
+pydocstyle>=2,<2.1  # < 2.1 required for flake8-docstrings<=1.1
+Sphinx
+sphinx-rtd-theme

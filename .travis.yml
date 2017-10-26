@@ -28,7 +28,7 @@ before_script:
   - sleep 3 # give xvfb some time to start
 
 before_install:
-  - pip install -U pip six
+  - pip install -U pip
   - pushd "${HOME}"
   - if [ ! -f $HOME/cmake-3.2.2-Linux-x86_64/bin/cmake ] ; then  curl -L http://cmake.org/files/v3.2/cmake-3.2.2-Linux-x86_64.tar.gz | gunzip -c | tar x ; fi
   - cd cmake-*/bin && export PATH="${PWD}:${PATH}"
@@ -44,8 +44,7 @@ before_install:
 # install dependencies
 install:
   # install Python packages for core and all plugins
-  - python scripts/install_requirements.py --mode=dev --all
-  - python setup.py develop
+  - pip install -r requirements.txt -e .
 
 # run tests
 script:
