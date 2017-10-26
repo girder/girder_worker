@@ -10,7 +10,7 @@ from celery.exceptions import TimeoutError
 
 from .raw import CeleryTestEndpoints
 from .traditional import TraditionalTestEndpoints
-
+from .docker import DockerTestEndpoints
 
 class CommonTestEndpoints(Resource):
     def __init__(self):
@@ -53,3 +53,4 @@ def load(info):
     info['apiRoot'].integration_tests.common = CommonTestEndpoints()
     info['apiRoot'].integration_tests.celery = CeleryTestEndpoints()
     info['apiRoot'].integration_tests.traditional = TraditionalTestEndpoints()
+    info['apiRoot'].integration_tests.docker = DockerTestEndpoints()
