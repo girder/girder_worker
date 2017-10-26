@@ -4,11 +4,12 @@ import signal
 
 if len(sys.argv) == 3:
     mode = sys.argv[1]
-    message = sys.argv[2]
 
     if mode == 'stdio':
+        message = sys.argv[2]
         print(message)
     elif mode == 'output_pipe':
+        message = sys.argv[2]
         with open('/mnt/girder_worker/data/output_pipe', 'w') as fp:
             fp.write(message)
     elif mode == 'input_pipe':
@@ -25,6 +26,10 @@ if len(sys.argv) == 3:
     elif mode == 'stdout_stderr':
         sys.stdout.write('this is stdout data\n')
         sys.stderr.write('this is stderr data\n')
+    elif mode == 'volume':
+        path = sys.argv[2]
+        with open(path) as fp:
+            print(fp.read())
     else:
         sys.stderr.write('Invalid test mode: "%s".\n' % mode)
         sys.exit(-1)
