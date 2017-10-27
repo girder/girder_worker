@@ -216,6 +216,20 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             task_kwargs = {k: _maybe_model_repr(v)
                            for k, v in body[1].iteritems()}
 
+            # We need to make sure these arguments can be serialize to mongo,
+            # Users can provide a model_repr methods todo this. TODO come up
+            # with a better name.
+            def _t(arg):
+                if isinstance(arg, list):
+                    return [_t(i) for i in arg]
+                elif hasattr(arg, 'model_repr'):
+                    return arg.model_repr()
+                return arg
+
+
+            task_args = [_t(a) for a in task_args]
+            task_kwargs = {k: _t(v) for k, v in task_kwargs.items()}
+
             job = job_model.createJob(
                 **{'title': headers.pop('girder_job_title',
                                         Task._girder_job_title),
