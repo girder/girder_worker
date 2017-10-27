@@ -143,17 +143,16 @@ def _handle_streaming_args(args):
     processed_arg = []
     write_streams = []
     read_streams = []
+
     for arg in args:
-        # TODO eventually this will be done automagically
-        if isinstance(arg, Connect):
-            connector = arg.transform()
-            if isinstance(connector, WriteStreamConnector):
-                write_streams.append(connector)
+        if isinstance(arg, StreamConnector):
+            if isinstance(arg, WriteStreamConnector):
+                write_streams.append(arg)
             else:
-                read_streams.append(connector)
+                read_streams.append(arg)
 
             # Get any container argument associated with this stream
-            arg = connector.container_arg()
+            arg = arg.container_arg()
 
         processed_arg.append(arg)
 
