@@ -200,10 +200,16 @@ class FileDescriptorWriter(object):
     def close(self):
         os.close(self.fileno())
 
-class StdStreamReader(FileDescriptorReader):
+class StdStreamWriter(object):
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, buf):
+        return self._stream.write(buf)
+
     def close(self):
-        # Bad thinks happend when you close stderr or stdout
-        pass
+        # Don't close std streams!
+        self._stream.flush()
 
 class NamedPipe(object):
     def __init__(self, path):

@@ -11,7 +11,8 @@ from girder_worker.docker import nvidia
 from girder_worker.docker.io import (
     WriteStreamConnector,
     ReadStreamConnector,
-    FileDescriptorReader
+    FileDescriptorReader,
+    StreamConnector
 )
 from girder_worker.docker.transform import (
     ContainerStdErr,
