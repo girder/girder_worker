@@ -1,38 +1,25 @@
 import sys
 
+from girder_worker_utils.transform import Transform
 
-# TODO This will move to girder_work_utils repo.
-class BaseTransform(object):
-    __state__ = {}
 
-    @classmethod
-    def __obj__(cls, state):
-        return cls(*state.get("args", []),
-                   **state.get("kwargs", {}))
-
-    def __json__(self):
-        return {"_class": self.__class__.__name__,
-                "__state__": self.__state__}
-
-    def __new__(cls, *args, **kwargs):
-        obj = object.__new__(cls)
-        obj.__state__['args'] = args
-        obj.__state__['kwargs'] = kwargs
-        return obj
-
-class StdOut(BaseTransform):
+class StdOut(Transform):
     def transform(self):
-        from girder_worker.plugins.docker.io import StdStreamReader
-        return StdStreamReader(sys.stdout)
+        from girder_worker.docker.io import (
+            StdStreamWriter
+        )
+        return StdStreamWriter(sys.stdout)
 
 
-class StdErr(BaseTransform):
+class StdErr(Transform):
     def transform(self):
-        from girder_worker.plugins.docker.io import StdStreamReader
-        return StdStreamReader(sys.stderr)
+        from girder_worker.docker.io import (
+            StdStreamWriter
+        )
+        return StdStreamWriter(sys.stderr)
 
 
-class ContainerStdOut(BaseTransform):
+class ContainerStdOut(Transform):
 
     def transform(self):
         return self
@@ -42,7 +29,7 @@ class ContainerStdOut(BaseTransform):
         pass
 
 
-class ContainerStdErr(BaseTransform):
+class ContainerStdErr(Transform):
 
     def transform(self):
         return self
@@ -52,7 +39,7 @@ class ContainerStdErr(BaseTransform):
         pass
 
 
-class ProgressPipe(BaseTransform):
+class ProgressPipe(Transform):
 
     def __init__(self, path):
         super(ProgressPipe, self).__init__()
@@ -60,7 +47,7 @@ class ProgressPipe(BaseTransform):
 
     def transform(self, task):
         from girder_worker import utils
-        from girder_worker.plugins.docker.io import (
+        from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeReader,
             ReadStreamConnector
@@ -71,7 +58,7 @@ class ProgressPipe(BaseTransform):
         return ReadStreamConnector(NamedPipeReader(pipe), utils.JobProgressAdapter(job_mgr))
 
 
-class NamedPipeBase(BaseTransform):
+class NamedPipeBase(Transform):
     def __init__(self, inside_path, outside_path):
         super(NamedPipeBase, self).__init__()
 
@@ -88,7 +75,7 @@ class NamedInputPipe(NamedPipeBase):
         super(NamedInputPipe, self).__init__(inside_path, outside_path)
 
     def transform(self):
-        from girder_worker.plugins.docker.io import (
+        from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeWriter
         )
@@ -101,24 +88,24 @@ class NamedOutputPipe(NamedPipeBase):
     i.e. To stream data out of a container.
     """
     def __init__(self, inside_path, outside_path):
-        super(NamedInputPipe, self).__init__(inside_path, outside_path)
+        super(NamedOutputPipe, self).__init__(inside_path, outside_path)
 
     def transform(self):
-        from girder_worker.plugins.docker.io import (
+        from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeReader
         )
         pipe = NamedPipe(self.outside_path)
         return NamedPipeReader(pipe, self.inside_path)
 
-class Connect(BaseTransform):
+class Connect(Transform):
     def __init__(self, input, output):
         super(Connect, self).__init__()
         self._input = input
         self._output = output
 
     def transform(self):
-        from girder_worker.plugins.docker.io import (
+        from girder_worker.docker.io import (
             WriteStreamConnector,
             ReadStreamConnector,
         )
