@@ -195,103 +195,120 @@ def _maybe_model_repr(obj):
 def girder_before_task_publish(sender=None, body=None, exchange=None,
                                routing_key=None, headers=None, properties=None,
                                declare=None, retry_policy=None, **kwargs):
+    try:
+        if 'jobInfoSpec' not in headers:
+            try:
+                # Note: If we can import these objects from the girder packages we
+                # assume our producer is in a girder REST request. This allows
+                # us to create the job model's directly. Otherwise there will be an
+                # ImportError and we can create the job via a REST request using
+                # the jobInfoSpec in headers.
+                from girder.utility.model_importer import ModelImporter
+                from girder.plugins.worker import utils
+                from girder.api.rest import getCurrentUser
 
-    if 'jobInfoSpec' not in headers:
-        try:
-            # Note: If we can import these objects from the girder packages we
-            # assume our producer is in a girder REST request. This allows
-            # us to create the job model's directly. Otherwise there will be an
-            # ImportError and we can create the job via a REST request using
-            # the jobInfoSpec in headers.
-            from girder.utility.model_importer import ModelImporter
-            from girder.plugins.worker import utils
-            from girder.api.rest import getCurrentUser
+                job_model = ModelImporter.model('job', 'jobs')
 
-            job_model = ModelImporter.model('job', 'jobs')
+                user = headers.pop('girder_user', getCurrentUser())
 
-            user = headers.pop('girder_user', getCurrentUser())
+                # Sanitize any Transform objects
+                task_args = tuple([_maybe_model_repr(b) for b in body[0]])
+                task_kwargs = {k: _maybe_model_repr(v)
+                               for k, v in body[1].iteritems()}
 
-            # Sanitize any Transform objects
-            task_args = tuple([_maybe_model_repr(b) for b in body[0]])
-            task_kwargs = {k: _maybe_model_repr(v)
-                           for k, v in body[1].iteritems()}
-
-            # We need to make sure these arguments can be serialize to mongo,
-            # Users can provide a model_repr methods todo this. TODO come up
-            # with a better name.
-            def _t(arg):
-                if isinstance(arg, list):
-                    return [_t(i) for i in arg]
-                elif hasattr(arg, 'model_repr'):
-                    return arg.model_repr()
-                return arg
+                # We need to make sure these arguments can be serialize to mongo,
+                # Users can provide a model_repr methods todo this. TODO come up
+                # with a better name.
+                def _t(arg):
+                    if isinstance(arg, list):
+                        return [_t(i) for i in arg]
+                    elif hasattr(arg, 'model_repr'):
+                        return arg.model_repr()
+                    return arg
 
 
-            task_args = [_t(a) for a in task_args]
-            task_kwargs = {k: _t(v) for k, v in task_kwargs.items()}
+                task_args = [_t(a) for a in task_args]
+                task_kwargs = {k: _t(v) for k, v in task_kwargs.items()}
 
-            job = job_model.createJob(
-                **{'title': headers.pop('girder_job_title',
-                                        Task._girder_job_title),
-                   'type': headers.pop('girder_job_type',
-                                       Task._girder_job_type),
-                   'handler': headers.pop('girder_job_handler',
-                                          Task._girder_job_handler),
-                   'public': headers.pop('girder_job_public',
-                                         Task._girder_job_public),
-                   'user': user,
-                   'args': task_args,
-                   'kwargs': task_kwargs,
-                   'otherFields': dict(
-                       celeryTaskId=headers['id'],
-                       **headers.pop('girder_job_other_fields',
-                                     Task._girder_job_other_fields))})
+                job = job_model.createJob(
+                    **{'title': headers.pop('girder_job_title',
+                                            Task._girder_job_title),
+                       'type': headers.pop('girder_job_type',
+                                           Task._girder_job_type),
+                       'handler': headers.pop('girder_job_handler',
+                                              Task._girder_job_handler),
+                       'public': headers.pop('girder_job_public',
+                                             Task._girder_job_public),
+                       'user': user,
+                       'args': task_args,
+                       'kwargs': task_kwargs,
+                       'otherFields': dict(
+                           celeryTaskId=headers['id'],
+                           **headers.pop('girder_job_other_fields',
+                                         Task._girder_job_other_fields))})
 
-            headers['jobInfoSpec'] = utils.jobInfoSpec(job)
+                headers['jobInfoSpec'] = utils.jobInfoSpec(job)
 
-        except ImportError:
-            # TODO: Check for self.job_manager to see if we have
-            #       tokens etc to contact girder and create a job model
-            #       we may be in a chain or a chord or some-such
-            pass
+            except ImportError:
+                # TODO: Check for self.job_manager to see if we have
+                #       tokens etc to contact girder and create a job model
+                #       we may be in a chain or a chord or some-such
+                pass
 
-    if 'girder_api_url' not in headers:
-        try:
-            from girder.plugins.worker import utils
-            headers['girder_api_url'] = utils.getWorkerApiUrl()
-        except ImportError:
-            # TODO: handle situation where girder_worker is producing
-            #       the message Note - this may not come up at all
-            #       depending on how we pass girder_api_url through to
-            #       the next task (e.g. in the context of chaining
-            #       events)
-            pass
+        if 'girder_api_url' not in headers:
+            try:
+                from girder.plugins.worker import utils
+                headers['girder_api_url'] = utils.getWorkerApiUrl()
+            except ImportError:
+                # TODO: handle situation where girder_worker is producing
+                #       the message Note - this may not come up at all
+                #       depending on how we pass girder_api_url through to
+                #       the next task (e.g. in the context of chaining
+                #       events)
+                pass
 
-    if 'girder_client_token' not in headers:
-        try:
-            from girder.utility.model_importer import ModelImporter
-            headers['girder_client_token'] = \
-                ModelImporter.model('token').createToken()
-        except ImportError:
-            # TODO: handle situation where girder_worker is producing
-            #       the message Note - this may not come up at all
-            #       depending on how we pass girder_token through to
-            #       the next task (e.g. in the context of chaining
-            #       events)
-            pass
+        if 'girder_client_token' not in headers:
+            try:
+                from girder.utility.model_importer import ModelImporter
+                headers['girder_client_token'] = \
+                    ModelImporter.model('token').createToken()
+            except ImportError:
+                # TODO: handle situation where girder_worker is producing
+                #       the message Note - this may not come up at all
+                #       depending on how we pass girder_token through to
+                #       the next task (e.g. in the context of chaining
+                #       events)
+                pass
 
-    if 'girder_result_hooks' in headers:
-        # Celery task headers are not automatically serialized by celery
-        # before being passed off to ampq for byte packing. We will have
-        # to do that here.
-        p = jsonpickle.pickler.Pickler()
-        headers['girder_result_hooks'] = \
-            [p.flatten(grh) for grh in headers['girder_result_hooks']]
+        if 'girder_result_hooks' in headers:
+            # Celery task headers are not automatically serialized by celery
+            # before being passed off to ampq for byte packing. We will have
+            # to do that here.
+            p = jsonpickle.pickler.Pickler()
+            headers['girder_result_hooks'] = \
+                [p.flatten(grh) for grh in headers['girder_result_hooks']]
 
-    # Finally,  remove all reserved_options from headers
-    for key in Task.reserved_options:
-        headers.pop(key, None)
+        # Finally,  remove all reserved_options from headers
+        for key in Task.reserved_options:
+            headers.pop(key, None)
 
+        if 'girder_client_token' not in headers:
+            try:
+                from girder.utility.model_importer import ModelImporter
+                headers['girder_client_token'] = ModelImporter.model('token').createToken()
+            except ImportError:
+                # TODO: handle situation where girder_worker is producing the message
+                #       Note - this may not come up at all depending on how we pass
+                #       girder_token through to the next task (e.g. in the context
+                #       of chaining events)
+                pass
+
+        # Finally,  remove all reserved_options from headers
+        for key in Task.reserved_options:
+            headers.pop(key, None)
+    except:
+        logger.exception('An error occurred in girder_before_task_publish.')
+        raise
 
 @worker_ready.connect
 def check_celery_version(*args, **kwargs):
