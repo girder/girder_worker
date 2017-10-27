@@ -15,14 +15,16 @@ from celery.signals import (
     worker_ready)
 
 from celery.task.control import inspect
-from girder_client import GirderClient
 import girder_worker
 from girder_worker import logger
 from girder_worker_utils import _walk_obj
 import jsonpickle
 from kombu.serialization import register
+
 from six.moves import configparser
 from .utils import JobStatus, StateTransitionException
+
+from girder_worker_utils.json import object_hook
 
 
 class GirderAsyncResult(AsyncResult):
