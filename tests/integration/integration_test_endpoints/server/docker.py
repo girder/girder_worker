@@ -9,6 +9,12 @@ from girder.plugins.worker import utils
 from girder.plugins.worker.constants import PluginSettings
 from girder_worker.docker.tasks import docker_run
 
+from girder_worker.docker.transform import (
+    StdOut,
+    NamedOutputPipe,
+    Connect
+)
+
 TEST_IMAGE = 'girder/girder_worker_test:latest'
 
 
@@ -19,6 +25,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run)
         self.route('POST', ('test_docker_run_mount_volume', ),
                    self.test_docker_run_mount_volume)
+        self.route('POST', ('test_docker_run_named_pipe_output', ),
+                   self.test_docker_run_named_pipe_output)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -49,3 +57,30 @@ class DockerTestEndpoints(Resource):
             remove_container=True, volumes=volumes)
 
         return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test mounting a volume.'))
+    def test_docker_run_named_pipe_output(self, params):
+        tmp_dir = params.get('tmpDir')
+        mount_dir = '/mnt/girder_worker/data'
+        pipe_name = 'output_pipe'
+
+        volumes = {
+            tmp_dir: {
+                'bind': mount_dir,
+                'mode': 'rw'
+            }
+        }
+
+        inside_path = os.path.join(mount_dir, pipe_name)
+        outside_path = os.path.join(tmp_dir, pipe_name)
+
+        connect = Connect(NamedOutputPipe(inside_path, outside_path), StdOut())
+
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['output_pipe', connect],
+            remove_container=True, volumes=volumes)
+
+        return result.job
+

@@ -36,3 +36,20 @@ def test_docker_run_volume(session):
         filepath = os.path.join(fixture_dir, 'read.txt')
         with open(filepath) as fp:
             assert log[0] == fp.read()
+
+@pytest.mark.docker
+def test_docker_run_named_pipe_output(session, tmpdir):
+    params = {
+        'tmpDir': tmpdir
+    }
+    r = session.post('integration_tests/docker/test_docker_run_named_pipe_output',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+        log = job['log']
+        assert len(log) == 1
+        assert log[0] == '/mnt/girder_worker/data/output_pipe'
