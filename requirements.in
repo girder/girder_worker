@@ -1,6 +1,7 @@
 celery>=4
 funcsigs ; python_version < '3.3'
 girder-client>=2
+girder-worker-utils>=0.6
 networkx<2
 pymongo>=3
 requests[security]
