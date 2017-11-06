@@ -2,6 +2,25 @@ import requests
 import time
 import sys
 from requests import HTTPError
+import six
+import collections
+
+# This is inteded to be used on deserialized JSON which allows us to
+# ignore many of the otherwise intractable edge cases.
+def _walk_deserialized_json_obj(obj, func):
+    """Walk through a nested object applying func to each element.
+
+    The object in question is intended to be deserialzied from JSON.  This will
+    not handle complex Mapping or Sequence types, Sets or Generators.
+    """
+    if isinstance(obj, dict):
+        return {k:walk_deserialized_json_obj(v, func)
+                for k,v in obj.iteritems()}
+    elif isinstance(obj, list):
+        return [walk_deserialized_json_obj(v,func)
+                for v in obj]
+    else:
+        return func(obj)
 
 
 def girder_job(title=None, type='celery', public=False,

@@ -13,9 +13,14 @@ from celery.task.control import inspect
 
 from six.moves import configparser
 import sys
-from .utils import JobStatus, StateTransitionException
+from .utils import JobStatus, StateTransitionException, _walk_deserialized_json_obj
 from girder_client import GirderClient
 
+from kombu.serialization import register
+from kombu.utils import json
+
+import functools
+from girder_worker_utils.json import object_hook
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
@@ -61,7 +66,8 @@ class Task(celery.Task):
     # transfered into the headers of the message.
     reserved_headers = [
         'girder_client_token',
-        'girder_api_url']
+        'girder_api_url',
+        'girder_results']
 
     # These keys will be available in the 'properties' dictionary inside
     # girder_before_task_publish() but will not be passed along in the message
@@ -128,6 +134,29 @@ class Task(celery.Task):
 
     def call_item_task(self, inputs, outputs={}):
         return self.run.call_item_task(inputs, outputs)
+
+
+    def __call__(self, *args, **kwargs):
+        def _t(arg):
+            if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
+                return arg.transform()
+            return arg
+
+        results = self.run(*[_walk_deserialized_json_obj(a, _t) for a in args],
+                           **_walk_deserialized_json_obj(kwargs, _t))
+
+        if hasattr(self.request, 'girder_results'):
+
+            if not isinstance(results, tuple):
+                results = (results, )
+
+            # assert len(results) == len(self.request.girder_resuts)
+
+            return tuple([gr.transform(r) for gr, r in
+                          zip(self.headers['girder_results'], results)])
+        else:
+            return results
+
 
 
 @before_task_publish.connect
@@ -370,8 +399,27 @@ def is_revoked(task):
 
 
 class _CeleryConfig:
-    CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'yaml']
+    accept_content = ['json', 'pickle', 'yaml', 'girder_io']
+    task_serializer = 'girder_io'
+    result_serializer = 'girder_io'
 
+
+def serialize(obj):
+    if hasattr(obj, '__json__'):
+        obj = obj.__json__()
+    return json.dumps(obj, check_circular=False)
+
+
+def deserialize(obj):
+    return json.loads(
+        obj, _loads=functools.partial(
+            json.json.loads, object_hook=object_hook))
+
+
+
+register('girder_io', serialize, deserialize,
+         content_type='application/json',
+         content_encoding='utf-8')
 
 broker_uri = girder_worker.config.get('celery', 'broker')
 try:
