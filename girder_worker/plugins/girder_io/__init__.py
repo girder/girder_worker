@@ -188,7 +188,13 @@ def push_handler(data, spec, **kwargs):
     elif target == 'filepath':
         name = spec.get('name') or os.path.basename(data)
         if os.path.isdir(data):
-            client.upload(data, spec['parent_id'], spec['parent_type'], reference=reference)
+            if spec['parent_type'] == 'item':
+                for f in os.listdir(data):
+                    path = os.path.join(data, f)
+                    if os.path.isfile(path):
+                        client.uploadFileToItem(spec['parent_id'], path, reference=reference)
+            else:
+                client.upload(data, spec['parent_id'], spec['parent_type'], reference=reference)
         else:
             size = os.path.getsize(data)
             with open(data, 'rb') as fd:

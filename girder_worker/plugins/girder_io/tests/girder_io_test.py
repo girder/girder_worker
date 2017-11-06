@@ -624,17 +624,19 @@ class TestGirderIo(unittest.TestCase):
 
             self.assertEqual(metadata_updates, [{'filepath': 'test'}])
 
+    @mock.patch('girder_client.GirderClient.uploadFileToItem')
     @mock.patch('girder_client.GirderClient.upload')
-    def test_directory_output(self, upload_mock):
+    def test_directory_output(self, upload_mock, upload_to_item_mock):
         out_dir = os.path.join(_tmp, 'out_dir')
         sub_dir = os.path.join(out_dir, 'sub_dir')
+        sub_sub_dir = os.path.join(sub_dir, 'ignored')
         try:
-            os.makedirs(sub_dir)
+            os.makedirs(sub_sub_dir)
         except OSError:
-            if not os.path.isdir(sub_dir):
+            if not os.path.isdir(sub_sub_dir):
                 raise
 
-        with open(os.path.join(sub_dir, 'file.txt'), 'w') as fd:
+        with open(os.path.join(sub_dir, 'file0.txt'), 'w') as fd:
             fd.write('hello')
 
         task = {
@@ -665,11 +667,40 @@ class TestGirderIo(unittest.TestCase):
 
         girder_worker.tasks.run(
             task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
-        self.assertEqual(len(upload_mock.mock_calls), 1)
+        self.assertEqual(upload_mock.call_count, 1)
+        self.assertEqual(upload_to_item_mock.call_count, 0)
         _, args, kwargs = upload_mock.mock_calls[0]
 
         self.assertEqual(args[0], out_dir)
         self.assertEqual(kwargs['reference'], 'my reference')
+
+        # Test upload directory of files to an item
+        upload_mock.reset_mock()
+        with open(os.path.join(sub_dir, 'file1.txt'), 'w') as fd:
+            fd.write('hello')
+
+        inputs['input'] = {
+            'mode': 'inline',
+            'data': sub_dir
+        }
+        outputs['out'] = {
+            'mode': 'girder',
+            'parent_id': 'my_item_id',
+            'parent_type': 'item',
+            'api_url': 'https://hello.com:1234/foo/bar/api',
+            'token': 'foo',
+            'reference': 'the_ref'
+        }
+        girder_worker.tasks.run(
+            task, inputs=inputs, outputs=outputs, validate=False, auto_convert=False)
+        self.assertEqual(upload_to_item_mock.call_count, 2)
+        self.assertEqual(upload_mock.call_count, 0)
+
+        files = [os.path.join(sub_dir, 'file%d.txt' % i) for i in range(2)]
+        for args, kwargs in upload_to_item_mock.call_args_list:
+            self.assertEqual(args[0], 'my_item_id')
+            self.assertIn(args[1], files)
+            self.assertEqual(kwargs['reference'], 'the_ref')
 
 
 if __name__ == '__main__':
