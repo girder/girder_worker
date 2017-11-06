@@ -17,7 +17,8 @@ from .utils import JobStatus, StateTransitionException, _walk_deserialized_json_
 from girder_client import GirderClient
 
 from kombu.serialization import register
-from kombu.utils import json
+from girder_worker_utils import json
+
 
 import functools
 from girder_worker_utils.json import object_hook
@@ -404,20 +405,7 @@ class _CeleryConfig:
     result_serializer = 'girder_io'
 
 
-def serialize(obj):
-    if hasattr(obj, '__json__'):
-        obj = obj.__json__()
-    return json.dumps(obj, check_circular=False)
-
-
-def deserialize(obj):
-    return json.loads(
-        obj, _loads=functools.partial(
-            json.json.loads, object_hook=object_hook))
-
-
-
-register('girder_io', serialize, deserialize,
+register('girder_io', json.dumps, json.loads,
          content_type='application/json',
          content_encoding='utf-8')
 
