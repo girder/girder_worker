@@ -10,6 +10,7 @@ RUN apt-get update && \
     libssl-dev \
     libjpeg-dev \
     zlib1g-dev \
+    r-base \
     libpython-dev && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -18,12 +19,13 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py
 WORKDIR /girder_worker
 COPY setup.py /girder_worker/setup.py
 COPY requirements.txt /girder_worker/requirements.txt
+COPY requirements.in /girder_worker/requirements.in
 COPY README.rst /girder_worker/README.rst
 COPY examples /girder_worker/examples
 COPY scripts /girder_worker/scripts
 COPY girder_worker /girder_worker/girder_worker
 
-RUN pip install -r requirements.txt -e .
+RUN pip install -e .
 
 RUN useradd -D --shell=/bin/bash && useradd -m worker
 
