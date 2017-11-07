@@ -136,7 +136,6 @@ class Task(celery.Task):
     def call_item_task(self, inputs, outputs={}):
         return self.run.call_item_task(inputs, outputs)
 
-
     def __call__(self, *args, **kwargs):
         def _t(arg):
             if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
@@ -159,11 +158,19 @@ class Task(celery.Task):
             return results
 
 
+def maybe_model_repr(obj):
+    try:
+        return obj.model_repr()
+    except AttributeError:
+        return obj
 
+# TODO: any exceptions raised in this function are not raised
+# and fail silently.  We should probably throw a warning.
 @before_task_publish.connect
 def girder_before_task_publish(sender=None, body=None, exchange=None,
                                routing_key=None, headers=None, properties=None,
                                declare=None, retry_policy=None, **kwargs):
+
     if 'jobInfoSpec' not in headers:
         try:
             # Note: If we can import these objects from the girder packages we
@@ -178,7 +185,11 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             job_model = ModelImporter.model('job', 'jobs')
 
             user = headers.pop('girder_user', getCurrentUser())
-            task_args, task_kwargs = body[0], body[1]
+
+            # Sanitize any Transform objects
+            task_args = [maybe_model_repr(b) for b in body[0]]
+            task_kwargs = {k: maybe_model_repr(v)
+                           for k, v in body[1].iteritems()}
 
             job = job_model.createJob(
                 **{'title': headers.pop('girder_job_title', Task._girder_job_title),
