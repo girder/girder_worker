@@ -13,7 +13,7 @@ from celery.task.control import inspect
 
 from six.moves import configparser
 import sys
-from .utils import JobStatus, StateTransitionException, _walk_deserialized_json_obj
+from .utils import JobStatus, StateTransitionException, _walk_obj
 from girder_client import GirderClient
 
 from kombu.serialization import register
@@ -68,7 +68,7 @@ class Task(celery.Task):
     reserved_headers = [
         'girder_client_token',
         'girder_api_url',
-        'girder_results']
+        'girder_result_hooks']
 
     # These keys will be available in the 'properties' dictionary inside
     # girder_before_task_publish() but will not be passed along in the message
@@ -136,33 +136,49 @@ class Task(celery.Task):
     def call_item_task(self, inputs, outputs={}):
         return self.run.call_item_task(inputs, outputs)
 
+    def _maybe_transform_result(self, idx, result):
+        try:
+            grh = self.request.girder_result_hooks[idx]
+            if hasattr(grh, 'transform') and hasattr(grh.transform, '__call__'):
+                return grh.transform(result)
+        except IndexError:
+            return result
+
+    def _maybe_transform_argument(self, arg):
+        if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
+            return arg.transform()
+        return arg
+
+    def _maybe_cleanup(self, arg):
+        if hasattr(arg, 'cleanup') and hasattr(arg.cleanup, '__call__'):
+            arg.cleanup()
+
     def __call__(self, *args, **kwargs):
-        def _t(arg):
-            if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
-                return arg.transform()
-            return arg
+        try:
+            _t_args = _walk_obj(args, self._maybe_transform_argument)
+            _t_kwargs = _walk_obj(kwargs, self._maybe_transform_argument)
 
-        results = self.run(*[_walk_deserialized_json_obj(a, _t) for a in args],
-                           **_walk_deserialized_json_obj(kwargs, _t))
+            results = self.run(*_t_args, **_t_kwargs)
 
-        if hasattr(self.request, 'girder_results'):
+            if hasattr(self.request, 'girder_result_hooks'):
+                if not isinstance(results, tuple):
+                    results = (results, )
 
-            if not isinstance(results, tuple):
-                results = (results, )
+                results = tuple([self._maybe_transform_result(i, r)
+                                 for i, r in enumerate(results)])
 
-            # assert len(results) == len(self.request.girder_resuts)
-
-            return tuple([gr.transform(r) for gr, r in
-                          zip(self.headers['girder_results'], results)])
-        else:
             return results
+        finally:
+            _walk_obj(args, self._maybe_cleanup)
+            _walk_obj(kwargs, self._maybe_cleanup)
 
 
-def maybe_model_repr(obj):
+def _maybe_model_repr(obj):
     try:
         return obj.model_repr()
     except AttributeError:
         return obj
+
 
 # TODO: any exceptions raised in this function are not raised
 # and fail silently.  We should probably throw a warning.
@@ -187,8 +203,8 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             user = headers.pop('girder_user', getCurrentUser())
 
             # Sanitize any Transform objects
-            task_args = [maybe_model_repr(b) for b in body[0]]
-            task_kwargs = {k: maybe_model_repr(v)
+            task_args = [_maybe_model_repr(b) for b in body[0]]
+            task_kwargs = {k: _maybe_model_repr(v)
                            for k, v in body[1].iteritems()}
 
             job = job_model.createJob(
@@ -232,6 +248,15 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             #       girder_token through to the next task (e.g. in the context
             #       of chaining events)
             pass
+
+    if 'girder_result_hooks' in headers:
+        # Celery task headers are not automatically serialized by celery
+        # before being passed off to ampq for byte packing. We will have
+        # to do that here.
+        headers['girder_result_hooks'] = [
+            h.__json__() if hasattr(h, '__json__') else h
+            for h in headers['girder_result_hooks']]
+
 
     # Finally,  remove all reserved_options from headers
     for key in Task.reserved_options:
@@ -313,6 +338,13 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
         task.girder_client.token = task.request.girder_client_token
     except AttributeError:
         task.girder_client = None
+
+    # Deserialize girder_client_tokens if they exist
+
+    if hasattr(task.request, "girder_result_hooks"):
+        task.request.girder_result_hooks = \
+            [object_hook(grh) for grh in task.request.girder_result_hooks]
+
 
 
 @task_success.connect

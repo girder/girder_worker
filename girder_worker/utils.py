@@ -8,18 +8,22 @@ import collections
 
 # This is inteded to be used on deserialized JSON which allows us to
 # ignore many of the otherwise intractable edge cases.
-def _walk_deserialized_json_obj(obj, func):
+def _walk_obj(obj, func):
     """Walk through a nested object applying func to each element.
 
     The object in question is intended to be deserialzied from JSON.  This will
     not handle complex Mapping or Sequence types, Sets or Generators.
     """
     if isinstance(obj, dict):
-        return {k: _walk_deserialized_json_obj(v, func)
+        return {k: _walk_obj(v, func)
                 for k, v in obj.iteritems()}
+
     elif isinstance(obj, list):
-        return [_walk_deserialized_json_obj(v,func)
-                for v in obj]
+        return [_walk_obj(v, func) for v in obj]
+
+    elif isinstance(obj, tuple):
+        return tuple(_walk_obj(list(obj), func))
+
     else:
         return func(obj)
 
