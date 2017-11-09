@@ -13,11 +13,11 @@ from celery.task.control import inspect
 
 from six.moves import configparser
 import sys
-from .utils import JobStatus, StateTransitionException, _walk_obj
+from .utils import JobStatus, StateTransitionException
 from girder_client import GirderClient
 
 from kombu.serialization import register
-from girder_worker_utils import json
+from girder_worker_utils import json, _walk_obj
 
 
 import functools
@@ -253,6 +253,7 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
         # Celery task headers are not automatically serialized by celery
         # before being passed off to ampq for byte packing. We will have
         # to do that here.
+
         headers['girder_result_hooks'] = [
             h.__json__() if hasattr(h, '__json__') else h
             for h in headers['girder_result_hooks']]
@@ -319,6 +320,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     their task and have access to the job_manager for logging and
     updating their status in girder.
     """
+
     try:
         task.job_manager = _job_manager(task.request, task.request.headers)
         _update_status(task, JobStatus.RUNNING)
@@ -340,7 +342,6 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
         task.girder_client = None
 
     # Deserialize girder_client_tokens if they exist
-
     if hasattr(task.request, "girder_result_hooks"):
         task.request.girder_result_hooks = \
             [object_hook(grh) for grh in task.request.girder_result_hooks]
