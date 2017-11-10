@@ -211,7 +211,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
 
 @app.task(bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-               volumes={}, remove_container=False, stream_connectors=[], **kwargs):
+               volumes={}, remove_container=False, **kwargs):
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
-        remove_container, stream_connectors, **kwargs)
+        remove_container, **kwargs)
