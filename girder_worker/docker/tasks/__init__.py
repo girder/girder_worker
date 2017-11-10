@@ -1,13 +1,16 @@
 import sys
-import docker
-from docker.errors import DockerException
-from requests.exceptions import ReadTimeout
-
+try:
+    import docker
+    from docker.errors import DockerException
+    from girder_worker.docker import nvidia
+    from requests.exceptions import ReadTimeout
+except  ImportError:
+    # These imports will not be available on the girder side.
+    pass
 from girder_worker.app import app
 from girder_worker import logger
 from girder_worker.core import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
-from girder_worker.docker import nvidia
 from girder_worker.docker.io import (
     WriteStreamConnector,
     ReadStreamConnector,
