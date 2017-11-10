@@ -9,7 +9,7 @@ except  ImportError:
     pass
 from girder_worker.app import app
 from girder_worker import logger
-from girder_worker.core import utils
+from girder_worker.docker import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 from girder_worker.docker.io import (
     WriteStreamConnector,
