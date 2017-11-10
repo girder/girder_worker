@@ -17,11 +17,11 @@ from .utils import JobStatus, StateTransitionException
 from girder_client import GirderClient
 
 from kombu.serialization import register
-from girder_worker_utils import json, _walk_obj
+from girder_worker_utils import _walk_obj
 
-
+import jsonpickle
 import functools
-from girder_worker_utils.json import object_hook
+# from girder_worker_utils.json import object_hook
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
@@ -253,11 +253,9 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
         # Celery task headers are not automatically serialized by celery
         # before being passed off to ampq for byte packing. We will have
         # to do that here.
-
-        headers['girder_result_hooks'] = [
-            h.__json__() if hasattr(h, '__json__') else h
-            for h in headers['girder_result_hooks']]
-
+        p = jsonpickle.pickler.Pickler()
+        headers['girder_result_hooks'] = \
+            [p.flatten(grh) for grh in headers['girder_result_hooks']]
 
     # Finally,  remove all reserved_options from headers
     for key in Task.reserved_options:
@@ -343,8 +341,9 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
     # Deserialize girder_client_tokens if they exist
     if hasattr(task.request, "girder_result_hooks"):
+        u = jsonpickle.unpickler.Unpickler()
         task.request.girder_result_hooks = \
-            [object_hook(grh) for grh in task.request.girder_result_hooks]
+             [u.restore(grh) for grh in task.request.girder_result_hooks]
 
 
 
@@ -449,7 +448,7 @@ class _CeleryConfig:
     result_serializer = 'girder_io'
 
 
-register('girder_io', json.dumps, json.loads,
+register('girder_io', jsonpickle.encode, jsonpickle.decode,
          content_type='application/json',
          content_encoding='utf-8')
 
