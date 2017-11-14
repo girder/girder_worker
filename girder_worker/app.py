@@ -21,7 +21,6 @@ from girder_worker_utils import _walk_obj
 
 import jsonpickle
 import functools
-# from girder_worker_utils.json import object_hook
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
