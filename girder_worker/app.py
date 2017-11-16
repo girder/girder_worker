@@ -182,10 +182,9 @@ class Task(celery.Task):
 
 
 def _maybe_model_repr(obj):
-    try:
+    if hasattr(obj, '__repr_model_') and hasattr(obj._repr_model_, '__call__'):
         return obj._repr_model_()
-    except AttributeError:
-        return obj
+    return obj
 
 
 # TODO: any exceptions raised in this function are not raised
