@@ -24,8 +24,6 @@ from kombu.serialization import register
 from six.moves import configparser
 from .utils import JobStatus, StateTransitionException
 
-from girder_worker_utils.json import object_hook
-
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
