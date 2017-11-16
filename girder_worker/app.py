@@ -355,7 +355,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     except AttributeError:
         task.girder_client = None
 
-    # Deserialize girder_client_tokens if they exist
+    # Deserialize girder_result_hooks if they exist
     if hasattr(task.request, 'girder_result_hooks'):
         u = jsonpickle.unpickler.Unpickler()
         task.request.girder_result_hooks = \
