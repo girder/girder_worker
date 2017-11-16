@@ -183,7 +183,7 @@ class Task(celery.Task):
 
 def _maybe_model_repr(obj):
     try:
-        return obj.model_repr()
+        return obj._repr_model_()
     except AttributeError:
         return obj
 
