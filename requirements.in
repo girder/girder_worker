@@ -6,3 +6,5 @@ pymongo>=3
 requests[security]
 six
 stevedore
+jsonpickle
+girder_worker_utils>=0.7.1
