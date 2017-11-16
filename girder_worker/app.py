@@ -1,26 +1,29 @@
-import girder_worker
-from girder_worker import logger
+import sys
 import traceback as tb
+from distutils.version import LooseVersion
 import celery
 from celery import Celery, __version__
-from distutils.version import LooseVersion
-from celery.signals import (task_prerun, task_postrun,
-                            task_failure, task_success,
-                            worker_ready, before_task_publish, task_revoked)
+
 from celery.result import AsyncResult
+from celery.signals import (
+    before_task_publish,
+    task_failure,
+    task_postrun,
+    task_prerun,
+    task_revoked,
+    task_success,
+    worker_ready)
 
 from celery.task.control import inspect
-
-from six.moves import configparser
-import sys
-from .utils import JobStatus, StateTransitionException
 from girder_client import GirderClient
-
-from kombu.serialization import register
+import girder_worker
+from girder_worker import logger
 from girder_worker_utils import _walk_obj
-
 import jsonpickle
-import functools
+from kombu.serialization import register
+from six.moves import configparser
+from .utils import JobStatus, StateTransitionException
+
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
@@ -31,13 +34,16 @@ class GirderAsyncResult(AsyncResult):
     def job(self):
         if self._job is None:
             try:
-                # GirderAsyncResult() objects may be instantiated in either a girder REST
-                # request,  or in some other context (e.g. from a running girder_worker
-                # instance if there is a chain).  If we are in a REST request we should
-                # have access to the girder package and can directly access the database
-                # If we are in a girder_worker context (or even in python console or a
-                # testing context) then we should get an ImportError and we can make a REST
-                # request to get the information we need.
+                # GirderAsyncResult() objects may be instantiated in
+                # either a girder REST request, or in some other
+                # context (e.g. from a running girder_worker instance
+                # if there is a chain).  If we are in a REST request
+                # we should have access to the girder package and can
+                # directly access the database If we are in a
+                # girder_worker context (or even in python console or
+                # a testing context) then we should get an ImportError
+                # and we can make a REST request to get the
+                # information we need.
                 from girder.utility.model_importer import ModelImporter
                 job_model = ModelImporter.model('job', 'jobs')
 
@@ -98,10 +104,12 @@ class Task(celery.Task):
             'girder_job_other_fields': self._girder_job_other_fields,
         }
 
-        # Certain keys may show up in either kwargs (e.g. via .delay(girder_token='foo')
-        # or in options (e.g.  .apply_async(args=(), kwargs={}, girder_token='foo')
-        # For those special headers,  pop them out of kwargs or options and put them
-        # in headers so they can be picked up by the before_task_publish signal.
+        # Certain keys may show up in either kwargs (e.g. via
+        # .delay(girder_token='foo') or in options (e.g.
+        # .apply_async(args=(), kwargs={}, girder_token='foo') For
+        # those special headers, pop them out of kwargs or options and
+        # put them in headers so they can be picked up by the
+        # before_task_publish signal.
         for key in self.reserved_headers + self.reserved_options:
             if kwargs is not None and key in kwargs:
                 headers[key] = kwargs.pop(key)
@@ -138,7 +146,8 @@ class Task(celery.Task):
     def _maybe_transform_result(self, idx, result):
         try:
             grh = self.request.girder_result_hooks[idx]
-            if hasattr(grh, 'transform') and hasattr(grh.transform, '__call__'):
+            if hasattr(grh, 'transform') and \
+               hasattr(grh.transform, '__call__'):
                 return grh.transform(result)
         except IndexError:
             return result
@@ -153,23 +162,24 @@ class Task(celery.Task):
             arg.cleanup()
 
     def __call__(self, *args, **kwargs):
-         try:
-             _t_args = _walk_obj(args, self._maybe_transform_argument)
-             _t_kwargs = _walk_obj(kwargs, self._maybe_transform_argument)
+        try:
+            _t_args = _walk_obj(args, self._maybe_transform_argument)
+            _t_kwargs = _walk_obj(kwargs, self._maybe_transform_argument)
 
-             results = super(Task, self).__call__(*_t_args, **_t_kwargs)
+            results = super(Task, self).__call__(*_t_args, **_t_kwargs)
 
-             if hasattr(self.request, 'girder_result_hooks'):
-                 if not isinstance(results, tuple):
-                     results = (results, )
+            if hasattr(self.request, 'girder_result_hooks'):
+                if not isinstance(results, tuple):
+                    results = (results, )
 
-                 results = tuple([self._maybe_transform_result(i, r)
-                                  for i, r in enumerate(results)])
+                results = tuple([self._maybe_transform_result(i, r)
+                                 for i, r in enumerate(results)])
 
-             return results
-         finally:
-             _walk_obj(args, self._maybe_cleanup)
-             _walk_obj(kwargs, self._maybe_cleanup)
+            return results
+        finally:
+            _walk_obj(args, self._maybe_cleanup)
+            _walk_obj(kwargs, self._maybe_cleanup)
+
 
 def _maybe_model_repr(obj):
     try:
@@ -206,16 +216,21 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                            for k, v in body[1].iteritems()}
 
             job = job_model.createJob(
-                **{'title': headers.pop('girder_job_title', Task._girder_job_title),
-                   'type': headers.pop('girder_job_type', Task._girder_job_type),
-                   'handler': headers.pop('girder_job_handler', Task._girder_job_handler),
-                   'public': headers.pop('girder_job_public', Task._girder_job_public),
+                **{'title': headers.pop('girder_job_title',
+                                        Task._girder_job_title),
+                   'type': headers.pop('girder_job_type',
+                                       Task._girder_job_type),
+                   'handler': headers.pop('girder_job_handler',
+                                          Task._girder_job_handler),
+                   'public': headers.pop('girder_job_public',
+                                         Task._girder_job_public),
                    'user': user,
                    'args': task_args,
                    'kwargs': task_kwargs,
-                   'otherFields': dict(celeryTaskId=headers['id'],
-                                       **headers.pop('girder_job_other_fields',
-                                                     Task._girder_job_other_fields))})
+                   'otherFields': dict(
+                       celeryTaskId=headers['id'],
+                       **headers.pop('girder_job_other_fields',
+                                     Task._girder_job_other_fields))})
 
             headers['jobInfoSpec'] = utils.jobInfoSpec(job)
 
@@ -230,21 +245,24 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             from girder.plugins.worker import utils
             headers['girder_api_url'] = utils.getWorkerApiUrl()
         except ImportError:
-            # TODO: handle situation where girder_worker is producing the message
-            #       Note - this may not come up at all depending on how we pass
-            #       girder_api_url through to the next task (e.g. in the context
-            #       of chaining events)
+            # TODO: handle situation where girder_worker is producing
+            #       the message Note - this may not come up at all
+            #       depending on how we pass girder_api_url through to
+            #       the next task (e.g. in the context of chaining
+            #       events)
             pass
 
     if 'girder_client_token' not in headers:
         try:
             from girder.utility.model_importer import ModelImporter
-            headers['girder_client_token'] = ModelImporter.model('token').createToken()
+            headers['girder_client_token'] = \
+                ModelImporter.model('token').createToken()
         except ImportError:
-            # TODO: handle situation where girder_worker is producing the message
-            #       Note - this may not come up at all depending on how we pass
-            #       girder_token through to the next task (e.g. in the context
-            #       of chaining events)
+            # TODO: handle situation where girder_worker is producing
+            #       the message Note - this may not come up at all
+            #       depending on how we pass girder_token through to
+            #       the next task (e.g. in the context of chaining
+            #       events)
             pass
 
     if 'girder_result_hooks' in headers:
@@ -338,11 +356,10 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
         task.girder_client = None
 
     # Deserialize girder_client_tokens if they exist
-    if hasattr(task.request, "girder_result_hooks"):
+    if hasattr(task.request, 'girder_result_hooks'):
         u = jsonpickle.unpickler.Unpickler()
         task.request.girder_result_hooks = \
-             [u.restore(grh) for grh in task.request.girder_result_hooks]
-
+            [u.restore(grh) for grh in task.request.girder_result_hooks]
 
 
 @task_success.connect
@@ -403,7 +420,8 @@ def gw_task_revoked(sender=None, request=None, **rest):
     except AttributeError:
         pass
     except JobSpecNotFound:
-        logger.warn('No jobInfoSpec. Unable to move \'%s\' into CANCELED state.')
+        logger.warn(
+            'No jobInfoSpec. Unable to move \'%s\' into CANCELED state.')
 
 
 # Access to the correct "Inspect" instance for this worker

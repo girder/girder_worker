@@ -1,9 +1,8 @@
-import requests
-import time
 import sys
+import time
+import requests
+
 from requests import HTTPError
-import six
-import collections
 
 
 def girder_job(title=None, type='celery', public=False,
