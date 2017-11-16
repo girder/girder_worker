@@ -153,24 +153,23 @@ class Task(celery.Task):
             arg.cleanup()
 
     def __call__(self, *args, **kwargs):
-        try:
-            _t_args = _walk_obj(args, self._maybe_transform_argument)
-            _t_kwargs = _walk_obj(kwargs, self._maybe_transform_argument)
+         try:
+             _t_args = _walk_obj(args, self._maybe_transform_argument)
+             _t_kwargs = _walk_obj(kwargs, self._maybe_transform_argument)
 
-            results = self.run(*_t_args, **_t_kwargs)
+             results = super(Task, self).__call__(*_t_args, **_t_kwargs)
 
-            if hasattr(self.request, 'girder_result_hooks'):
-                if not isinstance(results, tuple):
-                    results = (results, )
+             if hasattr(self.request, 'girder_result_hooks'):
+                 if not isinstance(results, tuple):
+                     results = (results, )
 
-                results = tuple([self._maybe_transform_result(i, r)
-                                 for i, r in enumerate(results)])
+                 results = tuple([self._maybe_transform_result(i, r)
+                                  for i, r in enumerate(results)])
 
-            return results
-        finally:
-            _walk_obj(args, self._maybe_cleanup)
-            _walk_obj(kwargs, self._maybe_cleanup)
-
+             return results
+         finally:
+             _walk_obj(args, self._maybe_cleanup)
+             _walk_obj(kwargs, self._maybe_cleanup)
 
 def _maybe_model_repr(obj):
     try:
@@ -202,7 +201,7 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             user = headers.pop('girder_user', getCurrentUser())
 
             # Sanitize any Transform objects
-            task_args = [_maybe_model_repr(b) for b in body[0]]
+            task_args = tuple([_maybe_model_repr(b) for b in body[0]])
             task_kwargs = {k: _maybe_model_repr(v)
                            for k, v in body[1].iteritems()}
 

@@ -115,7 +115,6 @@ class TestGirderIo(unittest.TestCase):
             self.assertEqual(file_downloaded, [1, 1])
 
             # Now test pushing to girder
-            del inputs['input']['data']
             outputs = {
                 'out': {
                     'mode': 'girder',
