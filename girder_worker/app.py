@@ -15,12 +15,12 @@ from celery.signals import (
     worker_ready)
 
 from celery.task.control import inspect
+from girder_client import GirderClient
 import girder_worker
 from girder_worker import logger
 from girder_worker_utils import _walk_obj
 import jsonpickle
 from kombu.serialization import register
-
 from six.moves import configparser
 from .utils import JobStatus, StateTransitionException
 
@@ -187,12 +187,11 @@ def _maybe_model_repr(obj):
     return obj
 
 
-# TODO: any exceptions raised in this function are not raised
-# and fail silently.  We should probably throw a warning.
 @before_task_publish.connect
 def girder_before_task_publish(sender=None, body=None, exchange=None,
                                routing_key=None, headers=None, properties=None,
                                declare=None, retry_policy=None, **kwargs):
+
     try:
         if 'jobInfoSpec' not in headers:
             try:
@@ -213,20 +212,6 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                 task_args = tuple([_maybe_model_repr(b) for b in body[0]])
                 task_kwargs = {k: _maybe_model_repr(v)
                                for k, v in body[1].iteritems()}
-
-                # We need to make sure these arguments can be serialize to mongo,
-                # Users can provide a model_repr methods todo this. TODO come up
-                # with a better name.
-                def _t(arg):
-                    if isinstance(arg, list):
-                        return [_t(i) for i in arg]
-                    elif hasattr(arg, 'model_repr'):
-                        return arg.model_repr()
-                    return arg
-
-
-                task_args = [_t(a) for a in task_args]
-                task_kwargs = {k: _t(v) for k, v in task_kwargs.items()}
 
                 job = job_model.createJob(
                     **{'title': headers.pop('girder_job_title',
@@ -285,21 +270,6 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
             p = jsonpickle.pickler.Pickler()
             headers['girder_result_hooks'] = \
                 [p.flatten(grh) for grh in headers['girder_result_hooks']]
-
-        # Finally,  remove all reserved_options from headers
-        for key in Task.reserved_options:
-            headers.pop(key, None)
-
-        if 'girder_client_token' not in headers:
-            try:
-                from girder.utility.model_importer import ModelImporter
-                headers['girder_client_token'] = ModelImporter.model('token').createToken()
-            except ImportError:
-                # TODO: handle situation where girder_worker is producing the message
-                #       Note - this may not come up at all depending on how we pass
-                #       girder_token through to the next task (e.g. in the context
-                #       of chaining events)
-                pass
 
         # Finally,  remove all reserved_options from headers
         for key in Task.reserved_options:
