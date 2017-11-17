@@ -39,16 +39,6 @@
         state: present
       register: plugins
 
-    - name: Enable integration test endpoints plugin
-      girder:
-        username: "{{ girder_user }}"
-        password: "{{ girder_pass }}"
-        port: "{{ girder_port }}"
-        plugins:
-          - integration_test_endpoints
-        state: present
-      register: plugins
-
     - name: Set the server root setting
       girder:
         username: "{{ girder_user }}"
