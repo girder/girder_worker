@@ -41,14 +41,6 @@ class CommonTestEndpoints(Resource):
 
 
 def load(info):
-    # Note: Some endpoints rely on the celery application defined in
-    # the worker plugin rather than the one defined in
-    # girder_worker. This means we need to make sure the
-    # backend/broker are set to the rabbitmq docker container
-    settings = ModelImporter.model('setting')
-    settings.set(PluginSettings.BACKEND, 'amqp://guest:guest@rabbit/')
-    settings.set(PluginSettings.BROKER, 'amqp://guest:guest@rabbit/')
-
     info['apiRoot'].integration_tests = Prefix()
     info['apiRoot'].integration_tests.common = CommonTestEndpoints()
     info['apiRoot'].integration_tests.celery = CeleryTestEndpoints()
