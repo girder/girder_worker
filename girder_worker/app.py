@@ -209,9 +209,8 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                 user = headers.pop('girder_user', getCurrentUser())
 
                 # Sanitize any Transform objects
-                task_args = tuple([_maybe_model_repr(b) for b in body[0]])
-                task_kwargs = {k: _maybe_model_repr(v)
-                               for k, v in body[1].iteritems()}
+                task_args = tuple(_walk_obj(body[0], _maybe_model_repr))
+                task_kwargs = _walk_obj(body[1], _maybe_model_repr)
 
                 job = job_model.createJob(
                     **{'title': headers.pop('girder_job_title',
