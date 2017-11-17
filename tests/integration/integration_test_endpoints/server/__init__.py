@@ -1,9 +1,6 @@
 from girder.api import access
 from girder.api.describe import Description, describeRoute
 from girder.api.rest import Resource, Prefix
-from girder.utility.model_importer import ModelImporter
-
-from girder.plugins.worker.constants import PluginSettings
 
 from girder_worker.app import app
 from celery.exceptions import TimeoutError
