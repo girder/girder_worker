@@ -1,6 +1,11 @@
 import pytest
 import requests
+import six
+import os
+import collections
 from .utilities import GirderSession
+from girder_client import GirderClient
+
 
 
 def pytest_addoption(parser):
@@ -34,6 +39,40 @@ def session(request, api_url):
                 'Unable to login with user "%s", password "%s"' % (username, password))
 
         yield s
+
+# TODO combine with session in some way?
+@pytest.fixture(scope='module',
+                params=[['admin', 'letmein']],
+                ids=['admin'])
+def girder_client(request, api_url):
+    username, password = request.param
+    client = GirderClient(apiUrl=api_url)
+    client.authenticate(username, password)
+
+    yield client
+
+@pytest.fixture(scope='module')
+def test_file():
+    return __file__
+
+@pytest.fixture(scope='module')
+def test_file_in_girder(girder_client, test_file):
+    me = girder_client.get('user/me')
+    try:
+        private_folder = six.next(girder_client.listFolder(me['_id'], parentFolderType='user', name='Private'))
+    except StopIteration:
+        raise Exception("User doesn't have a Private folder.")
+
+    file = None
+    try:
+        size = os.path.getsize(test_file)
+        with open(test_file) as f:
+            file = girder_client.uploadFile(private_folder['_id'], f, 'test_file', size, parentType='folder')
+
+        yield file
+    finally:
+        if file is not None:
+            girder_client.delete('item/%s' % file['itemId'])
 
 
 # pytest hooks for ordering test items after they have been collected
