@@ -115,7 +115,7 @@ class Connect(Transform):
         else:
             return ReadStreamConnector(self._input.transform(), self._output.transform())
 
-    def model_repr(self):
+    def _repr_model_(self):
         """
         The method is called before save the argument in the job model.
         """
