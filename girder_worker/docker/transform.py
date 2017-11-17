@@ -1,6 +1,7 @@
 import sys
 
 from girder_worker_utils.transform import Transform
+from girder_worker_utils.transforms.girder_io import GirderClientTransform
 
 
 class StdOut(Transform):
@@ -120,6 +121,16 @@ class Connect(Transform):
         """
         return str(self)
 
+class GirderFileToStream(GirderClientTransform):
+    def __init__(self, _id, **kwargs):
+        super(GirderFileToStream, self).__init__(**kwargs)
+        self.file_id = _id
+
+    def transform(self):
+        from girder_worker.docker.io import (
+            GirderFileStreamReader
+        )
+        return GirderFileStreamReader(self.gc, self.file_id)
 #
 # For example:
 # docker_run.delay(image, stream_connectors=[Connect(NamedOutputPipe('my/pipe'), StdOut())]

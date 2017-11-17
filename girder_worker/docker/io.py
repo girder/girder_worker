@@ -2,7 +2,7 @@ import os
 import errno
 import stat
 import abc
-
+import six
 
 class StreamConnector(object):
     """
@@ -269,3 +269,58 @@ class NamedPipeWriter(FileDescriptorWriter):
     def fileno(self):
         return self._pipe.fileno()
 
+
+class StreamReader(object):
+    """
+    This represents the interface that must be implemented by a stream reader.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def read(self, buf_len):
+        """
+        Stream readers must implement this method, which is responsible for
+        reading up to ``buf_len`` bytes from the stream. For now, this is
+        expected to be a blocking read, and should return an empty string to
+        indicate the end of the stream.
+        """
+
+class StreamWriter(object):
+    """
+    This represents the interface that must be implemented by a stream writer.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def write(self, buf):
+        """
+        Write a chunk of data to the output stream.
+        """
+
+    def close(self):
+        """
+        Close the output stream. Called after the last data is sent.
+        """
+        pass
+
+class GirderFileStreamReader(StreamReader):
+    def __init__(self, client, file_id):
+        super(GirderFileStreamReader, self).__init__()
+        self._client = client
+        self._file_id = file_id
+        self._iter = None
+
+    def read(self, buf_len):
+        """
+        Implementation note: due to a constraint of the requests library, the
+        buf_len that is used the first time this method is called will cause
+        all future requests to ``read`` to have the same ``buf_len`` even if
+        a different ``buf_len`` is passed in on subsequent requests.
+        """
+        if self._iter is None:  # lazy load response body iterator
+            self._iter = self._client.downloadFileAsIterator(self._file_id, buf_len)
+
+        try:
+            return six.next(self._iter)
+        except StopIteration:
+            return b''

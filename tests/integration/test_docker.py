@@ -53,3 +53,25 @@ def test_docker_run_named_pipe_output(session, tmpdir):
         log = job['log']
         assert len(log) == 1
         assert log[0] == '/mnt/girder_worker/data/output_pipe'
+
+@pytest.mark.docker
+def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_girder, tmpdir):
+
+    params = {
+        'tmpDir': tmpdir,
+        'fileId': test_file_in_girder['_id']
+    }
+    r = session.post('integration_tests/docker/test_docker_run_girder_file_to_named_pipe',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+        # Remove escaped chars
+        log = [str(l) for l in job['log']]
+        # join and remove trailing \n added by test script
+        log = ''.join(log)[:-1]
+        with open(test_file) as fp:
+            assert log == fp.read()

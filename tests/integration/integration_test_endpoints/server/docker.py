@@ -12,7 +12,9 @@ from girder_worker.docker.tasks import docker_run
 from girder_worker.docker.transform import (
     StdOut,
     NamedOutputPipe,
-    Connect
+    NamedInputPipe,
+    Connect,
+    GirderFileToStream
 )
 
 TEST_IMAGE = 'girder/girder_worker_test:latest'
@@ -27,6 +29,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_mount_volume)
         self.route('POST', ('test_docker_run_named_pipe_output', ),
                    self.test_docker_run_named_pipe_output)
+        self.route('POST', ('test_docker_run_girder_file_to_named_pipe', ),
+                   self.test_docker_run_girder_file_to_named_pipe)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -79,8 +83,37 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(NamedOutputPipe(inside_path, outside_path), StdOut())
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['output_pipe', connect],
+        result = docker_run.delay(TEST_IMAGE, pull_image=False, container_args=['output_pipe', connect],
             remove_container=True, volumes=volumes)
 
         return result.job
 
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test mounting a volume.'))
+    def test_docker_run_girder_file_to_named_pipe(self, params):
+        tmp_dir = params.get('tmpDir')
+        file_id = params.get('fileId')
+        print(file_id)
+        mount_dir = '/mnt/girder_worker/data'
+        pipe_name = 'input_pipe'
+
+        volumes = {
+            tmp_dir: {
+                'bind': mount_dir,
+                'mode': 'rw'
+            }
+        }
+
+        inside_path = os.path.join(mount_dir, pipe_name)
+        outside_path = os.path.join(tmp_dir, pipe_name)
+
+        connect = Connect(GirderFileToStream(file_id), NamedInputPipe(inside_path, outside_path))
+
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', connect],
+            remove_container=True, volumes=volumes)
+
+
+        return result.job
