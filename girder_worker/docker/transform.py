@@ -80,9 +80,6 @@ class Volume(Transform):
         self.mode = mode
 
     def transform(self):
-        return self.container_path
-
-    def _repr_json_(self):
         return {
             self.host_path: {
                 'bind': self.container_path,
@@ -95,9 +92,6 @@ class _TemporaryVolume(Volume):
         self._dir = dir
         super(_TemporaryVolume, self).__init__(tempfile.mkdtemp(dir=self._dir),
             os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex))
-
-    def transform(self):
-        return self.container_path
 
     def cleanup(self):
         if os.path.exists(self.host_path):
@@ -202,9 +196,9 @@ class NamedOutputPipe(NamedPipeBase):
         return NamedPipeReader(pipe, self.container_path)
 
 class FilePath(Transform):
-    def __init__(self, filename):
+    def __init__(self, filename, volume=TemporaryVolume()):
         self.filename = filename
-        self._volume = TemporaryVolume()
+        self._volume = volume
 
     def transform(self, *pargs):
         # If we are being called with arguments, then this is the execution of

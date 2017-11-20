@@ -16,7 +16,8 @@ from girder_worker.docker.transform import (
     Connect,
     GirderFileToStream,
     FilePath,
-    GirderUploadFilePathToItem
+    GirderUploadFilePathToItem,
+    Volume
 )
 
 
@@ -39,7 +40,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_file_upload_to_item)
         self.route('POST', ('test_docker_run_girder_file_to_named_pipe_on_temp_vol', ),
                    self.test_docker_run_girder_file_to_named_pipe_on_temp_vol)
-
+        self.route('POST', ('test_docker_run_mount_idiomatic_volume', ),
+                   self.test_docker_run_mount_idiomatic_volume)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -160,5 +162,22 @@ class DockerTestEndpoints(Resource):
 
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
             remove_container=True)
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test idiomatic volume.'))
+    def test_docker_run_mount_idiomatic_volume(self, params):
+        fixture_dir = params.get('fixtureDir')
+        filename = 'read.txt'
+        mount_dir = '/mnt/test'
+        mount_path = os.path.join(mount_dir, filename)
+        volume = Volume(fixture_dir, mount_path, 'ro')
+        filepath = FilePath(filename, volume)
+
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', '-p', filepath],
+            remove_container=True, volumes=[volume])
 
         return result.job

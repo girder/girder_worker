@@ -176,8 +176,19 @@ class DockerTask(Task):
             self.request.headers = {}
         self.request.headers[self._temp_volume_header] = _TemporaryVolume(dir=TemporaryVolume.dir)
 
-        volumes = kwargs.setdefault('volumes', {})
-        volumes.update(self._temp_volume._repr_json_())
+        volumes = kwargs.get('volumes', {})
+        # If we have a list of volumes, the user provide a list of Volume objects,
+        # we need to transform them.
+        if isinstance(volumes, list):
+            # First call the transform method these will give use a list of dicts.
+            volumes = _walk_obj(volumes, self._maybe_transform_argument)
+            # We then need to merge them into a single dict and it will be ready
+            # for docker-py.
+            volumes = { k: v for volume in volumes for k, v in volume.items() }
+            kwargs['volumes'] = volumes
+
+        # call transform on temp volume and add it to the volumes dict
+        volumes.update(self._temp_volume.transform())
 
         super(DockerTask, self).__call__(*args, **kwargs)
 
