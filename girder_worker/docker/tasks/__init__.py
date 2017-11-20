@@ -166,17 +166,27 @@ def _handle_streaming_args(args):
 
 class DockerTask(Task):
 
-    def __init__(self):
-        super(DockerTask, self).__init__()
-        self._temp_volume = _TemporaryVolume(dir=TemporaryVolume.dir)
+    _temp_volume_header = 'girder_docker_run_temp_volume'
 
     def __call__(self, *args, **kwargs):
-        # For now alway mount temp volume, but in theory we only need todo this
-        # if its being used.
+        # For now always mount temp volume, but in theory we only need todo this
+        # if its being used. We store the instance in the request headers for now.
+        # Not sure if there is a better per request storage location?
+        if self.request.headers is None:
+            self.request.headers = {}
+        self.request.headers[self._temp_volume_header] = _TemporaryVolume(dir=TemporaryVolume.dir)
+
         volumes = kwargs.setdefault('volumes', {})
         volumes.update(self._temp_volume._repr_json_())
 
-        return super(DockerTask, self).__call__(*args, **kwargs)
+        super(DockerTask, self).__call__(*args, **kwargs)
+
+        self._temp_volume.cleanup()
+        del self.request.headers[self._temp_volume_header]
+
+    @property
+    def _temp_volume(self):
+        return self.request.headers[self._temp_volume_header]
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                 volumes={}, remove_container=False, stream_connectors=[], **kwargs):

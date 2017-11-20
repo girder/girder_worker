@@ -37,6 +37,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_girder_file_to_named_pipe)
         self.route('POST', ('test_docker_run_file_upload_to_item', ),
                    self.test_docker_run_file_upload_to_item)
+        self.route('POST', ('test_docker_run_girder_file_to_named_pipe_on_temp_vol', ),
+                   self.test_docker_run_girder_file_to_named_pipe_on_temp_vol)
 
 
     @access.token
@@ -72,7 +74,7 @@ class DockerTestEndpoints(Resource):
     @access.token
     @filtermodel(model='job', plugin='jobs')
     @describeRoute(
-        Description('Test mounting a volume.'))
+        Description('Test named pipe output.'))
     def test_docker_run_named_pipe_output(self, params):
         tmp_dir = params.get('tmpDir')
         mount_dir = '/mnt/girder_worker/data'
@@ -99,7 +101,7 @@ class DockerTestEndpoints(Resource):
     @access.token
     @filtermodel(model='job', plugin='jobs')
     @describeRoute(
-        Description('Test mounting a volume.'))
+        Description('Test downloading file using named pipe.'))
     def test_docker_run_girder_file_to_named_pipe(self, params):
         tmp_dir = params.get('tmpDir')
         file_id = params.get('fileId')
@@ -138,5 +140,25 @@ class DockerTestEndpoints(Resource):
             TEST_IMAGE, pull_image=True,
             container_args=['output_pipe', '-p', filepath, '-m', contents],
             remove_container=True, girder_result_hooks=[GirderUploadFilePathToItem(filepath, item_id)])
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test downloading file using named pipe.'))
+    def test_docker_run_girder_file_to_named_pipe_on_temp_vol(self, params):
+        """
+        This is a simplified version of test_docker_run_girder_file_to_named_pipe
+        it uses the TemporaryVolume, rather than having to setup the volumes
+        'manually', this is the approach we should encourage.
+        """
+        file_id = params.get('fileId')
+        pipe_name = 'input_pipe'
+
+        connect = Connect(GirderFileToStream(file_id), NamedInputPipe(pipe_name))
+
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
+            remove_container=True)
 
         return result.job

@@ -13,6 +13,12 @@ from girder_worker_utils.transforms.girder_io import (
 
 TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
+def _maybe_transform(obj, *args):
+    if hasattr(obj, 'transform') and hasattr(obj.transform, '__call__'):
+        return obj.transform()
+
+    return obj
+
 class StdOut(Transform):
     def transform(self):
         from girder_worker.docker.io import (
@@ -142,28 +148,41 @@ class TemporaryVolume:
 
 
 class NamedPipeBase(Transform):
-    def __init__(self, inside_path, outside_path):
+    def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume()):
         super(NamedPipeBase, self).__init__()
 
-        self.inside_path = inside_path
-        self.outside_path = outside_path
+        if container_path is not None and host_path is not None:
+            self._container_path = container_path
+            self._host_path = host_path
+        else:
+            self._volume = volume
 
+        self.name = name
+
+    @property
+    def container_path(self):
+        return os.path.join(self._volume.container_path, self.name)
+
+    @property
+    def host_path(self):
+        return os.path.join(self._volume.host_path, self.name)
 
 class NamedInputPipe(NamedPipeBase):
     """
     A named pipe that read from within a docker container.
     i.e. To stream data out of a container.
     """
-    def __init__(self, inside_path, outside_path):
-        super(NamedInputPipe, self).__init__(inside_path, outside_path)
+    def __init__(self, name, volume=None):
+        super(NamedInputPipe, self).__init__(name, volume)
 
     def transform(self):
         from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeWriter
         )
-        pipe = NamedPipe(self.outside_path)
-        return NamedPipeWriter(pipe, self.inside_path)
+
+        pipe = NamedPipe(self.host_path)
+        return NamedPipeWriter(pipe, self.container_path)
 
 class NamedOutputPipe(NamedPipeBase):
     """
@@ -178,8 +197,9 @@ class NamedOutputPipe(NamedPipeBase):
             NamedPipe,
             NamedPipeReader
         )
-        pipe = NamedPipe(self.outside_path)
-        return NamedPipeReader(pipe, self.inside_path)
+
+        pipe = NamedPipe(self.host_path)
+        return NamedPipeReader(pipe, self.container_path)
 
 class FilePath(Transform):
     def __init__(self, filename):
@@ -232,14 +252,9 @@ class GirderUploadFilePathToItem(GirderUploadToItem):
         super(GirderUploadFilePathToItem, self).__init__(item_id, delete_file, **kwargs)
         self._filepath = filepath
 
-
     # We ignore the "result"
     def transform(self, *args):
-        path = self._filepath
-
-        if hasattr(path, 'transform') and \
-            hasattr(path.transform, '__call__'):
-            path = path.transform(*args)
+        path = _maybe_transform(self._filepath, *args)
 
         return super(GirderUploadFilePathToItem, self).transform(path)
 

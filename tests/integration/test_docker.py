@@ -102,3 +102,29 @@ def test_docker_run_file_upload_to_item(session, girder_client, test_item):
     file_contents.seek(0)
 
     assert file_contents.read().strip() == contents
+
+@pytest.mark.docker
+def test_docker_run_girder_file_to_named_pipe_on_temp_vol(session, test_file, test_file_in_girder):
+    """
+    This is a simplified version of test_docker_run_girder_file_to_named_pipe
+    it uses the TemporaryVolume, rather than having to setup the volumes
+    'manually', this is the approach we should encourage.
+    """
+
+    params = {
+        'fileId': test_file_in_girder['_id']
+    }
+    r = session.post('integration_tests/docker/test_docker_run_girder_file_to_named_pipe_on_temp_vol',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+        # Remove escaped chars
+        log = [str(l) for l in job['log']]
+        # join and remove trailing \n added by test script
+        log = ''.join(log)[:-1]
+        with open(test_file) as fp:
+            assert log == fp.read()
