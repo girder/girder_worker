@@ -7,15 +7,19 @@ from girder.utility.model_importer import ModelImporter
 
 from girder.plugins.worker import utils
 from girder.plugins.worker.constants import PluginSettings
-from girder_worker.docker.tasks import docker_run
 
+from girder_worker.docker.tasks import docker_run
 from girder_worker.docker.transform import (
     StdOut,
     NamedOutputPipe,
     NamedInputPipe,
     Connect,
-    GirderFileToStream
+    GirderFileToStream,
+    FilePath,
+    GirderUploadFilePathToItem
 )
+
+
 
 TEST_IMAGE = 'girder/girder_worker_test:latest'
 
@@ -31,6 +35,9 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_named_pipe_output)
         self.route('POST', ('test_docker_run_girder_file_to_named_pipe', ),
                    self.test_docker_run_girder_file_to_named_pipe)
+        self.route('POST', ('test_docker_run_file_upload_to_item', ),
+                   self.test_docker_run_file_upload_to_item)
+
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -57,11 +64,7 @@ class DockerTestEndpoints(Resource):
                 'mode': 'ro'
             }
         }
-<<<<<<< HEAD
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', mount_path],
-=======
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', '-p', mount_path],
->>>>>>> 222dd08... Refactor test script to use click
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -115,8 +118,25 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(GirderFileToStream(file_id), NamedInputPipe(inside_path, outside_path))
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', connect],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
             remove_container=True, volumes=volumes)
 
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test uploading output file to item.'))
+    def test_docker_run_file_upload_to_item(self, params):
+        item_id = params.get('itemId')
+        contents = params.get('contents')
+
+        filepath = FilePath('test_file')
+
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True,
+            container_args=['output_pipe', '-p', filepath, '-m', contents],
+            remove_container=True, girder_result_hooks=[GirderUploadFilePathToItem(filepath, item_id)])
 
         return result.job

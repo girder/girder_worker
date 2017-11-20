@@ -1,4 +1,5 @@
 import os
+import six
 
 from girder_worker.utils import JobStatus
 import pytest
@@ -75,3 +76,29 @@ def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_g
         log = ''.join(log)[:-1]
         with open(test_file) as fp:
             assert log == fp.read()
+
+@pytest.mark.docker
+def test_docker_run_file_upload_to_item(session, girder_client, test_item):
+
+    contents = 'Balaenoptera musculus'
+    params = {
+        'itemId': test_item['_id'],
+        'contents': contents
+    }
+    r = session.post('integration_tests/docker/test_docker_run_file_upload_to_item',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+    files = list(girder_client.listFile(test_item['_id']))
+
+    assert len(files) == 1
+
+    file_contents = six.BytesIO()
+    girder_client.downloadFile(files[0]['_id'], file_contents)
+    file_contents.seek(0)
+
+    assert file_contents.read().strip() == contents
