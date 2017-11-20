@@ -1,38 +1,52 @@
 import sys
 import time
 import signal
+import click
 
-if len(sys.argv) == 3:
-    mode = sys.argv[1]
+@click.group()
+def cli():
+    pass
 
-    if mode == 'stdio':
-        message = sys.argv[2]
-        print(message)
-    elif mode == 'output_pipe':
-        message = sys.argv[2]
-        with open('/mnt/girder_worker/data/output_pipe', 'w') as fp:
-            fp.write(message)
-    elif mode == 'input_pipe':
-        with open('/mnt/girder_worker/data/input_pipe', 'r') as fp:
-            print(fp.read())
-    elif mode == 'sigkill':
-        time.sleep(30)
-    elif mode == 'sigterm':
-        def _signal_handler(signal, frame):
-            sys.exit(0)
-        # Install signal handler
-        signal.signal(signal.SIGTERM, _signal_handler)
-        time.sleep(30)
-    elif mode == 'stdout_stderr':
-        sys.stdout.write('this is stdout data\n')
-        sys.stderr.write('this is stderr data\n')
-    elif mode == 'volume':
-        path = sys.argv[2]
-        with open(path) as fp:
-            print(fp.read())
-    else:
-        sys.stderr.write('Invalid test mode: "%s".\n' % mode)
-        sys.exit(-1)
-else:
-    sys.stderr.write('Insufficient arguments.\n')
-    sys.exit(-1)
+@cli.command()
+@click.option('-m', type=str)
+def stdio(m):
+    print(m)
+
+@cli.command()
+@click.option('-m', type=str)
+@click.option('-p', default='/mnt/girder_worker/data/output_pipe', type=str)
+def output_pipe(m, p):
+    with open(p, 'w') as fp:
+        fp.write(m)
+
+@cli.command()
+@click.option('-p', default='/mnt/girder_worker/data/input_pipe', type=str)
+def input_pipe(p):
+    with open(p, 'r') as fp:
+        print(fp.read())
+
+@cli.command()
+def sigkill():
+    time.sleep(30)
+
+@cli.command()
+def sigterm():
+    def _signal_handler(signal, frame):
+        sys.exit(0)
+    # Install signal handler
+    signal.signal(signal.SIGTERM, _signal_handler)
+    time.sleep(30)
+
+@cli.command()
+def stdout_stderr():
+    sys.stdout.write('this is stdout data\n')
+    sys.stderr.write('this is stderr data\n')
+
+@cli.command()
+@click.option('-p', type=str)
+def volume(p):
+    with open(p) as fp:
+        print(fp.read())
+
+if __name__ == '__main__':
+    cli(obj={})

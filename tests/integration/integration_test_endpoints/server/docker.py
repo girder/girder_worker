@@ -37,7 +37,7 @@ class DockerTestEndpoints(Resource):
     @describeRoute(
         Description('Test basic docker_run.'))
     def test_docker_run(self, params):
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['stdio', 'hello docker!'],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['stdio', '-m', 'hello docker!'],
             remove_container=True)
 
         return result.job
@@ -57,7 +57,11 @@ class DockerTestEndpoints(Resource):
                 'mode': 'ro'
             }
         }
+<<<<<<< HEAD
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', mount_path],
+=======
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', '-p', mount_path],
+>>>>>>> 222dd08... Refactor test script to use click
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -83,7 +87,7 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(NamedOutputPipe(inside_path, outside_path), StdOut())
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=False, container_args=['output_pipe', connect],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['output_pipe', '-p', connect],
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -96,7 +100,6 @@ class DockerTestEndpoints(Resource):
     def test_docker_run_girder_file_to_named_pipe(self, params):
         tmp_dir = params.get('tmpDir')
         file_id = params.get('fileId')
-        print(file_id)
         mount_dir = '/mnt/girder_worker/data'
         pipe_name = 'input_pipe'
 
