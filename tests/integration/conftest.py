@@ -56,13 +56,17 @@ def test_file():
     return __file__
 
 @pytest.fixture(scope='module')
-def test_file_in_girder(girder_client, test_file):
+def private_folder(girder_client):
     me = girder_client.get('user/me')
     try:
-        private_folder = six.next(girder_client.listFolder(me['_id'], parentFolderType='user', name='Private'))
+        folder = six.next(girder_client.listFolder(me['_id'], parentFolderType='user', name='Private'))
     except StopIteration:
         raise Exception("User doesn't have a Private folder.")
 
+    yield folder
+
+@pytest.fixture(scope='module')
+def test_file_in_girder(girder_client, private_folder,  test_file):
     file = None
     try:
         size = os.path.getsize(test_file)
@@ -74,6 +78,14 @@ def test_file_in_girder(girder_client, test_file):
         if file is not None:
             girder_client.delete('item/%s' % file['itemId'])
 
+@pytest.fixture(scope='module')
+def test_item(girder_client, private_folder):
+    try:
+        item = girder_client.createItem(private_folder['_id'], 'test')
+        yield item
+    finally:
+        if file is not None:
+            girder_client.delete('item/%s' % item['_id'])
 
 # pytest hooks for ordering test items after they have been collected
 # and ensuring tests marked with sanitycheck run first.

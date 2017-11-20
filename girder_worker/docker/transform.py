@@ -67,6 +67,79 @@ class ProgressPipe(Transform):
         pipe = NamedPipe(self.path)
         return ReadStreamConnector(NamedPipeReader(pipe), utils.JobProgressAdapter(job_mgr))
 
+class Volume(Transform):
+    def __init__(self, host_path, container_path, mode='rw'):
+        self.host_path = host_path
+        self.container_path = container_path
+        self.mode = mode
+
+    def transform(self):
+        return self.container_path
+
+    def _repr_json_(self):
+        return {
+            self.host_path: {
+                'bind': self.container_path,
+                'mode': self.mode
+            }
+        }
+
+class _TemporaryVolume(Volume):
+    def __init__(self, dir=None):
+        self._dir = dir
+        super(_TemporaryVolume, self).__init__(tempfile.mkdtemp(dir=self._dir),
+            os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex))
+
+    def transform(self):
+        return self.container_path
+
+    def cleanup(self):
+        if os.path.exists(self.host_path):
+            shutil.rmtree(self.host_path)
+
+class _TemporaryVolumeSingleton(type):
+    def __init__(cls, name, bases, dict):
+        super(_TemporaryVolumeSingleton, cls).__init__(name, bases, dict)
+        cls._instance = None
+
+    def __call__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(_TemporaryVolumeSingleton, cls).__call__(*args, **kwargs)
+        return cls._instance
+
+
+@six.add_metaclass(_TemporaryVolumeSingleton)
+class TemporaryVolume:
+    dir = None
+
+    def __init__(self):
+        self._instance = None
+
+    @property
+    def _task_instance(self):
+        if self._instance is None:
+            # This is not ideal however, if allows use to have a single share temp
+            # volume across a task.
+
+            from girder_worker.app import app
+            self._instance = app.current_task._temp_volume
+
+        return self._instance
+
+    def transform(self):
+        return self._task_instance.transform()
+
+    def cleanup(self):
+        self._task_instance.cleanup()
+
+    @property
+    def container_path(self):
+        return self._task_instance.container_path
+
+    @property
+    def host_path(self):
+        return self._task_instance.host_path
+
 
 class NamedPipeBase(Transform):
     def __init__(self, inside_path, outside_path):

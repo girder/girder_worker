@@ -7,7 +7,7 @@ try:
 except  ImportError:
     # These imports will not be available on the girder side.
     pass
-from girder_worker.app import app
+from girder_worker.app import app, Task
 from girder_worker import logger
 from girder_worker.docker import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
@@ -20,9 +20,12 @@ from girder_worker.docker.io import (
 from girder_worker.docker.transform import (
     ContainerStdErr,
     ContainerStdOut,
-    Connect
+    Connect,
+    Volume,
+    TemporaryVolume,
+    _TemporaryVolume
 )
-
+from girder_worker_utils import _walk_obj
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
@@ -161,6 +164,19 @@ def _handle_streaming_args(args):
 
     return (processed_arg, read_streams, write_streams)
 
+class DockerTask(Task):
+
+    def __init__(self):
+        super(DockerTask, self).__init__()
+        self._temp_volume = _TemporaryVolume(dir=TemporaryVolume.dir)
+
+    def __call__(self, *args, **kwargs):
+        # For now alway mount temp volume, but in theory we only need todo this
+        # if its being used.
+        volumes = kwargs.setdefault('volumes', {})
+        volumes.update(self._temp_volume._repr_json_())
+
+        return super(DockerTask, self).__call__(*args, **kwargs)
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                 volumes={}, remove_container=False, stream_connectors=[], **kwargs):
@@ -205,11 +221,19 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     try:
         _run_select_loop(task, container, read_streams, write_streams)
     finally:
+        # TODO only remove container is its stop, may be stop it ...
         if container and remove_container:
             container.remove()
 
+    # return a array of None's equal to number of entries in the girder_result_hooks
+    # header, in order to trigger processing of the container outputs.
+    results = []
+    if hasattr(task.request, 'girder_result_hooks'):
+        results = (None,) * len(task.request.girder_result_hooks)
 
-@app.task(bind=True)
+    return results
+
+@app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                volumes={}, remove_container=False, **kwargs):
     return _docker_run(
