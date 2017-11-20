@@ -14,16 +14,14 @@ def stdio(m):
 
 @cli.command()
 @click.option('-m', type=str)
-@click.option('-p', default='/mnt/girder_worker/data/output_pipe', type=str)
+@click.option('-p', default='/mnt/girder_worker/data/output_pipe', type=click.File('w'))
 def output_pipe(m, p):
-    with open(p, 'w') as fp:
-        fp.write(m)
+    p.write(m)
 
 @cli.command()
-@click.option('-p', default='/mnt/girder_worker/data/input_pipe', type=str)
+@click.option('-p', default='/mnt/girder_worker/data/input_pipe', type=click.File('r'))
 def input_pipe(p):
-    with open(p, 'r') as fp:
-        print(fp.read())
+    print(p.read())
 
 @cli.command()
 def sigkill():
@@ -43,10 +41,9 @@ def stdout_stderr():
     sys.stderr.write('this is stderr data\n')
 
 @cli.command()
-@click.option('-p', type=str)
+@click.option('-p', type=click.File('r'))
 def volume(p):
-    with open(p) as fp:
-        print(fp.read())
+    print(p.read())
 
 if __name__ == '__main__':
     cli(obj={})
