@@ -1,8 +1,17 @@
 import sys
+import six
+import uuid
+import os
+import shutil
+import tempfile
 
 from girder_worker_utils.transform import Transform
-from girder_worker_utils.transforms.girder_io import GirderClientTransform
+from girder_worker_utils.transforms.girder_io import (
+    GirderClientTransform,
+    GirderUploadToItem
+)
 
+TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
 class StdOut(Transform):
     def transform(self):
@@ -99,6 +108,19 @@ class NamedOutputPipe(NamedPipeBase):
         pipe = NamedPipe(self.outside_path)
         return NamedPipeReader(pipe, self.inside_path)
 
+class FilePath(Transform):
+    def __init__(self, filename):
+        self.filename = filename
+        self._volume = TemporaryVolume()
+
+    def transform(self, *pargs):
+        # If we are being called with arguments, then this is the execution of
+        # girder_result_hooks, so return the host_path
+        if len(pargs) > 0:
+            return os.path.join(self._volume.host_path, self.filename)
+        else:
+            return os.path.join(self._volume.container_path, self.filename)
+
 class Connect(Transform):
     def __init__(self, input, output):
         super(Connect, self).__init__()
@@ -131,6 +153,36 @@ class GirderFileToStream(GirderClientTransform):
             GirderFileStreamReader
         )
         return GirderFileStreamReader(self.gc, self.file_id)
+
+class GirderUploadFilePathToItem(GirderUploadToItem):
+    def __init__(self, filepath, item_id,  delete_file=False, **kwargs):
+        super(GirderUploadFilePathToItem, self).__init__(item_id, delete_file, **kwargs)
+        self._filepath = filepath
+
+
+    # We ignore the "result"
+    def transform(self, *args):
+        path = self._filepath
+
+        if hasattr(path, 'transform') and \
+            hasattr(path.transform, '__call__'):
+            path = path.transform(*args)
+
+        return super(GirderUploadFilePathToItem, self).transform(path)
+
+# class GirderFileToUploadStream(GirderClientTransform):
+#     def __init__(self, _id, **kwargs):
+#         super(GirderFileToStream, self).__init__(**kwargs)
+#         self.file_id = _id
+#
+#     def transform(self):
+#         from girder_worker.docker.io import (
+#             GirderFileStreamPushAdapter
+#         )
+#
+#         return GirderFileStreamFetchAdapter(self.file_id, self.client)
+
+
 #
 # For example:
 # docker_run.delay(image, stream_connectors=[Connect(NamedOutputPipe('my/pipe'), StdOut())]
