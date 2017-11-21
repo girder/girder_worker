@@ -12,6 +12,7 @@ from .raw import CeleryTestEndpoints
 from .traditional import TraditionalTestEndpoints
 from .docker import DockerTestEndpoints
 
+
 class CommonTestEndpoints(Resource):
     def __init__(self):
         super(CommonTestEndpoints, self).__init__()

@@ -10,14 +10,10 @@ from girder.api.rest import (
     getCurrentUser,
     getApiUrl
 )
-from girder.utility.model_importer import ModelImporter
 from girder.models.upload import Upload
 from girder.models.item import Item
 from girder.models.token import Token
 from girder.constants import AccessType
-
-from girder.plugins.worker import utils
-from girder.plugins.worker.constants import PluginSettings
 
 from girder_worker.docker.tasks import docker_run
 from girder_worker.docker.transform import (
@@ -33,8 +29,6 @@ from girder_worker.docker.transform import (
     GirderFileIdToVolume,
     ChunkedTransferEncodingStream
 )
-
-
 
 TEST_IMAGE = 'girder/girder_worker_test:latest'
 
@@ -69,7 +63,8 @@ class DockerTestEndpoints(Resource):
     @describeRoute(
         Description('Test basic docker_run.'))
     def test_docker_run(self, params):
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['stdio', '-m', 'hello docker!'],
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['stdio', '-m', 'hello docker!'],
             remove_container=True)
 
         return result.job
@@ -89,7 +84,8 @@ class DockerTestEndpoints(Resource):
                 'mode': 'ro'
             }
         }
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', mount_path],
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['read', '-p', mount_path],
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -113,12 +109,12 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(NamedOutputPipe(pipe_name, mount_dir, tmp_dir), StdOut())
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True,
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True,
             container_args=['write', '-p', connect, '-m', message],
             remove_container=True, volumes=volumes)
 
         return result.job
-
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -137,11 +133,12 @@ class DockerTestEndpoints(Resource):
             }
         }
 
-        connect = Connect(GirderFileIdToStream(file_id), NamedInputPipe(pipe_name, mount_dir, tmp_dir))
+        connect = Connect(GirderFileIdToStream(file_id),
+                          NamedInputPipe(pipe_name, mount_dir, tmp_dir))
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', connect],
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['read', '-p', connect],
             remove_container=True, volumes=volumes)
-
 
         return result.job
 
@@ -158,7 +155,8 @@ class DockerTestEndpoints(Resource):
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
             container_args=['write', '-p', filepath, '-m', contents],
-            remove_container=True, girder_result_hooks=[GirderUploadFilePathToItem(filepath, item_id)])
+            remove_container=True,
+            girder_result_hooks=[GirderUploadFilePathToItem(filepath, item_id)])
 
         return result.job
 
@@ -177,7 +175,8 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(GirderFileIdToStream(file_id), NamedInputPipe(pipe_name))
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', connect],
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['read', '-p', connect],
             remove_container=True)
 
         return result.job
@@ -194,7 +193,8 @@ class DockerTestEndpoints(Resource):
         volume = Volume(fixture_dir, mount_path, 'ro')
         filepath = FilePath(filename, volume)
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', filepath],
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['read', '-p', filepath],
             remove_container=True, volumes=[volume])
 
         return result.job
@@ -237,21 +237,18 @@ class DockerTestEndpoints(Resource):
                     model=Item, destName='item',
                     level=AccessType.READ, paramType='query'))
     def input_stream(self, item, params):
-        try:
-            # Read body 5 bytes at a time so we can test chunking a small body
-            chunks = six.BytesIO()
-            for chunk in iterBody(1):
-                chunks.write('%s\n' % chunk.decode())
-                chunks.write('\n')
+        # Read body 5 bytes at a time so we can test chunking a small body
+        chunks = six.BytesIO()
+        for chunk in iterBody(1):
+            chunks.write('%s\n' % chunk.decode())
+            chunks.write('\n')
 
-            chunks.seek(0)
-            contents = chunks.read()
-            chunks.seek(0)
-            Upload().uploadFromFile(chunks, len(contents), 'chunks', parentType='item', parent=item,
-                           user=getCurrentUser())
-        except:
-            import traceback
-            traceback.print_exc()
+        chunks.seek(0)
+        contents = chunks.read()
+        chunks.seek(0)
+        Upload().uploadFromFile(
+            chunks, len(contents), 'chunks', parentType='item', parent=item,
+            user=getCurrentUser())
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -266,10 +263,14 @@ class DockerTestEndpoints(Resource):
         }
         url = '%s/%s?itemId=%s' % (getApiUrl(), 'integration_tests/docker/input_stream', item_id)
 
+        container_args = [
+            'read_write',
+            '-i', GirderFileIdToVolume(file_id),
+            '-o', Connect(NamedOutputPipe('out'),
+                          ChunkedTransferEncodingStream(url, headers))
+        ]
         result = docker_run.delay(
-            TEST_IMAGE, pull_image=True,
-            container_args=['read_write', '-i', GirderFileIdToVolume(file_id), '-o',
-                            Connect(NamedOutputPipe('out'), ChunkedTransferEncodingStream(url, headers))],
+            TEST_IMAGE, pull_image=True, container_args=container_args,
             remove_container=True)
 
         return result.job
