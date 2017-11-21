@@ -191,3 +191,32 @@ def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girde
         log = ''.join(log)
         with open(test_file) as fp:
             assert log == fp.read()
+
+def test_docker_run_transfer_encoding_stream(session, girder_client, test_file, test_file_in_girder, test_item):
+    params = {
+        'itemId': test_item['_id'],
+        'fileId': test_file_in_girder['_id']
+    }
+    r = session.post('integration_tests/docker/test_docker_run_transfer_encoding_stream',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+    files = list(girder_client.listFile(test_item['_id']))
+
+    assert len(files) == 1
+
+    file_contents = six.BytesIO()
+    girder_client.downloadFile(files[0]['_id'], file_contents)
+    file_contents.seek(0)
+    chunks = file_contents.read().split('\n')
+    chunks = [c for c in chunks if c != '']
+
+    assert len(chunks) ==  3
+
+    with open(test_file) as fp:
+        for chunk in chunks:
+            assert chunk == fp.read(1024*64)

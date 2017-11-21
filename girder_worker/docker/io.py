@@ -3,6 +3,10 @@ import errno
 import stat
 import abc
 import six
+import httplib
+import urlparse
+import ssl
+import sys
 
 class StreamConnector(object):
     """
@@ -324,3 +328,82 @@ class GirderFileStreamReader(StreamReader):
             return six.next(self._iter)
         except StopIteration:
             return b''
+
+class ChunkedTransferEncodingStreamWriter(StreamWriter):
+    def __init__(self, url, headers={}):
+        self._url = url
+
+        """
+        Uses HTTP chunked transfer-encoding to stream a request body to a
+        server. Unfortunately requests does not support hooking into this logic
+        easily, so we use the lower-level httplib module.
+        """
+        self._closed = False
+
+        parts = urlparse.urlparse(self._url)
+        if parts.scheme == 'https':
+            ssl_context = ssl.create_default_context()
+            conn = httplib.HTTPSConnection(parts.netloc, context=ssl_context)
+        else:
+            conn = httplib.HTTPConnection(parts.netloc)
+
+        try:
+            url = parts.path
+            if parts.query is not None:
+                url = '%s?%s' % (url, parts.query)
+            conn.putrequest('POST',
+                            url, skip_accept_encoding=True)
+
+            for header, value in headers.items():
+                conn.putheader(header, value)
+
+            conn.putheader('Transfer-Encoding', 'chunked')
+
+            conn.endheaders()  # This actually flushes the headers to the server
+        except Exception:
+            sys.stderr.write('HTTP connection to "%s" failed.\n' % self._url)
+            conn.close()
+            raise
+
+        self.conn = conn
+
+    def write(self, buf):
+        """
+        Write a chunk of data to the output stream in accordance with the
+        chunked transfer encoding protocol.
+        """
+        try:
+            self.conn.send(hex(len(buf))[2:].encode('utf-8'))
+            self.conn.send(b'\r\n')
+            self.conn.send(buf)
+            self.conn.send(b'\r\n')
+        except Exception:
+            resp = self.conn.getresponse()
+            sys.stderr.write('Exception while sending HTTP chunk to %s, status was %s, '
+                  'message was:\n%s\n' % (self.output_spec['url'], resp.status,
+                                        resp.read()))
+            self.conn.close()
+            self._closed = True
+            raise
+
+    def close(self):
+        """
+        Close the output stream. Called after the last data is sent.
+        """
+        if self._closed:
+            return
+
+        try:
+            self.conn.send(b'0\r\n\r\n')
+            resp = self.conn.getresponse()
+            if resp.status >= 300 and resp.status < 400:
+                raise Exception('Redirects are not supported for streaming '
+                                'requests at this time. %d to Location: %s' % (
+                                    resp.status, resp.getheader('Location')))
+            if resp.status >= 400:
+                raise Exception(
+                    'HTTP stream output to %s failed with status %d. Response '
+                    'was: %s' % (
+                        self.output_spec['url'], resp.status, resp.read()))
+        finally:
+            self.conn.close()

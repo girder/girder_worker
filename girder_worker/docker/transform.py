@@ -286,17 +286,17 @@ class GirderUploadFilePathToItem(GirderUploadToItem):
 
         return super(GirderUploadFilePathToItem, self).transform(path)
 
-# class GirderFileToUploadStream(GirderClientTransform):
-#     def __init__(self, _id, **kwargs):
-#         super(GirderFileToStream, self).__init__(**kwargs)
-#         self.file_id = _id
-#
-#     def transform(self):
-#         from girder_worker.docker.io import (
-#             GirderFileStreamPushAdapter
-#         )
-#
-#         return GirderFileStreamFetchAdapter(self.file_id, self.client)
+class ChunkedTransferEncodingStream(Transform):
+    def __init__(self, url, headers={}, **kwargs):
+        self.url = url
+        self.headers = headers
+
+    def transform(self, **kwargs):
+        from girder_worker.docker.io import (
+            ChunkedTransferEncodingStreamWriter
+        )
+
+        return ChunkedTransferEncodingStreamWriter(self.url, self.headers)
 
 
 #

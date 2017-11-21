@@ -1,9 +1,20 @@
 import os
+import six
 
 from girder.api import access
-from girder.api.describe import Description, describeRoute
-from girder.api.rest import Resource, filtermodel
+from girder.api.describe import Description, describeRoute, autoDescribeRoute
+from girder.api.rest import (
+    Resource,
+    filtermodel,
+    iterBody,
+    getCurrentUser,
+    getApiUrl
+)
 from girder.utility.model_importer import ModelImporter
+from girder.models.upload import Upload
+from girder.models.item import Item
+from girder.models.token import Token
+from girder.constants import AccessType
 
 from girder.plugins.worker import utils
 from girder.plugins.worker.constants import PluginSettings
@@ -20,6 +31,7 @@ from girder_worker.docker.transform import (
     Volume,
     ProgressPipe,
     GirderFileIdToVolume,
+    ChunkedTransferEncodingStream
 )
 
 
@@ -48,6 +60,9 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_progress_pipe)
         self.route('POST', ('test_docker_run_girder_file_to_volume', ),
                    self.test_docker_run_girder_file_to_volume)
+        self.route('POST', ('input_stream',), self.input_stream)
+        self.route('POST', ('test_docker_run_transfer_encoding_stream', ),
+                   self.test_docker_run_transfer_encoding_stream)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -210,6 +225,51 @@ class DockerTestEndpoints(Resource):
             TEST_IMAGE, pull_image=True,
             container_args=['read_write', '-i', GirderFileIdToVolume(file_id),
                             '-o', Connect(NamedOutputPipe('out'), StdOut())],
+            remove_container=True)
+
+        return result.job
+
+    @access.token
+    @autoDescribeRoute(
+        Description('Accept transfer encoding request. Used by '
+                    'test_docker_run_transfer_encoding_stream test case.')
+        .modelParam('itemId', 'The item id',
+                    model=Item, destName='item',
+                    level=AccessType.READ, paramType='query'))
+    def input_stream(self, item, params):
+        try:
+            # Read body 5 bytes at a time so we can test chunking a small body
+            chunks = six.BytesIO()
+            for chunk in iterBody(1):
+                chunks.write('%s\n' % chunk.decode())
+                chunks.write('\n')
+
+            chunks.seek(0)
+            contents = chunks.read()
+            chunks.seek(0)
+            Upload().uploadFromFile(chunks, len(contents), 'chunks', parentType='item', parent=item,
+                           user=getCurrentUser())
+        except:
+            import traceback
+            traceback.print_exc()
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test transfer encoding stream.'))
+    def test_docker_run_transfer_encoding_stream(self, params):
+        item_id = params.get('itemId')
+        file_id = params.get('fileId')
+
+        headers = {
+            'Girder-Token': str(Token().createToken(getCurrentUser())['_id'])
+        }
+        url = '%s/%s?itemId=%s' % (getApiUrl(), 'integration_tests/docker/input_stream', item_id)
+
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True,
+            container_args=['read_write', '-i', GirderFileIdToVolume(file_id), '-o',
+                            Connect(NamedOutputPipe('out'), ChunkedTransferEncodingStream(url, headers))],
             remove_container=True)
 
         return result.job

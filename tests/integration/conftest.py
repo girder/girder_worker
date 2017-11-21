@@ -5,7 +5,8 @@ import os
 import collections
 from .utilities import GirderSession
 from girder_client import GirderClient
-
+import random
+import string
 
 
 def pytest_addoption(parser):
@@ -52,8 +53,13 @@ def girder_client(request, api_url):
     yield client
 
 @pytest.fixture(scope='module')
-def test_file():
-    return __file__
+def test_file(tmpdir_factory):
+    path = tmpdir_factory.mktemp('test').join('test.txt')
+    # Three times our read buffer for docker tests
+    path.write(''.join(random.choice(string.ascii_uppercase + string.digits)
+                       for _ in range(1024*64*3)))
+
+    yield str(path)
 
 @pytest.fixture(scope='module')
 def private_folder(girder_client):
@@ -78,7 +84,7 @@ def test_file_in_girder(girder_client, private_folder,  test_file):
         if file is not None:
             girder_client.delete('item/%s' % file['itemId'])
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def test_item(girder_client, private_folder):
     try:
         item = girder_client.createItem(private_folder['_id'], 'test')
