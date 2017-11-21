@@ -172,3 +172,22 @@ def test_docker_run_progress_pipe(session):
 
         del progress['notificationId']
         assert progress == progressions[-1]
+
+@pytest.mark.docker
+def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girder):
+    params = {
+        'fileId': test_file_in_girder['_id']
+    }
+    r = session.post('integration_tests/docker/test_docker_run_girder_file_to_volume',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+        # Remove escaped chars
+        log = [str(l) for l in job['log']]
+        log = ''.join(log)
+        with open(test_file) as fp:
+            assert log == fp.read()

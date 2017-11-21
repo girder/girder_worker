@@ -56,5 +56,15 @@ def progress(p, progressions):
         p.write('%s\n' % json.dumps(msg))
         p.flush()
 
+@cli.command()
+@click.option('-i', type=click.File('r'))
+@click.option('-o', type=click.File('w'))
+def read_write(i, o):
+    while True:
+        data = i.read(1024)
+        if not data:
+            break
+        o.write(data)
+
 if __name__ == '__main__':
     cli(obj={})

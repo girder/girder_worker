@@ -14,11 +14,12 @@ from girder_worker.docker.transform import (
     NamedOutputPipe,
     NamedInputPipe,
     Connect,
-    GirderFileToStream,
+    GirderFileIdToStream,
     FilePath,
     GirderUploadFilePathToItem,
     Volume,
-    ProgressPipe
+    ProgressPipe,
+    GirderFileIdToVolume,
 )
 
 
@@ -45,7 +46,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_mount_idiomatic_volume)
         self.route('POST', ('test_docker_run_progress_pipe', ),
                    self.test_docker_run_progress_pipe)
-
+        self.route('POST', ('test_docker_run_girder_file_to_volume', ),
+                   self.test_docker_run_girder_file_to_volume)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -120,7 +122,7 @@ class DockerTestEndpoints(Resource):
             }
         }
 
-        connect = Connect(GirderFileToStream(file_id), NamedInputPipe(pipe_name, mount_dir, tmp_dir))
+        connect = Connect(GirderFileIdToStream(file_id), NamedInputPipe(pipe_name, mount_dir, tmp_dir))
 
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
             remove_container=True, volumes=volumes)
@@ -158,7 +160,7 @@ class DockerTestEndpoints(Resource):
         file_id = params.get('fileId')
         pipe_name = 'input_pipe'
 
-        connect = Connect(GirderFileToStream(file_id), NamedInputPipe(pipe_name))
+        connect = Connect(GirderFileIdToStream(file_id), NamedInputPipe(pipe_name))
 
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
             remove_container=True)
@@ -185,7 +187,7 @@ class DockerTestEndpoints(Resource):
     @access.token
     @filtermodel(model='job', plugin='jobs')
     @describeRoute(
-        Description('Test idiomatic volume.'))
+        Description('Test progress pipe.'))
     def test_docker_run_progress_pipe(self, params):
         progressions = params.get('progressions')
         progress_pipe = ProgressPipe()
@@ -193,6 +195,21 @@ class DockerTestEndpoints(Resource):
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
             container_args=['progress', '-p', progress_pipe, '--progressions', progressions],
+            remove_container=True)
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test download to volume.'))
+    def test_docker_run_girder_file_to_volume(self, params):
+        file_id = params.get('fileId')
+
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True,
+            container_args=['read_write', '-i', GirderFileIdToVolume(file_id),
+                            '-o', Connect(NamedOutputPipe('out'), StdOut())],
             remove_container=True)
 
         return result.job

@@ -8,7 +8,8 @@ import tempfile
 from girder_worker_utils.transform import Transform
 from girder_worker_utils.transforms.girder_io import (
     GirderClientTransform,
-    GirderUploadToItem
+    GirderUploadToItem,
+    GirderFileId
 )
 from girder_worker.core.utils import JobProgressAdapter
 
@@ -245,9 +246,9 @@ class Connect(Transform):
         """
         return str(self)
 
-class GirderFileToStream(GirderClientTransform):
+class GirderFileIdToStream(GirderClientTransform):
     def __init__(self, _id, **kwargs):
-        super(GirderFileToStream, self).__init__(**kwargs)
+        super(GirderFileIdToStream, self).__init__(**kwargs)
         self.file_id = _id
 
     def transform(self, **kwargs):
@@ -255,6 +256,24 @@ class GirderFileToStream(GirderClientTransform):
             GirderFileStreamReader
         )
         return GirderFileStreamReader(self.gc, self.file_id)
+
+class GirderFileIdToVolume(GirderFileId):
+    def __init__(self, _id, volume=TemporaryVolume(), **kwargs):
+        super(GirderFileIdToVolume, self).__init__(_id,**kwargs)
+        self._volume = volume
+
+    def transform(self, **kwargs):
+        self._volume.transform(**kwargs)
+        self._dir = self._volume.host_path
+        super(GirderFileIdToVolume, self).transform()
+
+        # Return the path inside the container
+        return os.path.join(self._volume.container_path,
+                            os.path.basename(self.file_path))
+
+    def cleanup(self, **kwargs):
+        if hasattr(self, 'file_path'):
+            os.remove(self.file_path)
 
 class GirderUploadFilePathToItem(GirderUploadToItem):
     def __init__(self, filepath, item_id,  delete_file=False, **kwargs):
