@@ -16,12 +16,12 @@ def stdio(m):
 @cli.command()
 @click.option('-m', type=str)
 @click.option('-p', default='/mnt/girder_worker/data/output_pipe', type=click.File('w'))
-def output_pipe(m, p):
+def write(m, p):
     p.write(m)
 
 @cli.command()
 @click.option('-p', default='/mnt/girder_worker/data/input_pipe', type=click.File('r'))
-def input_pipe(p):
+def read(p):
     print(p.read())
 
 @cli.command()
@@ -40,11 +40,6 @@ def sigterm():
 def stdout_stderr():
     sys.stdout.write('this is stdout data\n')
     sys.stderr.write('this is stderr data\n')
-
-@cli.command()
-@click.option('-p', type=click.File('r'))
-def volume(p):
-    print(p.read())
 
 @cli.command()
 @click.option('-p', type=click.File('w'))

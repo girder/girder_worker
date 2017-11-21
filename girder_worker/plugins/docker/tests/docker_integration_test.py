@@ -183,7 +183,7 @@ class TestDockerMode(unittest.TestCase):
         inputs = {
             'test_mode': {
                 'format': 'string',
-                'data': 'output_pipe'
+                'data': 'write'
             },
             'message': {
                 'format': 'string',
@@ -251,7 +251,7 @@ class TestDockerMode(unittest.TestCase):
         inputs = {
             'test_mode': {
                 'format': 'string',
-                'data': 'input_pipe'
+                'data': 'read'
             },
             'message': {
                 'format': 'string',

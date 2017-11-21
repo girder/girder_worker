@@ -89,7 +89,7 @@ class DockerTestEndpoints(Resource):
                 'mode': 'ro'
             }
         }
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', '-p', mount_path],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', mount_path],
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -114,7 +114,7 @@ class DockerTestEndpoints(Resource):
         connect = Connect(NamedOutputPipe(pipe_name, mount_dir, tmp_dir), StdOut())
 
         result = docker_run.delay(TEST_IMAGE, pull_image=True,
-            container_args=['output_pipe', '-p', connect, '-m', message],
+            container_args=['write', '-p', connect, '-m', message],
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -139,7 +139,7 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(GirderFileIdToStream(file_id), NamedInputPipe(pipe_name, mount_dir, tmp_dir))
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', connect],
             remove_container=True, volumes=volumes)
 
 
@@ -157,7 +157,7 @@ class DockerTestEndpoints(Resource):
 
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
-            container_args=['output_pipe', '-p', filepath, '-m', contents],
+            container_args=['write', '-p', filepath, '-m', contents],
             remove_container=True, girder_result_hooks=[GirderUploadFilePathToItem(filepath, item_id)])
 
         return result.job
@@ -177,7 +177,7 @@ class DockerTestEndpoints(Resource):
 
         connect = Connect(GirderFileIdToStream(file_id), NamedInputPipe(pipe_name))
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', connect],
             remove_container=True)
 
         return result.job
@@ -194,7 +194,7 @@ class DockerTestEndpoints(Resource):
         volume = Volume(fixture_dir, mount_path, 'ro')
         filepath = FilePath(filename, volume)
 
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', '-p', filepath],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['read', '-p', filepath],
             remove_container=True, volumes=[volume])
 
         return result.job
