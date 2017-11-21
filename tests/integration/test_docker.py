@@ -42,7 +42,8 @@ def test_docker_run_volume(session):
 @pytest.mark.docker
 def test_docker_run_named_pipe_output(session, tmpdir):
     params = {
-        'tmpDir': tmpdir
+        'tmpDir': tmpdir,
+        'message': 'Dydh da'
     }
     r = session.post('integration_tests/docker/test_docker_run_named_pipe_output',
                      params=params)
@@ -54,7 +55,7 @@ def test_docker_run_named_pipe_output(session, tmpdir):
 
         log = job['log']
         assert len(log) == 1
-        assert log[0] == '/mnt/girder_worker/data/output_pipe'
+        assert log[0] == params['message']
 
 @pytest.mark.docker
 def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_girder, tmpdir):

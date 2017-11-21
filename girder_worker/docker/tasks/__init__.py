@@ -166,20 +166,16 @@ def _handle_streaming_args(args):
 
 class DockerTask(Task):
 
-    _temp_volume_header = 'girder_docker_run_temp_volume'
-
     def _maybe_transform_argument(self, arg):
-        if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
-            return arg.transform(task=self)
-        return arg
+        return super(DockerTask, self)._maybe_transform_argument(
+            arg, task=self, temp_volume=self.request._temp_volume)
+
+    def _maybe_transform_result(self, idx, result):
+        return super(DockerTask, self)._maybe_transform_result(
+            idx, result, temp_volume=self.request._temp_volume)
 
     def __call__(self, *args, **kwargs):
-        # For now always mount temp volume, but in theory we only need todo this
-        # if its being used. We store the instance in the request headers for now.
-        # Not sure if there is a better per request storage location?
-        if self.request.headers is None:
-            self.request.headers = {}
-        self.request.headers[self._temp_volume_header] = _TemporaryVolume(dir=TemporaryVolume.dir)
+        self.request._temp_volume = _TemporaryVolume(dir=TemporaryVolume.dir)
 
         volumes = kwargs.setdefault('volumes', {})
         # If we have a list of volumes, the user provide a list of Volume objects,
@@ -193,16 +189,11 @@ class DockerTask(Task):
             kwargs['volumes'] = volumes
 
         # call transform on temp volume and add it to the volumes dict
-        volumes.update(self._temp_volume.transform())
+        volumes.update(self.request._temp_volume.transform())
 
         super(DockerTask, self).__call__(*args, **kwargs)
 
-        self._temp_volume.cleanup()
-        del self.request.headers[self._temp_volume_header]
-
-    @property
-    def _temp_volume(self):
-        return self.request.headers[self._temp_volume_header]
+        self.request._temp_volume.cleanup()
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                 volumes={}, remove_container=False, stream_connectors=[], **kwargs):

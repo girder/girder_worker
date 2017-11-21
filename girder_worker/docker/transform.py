@@ -14,9 +14,9 @@ from girder_worker.core.utils import JobProgressAdapter
 
 TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
-def _maybe_transform(obj, *args):
+def _maybe_transform(obj, *args, **kwargs):
     if hasattr(obj, 'transform') and hasattr(obj.transform, '__call__'):
-        return obj.transform()
+        return obj.transform(*args, **kwargs)
 
     return obj
 
@@ -97,30 +97,23 @@ class TemporaryVolume:
     def __init__(self):
         self._instance = None
 
-    @property
-    def _task_instance(self):
-        if self._instance is None:
-            # This is not ideal however, if allows use to have a single share temp
-            # volume across a task.
-
-            from girder_worker.app import app
-            self._instance = app.current_task._temp_volume
-
-        return self._instance
-
-    def transform(self, **kwargs):
-        return self._task_instance.transform()
+    def transform(self, temp_volume=None, **kwargs):
+        # We save the runtime instances provide by the task, we delegate to this
+        # instance
+        if temp_volume is not None:
+            self._instance = temp_volume
+        return self._instance.transform(**kwargs)
 
     def cleanup(self):
-        self._task_instance.cleanup()
+        self._instance.cleanup()
 
     @property
     def container_path(self):
-        return self._task_instance.container_path
+        return self._instance.container_path
 
     @property
     def host_path(self):
-        return self._task_instance.host_path
+        return self._instance.host_path
 
 class ProgressPipe(Transform):
 
@@ -136,7 +129,7 @@ class ProgressPipe(Transform):
             NamedPipeReader,
             ReadStreamConnector
         )
-        from girder_worker.app import app
+        self._volume.transform(**kwargs)
 
         # TODO What do we do is job_manager is None? When can it me None?
         job_mgr = task.job_manager
@@ -148,6 +141,9 @@ class ProgressPipe(Transform):
 class NamedPipeBase(Transform):
     def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume()):
         super(NamedPipeBase, self).__init__()
+        self._container_path = None
+        self._host_path = None
+        self._volume  = None
 
         if container_path is not None and host_path is not None:
             self._container_path = container_path
@@ -157,27 +153,38 @@ class NamedPipeBase(Transform):
 
         self.name = name
 
+    def transform(self, **kwargs):
+        if self._volume is not None:
+            self._volume.transform(**kwargs)
+
     @property
     def container_path(self):
-        return os.path.join(self._volume.container_path, self.name)
+        if self._container_path is not None:
+            return os.path.join(self._container_path, self.name)
+        else:
+            return os.path.join(self._volume.container_path, self.name)
 
     @property
     def host_path(self):
-        return os.path.join(self._volume.host_path, self.name)
+        if self._host_path is not None:
+            return os.path.join(self._host_path, self.name)
+        else:
+            return os.path.join(self._volume.host_path, self.name)
 
 class NamedInputPipe(NamedPipeBase):
     """
     A named pipe that read from within a docker container.
     i.e. To stream data out of a container.
     """
-    def __init__(self, name, volume=None):
-        super(NamedInputPipe, self).__init__(name, volume)
+    def __init__(self, name,  container_path=None, host_path=None, volume=TemporaryVolume()):
+        super(NamedInputPipe, self).__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeWriter
         )
+        super(NamedInputPipe, self).transform(**kwargs)
 
         pipe = NamedPipe(self.host_path)
         return NamedPipeWriter(pipe, self.container_path)
@@ -187,14 +194,15 @@ class NamedOutputPipe(NamedPipeBase):
     A named pipe that written to from within a docker container.
     i.e. To stream data out of a container.
     """
-    def __init__(self, inside_path, outside_path):
-        super(NamedOutputPipe, self).__init__(inside_path, outside_path)
+    def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume()):
+        super(NamedOutputPipe, self).__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeReader
         )
+        super(NamedOutputPipe, self).transform(**kwargs)
 
         pipe = NamedPipe(self.host_path)
         return NamedPipeReader(pipe, self.container_path)
@@ -205,6 +213,7 @@ class FilePath(Transform):
         self._volume = volume
 
     def transform(self, *pargs, **kwargs):
+        self._volume.transform(**kwargs)
         # If we are being called with arguments, then this is the execution of
         # girder_result_hooks, so return the host_path
         if len(pargs) > 0:
@@ -223,8 +232,8 @@ class Connect(Transform):
             WriteStreamConnector,
             ReadStreamConnector,
         )
-        input = _maybe_transform(self._input)
-        output = _maybe_transform(self._output)
+        input = _maybe_transform(self._input, **kwargs)
+        output = _maybe_transform(self._output, **kwargs)
         if isinstance(self._output, NamedInputPipe):
             return WriteStreamConnector(input, output)
         else:
@@ -253,8 +262,8 @@ class GirderUploadFilePathToItem(GirderUploadToItem):
         self._filepath = filepath
 
     # We ignore the "result"
-    def transform(self, *args):
-        path = _maybe_transform(self._filepath, *args)
+    def transform(self, *args, **kwargs):
+        path = _maybe_transform(self._filepath, *args, **kwargs)
 
         return super(GirderUploadFilePathToItem, self).transform(path)
 

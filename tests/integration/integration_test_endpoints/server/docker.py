@@ -83,6 +83,7 @@ class DockerTestEndpoints(Resource):
         Description('Test named pipe output.'))
     def test_docker_run_named_pipe_output(self, params):
         tmp_dir = params.get('tmpDir')
+        message = params.get('message')
         mount_dir = '/mnt/girder_worker/data'
         pipe_name = 'output_pipe'
 
@@ -93,12 +94,10 @@ class DockerTestEndpoints(Resource):
             }
         }
 
-        inside_path = os.path.join(mount_dir, pipe_name)
-        outside_path = os.path.join(tmp_dir, pipe_name)
+        connect = Connect(NamedOutputPipe(pipe_name, mount_dir, tmp_dir), StdOut())
 
-        connect = Connect(NamedOutputPipe(inside_path, outside_path), StdOut())
-
-        result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['output_pipe', '-p', connect],
+        result = docker_run.delay(TEST_IMAGE, pull_image=True,
+            container_args=['output_pipe', '-p', connect, '-m', message],
             remove_container=True, volumes=volumes)
 
         return result.job
@@ -121,10 +120,7 @@ class DockerTestEndpoints(Resource):
             }
         }
 
-        inside_path = os.path.join(mount_dir, pipe_name)
-        outside_path = os.path.join(tmp_dir, pipe_name)
-
-        connect = Connect(GirderFileToStream(file_id), NamedInputPipe(inside_path, outside_path))
+        connect = Connect(GirderFileToStream(file_id), NamedInputPipe(pipe_name, mount_dir, tmp_dir))
 
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['input_pipe', '-p', connect],
             remove_container=True, volumes=volumes)
