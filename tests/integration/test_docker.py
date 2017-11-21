@@ -1,5 +1,6 @@
 import os
 import six
+import json
 
 from girder_worker.utils import JobStatus
 import pytest
@@ -148,3 +149,25 @@ def test_docker_run_idiomatic_volume(session):
         filepath = os.path.join(fixture_dir, 'read.txt')
         with open(filepath) as fp:
             assert log[0] == fp.read()
+
+@pytest.mark.docker
+def test_docker_run_progress_pipe(session):
+    progressions = [
+        {'message': 'Are there yet?', 'total': 100.0, 'current': 10.0},
+        {'message': 'How about now?', 'total': 100.0, 'current': 20.0},
+        {'message': 'Halfway there!', 'total': 100.0, 'current': 50.0},
+        {'message': 'We have arrived!', 'total': 100.0, 'current': 100.0}
+    ]
+    r = session.post('integration_tests/docker/test_docker_run_progress_pipe', params={
+        'progressions': json.dumps(progressions)
+    })
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+        progress = job['progress']
+
+        del progress['notificationId']
+        assert progress == progressions[-1]

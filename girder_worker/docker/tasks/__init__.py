@@ -168,6 +168,11 @@ class DockerTask(Task):
 
     _temp_volume_header = 'girder_docker_run_temp_volume'
 
+    def _maybe_transform_argument(self, arg):
+        if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
+            return arg.transform(task=self)
+        return arg
+
     def __call__(self, *args, **kwargs):
         # For now always mount temp volume, but in theory we only need todo this
         # if its being used. We store the instance in the request headers for now.
@@ -176,7 +181,7 @@ class DockerTask(Task):
             self.request.headers = {}
         self.request.headers[self._temp_volume_header] = _TemporaryVolume(dir=TemporaryVolume.dir)
 
-        volumes = kwargs.get('volumes', {})
+        volumes = kwargs.setdefault('volumes', {})
         # If we have a list of volumes, the user provide a list of Volume objects,
         # we need to transform them.
         if isinstance(volumes, list):

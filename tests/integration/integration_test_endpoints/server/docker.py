@@ -17,7 +17,8 @@ from girder_worker.docker.transform import (
     GirderFileToStream,
     FilePath,
     GirderUploadFilePathToItem,
-    Volume
+    Volume,
+    ProgressPipe
 )
 
 
@@ -42,6 +43,9 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_girder_file_to_named_pipe_on_temp_vol)
         self.route('POST', ('test_docker_run_mount_idiomatic_volume', ),
                    self.test_docker_run_mount_idiomatic_volume)
+        self.route('POST', ('test_docker_run_progress_pipe', ),
+                   self.test_docker_run_progress_pipe)
+
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -179,5 +183,20 @@ class DockerTestEndpoints(Resource):
 
         result = docker_run.delay(TEST_IMAGE, pull_image=True, container_args=['volume', '-p', filepath],
             remove_container=True, volumes=[volume])
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test idiomatic volume.'))
+    def test_docker_run_progress_pipe(self, params):
+        progressions = params.get('progressions')
+        progress_pipe = ProgressPipe()
+
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True,
+            container_args=['progress', '-p', progress_pipe, '--progressions', progressions],
+            remove_container=True)
 
         return result.job

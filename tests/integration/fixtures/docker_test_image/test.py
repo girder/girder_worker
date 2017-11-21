@@ -2,6 +2,7 @@ import sys
 import time
 import signal
 import click
+import json
 
 @click.group()
 def cli():
@@ -44,6 +45,16 @@ def stdout_stderr():
 @click.option('-p', type=click.File('r'))
 def volume(p):
     print(p.read())
+
+@cli.command()
+@click.option('-p', type=click.File('w'))
+@click.option('--progressions', type=str)
+def progress(p, progressions):
+    progressions = json.loads(progressions)
+
+    for msg in progressions:
+        p.write('%s\n' % json.dumps(msg))
+        p.flush()
 
 if __name__ == '__main__':
     cli(obj={})
