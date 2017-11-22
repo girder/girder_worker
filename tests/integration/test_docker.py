@@ -201,6 +201,7 @@ def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girde
             assert log == fp.read()
 
 
+@pytest.mark.docker
 def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
                                              test_file_in_girder, test_item):
     delimiter = '_please_dont_common_up_randomly_if_you_do_i_will_eat_my_hat!'
