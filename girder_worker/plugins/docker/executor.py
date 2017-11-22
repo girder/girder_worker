@@ -4,20 +4,17 @@ import re
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
 from girder_worker.docker.tasks import _docker_run
-from girder_worker.docker.io import (
-    WriteStreamConnector,
-    NamedPipe,
-    ReadStreamConnector
-)
-
-from girder_worker.docker.transform import (
-    ProgressPipe,
+from girder_worker.docker.transforms import (
     ContainerStdOut,
     ContainerStdErr
 )
+from girder_worker.docker.transforms.girder import ProgressPipe
 from girder_worker.docker.io import (
     NamedPipeReader,
-    NamedPipeWriter
+    NamedPipeWriter,
+    WriteStreamConnector,
+    NamedPipe,
+    ReadStreamConnector
 )
 
 

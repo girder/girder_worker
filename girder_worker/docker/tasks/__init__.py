@@ -15,9 +15,10 @@ from girder_worker.docker.io import (
     WriteStreamConnector,
     ReadStreamConnector,
     FileDescriptorReader,
-    StreamConnector
+    StreamConnector,
+    StdStreamWriter
 )
-from girder_worker.docker.transform import (
+from girder_worker.docker.transforms import (
     ContainerStdErr,
     ContainerStdOut,
     Connect,
@@ -104,13 +105,13 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         if not stdout_connected:
             stdout_reader = FileDescriptorReader(stdout.fileno())
             connector = ReadStreamConnector(stdout_reader,
-                DockerStreamPushAdapter(utils.WritePipeAdapter({}, sys.stdout)))
+                DockerStreamPushAdapter(StdStreamWriter(sys.stdout)))
             read_stream_connectors.append(connector)
 
         if not stderr_connected:
             stderr_reader = FileDescriptorReader(stderr.fileno())
             connector = ReadStreamConnector(stderr_reader,
-                DockerStreamPushAdapter(utils.WritePipeAdapter({}, sys.stderr)))
+                DockerStreamPushAdapter(StdStreamWriter(sys.stderr)))
             read_stream_connectors.append(connector)
 
         # Run select loop

@@ -16,18 +16,20 @@ from girder.models.token import Token
 from girder.constants import AccessType
 
 from girder_worker.docker.tasks import docker_run
-from girder_worker.docker.transform import (
+from girder_worker.docker.transforms import (
     StdOut,
     NamedOutputPipe,
     NamedInputPipe,
     Connect,
-    GirderFileIdToStream,
     FilePath,
-    GirderUploadFilePathToItem,
     Volume,
+    ChunkedTransferEncodingStream
+)
+from girder_worker.docker.transforms.girder import (
+    GirderFileIdToStream,
+    GirderUploadFilePathToItem,
     ProgressPipe,
     GirderFileIdToVolume,
-    ChunkedTransferEncodingStream
 )
 
 TEST_IMAGE = 'girder/girder_worker_test:latest'
