@@ -31,7 +31,7 @@ docker==2.5.1
 docopt==0.6.2             # via coveralls
 docutils==0.14            # via botocore, sphinx
 enum34==1.1.6             # via cryptography, flake8
-ete3==3.0.0b35
+ete3==3.1.1
 filelock==2.0.12          # via girder
 flake8-blind-except==0.1.1
 flake8-docstrings==1.1.0
@@ -42,7 +42,7 @@ funcsigs==1.0.2 ; python_version < "3.3"
 functools32==3.2.3.post2  # via jsonschema
 futures==3.1.1            # via s3transfer
 girder-client==2.3.0
-girder-worker-utils==0.5.0
+girder-worker-utils==0.7.1
 girder==2.3.0
 httmock==1.2.6
 idna==2.6                 # via cryptography, requests, urllib3
@@ -50,6 +50,7 @@ imagesize==0.7.1          # via sphinx
 ipaddress==1.0.18         # via cryptography, docker, urllib3
 jinja2==2.9.6             # via sphinx
 jmespath==0.9.3           # via boto3, botocore
+jsonpickle==0.9.5
 jsonschema==2.6.0         # via girder
 kombu==4.1.0              # via celery
 lxml==4.0.0
