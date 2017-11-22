@@ -104,9 +104,6 @@ class TemporaryVolume:
             self._instance = temp_volume
         return self._instance.transform(**kwargs)
 
-    def cleanup(self):
-        self._instance.cleanup()
-
     @property
     def container_path(self):
         return self._instance.container_path
@@ -147,6 +144,9 @@ class NamedPipeBase(Transform):
             return os.path.join(self._host_path, self.name)
         else:
             return os.path.join(self._volume.host_path, self.name)
+
+    def cleanup(self, **kwargs):
+        os.remove(self.host_path)
 
 class NamedInputPipe(NamedPipeBase):
     """
