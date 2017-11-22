@@ -2,7 +2,6 @@ import pytest
 import requests
 import six
 import os
-import collections
 from .utilities import GirderSession
 from girder_client import GirderClient
 import random
@@ -41,6 +40,7 @@ def session(request, api_url):
 
         yield s
 
+
 # TODO combine with session in some way?
 @pytest.fixture(scope='module',
                 params=[['admin', 'letmein']],
@@ -52,6 +52,7 @@ def girder_client(request, api_url):
 
     yield client
 
+
 @pytest.fixture(scope='module')
 def test_file(tmpdir_factory):
     path = tmpdir_factory.mktemp('test').join('test.txt')
@@ -61,15 +62,19 @@ def test_file(tmpdir_factory):
 
     yield str(path)
 
+
 @pytest.fixture(scope='module')
 def private_folder(girder_client):
     me = girder_client.get('user/me')
     try:
-        folder = six.next(girder_client.listFolder(me['_id'], parentFolderType='user', name='Private'))
+        folder = six.next(
+            girder_client.listFolder(
+                me['_id'], parentFolderType='user', name='Private'))
     except StopIteration:
         raise Exception("User doesn't have a Private folder.")
 
     yield folder
+
 
 @pytest.fixture(scope='module')
 def test_file_in_girder(girder_client, private_folder,  test_file):
@@ -77,12 +82,14 @@ def test_file_in_girder(girder_client, private_folder,  test_file):
     try:
         size = os.path.getsize(test_file)
         with open(test_file) as f:
-            file = girder_client.uploadFile(private_folder['_id'], f, 'test_file', size, parentType='folder')
+            file = girder_client.uploadFile(
+                private_folder['_id'], f, 'test_file', size, parentType='folder')
 
         yield file
     finally:
         if file is not None:
             girder_client.delete('item/%s' % file['itemId'])
+
 
 @pytest.fixture(scope='function')
 def test_item(girder_client, private_folder):
@@ -92,6 +99,7 @@ def test_item(girder_client, private_folder):
     finally:
         if file is not None:
             girder_client.delete('item/%s' % item['_id'])
+
 
 # pytest hooks for ordering test items after they have been collected
 # and ensuring tests marked with sanitycheck run first.

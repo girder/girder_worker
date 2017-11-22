@@ -2,11 +2,11 @@ import os
 import errno
 import stat
 import abc
-import six
 import httplib
 import urlparse
 import ssl
 import sys
+
 
 class StreamConnector(object):
     """
@@ -90,7 +90,6 @@ class WriteStreamConnector(StreamConnector):
         Calls open on the output side of this connector.
         """
         self.output.open()
-
 
     def close(self):
         """
@@ -204,6 +203,7 @@ class FileDescriptorWriter(object):
     def close(self):
         os.close(self.fileno())
 
+
 class StdStreamWriter(object):
     def __init__(self, stream):
         self._stream = stream
@@ -214,6 +214,7 @@ class StdStreamWriter(object):
     def close(self):
         # Don't close std streams!
         self._stream.flush()
+
 
 class NamedPipe(object):
     def __init__(self, path):
@@ -294,6 +295,7 @@ class StreamReader(object):
         """
         pass
 
+
 class StreamWriter(object):
     """
     This represents the interface that must be implemented by a stream writer.
@@ -311,6 +313,7 @@ class StreamWriter(object):
         Close the output stream. Called after the last data is sent.
         """
         pass
+
 
 class ChunkedTransferEncodingStreamWriter(StreamWriter):
     def __init__(self, url, headers={}):
@@ -362,8 +365,9 @@ class ChunkedTransferEncodingStreamWriter(StreamWriter):
             self.conn.send(b'\r\n')
         except Exception:
             resp = self.conn.getresponse()
-            sys.stderr.write('Exception while sending HTTP chunk to %s, status was %s, '
-                  'message was:\n%s\n' % (self.output_spec['url'], resp.status,
+            sys.stderr.write(
+                'Exception while sending HTTP chunk to %s, status was %s, '
+                'message was:\n%s\n' % (self.output_spec['url'], resp.status,
                                         resp.read()))
             self.conn.close()
             self._closed = True

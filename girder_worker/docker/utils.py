@@ -3,6 +3,7 @@ import docker
 from docker.errors import DockerException
 from girder_worker import logger
 
+
 def select_loop(exit_condition=lambda: True, readers=None, writers=None):
     """
     Run a select loop for a set of readers and writers
@@ -58,7 +59,9 @@ def select_loop(exit_condition=lambda: True, readers=None, writers=None):
         for stream in readers + writers:
             stream.close()
 
+
 CONTAINER_PATH = '/mnt/girder_worker/data'
+
 
 def chmod_writable(host_path):
     """

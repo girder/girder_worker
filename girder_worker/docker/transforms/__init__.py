@@ -10,6 +10,7 @@ from girder_worker_utils.transform import Transform
 
 TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
+
 def _maybe_transform(obj, *args, **kwargs):
     if hasattr(obj, 'transform') and hasattr(obj.transform, '__call__'):
         return obj.transform(*args, **kwargs)
@@ -52,6 +53,7 @@ class ContainerStdErr(Transform):
         # noop
         pass
 
+
 class Volume(Transform):
     def __init__(self, host_path, container_path, mode='rw'):
         self.host_path = host_path
@@ -66,15 +68,18 @@ class Volume(Transform):
             }
         }
 
+
 class _TemporaryVolume(Volume):
     def __init__(self, dir=None):
         self._dir = dir
-        super(_TemporaryVolume, self).__init__(tempfile.mkdtemp(dir=self._dir),
+        super(_TemporaryVolume, self).__init__(
+            tempfile.mkdtemp(dir=self._dir),
             os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex))
 
     def cleanup(self):
         if os.path.exists(self.host_path):
             shutil.rmtree(self.host_path)
+
 
 class _TemporaryVolumeSingleton(type):
     def __init__(cls, name, bases, dict):
@@ -112,12 +117,13 @@ class TemporaryVolume:
     def host_path(self):
         return self._instance.host_path
 
+
 class NamedPipeBase(Transform):
     def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume()):
         super(NamedPipeBase, self).__init__()
         self._container_path = None
         self._host_path = None
-        self._volume  = None
+        self._volume = None
 
         if container_path is not None and host_path is not None:
             self._container_path = container_path
@@ -148,6 +154,7 @@ class NamedPipeBase(Transform):
     def cleanup(self, **kwargs):
         os.remove(self.host_path)
 
+
 class NamedInputPipe(NamedPipeBase):
     """
     A named pipe that read from within a docker container.
@@ -165,6 +172,7 @@ class NamedInputPipe(NamedPipeBase):
 
         pipe = NamedPipe(self.host_path)
         return NamedPipeWriter(pipe, self.container_path)
+
 
 class NamedOutputPipe(NamedPipeBase):
     """
@@ -184,6 +192,7 @@ class NamedOutputPipe(NamedPipeBase):
         pipe = NamedPipe(self.host_path)
         return NamedPipeReader(pipe, self.container_path)
 
+
 class FilePath(Transform):
     def __init__(self, filename, volume=TemporaryVolume()):
         self.filename = filename
@@ -197,6 +206,7 @@ class FilePath(Transform):
             return os.path.join(self._volume.host_path, self.filename)
         else:
             return os.path.join(self._volume.container_path, self.filename)
+
 
 class Connect(Transform):
     def __init__(self, input, output):
@@ -221,6 +231,7 @@ class Connect(Transform):
         The method is called before save the argument in the job model.
         """
         return str(self)
+
 
 class ChunkedTransferEncodingStream(Transform):
     def __init__(self, url, headers={}, **kwargs):

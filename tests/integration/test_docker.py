@@ -19,6 +19,7 @@ def test_docker_run(session):
         assert len(log) == 1
         assert log[0] == 'hello docker!\n'
 
+
 @pytest.mark.docker
 def test_docker_run_volume(session):
     fixture_dir = os.path.join('..', os.path.dirname(__file__), 'fixtures')
@@ -39,6 +40,7 @@ def test_docker_run_volume(session):
         with open(filepath) as fp:
             assert log[0] == fp.read()
 
+
 @pytest.mark.docker
 def test_docker_run_named_pipe_output(session, tmpdir):
     params = {
@@ -56,6 +58,7 @@ def test_docker_run_named_pipe_output(session, tmpdir):
         log = job['log']
         assert len(log) == 1
         assert log[0] == params['message']
+
 
 @pytest.mark.docker
 def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_girder, tmpdir):
@@ -78,6 +81,7 @@ def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_g
         log = ''.join(log)[:-1]
         with open(test_file) as fp:
             assert log == fp.read()
+
 
 @pytest.mark.docker
 def test_docker_run_file_upload_to_item(session, girder_client, test_item):
@@ -105,6 +109,7 @@ def test_docker_run_file_upload_to_item(session, girder_client, test_item):
 
     assert file_contents.read().strip() == contents
 
+
 @pytest.mark.docker
 def test_docker_run_girder_file_to_named_pipe_on_temp_vol(session, test_file, test_file_in_girder):
     """
@@ -116,8 +121,8 @@ def test_docker_run_girder_file_to_named_pipe_on_temp_vol(session, test_file, te
     params = {
         'fileId': test_file_in_girder['_id']
     }
-    r = session.post('integration_tests/docker/test_docker_run_girder_file_to_named_pipe_on_temp_vol',
-                     params=params)
+    url = 'integration_tests/docker/test_docker_run_girder_file_to_named_pipe_on_temp_vol'
+    r = session.post(url, params=params)
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
@@ -130,6 +135,7 @@ def test_docker_run_girder_file_to_named_pipe_on_temp_vol(session, test_file, te
         log = ''.join(log)[:-1]
         with open(test_file) as fp:
             assert log == fp.read()
+
 
 @pytest.mark.docker
 def test_docker_run_idiomatic_volume(session):
@@ -150,6 +156,7 @@ def test_docker_run_idiomatic_volume(session):
         filepath = os.path.join(fixture_dir, 'read.txt')
         with open(filepath) as fp:
             assert log[0] == fp.read()
+
 
 @pytest.mark.docker
 def test_docker_run_progress_pipe(session):
@@ -173,6 +180,7 @@ def test_docker_run_progress_pipe(session):
         del progress['notificationId']
         assert progress == progressions[-1]
 
+
 @pytest.mark.docker
 def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girder):
     params = {
@@ -192,7 +200,9 @@ def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girde
         with open(test_file) as fp:
             assert log == fp.read()
 
-def test_docker_run_transfer_encoding_stream(session, girder_client, test_file, test_file_in_girder, test_item):
+
+def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
+                                             test_file_in_girder, test_item):
     delimiter = '_please_dont_common_up_randomly_if_you_do_i_will_eat_my_hat!'
     params = {
         'itemId': test_item['_id'],
@@ -217,7 +227,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file, 
     chunks = file_contents.read().split(delimiter)
     chunks = [c for c in chunks if c != '']
 
-    assert len(chunks) ==  3
+    assert len(chunks) == 3
 
     with open(test_file) as fp:
         for chunk in chunks:

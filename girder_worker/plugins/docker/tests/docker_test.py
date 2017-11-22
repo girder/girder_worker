@@ -65,8 +65,10 @@ def _mockOsRead(fd, *args, **kwargs):
     elif fd == ERR_FD:
         return _err.read()
 
+
 def _close(self):
     pass
+
 
 girder_worker.plugins.docker.executor.os.read = _mockOsRead
 
@@ -480,7 +482,7 @@ class TestDockerMode(unittest.TestCase):
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
     @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
-                 return_value=_close)
+                return_value=_close)
     def testOutputTemplate(self, *args):
         task = {
             'mode': 'docker',

@@ -273,9 +273,10 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
         # Finally,  remove all reserved_options from headers
         for key in Task.reserved_options:
             headers.pop(key, None)
-    except:
+    except Exception:
         logger.exception('An error occurred in girder_before_task_publish.')
         raise
+
 
 @worker_ready.connect
 def check_celery_version(*args, **kwargs):

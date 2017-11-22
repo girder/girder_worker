@@ -118,11 +118,7 @@ def _setup_streams(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr,
     STDERR mappings, and in the case of non-streaming standard IO pipes, will
     create default bindings for those as well.
     """
-    #ipipes = {}
-    #opipes = {}
-
     stream_connectors = []
-
 
     def stream_pipe_path(id, spec, bindings):
         """
@@ -163,8 +159,8 @@ def _setup_streams(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr,
         progress_pipe = ProgressPipe(os.path.join(tempdir, '.girder_progress'))
         stream_connectors.append(progress_pipe.open())
 
-
     return stream_connectors
+
 
 def _setup_std_streams(task_outputs, outputs):
     def push_adapter(id):

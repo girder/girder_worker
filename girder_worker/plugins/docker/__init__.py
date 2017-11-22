@@ -3,8 +3,6 @@ import shutil
 import subprocess
 import tempfile
 import time
-import docker
-from docker.errors import DockerException
 from girder_worker import config, logger
 from girder_worker.docker.utils import chmod_writable
 
@@ -96,7 +94,6 @@ def task_cleanup(e):
     clean them up in the worker process since that typically doesn't run
     as root. So, we run a lightweight container to make the temp dir cleanable.
     """
-    from .executor import DATA_VOLUME
     if e.info['task']['mode'] == 'docker' and '_tempdir' in e.info['kwargs']:
         tmpdir = e.info['kwargs']['_tempdir']
         chmod_writable(tmpdir)

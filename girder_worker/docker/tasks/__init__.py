@@ -4,7 +4,7 @@ try:
     from docker.errors import DockerException
     from girder_worker.docker import nvidia
     from requests.exceptions import ReadTimeout
-except  ImportError:
+except ImportError:
     # These imports will not be available on the girder side.
     pass
 from girder_worker.app import app, Task
@@ -21,12 +21,11 @@ from girder_worker.docker.io import (
 from girder_worker.docker.transforms import (
     ContainerStdErr,
     ContainerStdOut,
-    Connect,
-    Volume,
     TemporaryVolume,
     _TemporaryVolume
 )
 from girder_worker_utils import _walk_obj
+
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
@@ -58,6 +57,7 @@ def _run_container(image, container_args,  **kwargs):
         logger.error(dex)
         raise
 
+
 def _run_select_loop(task, container, read_stream_connectors, write_stream_connectors):
     stdout = None
     stderr = None
@@ -78,7 +78,6 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         def exit_condition():
             container.reload()
             return container.status in ['exited', 'dead'] or task.canceled
-
 
         # Look for ContainerStdOut and ContainerStdErr instances that need
         # to be replace with the real container streams.
@@ -104,13 +103,15 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         # sys.stdXXX
         if not stdout_connected:
             stdout_reader = FileDescriptorReader(stdout.fileno())
-            connector = ReadStreamConnector(stdout_reader,
+            connector = ReadStreamConnector(
+                stdout_reader,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stdout)))
             read_stream_connectors.append(connector)
 
         if not stderr_connected:
             stderr_reader = FileDescriptorReader(stderr.fileno())
-            connector = ReadStreamConnector(stderr_reader,
+            connector = ReadStreamConnector(
+                stderr_reader,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stderr)))
             read_stream_connectors.append(connector)
 
@@ -146,6 +147,7 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         if stderr:
             stderr.close()
 
+
 def _handle_streaming_args(args):
     processed_arg = []
     write_streams = []
@@ -164,6 +166,7 @@ def _handle_streaming_args(args):
         processed_arg.append(arg)
 
     return (processed_arg, read_streams, write_streams)
+
 
 class DockerTask(Task):
 
@@ -186,7 +189,7 @@ class DockerTask(Task):
             volumes = _walk_obj(volumes, self._maybe_transform_argument)
             # We then need to merge them into a single dict and it will be ready
             # for docker-py.
-            volumes = { k: v for volume in volumes for k, v in volume.items() }
+            volumes = {k: v for volume in volumes for k, v in volume.items()}
             kwargs['volumes'] = volumes
 
         # call transform on temp volume and add it to the volumes dict
@@ -198,6 +201,7 @@ class DockerTask(Task):
         # TODO We only need todo this is we have used the temp volume
         utils.chmod_writable(self.request._temp_volume.container_path)
         self.request._temp_volume.cleanup()
+
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                 volumes={}, remove_container=False, stream_connectors=[], **kwargs):
@@ -257,6 +261,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
         results = (None,) * len(task.request.girder_result_hooks)
 
     return results
+
 
 @app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
