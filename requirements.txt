@@ -27,7 +27,7 @@ cryptography==2.1         # via pyopenssl, requests, urllib3
 decorator==4.1.2          # via networkx
 diskcache==2.9.0          # via girder-client
 docker-pycreds==0.2.1     # via docker
-docker==2.5.1
+docker==2.6.1
 docopt==0.6.2             # via coveralls
 docutils==0.14            # via botocore, sphinx
 enum34==1.1.6             # via cryptography, flake8
