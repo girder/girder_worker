@@ -32,7 +32,7 @@ from girder_worker.docker.transforms.girder import (
     GirderFileIdToVolume,
 )
 
-TEST_IMAGE = 'girder/girder_worker_test:latest'
+TEST_IMAGE = 'girder/girder_worker_test:ng'
 
 
 class DockerTestEndpoints(Resource):

@@ -98,7 +98,7 @@ class TestDockerMode(unittest.TestCase):
         _reset_mocks()
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
+    @mock.patch('girder_worker.docker.io.FileDescriptorReader.close',
                 return_value=_close)
     def testDockerMode(self, *args):
         task = {

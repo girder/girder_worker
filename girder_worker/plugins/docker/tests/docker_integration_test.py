@@ -13,7 +13,7 @@ import time
 import girder_worker
 from girder_worker.core import run, io
 
-TEST_IMAGE = 'girder/girder_worker_test:latest'
+TEST_IMAGE = 'girder/girder_worker_test:ng'
 
 
 def setUpModule():
@@ -223,14 +223,9 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '-m', '$input{message}'],
+            'container_args': ['$input{test_mode}'],
             'inputs': [{
                 'id': 'test_mode',
-                'name': '',
-                'format': 'string',
-                'type': 'string'
-            }, {
-                'id': 'message',
                 'name': '',
                 'format': 'string',
                 'type': 'string'
@@ -252,10 +247,6 @@ class TestDockerMode(unittest.TestCase):
             'test_mode': {
                 'format': 'string',
                 'data': 'read'
-            },
-            'message': {
-                'format': 'string',
-                'data': self._test_message
             },
             'input_pipe': {
                 'mode': 'static',
