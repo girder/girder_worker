@@ -17,7 +17,7 @@ from girder.constants import AccessType
 
 from girder_worker.docker.tasks import docker_run
 from girder_worker.docker.transforms import (
-    StdOut,
+    HostStdOut,
     NamedOutputPipe,
     NamedInputPipe,
     Connect,
@@ -109,7 +109,7 @@ class DockerTestEndpoints(Resource):
             }
         }
 
-        connect = Connect(NamedOutputPipe(pipe_name, mount_dir, tmp_dir), StdOut())
+        connect = Connect(NamedOutputPipe(pipe_name, mount_dir, tmp_dir), HostStdOut())
 
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
@@ -226,7 +226,7 @@ class DockerTestEndpoints(Resource):
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
             container_args=['read_write', '-i', GirderFileIdToVolume(file_id),
-                            '-o', Connect(NamedOutputPipe('out'), StdOut())],
+                            '-o', Connect(NamedOutputPipe('out'), HostStdOut())],
             remove_container=True)
 
         return result.job

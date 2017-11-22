@@ -17,7 +17,7 @@ def _maybe_transform(obj, *args, **kwargs):
     return obj
 
 
-class StdOut(Transform):
+class HostStdOut(Transform):
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             StdStreamWriter
@@ -25,7 +25,7 @@ class StdOut(Transform):
         return StdStreamWriter(sys.stdout)
 
 
-class StdErr(Transform):
+class HostStdErr(Transform):
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             StdStreamWriter
@@ -89,6 +89,9 @@ class _TemporaryVolumeSingleton(type):
 
 @six.add_metaclass(_TemporaryVolumeSingleton)
 class TemporaryVolume:
+    # TODO Not sure how we can get this class attribute to the worker side. Maybe
+    # in a header?
+    # Currently setting this will have no effect.
     dir = None
 
     def __init__(self):
