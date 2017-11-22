@@ -194,6 +194,9 @@ class DockerTask(Task):
 
         super(DockerTask, self).__call__(*args, **kwargs)
 
+        # Set the permission to allow cleanup of temp directory
+        # TODO We only need todo this is we have used the temp volume
+        utils.chmod_writable(self.request._temp_volume.container_path)
         self.request._temp_volume.cleanup()
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,

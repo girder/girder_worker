@@ -1,5 +1,7 @@
 import select
-
+import docker
+from docker.errors import DockerException
+from girder_worker import logger
 
 def select_loop(exit_condition=lambda: True, readers=None, writers=None):
     """
@@ -55,3 +57,32 @@ def select_loop(exit_condition=lambda: True, readers=None, writers=None):
     finally:
         for stream in readers + writers:
             stream.close()
+
+CONTAINER_PATH = '/mnt/girder_worker/data'
+
+def chmod_writable(host_path):
+    """
+    Since files written by docker containers are owned by root, we can't
+    clean them up in the worker process since that typically doesn't run
+    as root. So, we run a lightweight container to make the temp dir cleanable.
+    """
+    client = docker.from_env(version='auto')
+    config = {
+        'tty': True,
+        'volumes': {
+            host_path: {
+                'bind': CONTAINER_PATH,
+                'mode': 'rw'
+            }
+        },
+        'detach': False,
+        'remove': True
+    }
+    args = ['chmod', '-R', 'a+rw', CONTAINER_PATH]
+
+    try:
+        client.containers.run('busybox:latest', args, **config)
+    except DockerException as dex:
+        logger.error('Error setting perms on docker volume %s.' % host_path)
+        logger.exception(dex)
+        raise

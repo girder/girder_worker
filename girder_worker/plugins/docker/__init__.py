@@ -6,6 +6,7 @@ import time
 import docker
 from docker.errors import DockerException
 from girder_worker import config, logger
+from girder_worker.docker.utils import chmod_writable
 
 # Minimum interval in seconds at which to run the docker-gc script
 MIN_GC_INTERVAL = 600
@@ -98,26 +99,7 @@ def task_cleanup(e):
     from .executor import DATA_VOLUME
     if e.info['task']['mode'] == 'docker' and '_tempdir' in e.info['kwargs']:
         tmpdir = e.info['kwargs']['_tempdir']
-        client = docker.from_env(version='auto')
-        config = {
-            'tty': True,
-            'volumes': {
-                tmpdir: {
-                    'bind': DATA_VOLUME,
-                    'mode': 'rw'
-                }
-            },
-            'detach': False,
-            'remove': True
-        }
-        args = ['chmod', '-R', 'a+rw', DATA_VOLUME]
-
-        try:
-            client.containers.run('busybox:latest', args, **config)
-        except DockerException as dex:
-            logger.error('Error setting perms on docker tempdir %s.' % tmpdir)
-            logger.exception(dex)
-            raise
+        chmod_writable(tmpdir)
 
 
 def load(params):

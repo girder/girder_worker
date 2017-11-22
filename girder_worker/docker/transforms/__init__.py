@@ -230,19 +230,3 @@ class ChunkedTransferEncodingStream(Transform):
         )
 
         return ChunkedTransferEncodingStreamWriter(self.url, self.headers)
-
-
-#
-# For example:
-# docker_run.delay(image, stream_connectors=[Connect(NamedOutputPipe('my/pipe'), StdOut())]
-# docker_run.delay(image, stream_connectors=[Connect(ContainerStdOut(), StdErr())]
-# docker_run.delay(image, stream_connectors=[Connect(ContainerStdOut(), StdErr())]
-# docker_run.delay(image, stream_connectors=[Connect(GirderFile(id), NamedInputPipe(my/girder/pipe))]
-# docker_run.delay(image, stream_connectors=[ProgressPipe('write/your/progress/here')]
-# docker_run.delay(image, stream_connectors=[Connect(ContainerStdOut(), GirderFileId(id))]
-#                                           output                                                  input
-# docker_run.delay(image, container_args=[Connect(NamedPipe('my/input/pipe'), StdOut()), Connect(GirderFileId(id), NamedPipe('my/girder/pipe'))])
-#
-# args passed to container: my/input/pipe, my/girder/pipe
-#
-
