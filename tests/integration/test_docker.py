@@ -193,9 +193,11 @@ def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girde
             assert log == fp.read()
 
 def test_docker_run_transfer_encoding_stream(session, girder_client, test_file, test_file_in_girder, test_item):
+    delimiter = '_please_dont_common_up_randomly_if_you_do_i_will_eat_my_hat!'
     params = {
         'itemId': test_item['_id'],
-        'fileId': test_file_in_girder['_id']
+        'fileId': test_file_in_girder['_id'],
+        'delimiter': delimiter
     }
     r = session.post('integration_tests/docker/test_docker_run_transfer_encoding_stream',
                      params=params)
@@ -212,7 +214,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file, 
     file_contents = six.BytesIO()
     girder_client.downloadFile(files[0]['_id'], file_contents)
     file_contents.seek(0)
-    chunks = file_contents.read().split('\n')
+    chunks = file_contents.read().split(delimiter)
     chunks = [c for c in chunks if c != '']
 
     assert len(chunks) ==  3

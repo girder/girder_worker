@@ -56,7 +56,7 @@ def girder_client(request, api_url):
 def test_file(tmpdir_factory):
     path = tmpdir_factory.mktemp('test').join('test.txt')
     # Three times our read buffer for docker tests
-    path.write(''.join(random.choice(string.ascii_uppercase + string.digits)
+    path.write(''.join(random.choice(string.printable)
                        for _ in range(1024*64*3)))
 
     yield str(path)

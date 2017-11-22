@@ -237,13 +237,14 @@ class DockerTestEndpoints(Resource):
                     'test_docker_run_transfer_encoding_stream test case.')
         .modelParam('itemId', 'The item id',
                     model=Item, destName='item',
-                    level=AccessType.READ, paramType='query'))
-    def input_stream(self, item, params):
+                    level=AccessType.READ, paramType='query')
+        .param('delimiter', 'Delimiter to use when writing out chunks.'))
+    def input_stream(self, item, delimiter):
         # Read body 5 bytes at a time so we can test chunking a small body
         chunks = six.BytesIO()
         for chunk in iterBody(1):
-            chunks.write('%s\n' % chunk.decode())
-            chunks.write('\n')
+            chunks.write(chunk.decode())
+            chunks.write(delimiter)
 
         chunks.seek(0)
         contents = chunks.read()
@@ -259,11 +260,13 @@ class DockerTestEndpoints(Resource):
     def test_docker_run_transfer_encoding_stream(self, params):
         item_id = params.get('itemId')
         file_id = params.get('fileId')
+        delimiter = params.get('delimiter')
 
         headers = {
             'Girder-Token': str(Token().createToken(getCurrentUser())['_id'])
         }
-        url = '%s/%s?itemId=%s' % (getApiUrl(), 'integration_tests/docker/input_stream', item_id)
+        url = '%s/%s?itemId=%s&delimiter=%s' % (
+            getApiUrl(), 'integration_tests/docker/input_stream', item_id, delimiter)
 
         container_args = [
             'read_write',
