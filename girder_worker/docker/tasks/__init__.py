@@ -239,9 +239,13 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     try:
         _run_select_loop(task, container, read_streams, write_streams)
     finally:
-        # TODO only remove container is its stop, may be stop it ...
         if container and remove_container:
-            container.remove()
+            container.reload()
+            # If the container is still running issue a warning
+            if container.status == 'running':
+                logger.warning('Container is still running, unable to remove.')
+            else:
+                container.remove()
 
     # return a array of None's equal to number of entries in the girder_result_hooks
     # header, in order to trigger processing of the container outputs.
