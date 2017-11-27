@@ -6,14 +6,15 @@ import httplib
 import urlparse
 import ssl
 import sys
+import six
 
 
+@six.add_metaclass(abc.ABCMeta)
 class StreamConnector(object):
     """
     StreamConnector is an abstract base class use to connect a read(input) and write(output)
     stream.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, input, output):
         self.input = input
@@ -275,11 +276,11 @@ class NamedPipeWriter(FileDescriptorWriter):
         return self._pipe.fileno()
 
 
+@six.add_metaclass(abc.ABCMeta)
 class StreamReader(object):
     """
     This represents the interface that must be implemented by a stream reader.
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def read(self, buf_len):
@@ -296,11 +297,11 @@ class StreamReader(object):
         pass
 
 
+@six.add_metaclass(abc.ABCMeta)
 class StreamWriter(object):
     """
     This represents the interface that must be implemented by a stream writer.
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def write(self, buf):
