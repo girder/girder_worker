@@ -22,14 +22,14 @@ from girder_worker.docker.transforms import (
     NamedOutputPipe,
     NamedInputPipe,
     Connect,
-    FilePath,
+    VolumePath,
     Volume,
     ChunkedTransferEncodingStream,
     TemporaryVolume
 )
 from girder_worker.docker.transforms.girder import (
     GirderFileIdToStream,
-    GirderUploadFilePathToItem,
+    GirderUploadVolumePathToItem,
     ProgressPipe,
     GirderFileIdToVolume,
 )
@@ -156,13 +156,13 @@ class DockerTestEndpoints(Resource):
         item_id = params.get('itemId')
         contents = params.get('contents')
 
-        filepath = FilePath('test_file')
+        volumepath = VolumePath('test_file')
 
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
-            container_args=['write', '-p', filepath, '-m', contents],
+            container_args=['write', '-p', volumepath, '-m', contents],
             remove_container=True,
-            girder_result_hooks=[GirderUploadFilePathToItem(filepath, item_id)])
+            girder_result_hooks=[GirderUploadVolumePathToItem(volumepath, item_id)])
 
         return result.job
 
@@ -197,10 +197,10 @@ class DockerTestEndpoints(Resource):
         mount_dir = '/mnt/test'
         mount_path = os.path.join(mount_dir, filename)
         volume = Volume(fixture_dir, mount_path, 'ro')
-        filepath = FilePath(filename, volume)
+        volumepath = VolumePath(filename, volume)
 
         result = docker_run.delay(
-            TEST_IMAGE, pull_image=True, container_args=['read', '-p', filepath],
+            TEST_IMAGE, pull_image=True, container_args=['read', '-p', volumepath],
             remove_container=True, volumes=[volume])
 
         return result.job

@@ -225,7 +225,7 @@ class NamedOutputPipe(NamedPipeBase):
         return NamedPipeReader(pipe, self.container_path)
 
 
-class FilePath(Transform):
+class VolumePath(Transform):
     def __init__(self, filename, volume=TemporaryVolume.default):
         self.filename = filename
         self._volume = volume

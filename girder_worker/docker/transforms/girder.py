@@ -65,13 +65,13 @@ class GirderFileIdToVolume(GirderFileId):
             os.remove(self.file_path)
 
 
-class GirderUploadFilePathToItem(GirderUploadToItem):
-    def __init__(self, filepath, item_id,  delete_file=False, **kwargs):
-        super(GirderUploadFilePathToItem, self).__init__(item_id, delete_file, **kwargs)
-        self._filepath = filepath
+class GirderUploadVolumePathToItem(GirderUploadToItem):
+    def __init__(self, volumepath, item_id,  delete_file=False, **kwargs):
+        super(GirderUploadVolumePathToItem, self).__init__(item_id, delete_file, **kwargs)
+        self._volumepath = volumepath
 
     # We ignore the "result"
     def transform(self, *args, **kwargs):
-        path = _maybe_transform(self._filepath, *args, **kwargs)
+        path = _maybe_transform(self._volumepath, *args, **kwargs)
 
-        return super(GirderUploadFilePathToItem, self).transform(path)
+        return super(GirderUploadVolumePathToItem, self).transform(path)
