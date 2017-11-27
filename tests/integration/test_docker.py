@@ -235,6 +235,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
             assert chunk == fp.read(1024*64)
 
 
+@pytest.mark.docker
 def test_docker_run_temporary_volume_root(session):
     params = {
         'prefix': 'prefix'
