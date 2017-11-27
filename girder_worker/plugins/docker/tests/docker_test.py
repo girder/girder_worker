@@ -190,8 +190,9 @@ class TestDockerMode(unittest.TestCase):
 
             self.assertTrue(kwargs['remove'])
             six.assertRegex(self, kwargs['volumes'].keys()[0], _tmp + '/.*')
-            self.assertEqual(kwargs['volumes'].itervalues().next()['bind'], DATA_VOLUME)
-            self.assertEqual(args[1], ['chmod', '-R', 'a+rw', DATA_VOLUME])
+            self.assertTrue(kwargs['volumes'].itervalues().next()['bind'].startswith(DATA_VOLUME))
+            self.assertEqual(args[1][:-1], ['chmod', '-R', 'a+rw'])
+            self.assertTrue(args[1][-1].startswith(DATA_VOLUME))
 
             # Make sure we can specify a custom entrypoint to the container
             _reset_mocks()
