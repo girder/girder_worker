@@ -1,9 +1,9 @@
 import sys
-import six
 import uuid
 import os
-import shutil
 import tempfile
+import six
+import abc
 
 from girder_worker_utils.transform import Transform
 
@@ -56,11 +56,11 @@ class ContainerStdErr(Transform):
 
 class Volume(Transform):
     def __init__(self, host_path, container_path, mode='rw'):
-        self.host_path = host_path
-        self.container_path = container_path
+        self._host_path = host_path
+        self._container_path = container_path
         self.mode = mode
 
-    def transform(self, **kwargs):
+    def _repr_json_(self):
         return {
             self.host_path: {
                 'bind': self.container_path,
@@ -68,45 +68,77 @@ class Volume(Transform):
             }
         }
 
+    def transform(self, **kwargs):
+        return self.container_path
 
-class _TemporaryVolume(Volume):
-    def __init__(self, dir=None):
-        self._dir = dir
-        super(_TemporaryVolume, self).__init__(
-            tempfile.mkdtemp(dir=self._dir),
-            os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex))
+    @property
+    def container_path(self):
+        return self._container_path
 
-    def cleanup(self):
-        if os.path.exists(self.host_path):
-            shutil.rmtree(self.host_path)
-
-
-class _TemporaryVolumeSingleton(type):
-    def __init__(cls, name, bases, dict):
-        super(_TemporaryVolumeSingleton, cls).__init__(name, bases, dict)
-        cls._instance = None
-
-    def __call__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(_TemporaryVolumeSingleton, cls).__call__(*args, **kwargs)
-        return cls._instance
+    @property
+    def host_path(self):
+        return self._host_path
 
 
-@six.add_metaclass(_TemporaryVolumeSingleton)
-class TemporaryVolume:
-    # TODO Not sure how we can get this class attribute to the worker side. Maybe
-    # in a header?
-    # Currently setting this will have no effect.
-    dir = None
+class _TemporaryVolumeMetaClass(abc.ABCMeta):
+    @property
+    def default(cls):
+        return _DefaultTemporaryVolume()
 
-    def __init__(self):
+
+class _TemporaryVolumeBase(Volume):
+    def __init__(self, *arg, **kwargs):
+        super(_TemporaryVolumeBase, self).__init__(*arg, **kwargs)
+        self._transformed = False
+
+    def _make_paths(self, host_dir=None):
+        if host_dir is not None and not os.path.exists(host_dir):
+            os.makedirs(host_dir)
+        self._host_path = tempfile.mkdtemp(dir=host_dir)
+        self._container_path = os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex)
+
+
+@six.add_metaclass(_TemporaryVolumeMetaClass)
+class TemporaryVolume(_TemporaryVolumeBase):
+    """
+    This is a class used to represent a temporary directory on the host that will
+    be mounted into a docker container. girder_worker will automatically attach a default
+    temporary volume. This can be reference using `TemporaryVolume.default` class attribute.
+    A temporary volume can also be create in a particular host directory by providing the
+    `host_dir` param.
+    :param host_dir
+    """
+    def __init__(self, host_dir=None):
+        """
+        :param host_dir: The root directory on the host to use when creating the
+            the temporary host path.
+        :type host_dir: str
+        """
+        super(TemporaryVolume, self).__init__(None, None)
+        self.host_dir = host_dir
         self._instance = None
+        self._transformed = False
 
-    def transform(self, temp_volume=None, **kwargs):
-        # We save the runtime instances provide by the task, we delegate to this
-        # instance
-        if temp_volume is not None:
-            self._instance = temp_volume
+    def transform(self, **kwargs):
+        if not self._transformed:
+            self._transformed = True
+            self._make_paths(self.host_dir)
+
+        return super(TemporaryVolume, self).transform(**kwargs)
+
+
+class _DefaultTemporaryVolume(TemporaryVolume):
+    """
+    Place holder who delegates implementation to instance provide by transform(...) method
+    An instance of the class is returned each time `TemporaryVolume.default` is accessed.
+    When the docker_run task is executed the transform(...) method is call with an instance
+    containing information about the actual default temporary volume associated with the
+    task. The place holder then delgates all functionality to this instance.
+    """
+    def transform(self, _default_temp_volume=None, **kwargs):
+        self._instance = _default_temp_volume
+        self._transformed = True
+
         return self._instance.transform(**kwargs)
 
     @property
@@ -119,7 +151,7 @@ class TemporaryVolume:
 
 
 class NamedPipeBase(Transform):
-    def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume()):
+    def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume.default):
         super(NamedPipeBase, self).__init__()
         self._container_path = None
         self._host_path = None
@@ -160,7 +192,7 @@ class NamedInputPipe(NamedPipeBase):
     A named pipe that read from within a docker container.
     i.e. To stream data out of a container.
     """
-    def __init__(self, name,  container_path=None, host_path=None, volume=TemporaryVolume()):
+    def __init__(self, name,  container_path=None, host_path=None, volume=TemporaryVolume.default):
         super(NamedInputPipe, self).__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
@@ -179,7 +211,7 @@ class NamedOutputPipe(NamedPipeBase):
     A named pipe that written to from within a docker container.
     i.e. To stream data out of a container.
     """
-    def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume()):
+    def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume.default):
         super(NamedOutputPipe, self).__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
@@ -194,7 +226,7 @@ class NamedOutputPipe(NamedPipeBase):
 
 
 class FilePath(Transform):
-    def __init__(self, filename, volume=TemporaryVolume()):
+    def __init__(self, filename, volume=TemporaryVolume.default):
         self.filename = filename
         self._volume = volume
 

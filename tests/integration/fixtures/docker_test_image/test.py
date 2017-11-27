@@ -71,5 +71,11 @@ def read_write(i, o):
         o.write(data)
 
 
+@cli.command()
+@click.option('-p', type=str)
+def print_path(p):
+    print(p)
+
+
 if __name__ == '__main__':
     cli(obj={})

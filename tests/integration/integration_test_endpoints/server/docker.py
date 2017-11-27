@@ -1,5 +1,6 @@
 import os
 import six
+import tempfile
 
 from girder.api import access
 from girder.api.describe import Description, describeRoute, autoDescribeRoute
@@ -23,7 +24,8 @@ from girder_worker.docker.transforms import (
     Connect,
     FilePath,
     Volume,
-    ChunkedTransferEncodingStream
+    ChunkedTransferEncodingStream,
+    TemporaryVolume
 )
 from girder_worker.docker.transforms.girder import (
     GirderFileIdToStream,
@@ -59,6 +61,8 @@ class DockerTestEndpoints(Resource):
         self.route('POST', ('input_stream',), self.input_stream)
         self.route('POST', ('test_docker_run_transfer_encoding_stream', ),
                    self.test_docker_run_transfer_encoding_stream)
+        self.route('POST', ('test_docker_run_temporary_volume_root', ),
+                   self.test_docker_run_temporary_volume_root)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -277,5 +281,20 @@ class DockerTestEndpoints(Resource):
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True, container_args=container_args,
             remove_container=True)
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test setting temporary volume root.'))
+    def test_docker_run_temporary_volume_root(self, params):
+        prefix = params.get('prefix')
+        root = os.path.join(tempfile.gettempdir(), prefix)
+        volume = TemporaryVolume(host_dir=root)
+
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['print_path', '-p', volume],
+            remove_container=True, volumes=[volume])
 
         return result.job

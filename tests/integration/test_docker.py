@@ -233,3 +233,17 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
     with open(test_file) as fp:
         for chunk in chunks:
             assert chunk == fp.read(1024*64)
+
+
+def test_docker_run_temporary_volume_root(session):
+    params = {
+        'prefix': 'prefix'
+    }
+    r = session.post('integration_tests/docker/test_docker_run_temporary_volume_root',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.SUCCESS]
+        assert len(job['log']) == 1

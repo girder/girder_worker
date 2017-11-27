@@ -17,7 +17,7 @@ from . import (
 
 class ProgressPipe(Transform):
 
-    def __init__(self, name='.girder_progress', volume=TemporaryVolume()):
+    def __init__(self, name='.girder_progress', volume=TemporaryVolume.default):
         self.name = name
         self._volume = volume
 
@@ -47,7 +47,7 @@ class GirderFileIdToStream(GirderClientTransform):
 
 
 class GirderFileIdToVolume(GirderFileId):
-    def __init__(self, _id, volume=TemporaryVolume(), **kwargs):
+    def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
         super(GirderFileIdToVolume, self).__init__(_id, **kwargs)
         self._volume = volume
 

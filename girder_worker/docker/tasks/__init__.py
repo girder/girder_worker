@@ -1,4 +1,6 @@
 import sys
+import shutil
+import os
 try:
     import docker
     from docker.errors import DockerException
@@ -21,8 +23,8 @@ from girder_worker.docker.io import (
 from girder_worker.docker.transforms import (
     ContainerStdErr,
     ContainerStdOut,
-    TemporaryVolume,
-    _TemporaryVolume
+    _TemporaryVolumeBase,
+    TemporaryVolume
 )
 from girder_worker_utils import _walk_obj
 
@@ -168,39 +170,70 @@ def _handle_streaming_args(args):
     return (processed_arg, read_streams, write_streams)
 
 
+class _RequestDefaultTemporaryVolume(_TemporaryVolumeBase):
+    def __init__(self):
+        super(_RequestDefaultTemporaryVolume, self).__init__(None, None)
+        self._dir = dir
+        self._make_paths()
+
+    def transform(self, **kwargs):
+        self._transformed = True
+
+
 class DockerTask(Task):
 
     def _maybe_transform_argument(self, arg):
         return super(DockerTask, self)._maybe_transform_argument(
-            arg, task=self, temp_volume=self.request._temp_volume)
+            arg, task=self, _default_temp_volume=self.request._default_temp_volume)
 
     def _maybe_transform_result(self, idx, result):
         return super(DockerTask, self)._maybe_transform_result(
-            idx, result, temp_volume=self.request._temp_volume)
+            idx, result, _default_temp_volume=self.request._default_temp_volume)
 
     def __call__(self, *args, **kwargs):
-        self.request._temp_volume = _TemporaryVolume(dir=TemporaryVolume.dir)
+        default_temp_volume = _RequestDefaultTemporaryVolume()
+        self.request._default_temp_volume = default_temp_volume
 
         volumes = kwargs.setdefault('volumes', {})
         # If we have a list of volumes, the user provide a list of Volume objects,
         # we need to transform them.
+        temp_volumes = []
         if isinstance(volumes, list):
-            # First call the transform method these will give use a list of dicts.
-            volumes = _walk_obj(volumes, self._maybe_transform_argument)
+            # See if we have been passed any TemporaryVolume instances.
+            for v in volumes:
+                if isinstance(v, TemporaryVolume):
+                    temp_volumes.append(v)
+
+            # First call the transform method, this we replace default temp volumes
+            # with the instance associated with this task create above. That is any
+            # reference to TemporaryVolume.default
+            _walk_obj(volumes, self._maybe_transform_argument)
+
+            # Now convert them to JSON
+            def _json(volume):
+                return volume._repr_json_()
+
+            volumes = _walk_obj(volumes, _json)
             # We then need to merge them into a single dict and it will be ready
             # for docker-py.
             volumes = {k: v for volume in volumes for k, v in volume.items()}
             kwargs['volumes'] = volumes
 
-        # call transform on temp volume and add it to the volumes dict
-        volumes.update(self.request._temp_volume.transform())
+        volumes.update(default_temp_volume._repr_json_())
 
         super(DockerTask, self).__call__(*args, **kwargs)
 
-        # Set the permission to allow cleanup of temp directory
-        # TODO We only need todo this is we have used the temp volume
-        utils.chmod_writable(self.request._temp_volume.container_path)
-        self.request._temp_volume.cleanup()
+        # Set the permission to allow cleanup of temp directories
+        temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
+        if len(temp_volumes) > 0:
+            to_chmod = temp_volumes[:]
+            # If our default_temp_volume instance has been transformed then we
+            # know it has been used and we have to clean it up.
+            if default_temp_volume._transformed:
+                to_chmod.append(default_temp_volume)
+            utils.chmod_writable([v.host_path for v in to_chmod])
+            for v in temp_volumes + [default_temp_volume]:
+                shutil.rmtree(v.host_path)
 
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
