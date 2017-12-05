@@ -13,7 +13,6 @@ dev:
 	docker-compose -f $(COMPOSE_FILE) logs --tail=15 girder
 
 ci:
-	-docker rmi -f integration_girder_worker_data_volume
 	docker-compose -f $(COMPOSE_FILE) up -d
 	-docker-compose -f $(COMPOSE_FILE) exec girder /scripts/wait-for-it.sh localhost:8989 -t 60
 	docker-compose -f $(COMPOSE_FILE) logs girder girder_worker
@@ -39,4 +38,4 @@ test:
 	pytest -v -x -n4
 
 
-.PHONY: initialize dev test
+.PHONY: initialize dev ci clean nuke test
