@@ -1,21 +1,20 @@
 .DEFAULT_GOAL := initialize
 
 COMPOSE_FILE=docker-compose.yml
+COMPOSE_LOGS_EXTRA_ARGS=
 
 initialize:
 	pip install -U -r requirements.txt
 
 dev:
-	docker rmi -f integration_girder_worker_data_volume
-	docker-compose -f $(COMPOSE_FILE) up -d
-	-docker-compose -f $(COMPOSE_FILE) exec girder /scripts/wait-for-it.sh localhost:8989 -t 60
-	docker-compose -f $(COMPOSE_FILE) logs --tail=4 girder_worker
-	docker-compose -f $(COMPOSE_FILE) logs --tail=15 girder
+	$(eval COMPOSE_FILE=docker-compose.dev.yml)
+	$(eval COMPOSE_LOGS_EXTRA_ARGS="--tail=15")
 
-ci:
+init:
 	docker-compose -f $(COMPOSE_FILE) up -d
 	-docker-compose -f $(COMPOSE_FILE) exec girder /scripts/wait-for-it.sh localhost:8989 -t 60
-	docker-compose -f $(COMPOSE_FILE) logs girder girder_worker
+	docker-compose -f $(COMPOSE_FILE) logs $(COMPOSE_LOGS_EXTRA_ARGS) girder
+	docker-compose -f $(COMPOSE_FILE) logs $(COMPOSE_LOGS_EXTRA_ARGS) girder_worker
 
 
 clean:

@@ -1,0 +1,46 @@
+version: '2'
+services:
+  girder:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.girder
+    image: girder/girder:gw_integration_test
+    container_name: gw_integration_test_girder_dev
+    volumes:
+      - ../../:/girder_worker
+    # Note: 4444 is for debugging with rpdb
+    ports:
+      - 8989:8989
+      - 4444:4444
+    depends_on:
+      - 'mongo'
+
+  girder_worker:
+    build:
+      context: ./
+      dockerfile: Dockerfile.girder_worker
+    image: girder/girder_worker:gw_integration_test
+    container_name: gw_integration_test_girder_worker_dev
+    # Note: 4445 is for debugging with rpdb
+    ports:
+      - 4445:4444
+    volumes:
+      - ../../:/girder_worker
+    depends_on:
+      - 'rabbit'
+
+  rabbit:
+    image: rabbitmq:management
+    container_name: gw_integration_test_rabbit_dev
+    ports:
+      - 5673:5672
+      - 35198:35197
+      - 4370:4369
+      - 25673:25672
+      - 15673:15672
+
+  mongo:
+    image: mongo:latest
+    container_name: gw_integration_test_mongo_dev
+    ports:
+      - 27018:27017
