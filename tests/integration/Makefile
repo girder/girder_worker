@@ -1,20 +1,20 @@
 .DEFAULT_GOAL := initialize
 
 COMPOSE_FILE=docker-compose.yml
-COMPOSE_LOGS_EXTRA_ARGS=
+ANSIBLE_INVENTORY=inventory
+ANSIBLE_EXTRA_VARS=
 
 initialize:
 	pip install -U -r requirements.txt
 
 dev:
 	$(eval COMPOSE_FILE=docker-compose.dev.yml)
-	$(eval COMPOSE_LOGS_EXTRA_ARGS="--tail=15")
+	$(eval ANSIBLE_EXTRA_VARS='-e girder_host=localhost -e girder_port=8080 -e celery_broker="amqp://guest:guest@localhost/"')
+	$(eval ANSIBLE_INVENTORY=inventory.dev)
 
-init:
+run:
 	docker-compose -f $(COMPOSE_FILE) up -d
-	-docker-compose -f $(COMPOSE_FILE) exec girder /scripts/wait-for-it.sh localhost:8989 -t 60
-	docker-compose -f $(COMPOSE_FILE) logs $(COMPOSE_LOGS_EXTRA_ARGS) girder
-	docker-compose -f $(COMPOSE_FILE) logs $(COMPOSE_LOGS_EXTRA_ARGS) girder_worker
+	cd scripts/ && ansible-playbook -i $(ANSIBLE_INVENTORY) $(ANSIBLE_EXTRA_VARS) setup.yml
 
 
 clean:
@@ -37,4 +37,4 @@ test:
 	pytest -v -x -n4
 
 
-.PHONY: initialize dev ci clean nuke test
+.PHONY: initialize dev ci clean nuke test init

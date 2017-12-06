@@ -13,4 +13,4 @@ VOLUME /girder_worker
 # Make sure remote debugging is available
 RUN pip install rpdb
 
-ENTRYPOINT ["/scripts/wait-for-it.sh", "mongo:27017", "--", "/scripts/girder_entrypoint.sh"]
+ENTRYPOINT ["/scripts/girder_entrypoint.sh"]

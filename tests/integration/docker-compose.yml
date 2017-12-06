@@ -20,6 +20,13 @@ services:
       - 4444:4444
     depends_on:
       - 'mongo'
+    entrypoint:
+      - '/scripts/girder_entrypoint.sh'
+      - '-p'
+      - '8989'
+      - '-d'
+      - 'mongodb://mongo:27017/girder'
+
 
   girder_worker:
     build:
