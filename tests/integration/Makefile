@@ -7,14 +7,18 @@ ANSIBLE_EXTRA_VARS=
 initialize:
 	pip install -U -r requirements.txt
 
-dev:
-	$(eval COMPOSE_FILE=docker-compose.dev.yml)
-	$(eval ANSIBLE_EXTRA_VARS='-e girder_host=localhost -e girder_port=8080 -e celery_broker="amqp://guest:guest@localhost/"')
-	$(eval ANSIBLE_INVENTORY=inventory.dev)
+ci:
+	$(eval COMPOSE_FILE=docker-compose.ci.yml)
+	$(eval ANSIBLE_EXTRA_VARS='-e girder_host=girder -e girder_port=8989 -e celery_broker="amqp://guest:guest@rabbit/"')
+	$(eval ANSIBLE_INVENTORY=inventory.ci)
 
 run:
 	docker-compose -f $(COMPOSE_FILE) up -d
 	cd scripts/ && ansible-playbook -i $(ANSIBLE_INVENTORY) $(ANSIBLE_EXTRA_VARS) setup.yml
+
+
+worker_restart:
+	docker-compose -f $(COMPOSE_FILE) restart girder_worker
 
 
 clean:
@@ -29,9 +33,9 @@ nuke: clean
 
 test-ci:
 	-docker run --volumes-from girder_worker_data_volume \
-                   --network container:gw_integration_test_girder \
+                   --network container:gw_integration_test_girder_ci \
           python:2.7.13 \
-          /bin/bash -c "cd /girder_worker/tests/integration && make && make test"
+          /bin/bash -c "cd /girder_worker/tests/integration && make && pytest --girder http://girder:8989/api/v1/ -v -x -n4"
 
 test:
 	pytest -v -x -n4

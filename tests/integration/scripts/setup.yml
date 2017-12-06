@@ -1,11 +1,11 @@
 ---
 - hosts: girder
   vars:
-    girder_host: girder
-    girder_port: 8989
+    girder_host: localhost
+    girder_port: 8080
     girder_user: "admin"
     girder_pass: "letmein"
-    celery_broker: amqp://guest:guest@rabbit/
+    celery_broker: amqp://guest:guest@localhost/
   tasks:
     - name: Wait Girder to come up
       wait_for:
@@ -96,8 +96,3 @@
       with_items:
         - "worker.broker"
         - "worker.backend"
-
-    - name: Include additional setup tasks
-      include: "{{ item }}"
-      with_fileglob:
-        - "setup.d/*.yml"

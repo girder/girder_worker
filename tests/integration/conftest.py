@@ -4,7 +4,7 @@ from .utilities import GirderSession
 
 
 def pytest_addoption(parser):
-    parser.addoption('--girder', action='store', default='http://127.0.0.1:8989/api/v1/',
+    parser.addoption('--girder', action='store', default='http://127.0.0.1:8080/api/v1/',
                      help='Specify a different server to run against')
 
 

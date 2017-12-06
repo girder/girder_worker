@@ -13,7 +13,6 @@ from girder_worker.utils import JobStatus
 
 from .utilities import wait_for_status
 
-
 # N.B. Module is named raw to avoid conflict with celery package
 class CeleryTestEndpoints(Resource):
     def __init__(self):
