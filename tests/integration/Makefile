@@ -6,10 +6,11 @@ ANSIBLE_EXTRA_VARS=
 
 initialize:
 	pip install -U -r requirements.txt
+	ansible-galaxy install --roles-path ./scripts/roles girder.girder
 
 ci:
 	$(eval COMPOSE_FILE=docker-compose.ci.yml)
-	$(eval ANSIBLE_EXTRA_VARS='-e girder_host=girder -e girder_port=8989 -e celery_broker="amqp://guest:guest@rabbit/"')
+	$(eval ANSIBLE_EXTRA_VARS=-e girder_host=girder -e girder_port=8989 -e celery_broker="amqp://guest:guest@rabbit/")
 	$(eval ANSIBLE_INVENTORY=inventory.ci)
 
 run:

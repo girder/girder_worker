@@ -4,7 +4,6 @@ MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
 RUN pip install ansible girder-client
 
 COPY ./scripts /scripts
-RUN mkdir -p /scripts/roles && ansible-galaxy install --roles-path /scripts/roles girder.girder
 
 # Allow mounting /girder_worker
 RUN mkdir /girder_worker
