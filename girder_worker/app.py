@@ -21,9 +21,9 @@ from girder_worker import logger
 from girder_worker_utils import _walk_obj
 import jsonpickle
 from kombu.serialization import register
+import six
 from six.moves import configparser
 from .utils import JobStatus, StateTransitionException
-import six
 
 
 class GirderAsyncResult(AsyncResult):
@@ -148,19 +148,19 @@ class Task(celery.Task):
         try:
             grh = self.request.girder_result_hooks[idx]
             if hasattr(grh, 'transform') and \
-               hasattr(grh.transform, '__call__'):
-                return grh.transform(result, **kwargs)
+               six.callable(grh.transform):
+                return grh.transform(result)
         except IndexError:
             return result
 
-    def _maybe_transform_argument(self, arg, **kwargs):
-        if hasattr(arg, 'transform') and hasattr(arg.transform, '__call__'):
-            return arg.transform(**kwargs)
+    def _maybe_transform_argument(self, arg):
+        if hasattr(arg, 'transform') and six.callable(arg.transform):
+            return arg.transform()
         return arg
 
-    def _maybe_cleanup(self, arg, **kwargs):
-        if hasattr(arg, 'cleanup') and hasattr(arg.cleanup, '__call__'):
-            arg.cleanup(**kwargs)
+    def _maybe_cleanup(self, arg):
+        if hasattr(arg, 'cleanup') and six.callable(arg.cleanup):
+            arg.cleanup()
 
     def __call__(self, *args, **kwargs):
         try:

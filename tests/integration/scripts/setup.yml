@@ -39,16 +39,6 @@
         state: present
       register: plugins
 
-    - name: Enable integration test endpoints plugin
-      girder:
-        username: "{{ girder_user }}"
-        password: "{{ girder_pass }}"
-        port: "{{ girder_port }}"
-        plugins:
-          - integration_test_endpoints
-        state: present
-      register: plugins
-
     - name: Set the server root setting
       girder:
         username: "{{ girder_user }}"
@@ -72,6 +62,19 @@
         port: "{{ girder_port }}"
         delay: 5
       when: plugins.changed
+
+    - name: Configure Celery
+      girder:
+        username: "{{ girder_user }}"
+        password: "{{ girder_pass }}"
+        port: "{{ girder_port }}"
+        setting:
+          key: "{{item}}"
+          value: amqp://guest:guest@rabbit/
+        state: present
+      with_items:
+        - "worker.broker"
+        - "worker.backend"
 
     - name: Include additional setup tasks
       include: "{{ item }}"

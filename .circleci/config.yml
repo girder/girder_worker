@@ -28,8 +28,9 @@ jobs:
           name: Get the environment up and running with Docker Compose
           command: |
             cd tests/integration && docker-compose up -d
-            # Test if girder is up and running on port 8989
-            docker run --network container:gw_integration_test_girder appropriate/curl --retry 30 --retry-delay 1 --retry-connrefused http://localhost:8989
+            # Wait for girder to be up and running on port 8989
+            docker-compose exec girder /scripts/wait-for-it.sh localhost:8989 -t 60
+
       - run:
           name: Run integration tests
           command: |
