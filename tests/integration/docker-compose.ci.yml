@@ -18,15 +18,11 @@ services:
     ports:
       - 8989:8989
       - 4444:4444
+    environment:
+      - GIRDER_WORKER_BROKER=amqp://guest:guest@rabbit/
+      - GIRDER_WORKER_BACKEND=amqp://guest:guest@rabbit/
     depends_on:
       - 'mongo'
-    entrypoint:
-      - '/scripts/girder_entrypoint.sh'
-      - '-p'
-      - '8989'
-      - '-d'
-      - 'mongodb://mongo:27017/girder'
-
 
   girder_worker:
     build:
@@ -39,6 +35,9 @@ services:
       - 4445:4444
     volumes_from:
       - girder_worker_data_volume:rw
+    environment:
+      - GIRDER_WORKER_BROKER=amqp://guest:guest@rabbit/
+      - GIRDER_WORKER_BACKEND=amqp://guest:guest@rabbit/
     depends_on:
       - 'rabbit'
       - 'girder_worker_data_volume'
