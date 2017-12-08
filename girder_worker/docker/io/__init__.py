@@ -178,6 +178,9 @@ class ReadStreamConnector(StreamConnector):
 
 
 class FileDescriptorReader(object):
+    """
+    Reader to read from a file descriptor.
+    """
     def __init__(self, fd):
         self._fd = fd
 
@@ -192,6 +195,9 @@ class FileDescriptorReader(object):
 
 
 class FileDescriptorWriter(object):
+    """
+    Writer to write to a file descriptor.
+    """
     def __init__(self, fd):
         self._fd = fd
 
@@ -206,6 +212,9 @@ class FileDescriptorWriter(object):
 
 
 class StdStreamWriter(object):
+    """
+    Writer for write to stdout and stderr.
+    """
     def __init__(self, stream):
         self._stream = stream
 
@@ -218,6 +227,9 @@ class StdStreamWriter(object):
 
 
 class NamedPipe(object):
+    """
+    A named pipe.
+    """
     def __init__(self, path):
         self.path = path
         self._fd = None
@@ -241,10 +253,17 @@ class NamedPipe(object):
         return self._fd
 
     def container_arg(self):
+        """
+        The argument to pass to the docker container's entrypoint. In this case
+        the path to the named pipe.
+        """
         return self.path
 
 
 class NamedPipeReader(FileDescriptorReader):
+    """
+    Reader to read from a named pipe.
+    """
     def __init__(self, pipe, container_path=None):
         super(NamedPipeReader, self).__init__(None)
         self._pipe = pipe
@@ -254,6 +273,10 @@ class NamedPipeReader(FileDescriptorReader):
         self._pipe.open(os.O_RDONLY | os.O_NONBLOCK)
 
     def container_arg(self):
+        """
+        The argument to pass to the docker container's entrypoint. In this case
+        the path to the named pipe.
+        """
         return self._container_path
 
     def fileno(self):
@@ -261,6 +284,9 @@ class NamedPipeReader(FileDescriptorReader):
 
 
 class NamedPipeWriter(FileDescriptorWriter):
+    """
+    Write to write to a named pipe.
+    """
     def __init__(self, pipe, container_path=None):
         super(NamedPipeWriter, self).__init__(None)
         self._pipe = pipe
@@ -270,6 +296,10 @@ class NamedPipeWriter(FileDescriptorWriter):
         self._pipe.open(os.O_WRONLY | os.O_NONBLOCK)
 
     def container_arg(self):
+        """
+        The argument to pass to the docker container's entrypoint. In this case
+        the path to the named pipe.
+        """
         return self._container_path
 
     def fileno(self):

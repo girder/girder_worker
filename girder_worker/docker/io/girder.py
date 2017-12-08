@@ -4,7 +4,14 @@ from . import StreamReader
 
 
 class GirderFileStreamReader(StreamReader):
+    """
+    Stream a file from Girder.
+    """
     def __init__(self, client, file_id):
+        """
+        :param client: The GirderClient instance to use.
+        :type client: girder_client.GirderClient
+        """
         super(GirderFileStreamReader, self).__init__()
         self._client = client
         self._file_id = file_id
