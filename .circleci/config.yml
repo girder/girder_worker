@@ -38,6 +38,7 @@ jobs:
             # Copy the repository to this volume
             docker cp /root/girder_worker configs:/cfg
             # Run the integration tests after installing requirements
+            # TODO docker test are currently disabled.
             docker run --volumes-from configs --network container:gw_integration_test_girder python:2.7.13 /bin/bash -c "cd /cfg/girder_worker/tests/integration; pip install -r requirements.txt; pytest -v -n 4 -m 'not docker'"
 
       - deploy:

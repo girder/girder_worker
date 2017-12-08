@@ -12,7 +12,7 @@ TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
 
 def _maybe_transform(obj, *args, **kwargs):
-    if hasattr(obj, 'transform') and hasattr(obj.transform, '__call__'):
+    if hasattr(obj, 'transform') and six.callable(obj.transform):
         return obj.transform(*args, **kwargs)
 
     return obj
@@ -106,7 +106,6 @@ class TemporaryVolume(_TemporaryVolumeBase):
     temporary volume. This can be reference using `TemporaryVolume.default` class attribute.
     A temporary volume can also be create in a particular host directory by providing the
     `host_dir` param.
-    :param host_dir
     """
     def __init__(self, host_dir=None):
         """

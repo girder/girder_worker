@@ -79,7 +79,7 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
 
         def exit_condition():
             container.reload()
-            return container.status in ['exited', 'dead'] or task.canceled
+            return container.status in {'exited', 'dead'} or task.canceled
 
         # Look for ContainerStdOut and ContainerStdErr instances that need
         # to be replace with the real container streams.
@@ -173,7 +173,6 @@ def _handle_streaming_args(args):
 class _RequestDefaultTemporaryVolume(_TemporaryVolumeBase):
     def __init__(self):
         super(_RequestDefaultTemporaryVolume, self).__init__(None, None)
-        self._dir = dir
         self._make_paths()
 
     def transform(self, **kwargs):
@@ -269,6 +268,10 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
             read_streams.append(connector)
         elif isinstance(connector, WriteStreamConnector):
             write_streams.append(connector)
+        else:
+            raise TypeError(
+                "Expected 'ReadStreamConnector' or 'WriterStreamConnector', received '%s'"
+                % type(connector))
 
     # We need to open any read streams before starting the container, so the
     # underling named pipes are opened for read.

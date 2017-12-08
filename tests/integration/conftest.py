@@ -4,8 +4,6 @@ import six
 import os
 from .utilities import GirderSession
 from girder_client import GirderClient
-import random
-import string
 
 
 def pytest_addoption(parser):
@@ -57,8 +55,7 @@ def girder_client(request, api_url):
 def test_file(tmpdir_factory):
     path = tmpdir_factory.mktemp('test').join('test.txt')
     # Three times our read buffer for docker tests
-    path.write(''.join(random.choice(string.printable)
-                       for _ in range(1024*64*3)))
+    path.write('abc'*65536)
 
     yield str(path)
 

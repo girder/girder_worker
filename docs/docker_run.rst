@@ -1,8 +1,8 @@
 docker_run
 ==========
 
-girder_worker provides a built-in task that can be used to run docker containers.
-girder_worker makes it easy to work on data held in girder from with a
+Girder Worker provides a built-in task that can be used to run docker containers.
+Girder Worker makes it easy to work on data held in girder from with a
 docker containers.
 
 Container arguments
@@ -15,7 +15,7 @@ to pass arguments to the container entrypoint.
 Volumes
 -------
 
-The volumes to be mount into a container can me pass to the ``docker_run`` task
+The volumes to be mount into a container can me passed to the ``docker_run`` task
 in one of two ways.
 
 Using docker-py syntax
@@ -23,7 +23,7 @@ Using docker-py syntax
 
 In this case the value of the ``volumes`` parameter is a ``dict`` conforming to
 specification defined by `docker-py <http://docker-py.readthedocs.io/en/stable/containers.html>`_,
-this is passed directly to docker-py. For example
+which is passed directly to docker-py. For example
 
 .. code-block:: python
 
@@ -39,15 +39,16 @@ this is passed directly to docker-py. For example
 Using the Volume class
 ^^^^^^^^^^^^^^^^^^^^^^
 
-girder_worker provides a utility class ``Volume`` that can be using to define volumes
-that should be mount into a container. These class can also be using in conjection
-with other part of the girder_work docker infrastructure, for example providing a location
-where a file should be downloaded to. See `Downloading files from Girder`_. When using
-the ``Volume`` class a list on instances is provided as the value for the ``volumes``
-parameter, girder_work will take care of ensuring that these volumes are mount. In the
-example below we are creating a ``Volume`` instance and passing it as a container
-argument to provide the mounted location to the container. girder_worker will take
-care of transforming the instance into the approriate path inside the container.
+Girder Worker provides a utility class :py:class:`girder_worker.docker.transforms.Volume`
+ that can be using to define volumes that should be mounted into a container. These classes
+ can also be used in conjunction with other parts of the girder_work docker infrastructure,
+ for example providing a location where a file should be downloaded to.
+ See `Downloading files from Girder`_. When using the :py:class:`girder_worker.docker.transforms.Volume`
+ class a list of instances is provided as the value for the ``volumes`` parameter, Girder Worker
+ will take care of ensuring that these volumes are mount. In the example below we are creating
+ a :py:class:`girder_worker.docker.transforms.Volume` instance and passing it as a container argument to provide
+ the mounted location to the container. Girder Worker will take care of transforming
+ the instance into the approriate path inside the container.
 
 .. code-block:: python
 
@@ -57,41 +58,46 @@ care of transforming the instance into the approriate path inside the container.
 Temporary Volume
 ^^^^^^^^^^^^^^^^
 
-A ``TemporaryVolume`` class is provided representing a temporary directory on the host
-machine that is mounted into the container. ``TemporaryVolume.default`` holds a default
-instance that is used as the default location for many other parts of the girder_worker docker
-infrastructure for example when downloading file. See `Downloading files from Girder`_.
-However, it can also be using explicity for example, here it is being passed as a
-container argument for use within a container. Again, girder_worker will take care
-of transforming the ``TemporaryVolume`` instance into the appropriate path inside
-the container, so the container entrypoint will simply recieve a path.
+A :py:class:`girder_worker.docker.transforms.TemporaryVolume` class is provided
+representing a temporary directory on the host machine that is mounted into the
+container. :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
+holds a default instance that is used as the default location for many other parts
+of the Girder Worker docker infrastructure for example when downloading a file.
+See `Downloading files from Girder`_. However, it can also be used explicity for
+example, here it is being passed as a container argument for use within a container.
+Again, Girder Worker will take care of transforming the
+:py:class:`girder_worker.docker.transforms.TemporaryVolume`
+instance into the appropriate path inside the container, so the container entrypoint
+will simply recieve a path.
 
 .. code-block:: python
 
     vol = Volume('/home/docker/data', '/mnt/docker/')
     docker_run.delay('my/image', pull_image=True, container_args=[TemporaryVolume.default])
 
-Note that we don't have to add the instance to the ``volumes`` parameter as it is
-automatically added to the list of volumes to mount.
+Note that because we are using the default path, we don't have to add the instance to
+the ``volumes`` parameter as it is automatically added to the list of volumes to mount.
 
 Downloading files from Girder
 -----------------------------
 
-Accessing files held in girder from within a container is straight forward using
-the ``GirderFileIdToVolume`` utility class. One simply provides the file id as
-a argument to the constructor and pass the instance as a container argument.
+Accessing files held in girder from within a container is straightforward using
+the :py:class:`girder_worker.docker.transforms.girder.GirderFileIdToVolume` utility class.
+One simply provides the file id as an argument to the constructor and passes the
+instance as a container argument.
 
 .. code-block:: python
 
     docker_run.delay('my/image', pull_image=True,
         container_args=[GirderFileIdToVolume(file_id)])
 
-The ``GirderFileIdToVolume`` instance will take care of downloading the file from
-Girder and passes the path it was download to the docker containers entrypoint as an argument.
+The :py:class:`girder_worker.docker.transforms.girder.GirderFileIdToVolume` instance
+will take care of downloading the file from Girder and passing the path it was
+downloaded to into the docker container's entrypoint as an argument.
 
 If no ``volume`` parameter is specified then the file will be downloading to the
-task temporary volume. The file can also be downloaded to a specific ``Volume`` by
-specifying a volume parameter, as follows:
+task temporary volume. The file can also be downloaded to a specific
+:py:class:`girder_worker.docker.transforms.Volume` by specifying a volume parameter, as follows:
 
 .. code-block:: python
 
@@ -99,22 +105,24 @@ specifying a volume parameter, as follows:
     docker_run.delay('my/image', pull_image=True,
         container_args=[GirderFileIdToVolume(file_id,volume=vol)])
 
-If the being downloaded is particularly large you may want to consider streaming
+If the file being downloaded is particularly large you may want to consider streaming
 it into the container using a named pipe. See `Streaming Girder files into a container`_
 for more details.
 
 Uploading files to Girder items
 -------------------------------
 
-Utility classes are also provide to simplify uploading files generated by a the
-docker container. The ``GirderUploadVolumePathToItem`` provides the functionality
-to upload a file to an item. In the example below, we using the ``VolumePath``
-utility class to define a file path that we then pass to the docker container.
-The docker container can write data to this file path. As well as passing the
-``VolumePath`` instance as a container argument we also pass it to ``GirderUploadVolumePathToItem``
-, the ``GirderUploadVolumePathToItem`` instance is add to ``girder_result_hooks``. This
-tell girder_work to upload the file path to the item id provided when the docker
-container has finished running.
+Utility classes are also provided to simplify uploading files generated by a
+docker container. The :py:class:`girder_worker.docker.transforms.girder.GirderUploadVolumePathToItem`
+provides the functionality to upload a file to an item. In the example below,
+we use the :py:class:`girder_worker.docker.transforms.VolumePath`` utility class
+to define a file path that we then pass to the docker container. The docker container
+can write data to this file path. As well as passing the
+:py:class:`girder_worker.docker.transforms.VolumePath` instance as a container
+argument we also pass it to :py:class:`girder_worker.docker.transforms.girder.GirderUploadVolumePathToItem`
+, the :py:class:`girder_worker.docker.transforms.girder.GirderUploadVolumePathToItem`
+instance is add to ``girder_result_hooks``. This tells Girder Worker to upload the
+file path to the item id provided once the docker container has finished running.
 
 
 .. code-block:: python
@@ -127,44 +135,47 @@ container has finished running.
 Using named pipes to stream data in and out of containers
 ---------------------------------------------------------
 
-girder_worker uses named pipes as a language agnostic way of streaming data in
+Girder Worker uses named pipes as a language agnostic way of streaming data in
 and out of docker containers. Basically a named pipe is created at a path that is
 mounted into the container. This allows the container to open that pipe for read or
-write and similarly the girder_worker infrastructure can open the pipe on the host,
-thus allow data write and read from the container.
+write and similarly the Girder Worker infrastructure can open the pipe on the host,
+thus allowing data write and read from the container.
 
-The are two utility classes using to represent as named pipe, ``NamedOutputPipe``
-and ``NamedInputPipe``
+The are two utility classes using to represent as named pipe,
+:py:class:`girder_worker.docker.transforms.NamedOutputPipe`
+and :py:class:`girder_worker.docker.transforms.NamedInputPipe`.
 
 NamedOuputPipe
 ^^^^^^^^^^^^^^
 
-This represents a named pipe that will be opened in the docker container for write.
-So is using to stream data out of a container.
+This represents a named pipe that can be opened in a docker container for write.
+Allowing data to be streamed out of a container.
 
 
 NamedInputPipe
 ^^^^^^^^^^^^^^
 
-This represents a named pipe that will be opened in the docker container for read.
-So is using to stream data into a container.
+This represents a named pipe that can be opened in a docker container for read.
+Allowing data to be streamed into a container.
 
-These pipes can be connected to other streams using the ``Connect`` untility class.
+These pipes can be connected together using the
+:py:class:`girder_worker.docker.transforms.Connect` utility class.
 
 
 Streaming Girder files into a container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-One great example of using a named pipe is to stream a potentially large file into
-a container. This approach allow the task to start process straight away rather
-than have to wait for the either file to download, it also removed the requirement
+One common example of using a named pipe is to stream a potentially large file into
+a container. This approach allows the task to start processing immediately rather
+than having to wait for the entire file to download, it also removes the requirement
 that the file is held on the local filesystem. In the example below we are creating
-an instance of ``GirderFileIdToStream`` that provides the ability to download a
-file in chunks. We are also creating a named pipe called ``read_in_container``,
-as not ``volume`` argument is provided this pipe will be created on the temporary
-volume automatically mounted by girder_worker. Finally we are using the ``Connect``
-class to "connect" the stream to the pipe, we pass the instance as a container
-argument. girder_worker will take care of the select logic to stream the file into
+an instance of :py:class:`girder_worker.docker.transforms.girder.GirderFileIdToStream`
+that provides the ability to download a file in chunks. We are also creating a named
+pipe called ``read_in_container``, as no ``volume`` argument is provided this pipe
+will be created on the temporary volume automatically mounted by Girder Worker.
+Finally, we are using the :py:class:`girder_worker.docker.transforms.Connect`
+class to "connect" the stream to the pipe and we pass the instance as a container
+argument. Girder Worker will take care of the select logic to stream the file into
 the pipe.
 
 
@@ -174,7 +185,7 @@ the pipe.
     pipe = NamedInputPipe('read_in_container')
     docker_run('my/image', pull_image=True, container_args=[Connect(stream, pipe)])
 
-Allow the container has todo is open path passed into the container entry point
+All the container has to do is open the path passed into the container entry point
 and start reading. Below is an example python entry point:
 
 .. code-block:: python
@@ -184,7 +195,3 @@ and start reading. Below is an example python entry point:
         fp.read() # This will be reading the files contents
 
 
-
-Using "Chunked transfer encoding" to upload data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TODO

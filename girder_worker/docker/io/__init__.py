@@ -12,7 +12,7 @@ import six
 @six.add_metaclass(abc.ABCMeta)
 class StreamConnector(object):
     """
-    StreamConnector is an abstract base class use to connect a read(input) and write(output)
+    StreamConnector is an abstract base class used to connect a read(input) and write(output)
     stream.
     """
 
@@ -37,12 +37,12 @@ class StreamConnector(object):
         """
         This method allows an instance of this class to used in the select call.
 
-        :returns The file descriptor that should be used to determine if the connector
+        :returns: The file descriptor that should be used to determine if the connector
                  has data to process.
         """
     def container_arg(self):
         """
-        :returns A string that should be passed to the container as an argument in order
+        :returns: A string that should be passed to the container as an argument in order
                  to utilize this stream. For example a named pipe path.
         """
         return ''
@@ -62,7 +62,7 @@ class WriteStreamConnector(StreamConnector):
         """
         This method allows an instance of this class to used in the select call.
 
-        :returns The file descriptor for write(output) side of the connection.
+        :returns: The file descriptor for write(output) side of the connection.
         """
         return self.output.fileno()
 
@@ -75,7 +75,7 @@ class WriteStreamConnector(StreamConnector):
 
         :param n The maximum number of bytes to write.
         :type n int
-        :returns The actual number of bytes written.
+        :returns: The actual number of bytes written.
         """
         buf = self.input.read(n)
 
@@ -102,7 +102,7 @@ class WriteStreamConnector(StreamConnector):
 
     def container_arg(self):
         """
-        :returns Returns any container arg associated with input side of the connector.
+        :returns: Returns any container arg associated with input side of the connector.
         """
 
         if hasattr(self.output, 'container_arg'):
@@ -125,7 +125,7 @@ class ReadStreamConnector(StreamConnector):
         """
         This method allows an instance of this class to used in the select call.
 
-        :returns The file descriptor for read(input) side of the connection.
+        :returns: The file descriptor for read(input) side of the connection.
         """
 
         return self.input.fileno()
@@ -138,7 +138,7 @@ class ReadStreamConnector(StreamConnector):
 
         :param n The maximum number of bytes to read.
         :type n int
-        :returns The actual number of bytes read.
+        :returns: The actual number of bytes read.
         """
         buf = self.input.read(n)
 
@@ -167,7 +167,7 @@ class ReadStreamConnector(StreamConnector):
 
     def container_arg(self):
         """
-        :returns A string that should be passed to the container as an argument in order
+        :returns: A string that should be passed to the container as an argument in order
                  to utilize this stream. For example a named pipe path.
         """
 
@@ -290,6 +290,7 @@ class StreamReader(object):
         expected to be a blocking read, and should return an empty string to
         indicate the end of the stream.
         """
+
     def close(self):
         """
         Close the input stream. Called after the last data is read.

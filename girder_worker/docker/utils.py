@@ -95,7 +95,6 @@ def chmod_writable(host_paths):
 
     try:
         client.containers.run('busybox:latest', args, **config)
-    except DockerException as dex:
-        logger.error('Error setting perms on docker volumes %s.' % host_paths)
-        logger.exception(dex)
+    except DockerException:
+        logger.exception('Error setting perms on docker volumes %s.' % host_paths)
         raise

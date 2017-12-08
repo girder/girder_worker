@@ -23,6 +23,7 @@ import jsonpickle
 from kombu.serialization import register
 from six.moves import configparser
 from .utils import JobStatus, StateTransitionException
+import six
 
 
 class GirderAsyncResult(AsyncResult):
@@ -182,7 +183,7 @@ class Task(celery.Task):
 
 
 def _maybe_model_repr(obj):
-    if hasattr(obj, '_repr_model_') and hasattr(obj._repr_model_, '__call__'):
+    if hasattr(obj, '_repr_model_') and six.callable(obj._repr_model_):
         return obj._repr_model_()
     return obj
 
