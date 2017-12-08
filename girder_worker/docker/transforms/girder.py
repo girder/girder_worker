@@ -1,9 +1,9 @@
 import os
+import shutil
 from girder_worker_utils.transform import Transform
 from girder_worker_utils.transforms.girder_io import (
     GirderClientTransform,
-    GirderUploadToItem,
-    GirderFileId
+    GirderUploadToItem
 )
 
 
@@ -46,23 +46,27 @@ class GirderFileIdToStream(GirderClientTransform):
         return GirderFileStreamReader(self.gc, self.file_id)
 
 
-class GirderFileIdToVolume(GirderFileId):
+class GirderFileIdToVolume(GirderClientTransform):
     def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
-        super(GirderFileIdToVolume, self).__init__(_id, **kwargs)
+        super(GirderFileIdToVolume, self).__init__(**kwargs)
+        self._file_id = _id
         self._volume = volume
+        self._file_path = None
 
     def transform(self, **kwargs):
         self._volume.transform(**kwargs)
-        self._dir = self._volume.host_path
-        super(GirderFileIdToVolume, self).transform()
+        dir = self._volume.host_path
+        self._file_path = os.path.join(
+            dir, self._file_id)
+
+        self.gc.downloadFile(self._file_id, self._file_path)
 
         # Return the path inside the container
-        return os.path.join(self._volume.container_path,
-                            os.path.basename(self.file_path))
+        return os.path.join(self._volume.container_path, self._file_id)
 
     def cleanup(self, **kwargs):
-        if hasattr(self, 'file_path'):
-            os.remove(self.file_path)
+        if self._file_path is not None:
+            shutil.rmtree(self._file_path, ignore_errors=True)
 
 
 class GirderUploadVolumePathToItem(GirderUploadToItem):
