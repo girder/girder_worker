@@ -22,7 +22,6 @@ from girder_worker_utils import _walk_obj
 import jsonpickle
 from kombu.serialization import register
 import six
-from six.moves import configparser
 from .utils import JobStatus, StateTransitionException
 
 
@@ -458,25 +457,12 @@ def is_revoked(task):
     return task.request.id in _revoked_tasks(task)
 
 
-class _CeleryConfig:
-    accept_content = ['json', 'pickle', 'yaml', 'girder_io']
-    task_serializer = 'girder_io'
-    result_serializer = 'girder_io'
-
-
 register('girder_io', jsonpickle.encode, jsonpickle.decode,
          content_type='application/json',
          content_encoding='utf-8')
 
-broker_uri = girder_worker.config.get('celery', 'broker')
-try:
-    backend_uri = girder_worker.config.get('celery', 'backend')
-except configparser.NoOptionError:
-    backend_uri = broker_uri
-
 app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
-    backend=backend_uri, broker=broker_uri,
     task_cls='girder_worker.app:Task')
 
-app.config_from_object(_CeleryConfig)
+app.config_from_object('girder_worker.celeryconfig')
