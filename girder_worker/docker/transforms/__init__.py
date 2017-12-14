@@ -291,7 +291,8 @@ class VolumePath(Transform):
         :param filename: The file name.
         :type name: str
         :param volume: The volume this file lived on. If no volume is provided then
-            the file will be on :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
+            the file will be on
+            :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
         :type volume: :py:class:`girder_worker.docker.transforms.Connect`
         """
         self.filename = filename

@@ -174,7 +174,6 @@ def _handle_streaming_args(args):
 
         processed_args.append(arg)
 
-
     return (processed_args, read_streams, write_streams)
 
 
