@@ -14,10 +14,10 @@ from girder_worker import logger
 from girder_worker.docker import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 from girder_worker.docker.io import (
-    WriteStreamConnector,
-    ReadStreamConnector,
+    FDWriteStreamConnector,
+    FDReadStreamConnector,
     FileDescriptorReader,
-    StreamConnector,
+    FDStreamConnector,
     StdStreamWriter
 )
 from girder_worker.docker.transforms import (
@@ -105,14 +105,14 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         # sys.stdXXX
         if not stdout_connected:
             stdout_reader = FileDescriptorReader(stdout.fileno())
-            connector = ReadStreamConnector(
+            connector = FDReadStreamConnector(
                 stdout_reader,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stdout)))
             read_stream_connectors.append(connector)
 
         if not stderr_connected:
             stderr_reader = FileDescriptorReader(stderr.fileno())
-            connector = ReadStreamConnector(
+            connector = FDReadStreamConnector(
                 stderr_reader,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stderr)))
             read_stream_connectors.append(connector)
@@ -151,23 +151,31 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
 
 
 def _handle_streaming_args(args):
-    processed_arg = []
+    processed_args = []
     write_streams = []
     read_streams = []
 
+    def _maybe_path(arg):
+        if hasattr(arg, 'path'):
+            return arg.path()
+
+        # Don't pass anything
+        return ''
+
     for arg in args:
-        if isinstance(arg, StreamConnector):
-            if isinstance(arg, WriteStreamConnector):
+        if isinstance(arg, FDStreamConnector):
+            if isinstance(arg, FDWriteStreamConnector):
                 write_streams.append(arg)
-            else:
+                arg = _maybe_path(arg.output)
+
+            elif isinstance(arg, FDReadStreamConnector):
                 read_streams.append(arg)
+                arg = _maybe_path(arg.input)
 
-            # Get any container argument associated with this stream
-            arg = arg.container_arg()
+        processed_args.append(arg)
 
-        processed_arg.append(arg)
 
-    return (processed_arg, read_streams, write_streams)
+    return (processed_args, read_streams, write_streams)
 
 
 class _RequestDefaultTemporaryVolume(_TemporaryVolumeBase):
@@ -264,13 +272,13 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
         _handle_streaming_args(container_args)
 
     for connector in stream_connectors:
-        if isinstance(connector, ReadStreamConnector):
+        if isinstance(connector, FDReadStreamConnector):
             read_streams.append(connector)
-        elif isinstance(connector, WriteStreamConnector):
+        elif isinstance(connector, FDWriteStreamConnector):
             write_streams.append(connector)
         else:
             raise TypeError(
-                "Expected 'ReadStreamConnector' or 'WriterStreamConnector', received '%s'"
+                "Expected 'FDReadStreamConnector' or 'FDWriterStreamConnector', received '%s'"
                 % type(connector))
 
     # We need to open any read streams before starting the container, so the

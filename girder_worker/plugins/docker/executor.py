@@ -12,9 +12,9 @@ from girder_worker.docker.transforms.girder import ProgressPipe
 from girder_worker.docker.io import (
     NamedPipeReader,
     NamedPipeWriter,
-    WriteStreamConnector,
+    FDWriteStreamConnector,
     NamedPipe,
-    ReadStreamConnector
+    FDReadStreamConnector
 )
 
 
@@ -142,7 +142,7 @@ def _setup_streams(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr,
         # We have a streaming input
         if path is not None:
             writer = NamedPipeWriter(NamedPipe(path))
-            connector = WriteStreamConnector(make_stream_fetch_adapter(inputs[id]), writer)
+            connector = FDWriteStreamConnector(make_stream_fetch_adapter(inputs[id]), writer)
             stream_connectors.append(connector)
             # Don't open from this side, must be opened for reading first!
 
@@ -151,7 +151,7 @@ def _setup_streams(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr,
         path = stream_pipe_path(id, spec, outputs)
         if path is not None:
             reader = NamedPipeReader(NamedPipe(path))
-            connector = ReadStreamConnector(reader, make_stream_push_adapter(outputs[id]))
+            connector = FDReadStreamConnector(reader, make_stream_push_adapter(outputs[id]))
             stream_connectors.append(connector)
 
     # handle special stream output for job progress
@@ -215,9 +215,9 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     # Connect up stdout and strerr ContainerStdOut() and ContainerStdErr() will be
     # replaced with the real streams when the container is started.
     if stdout_fetch_adapter is not None:
-        stream_connectors.append(ReadStreamConnector(ContainerStdOut(), stdout_fetch_adapter))
+        stream_connectors.append(FDReadStreamConnector(ContainerStdOut(), stdout_fetch_adapter))
     if stderr_fetch_adapter is not None:
-        stream_connectors.append(ReadStreamConnector(ContainerStdErr(), stderr_fetch_adapter))
+        stream_connectors.append(FDReadStreamConnector(ContainerStdErr(), stderr_fetch_adapter))
 
     entrypoint = None
     if 'entrypoint' in task:

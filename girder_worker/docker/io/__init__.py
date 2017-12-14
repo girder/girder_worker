@@ -10,9 +10,9 @@ import six
 
 
 @six.add_metaclass(abc.ABCMeta)
-class StreamConnector(object):
+class FDStreamConnector(object):
     """
-    StreamConnector is an abstract base class used to connect a read(input) and write(output)
+    FDStreamConnector is an abstract base class used to connect a read(input) and write(output)
     stream.
     """
 
@@ -40,17 +40,11 @@ class StreamConnector(object):
         :returns: The file descriptor that should be used to determine if the connector
                  has data to process.
         """
-    def container_arg(self):
-        """
-        :returns: A string that should be passed to the container as an argument in order
-                 to utilize this stream. For example a named pipe path.
-        """
-        return ''
 
 
-class WriteStreamConnector(StreamConnector):
+class FDWriteStreamConnector(FDStreamConnector):
     """
-    WriteStreamConnector can be used to connect a read and write stream. The write
+    FDWriteStreamConnector can be used to connect a read and write stream. The write
     side of the connection will be used in the select loop to trigger write i.e
     the file descriptor from the write stream will be used in the select call.
 
@@ -100,20 +94,10 @@ class WriteStreamConnector(StreamConnector):
         if hasattr(self.input, 'close'):
             self.input.close()
 
-    def container_arg(self):
-        """
-        :returns: Returns any container arg associated with input side of the connector.
-        """
 
-        if hasattr(self.output, 'container_arg'):
-            return self.output.container_arg()
-
-        return ''
-
-
-class ReadStreamConnector(StreamConnector):
+class FDReadStreamConnector(FDStreamConnector):
     """
-    ReadStreamConnector can be used to connect a read and write stream. The read
+    FDReadStreamConnector can be used to connect a read and write stream. The read
     side of the connection will be used in the select loop to trigger write i.e
     the file descriptor from the read stream will be used in the select call.
 
@@ -165,146 +149,6 @@ class ReadStreamConnector(StreamConnector):
         self.input.close()
         self.output.close()
 
-    def container_arg(self):
-        """
-        :returns: A string that should be passed to the container as an argument in order
-                 to utilize this stream. For example a named pipe path.
-        """
-
-        if hasattr(self.input, 'container_arg'):
-            return self.input.container_arg()
-
-        return ''
-
-
-class FileDescriptorReader(object):
-    """
-    Reader to read from a file descriptor.
-    """
-    def __init__(self, fd):
-        self._fd = fd
-
-    def fileno(self):
-        return self._fd
-
-    def read(self, n):
-        return os.read(self.fileno(), n)
-
-    def close(self):
-        os.close(self.fileno())
-
-
-class FileDescriptorWriter(object):
-    """
-    Writer to write to a file descriptor.
-    """
-    def __init__(self, fd):
-        self._fd = fd
-
-    def fileno(self):
-        return self._fd
-
-    def write(self, buf):
-        return os.write(self.fileno(), buf)
-
-    def close(self):
-        os.close(self.fileno())
-
-
-class StdStreamWriter(object):
-    """
-    Writer for write to stdout and stderr.
-    """
-    def __init__(self, stream):
-        self._stream = stream
-
-    def write(self, buf):
-        return self._stream.write(buf)
-
-    def close(self):
-        # Don't close std streams!
-        self._stream.flush()
-
-
-class NamedPipe(object):
-    """
-    A named pipe.
-    """
-    def __init__(self, path):
-        self.path = path
-        self._fd = None
-        os.mkfifo(self.path)
-
-    def open(self, flags):
-
-        if self._fd is None:
-            if not os.path.exists(self.path):
-                raise Exception('Input pipe does not exist: %s' % self._path)
-            if not stat.S_ISFIFO(os.stat(self.path).st_mode):
-                raise Exception('Input pipe must be a fifo object: %s' % self._path)
-
-            try:
-                self._fd = os.open(self.path, flags)
-            except OSError as e:
-                if e.errno != errno.ENXIO:
-                    raise e
-
-    def fileno(self):
-        return self._fd
-
-    def container_arg(self):
-        """
-        The argument to pass to the docker container's entrypoint. In this case
-        the path to the named pipe.
-        """
-        return self.path
-
-
-class NamedPipeReader(FileDescriptorReader):
-    """
-    Reader to read from a named pipe.
-    """
-    def __init__(self, pipe, container_path=None):
-        super(NamedPipeReader, self).__init__(None)
-        self._pipe = pipe
-        self._container_path = container_path
-
-    def open(self):
-        self._pipe.open(os.O_RDONLY | os.O_NONBLOCK)
-
-    def container_arg(self):
-        """
-        The argument to pass to the docker container's entrypoint. In this case
-        the path to the named pipe.
-        """
-        return self._container_path
-
-    def fileno(self):
-        return self._pipe.fileno()
-
-
-class NamedPipeWriter(FileDescriptorWriter):
-    """
-    Write to write to a named pipe.
-    """
-    def __init__(self, pipe, container_path=None):
-        super(NamedPipeWriter, self).__init__(None)
-        self._pipe = pipe
-        self._container_path = container_path
-
-    def open(self):
-        self._pipe.open(os.O_WRONLY | os.O_NONBLOCK)
-
-    def container_arg(self):
-        """
-        The argument to pass to the docker container's entrypoint. In this case
-        the path to the named pipe.
-        """
-        return self._container_path
-
-    def fileno(self):
-        return self._pipe.fileno()
-
 
 @six.add_metaclass(abc.ABCMeta)
 class StreamReader(object):
@@ -345,6 +189,128 @@ class StreamWriter(object):
         Close the output stream. Called after the last data is sent.
         """
         pass
+
+
+class FileDescriptorReader(StreamReader):
+    """
+    Reader to read from a file descriptor.
+    """
+    def __init__(self, fd):
+        self._fd = fd
+
+    def fileno(self):
+        return self._fd
+
+    def read(self, n):
+        return os.read(self.fileno(), n)
+
+    def close(self):
+        os.close(self.fileno())
+
+
+class FileDescriptorWriter(StreamWriter):
+    """
+    Writer to write to a file descriptor.
+    """
+    def __init__(self, fd):
+        self._fd = fd
+
+    def fileno(self):
+        return self._fd
+
+    def write(self, buf):
+        return os.write(self.fileno(), buf)
+
+    def close(self):
+        os.close(self.fileno())
+
+
+class StdStreamWriter(StreamWriter):
+    """
+    Writer for write to stdout and stderr.
+    """
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, buf):
+        return self._stream.write(buf)
+
+    def close(self):
+        # Don't close std streams!
+        self._stream.flush()
+
+
+class NamedPipe(object):
+    """
+    A named pipe.
+    """
+    def __init__(self, path):
+        self.path = path
+        self._fd = None
+        os.mkfifo(self.path)
+
+    def open(self, flags):
+
+        if self._fd is None:
+            if not os.path.exists(self.path):
+                raise Exception('Input pipe does not exist: %s' % self._path)
+            if not stat.S_ISFIFO(os.stat(self.path).st_mode):
+                raise Exception('Input pipe must be a fifo object: %s' % self._path)
+
+            try:
+                self._fd = os.open(self.path, flags)
+            except OSError as e:
+                if e.errno != errno.ENXIO:
+                    raise e
+
+    def fileno(self):
+        return self._fd
+
+
+class NamedPipeReader(FileDescriptorReader):
+    """
+    Reader to read from a named pipe.
+    """
+    def __init__(self, pipe, container_path=None):
+        super(NamedPipeReader, self).__init__(None)
+        self._pipe = pipe
+        self._container_path = container_path
+
+    def open(self):
+        self._pipe.open(os.O_RDONLY | os.O_NONBLOCK)
+
+    def path(self):
+        """
+        The argument to pass to the docker container's entrypoint. In this case
+        the path to the named pipe.
+        """
+        return self._container_path
+
+    def fileno(self):
+        return self._pipe.fileno()
+
+
+class NamedPipeWriter(FileDescriptorWriter):
+    """
+    Write to write to a named pipe.
+    """
+    def __init__(self, pipe, container_path=None):
+        super(NamedPipeWriter, self).__init__(None)
+        self._pipe = pipe
+        self._container_path = container_path
+
+    def open(self):
+        self._pipe.open(os.O_WRONLY | os.O_NONBLOCK)
+
+    def path(self):
+        """
+        The argument to pass to the docker container's entrypoint. In this case
+        the path to the named pipe.
+        """
+        return self._container_path
+
+    def fileno(self):
+        return self._pipe.fileno()
 
 
 class ChunkedTransferEncodingStreamWriter(StreamWriter):

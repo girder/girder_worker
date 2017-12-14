@@ -332,15 +332,17 @@ class Connect(Transform):
 
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
-            WriteStreamConnector,
-            ReadStreamConnector,
+            FDWriteStreamConnector,
+            FDReadStreamConnector,
         )
         input = _maybe_transform(self._input, **kwargs)
         output = _maybe_transform(self._output, **kwargs)
         if isinstance(self._output, NamedInputPipe):
-            return WriteStreamConnector(input, output)
+            return FDWriteStreamConnector(input, output)
+        elif isinstance(self._input, NamedOutputPipe):
+            return FDReadStreamConnector(input, output)
         else:
-            return ReadStreamConnector(input, output)
+            raise TypeError('A NamedInputPipe or NamedOutputPipe must be provided.')
 
     def _repr_model_(self):
         """
