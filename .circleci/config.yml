@@ -27,20 +27,12 @@ jobs:
       - run:
           name: Get the environment up and running with Docker Compose
           command: |
-            cd tests/integration && docker-compose up -d
-            # Wait for girder to be up and running on port 8989
-            docker-compose exec girder /scripts/wait-for-it.sh localhost:8989 -t 60
+            cd tests/integration && make && make ci run
 
       - run:
           name: Run integration tests
           command: |
-            # Create a new container with a volume attached
-            docker create -v /cfg --name configs alpine:3.4 /bin/true
-            # Copy the repository to this volume
-            docker cp /root/girder_worker configs:/cfg
-            # Run the integration tests after installing requirements
-            # TODO docker test are currently disabled.
-            docker run --volumes-from configs --network container:gw_integration_test_girder python:2.7.13 /bin/bash -c "cd /cfg/girder_worker/tests/integration; pip install -r requirements.txt; pytest -v -n 4 -m 'not docker'"
+            cd tests/integration && make ci test
 
       - deploy:
           command: |

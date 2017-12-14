@@ -19,4 +19,4 @@ fi
 mkdir tmp
 chmod 777 tmp
 
-sudo -u worker python -m girder_worker -l info
+sudo --preserve-env -u worker python -m girder_worker -l info
