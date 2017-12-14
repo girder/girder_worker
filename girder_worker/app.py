@@ -148,18 +148,18 @@ class Task(celery.Task):
             grh = self.request.girder_result_hooks[idx]
             if hasattr(grh, 'transform') and \
                six.callable(grh.transform):
-                return grh.transform(result)
+                return grh.transform(result, **kwargs)
         except IndexError:
             return result
 
-    def _maybe_transform_argument(self, arg):
+    def _maybe_transform_argument(self, arg, **kwargs):
         if hasattr(arg, 'transform') and six.callable(arg.transform):
-            return arg.transform()
+            return arg.transform(**kwargs)
         return arg
 
-    def _maybe_cleanup(self, arg):
+    def _maybe_cleanup(self, arg, **kwargs):
         if hasattr(arg, 'cleanup') and six.callable(arg.cleanup):
-            arg.cleanup()
+            arg.cleanup(**kwargs)
 
     def __call__(self, *args, **kwargs):
         try:
