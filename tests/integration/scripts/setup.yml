@@ -1,10 +1,31 @@
 ---
 - hosts: girder
   vars:
-    girder_port: 8999
+    girder_host: localhost
+    girder_port: 8080
     girder_user: "admin"
     girder_pass: "letmein"
+    celery_broker: amqp://guest:guest@localhost/
   tasks:
+    - name: Wait Girder to come up
+      wait_for:
+        port: "{{ girder_port }}"
+        delay: 5
+
+    - name: Install integration_test_endpoints
+      command:
+        girder-install plugin -s /girder_worker/tests/integration/integration_test_endpoints/
+
+    - name: Install Girder Worker
+      pip:
+        name: /girder_worker
+        editable: true
+
+    - name: Install Common Tasks plugin
+      pip:
+        name: /girder_worker/tests/integration/common_tasks/
+        editable: true
+
     - name: Create 'admin' User with password 'letmein'
       girder:
         port: "{{ girder_port }}"
@@ -46,7 +67,7 @@
         port: "{{ girder_port }}"
         setting:
           key: "core.server_root"
-          value: "http://girder:8989/"
+          value: "http://{{ girder_host }}:{{ girder_port }}/"
 
     - name: Restart the server
       girder:
@@ -70,13 +91,8 @@
         port: "{{ girder_port }}"
         setting:
           key: "{{item}}"
-          value: amqp://guest:guest@rabbit/
+          value: "{{ celery_broker }}"
         state: present
       with_items:
         - "worker.broker"
         - "worker.backend"
-
-    - name: Include additional setup tasks
-      include: "{{ item }}"
-      with_fileglob:
-        - "setup.d/*.yml"
