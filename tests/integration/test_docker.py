@@ -228,7 +228,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
     chunks = file_contents.read().split(delimiter)
     chunks = [c for c in chunks if c != '']
 
-    assert len(chunks) == 3
+    assert len(chunks) == 4
 
     with open(test_file) as fp:
         for chunk in chunks:
