@@ -109,7 +109,8 @@ setuptools.setup(
             'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [
-            'core = girder_worker:GirderWorkerPlugin'
+            'core = girder_worker:GirderWorkerPlugin',
+            'docker = girder_worker.docker:DockerPlugin [docker]'
         ],
         'girder_worker.test.valid_plugins': [
             'core = girder_worker.tests.plugins:TestCore',

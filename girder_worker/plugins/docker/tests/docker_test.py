@@ -66,6 +66,10 @@ def _mockOsRead(fd, *args, **kwargs):
         return _err.read()
 
 
+def _close(self):
+    pass
+
+
 girder_worker.plugins.docker.executor.os.read = _mockOsRead
 
 celery_task = mock.MagicMock()
@@ -96,6 +100,8 @@ class TestDockerMode(unittest.TestCase):
         _reset_mocks()
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
+    @mock.patch('girder_worker.docker.io.FileDescriptorReader.close',
+                return_value=_close)
     def testDockerMode(self, *args):
         task = {
             'mode': 'docker',
@@ -184,8 +190,9 @@ class TestDockerMode(unittest.TestCase):
 
             self.assertTrue(kwargs['remove'])
             six.assertRegex(self, kwargs['volumes'].keys()[0], _tmp + '/.*')
-            self.assertEqual(kwargs['volumes'].itervalues().next()['bind'], DATA_VOLUME)
-            self.assertEqual(args[1], ['chmod', '-R', 'a+rw', DATA_VOLUME])
+            self.assertTrue(kwargs['volumes'].itervalues().next()['bind'].startswith(DATA_VOLUME))
+            self.assertEqual(args[1][:-1], ['chmod', '-R', 'a+rw'])
+            self.assertTrue(args[1][-1].startswith(DATA_VOLUME))
 
             # Make sure we can specify a custom entrypoint to the container
             _reset_mocks()
@@ -334,6 +341,8 @@ class TestDockerMode(unittest.TestCase):
         self.assertEqual(mockPopen.call_count, 0)
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
+                return_value=_close)
     def testOutputValidation(self, *args):
         task = {
             'mode': 'docker',
@@ -390,6 +399,8 @@ class TestDockerMode(unittest.TestCase):
             run(task, _celery_task=celery_task)
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
+                return_value=_close)
     def testNamedPipes(self, *args):
         task = {
             'mode': 'docker',
@@ -429,6 +440,8 @@ class TestDockerMode(unittest.TestCase):
         self.assertTrue(stat.S_ISFIFO(os.stat(pipe).st_mode))
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
+                return_value=_close)
     def testDockerRunArgs(self, *args):
         task = {
             'mode': 'docker',
@@ -469,7 +482,9 @@ class TestDockerMode(unittest.TestCase):
         self.assertFalse(kwargs['tty'])
 
     @mock.patch('docker.from_env', return_value=docker_client_mock)
-    def testOutputTemplate(self, from_env):
+    @mock.patch('girder_worker.docker.tasks.FileDescriptorReader.close',
+                return_value=_close)
+    def testOutputTemplate(self, *args):
         task = {
             'mode': 'docker',
             'docker_image': 'test/test:latest',

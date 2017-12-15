@@ -13,7 +13,7 @@ import time
 import girder_worker
 from girder_worker.core import run, io
 
-TEST_IMAGE = 'girder/girder_worker_test:latest'
+TEST_IMAGE = 'girder/girder_worker_test:ng'
 
 
 def setUpModule():
@@ -58,7 +58,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', '-m', '$input{message}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -100,7 +100,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', '-m', '$input{message}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -153,7 +153,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', '-m', '$input{message}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -183,7 +183,7 @@ class TestDockerMode(unittest.TestCase):
         inputs = {
             'test_mode': {
                 'format': 'string',
-                'data': 'output_pipe'
+                'data': 'write'
             },
             'message': {
                 'format': 'string',
@@ -223,14 +223,9 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}'],
             'inputs': [{
                 'id': 'test_mode',
-                'name': '',
-                'format': 'string',
-                'type': 'string'
-            }, {
-                'id': 'message',
                 'name': '',
                 'format': 'string',
                 'type': 'string'
@@ -251,11 +246,7 @@ class TestDockerMode(unittest.TestCase):
         inputs = {
             'test_mode': {
                 'format': 'string',
-                'data': 'input_pipe'
-            },
-            'message': {
-                'format': 'string',
-                'data': self._test_message
+                'data': 'read'
             },
             'input_pipe': {
                 'mode': 'static',
@@ -296,7 +287,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', '-m', '$input{message}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -376,7 +367,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', 'message'],
+            'container_args': ['$input{test_mode}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -460,7 +451,7 @@ class TestDockerMode(unittest.TestCase):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', 'message'],
+            'container_args': ['$input{test_mode}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',
@@ -555,7 +546,7 @@ def testDockerModeStdErrStdOut(self):
             'mode': 'docker',
             'docker_image': TEST_IMAGE,
             'pull_image': True,
-            'container_args': ['$input{test_mode}', '$input{message}'],
+            'container_args': ['$input{test_mode}', '-m', '$input{message}'],
             'inputs': [{
                 'id': 'test_mode',
                 'name': '',

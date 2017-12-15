@@ -1,35 +1,28 @@
 import os
 import re
-import sys
-import docker
-from docker.errors import DockerException
-from requests.exceptions import ReadTimeout
 
-from girder_worker import logger
 from girder_worker.core import TaskSpecValidationError, utils
 from girder_worker.core.io import make_stream_fetch_adapter, make_stream_push_adapter
-from girder_worker.plugins.docker.stream_adapter import DockerStreamPushAdapter
-from . import nvidia
+from girder_worker.docker.tasks import _docker_run
+from girder_worker.docker.transforms import (
+    ContainerStdOut,
+    ContainerStdErr
+)
+from girder_worker.docker.transforms.girder import ProgressPipe
+from girder_worker.docker.io import (
+    NamedPipeReader,
+    NamedPipeWriter,
+    FDWriteStreamConnector,
+    NamedPipe,
+    FDReadStreamConnector
+)
+
 
 DATA_VOLUME = '/mnt/girder_worker/data'
-BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
 _inputRe = re.compile(r'\$input\{([^}]+)\}')
 _outputRe = re.compile(r'\$output\{([^}]+)\}')
 _flagRe = re.compile(r'\$flag\{([^}]+)\}')
-
-
-def _pull_image(image):
-    """
-    Pulls the specified Docker image onto this worker.
-    """
-    client = docker.from_env(version='auto')
-    try:
-        client.images.pull(image)
-    except DockerException as dex:
-        logger.error('Error pulling Docker image %s:' % image)
-        logger.exception(dex)
-        raise
 
 
 def _transform_path(inputs, taskInputs, inputId, tmpDir):
@@ -116,7 +109,7 @@ def validate_task_outputs(task_outputs):
                 'filepath-target outputs.')
 
 
-def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe):
+def _setup_streams(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe):
     """
     Returns a 2 tuple of input and output pipe mappings. The first element is
     a dict mapping input file descriptors to the corresponding stream adapters,
@@ -125,142 +118,62 @@ def _setup_pipes(task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, p
     STDERR mappings, and in the case of non-streaming standard IO pipes, will
     create default bindings for those as well.
     """
-    ipipes = {}
-    opipes = {}
+    stream_connectors = []
 
-    def make_pipe(id, spec, bindings):
+    def stream_pipe_path(id, spec, bindings):
         """
-        Helper to make a pipe conditionally for valid streaming IO specs. If the
-        given spec is not a streaming spec, returns False. If it is, returns the
-        path to the pipe file that was created.
+        Helper to check for a  valid streaming IO specs. If the
+        given spec is not a streaming spec, returns None. If it is, returns the
+        path.
         """
         if spec.get('stream') and id in bindings and spec.get('target') == 'filepath':
             path = spec.get('path', id)
             if path.startswith('/'):
                 raise Exception('Streaming filepaths must be relative.')
             path = os.path.join(tempdir, path)
-            os.mkfifo(path)
             return path
-        return False
+
+        return None
 
     # handle stream inputs
     for id, spec in task_inputs.iteritems():
-        pipe = make_pipe(id, spec, inputs)
-        if pipe:
+
+        path = stream_pipe_path(id, spec, inputs)
+        # We have a streaming input
+        if path is not None:
+            writer = NamedPipeWriter(NamedPipe(path))
+            connector = FDWriteStreamConnector(make_stream_fetch_adapter(inputs[id]), writer)
+            stream_connectors.append(connector)
             # Don't open from this side, must be opened for reading first!
-            ipipes[pipe] = make_stream_fetch_adapter(inputs[id])
 
     # handle stream outputs
     for id, spec in task_outputs.iteritems():
-        pipe = make_pipe(id, spec, outputs)
-        if pipe:
-            opipes[os.open(pipe, os.O_RDONLY | os.O_NONBLOCK)] = \
-                make_stream_push_adapter(outputs[id])
+        path = stream_pipe_path(id, spec, outputs)
+        if path is not None:
+            reader = NamedPipeReader(NamedPipe(path))
+            connector = FDReadStreamConnector(reader, make_stream_push_adapter(outputs[id]))
+            stream_connectors.append(connector)
 
     # handle special stream output for job progress
     if progress_pipe and job_mgr:
-        path = os.path.join(tempdir, '.girder_progress')
-        os.mkfifo(path)
-        opipes[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = utils.JobProgressAdapter(job_mgr)
+        progress_pipe = ProgressPipe(os.path.join(tempdir, '.girder_progress'))
+        stream_connectors.append(progress_pipe.open())
 
-    # special handling for stdin, stdout, and stderr pipes
-    if '_stdin' in task_inputs and '_stdin' in inputs:
-        if task_inputs['_stdin'].get('stream'):
-            ipipes['_stdin'] = make_stream_fetch_adapter(inputs['_stdin'])
-        else:
-            ipipes['_stdin'] = utils.MemoryFetchAdapter(inputs[id], inputs[id]['data'])
+    return stream_connectors
 
-    for id in ('_stdout', '_stderr'):
+
+def _setup_std_streams(task_outputs, outputs):
+    def push_adapter(id):
+        adapter = None
         if id in task_outputs and id in outputs:
             if task_outputs[id].get('stream'):
-                opipes[id] = make_stream_push_adapter(outputs[id])
+                adapter = make_stream_push_adapter(outputs[id])
             else:
-                opipes[id] = utils.AccumulateDictAdapter(outputs[id], 'script_data')
+                adapter = utils.AccumulateDictAdapter(outputs[id], 'script_data')
 
-    return ipipes, opipes
+        return adapter
 
-
-def _run_container(image, args, **kwargs):
-    # TODO we could allow configuration of non default socket
-    client = docker.from_env(version='auto')
-    if nvidia.is_nvidia_image(client.api, image):
-        client = nvidia.NvidiaDockerClient.from_env(version='auto')
-
-    logger.info('Running container: image: %s args: %s kwargs: %s' % (image, args, kwargs))
-    try:
-        return client.containers.run(image, args, **kwargs)
-    except nvidia.NvidiaConnectionError:
-        try:
-            logger.info('Running nvidia container without nvidia support: image: %s' % image)
-            client = docker.from_env(version='auto')
-            return client.containers.run(image, args, **kwargs)
-        except DockerException as dex:
-            logger.error(dex)
-            raise
-    except DockerException as dex:
-        logger.error(dex)
-        raise
-
-
-def _run_select_loop(celery_task, container, opipes, ipipes):
-    stdout = None
-    stderr = None
-    try:
-        # attach to standard streams
-        stdout = container.attach_socket(params={
-            'stdout': True,
-            'logs': True,
-            'stream': True
-        })
-
-        stderr = container.attach_socket(params={
-            'stderr': True,
-            'logs': True,
-            'stream': True
-        })
-
-        def exit_condition():
-            container.reload()
-            return container.status in ['exited', 'dead'] or celery_task.canceled
-
-        def close_output(output):
-            return output not in (stdout.fileno(), stderr.fileno())
-
-        opipes[stdout.fileno()] = DockerStreamPushAdapter(opipes.get(
-            '_stdout', utils.WritePipeAdapter({}, sys.stdout)))
-        opipes[stderr.fileno()] = DockerStreamPushAdapter(opipes.get(
-            '_stderr', utils.WritePipeAdapter({}, sys.stderr)))
-
-        # Run select loop
-        utils.select_loop(exit_condition=exit_condition, close_output=close_output,
-                          outputs=opipes, inputs=ipipes)
-
-        if celery_task.canceled:
-            try:
-                container.stop()
-            # Catch the ReadTimeout from requests and wait for container to
-            # exit. See https://github.com/docker/docker-py/issues/1374 for
-            # more details.
-            except ReadTimeout:
-                tries = 10
-                while tries > 0:
-                    container.reload()
-                    if container.status == 'exited':
-                        break
-
-                if container.status != 'exited':
-                    msg = 'Unable to stop container: %s' % container.id
-                    logger.error(msg)
-            except DockerException as dex:
-                logger.error(dex)
-                raise
-
-    finally:
-        # Close our stdout and stderr sockets
-        if stdout:
-            stdout.close()
-        if stderr:
-            stderr.close()
+    return (push_adapter('_stdout'), push_adapter('_stderr'))
 
 
 def add_input_volumes(inputs, volumes):
@@ -285,55 +198,45 @@ def add_input_volumes(inputs, volumes):
 def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     image = task['docker_image']
     celery_task = kwargs.get('_celery_task')
-    if task.get('pull_image', True):
-        logger.info('Pulling Docker image: %s', image)
-        _pull_image(image)
-
+    pull_image = task.get('pull_image', True)
     progress_pipe = task.get('progress_pipe', False)
-
+    remove_container = kwargs.get('_rm_container', False)
+    # Allow run args to overridden
+    extra_run_kwargs = task.get('docker_run_args', {})
     tempdir = kwargs.get('_tempdir')
     job_mgr = kwargs.get('_job_manager')
     args = _expand_args(task.get('container_args', []), inputs, task_inputs, outputs, tempdir)
 
-    ipipes, opipes = _setup_pipes(
+    stream_connectors = _setup_streams(
         task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe)
 
+    stdout_fetch_adapter, stderr_fetch_adapter = _setup_std_streams(task_outputs, outputs)
+
+    # Connect up stdout and strerr ContainerStdOut() and ContainerStdErr() will be
+    # replaced with the real streams when the container is started.
+    if stdout_fetch_adapter is not None:
+        stream_connectors.append(FDReadStreamConnector(ContainerStdOut(), stdout_fetch_adapter))
+    if stderr_fetch_adapter is not None:
+        stream_connectors.append(FDReadStreamConnector(ContainerStdErr(), stderr_fetch_adapter))
+
+    entrypoint = None
     if 'entrypoint' in task:
         if isinstance(task['entrypoint'], (list, tuple)):
-            ep_args = task['entrypoint']
+            entrypoint = task['entrypoint']
         else:
-            ep_args = [task['entrypoint']]
-    else:
-        ep_args = []
+            entrypoint = [task['entrypoint']]
 
-    run_kwargs = {
-        'tty': False,
-        'volumes': {
-            tempdir: {
-                'bind': DATA_VOLUME,
-                'mode': 'rw'
-            }
-        },
-        'detach': True
+    volumes = {
+        tempdir: {
+            'bind': DATA_VOLUME,
+            'mode': 'rw'
+        }
     }
-    add_input_volumes(inputs, run_kwargs['volumes'])
-    if ep_args:
-        run_kwargs['entrypoint'] = ep_args
+    add_input_volumes(inputs, volumes)
 
-    # Allow run args to overridden
-    extra_run_kwargs = task.get('docker_run_args', {})
-    # Filter out any we don't want to override
-    extra_run_kwargs = {k: v for k, v in extra_run_kwargs.items() if k not
-                        in BLACKLISTED_DOCKER_RUN_ARGS}
-    run_kwargs.update(extra_run_kwargs)
-
-    container = _run_container(image, args, **run_kwargs)
-
-    try:
-        _run_select_loop(celery_task, container, opipes, ipipes)
-    finally:
-        if container and kwargs.get('_rm_container'):
-            container.remove()
+    _docker_run(celery_task, image, pull_image=pull_image, entrypoint=entrypoint,
+                container_args=args, volumes=volumes, remove_container=remove_container,
+                stream_connectors=stream_connectors, **extra_run_kwargs)
 
     for name, spec in task_outputs.iteritems():
         if spec.get('target') == 'filepath' and not spec.get('stream'):

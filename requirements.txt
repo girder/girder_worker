@@ -8,27 +8,30 @@ alabaster==0.7.10         # via sphinx
 amqp==2.2.2               # via kombu
 asn1crypto==0.23.0        # via cryptography
 babel==2.5.1              # via sphinx
+backports.ssl-match-hostname==3.5.0.1  # via docker
 bcrypt==3.1.4             # via girder
 billiard==3.5.0.3         # via celery
 boto3==1.4.7              # via girder
 botocore==1.7.26          # via boto3, s3transfer
 celery==4.1.0
-certifi==2017.7.27.1      # via requests
+certifi==2017.7.27.1      # via requests, urllib3
 cffi==1.11.2              # via bcrypt, cryptography
 chardet==3.0.4            # via requests
 cheroot==5.8.3            # via cherrypy
 cherrypy==11.0.0          # via girder
 click==6.7                # via girder-client
+configparser==3.5.0       # via flake8
 coverage==4.4.1
 coveralls==1.2.0
-cryptography==2.1         # via pyopenssl, requests
+cryptography==2.1         # via pyopenssl, requests, urllib3
 decorator==4.1.2          # via networkx
 diskcache==2.9.0          # via girder-client
 docker-pycreds==0.2.1     # via docker
-docker==2.5.1
+docker==2.6.1
 docopt==0.6.2             # via coveralls
 docutils==0.14            # via botocore, sphinx
-ete3==3.0.0b35
+enum34==1.1.6             # via cryptography, flake8
+ete3==3.1.1
 filelock==2.0.12          # via girder
 flake8-blind-except==0.1.1
 flake8-docstrings==1.1.0
@@ -36,13 +39,18 @@ flake8-polyfill==1.0.1    # via flake8-docstrings
 flake8-quotes==0.11.0
 flake8==3.4.1
 funcsigs==1.0.2 ; python_version < "3.3"
+functools32==3.2.3.post2  # via jsonschema
+futures==3.1.1            # via s3transfer
 girder-client==2.3.0
+girder-worker-utils==0.7.1
 girder==2.3.0
 httmock==1.2.6
-idna==2.6                 # via cryptography, requests
+idna==2.6                 # via cryptography, requests, urllib3
 imagesize==0.7.1          # via sphinx
+ipaddress==1.0.18         # via cryptography, docker, urllib3
 jinja2==2.9.6             # via sphinx
 jmespath==0.9.3           # via boto3, botocore
+jsonpickle==0.9.5
 jsonschema==2.6.0         # via girder
 kombu==4.1.0              # via celery
 lxml==4.0.0
@@ -61,7 +69,7 @@ pydocstyle==2.0.0
 pyflakes==1.5.0           # via flake8
 pygments==2.2.0           # via sphinx
 pymongo==3.5.1
-pyopenssl==17.3.0         # via requests
+pyopenssl==17.3.0         # via requests, urllib3
 python-dateutil==2.6.1    # via botocore, girder
 pytz==2017.2              # via babel, celery, girder, tempora
 pyyaml==3.12              # via girder
@@ -69,6 +77,8 @@ requests-toolbelt==0.8.0  # via girder-client
 requests[security]==2.18.4
 rpy2==2.8.6
 s3transfer==0.1.11        # via boto3
+shutilwhich==1.1.0        # via girder
+singledispatch==3.4.0.3   # via rpy2
 six==1.11.0
 snowballstemmer==1.2.1    # via pydocstyle, sphinx
 sphinx-rtd-theme==0.2.4
@@ -76,6 +86,7 @@ sphinx==1.6.4
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.27.1
 tempora==1.9              # via portend
-urllib3==1.22             # via requests
+typing==3.6.2             # via sphinx
+urllib3[secure]==1.22     # via coveralls, requests
 vine==1.1.4               # via amqp
 websocket-client==0.44.0  # via docker

@@ -36,6 +36,7 @@ via its plugin system, which is described in :doc:`plugins`.
    examples
    developer-docs
    plugins
+   docker_run
 
 Indices and tables
 ------------------

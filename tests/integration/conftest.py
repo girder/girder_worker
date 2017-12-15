@@ -1,6 +1,9 @@
 import pytest
 import requests
+import six
+import os
 from .utilities import GirderSession
+from girder_client import GirderClient
 
 
 def pytest_addoption(parser):
@@ -34,6 +37,64 @@ def session(request, api_url):
                 'Unable to login with user "%s", password "%s"' % (username, password))
 
         yield s
+
+
+# TODO combine with session in some way?
+@pytest.fixture(scope='module',
+                params=[['admin', 'letmein']],
+                ids=['admin'])
+def girder_client(request, api_url):
+    username, password = request.param
+    client = GirderClient(apiUrl=api_url)
+    client.authenticate(username, password)
+
+    yield client
+
+
+@pytest.fixture(scope='module')
+def test_file(tmpdir_factory):
+    path = tmpdir_factory.mktemp('test').join('test.txt')
+    path.write('abc'*65546)
+
+    yield str(path)
+
+
+@pytest.fixture(scope='module')
+def private_folder(girder_client):
+    me = girder_client.get('user/me')
+    try:
+        folder = six.next(
+            girder_client.listFolder(
+                me['_id'], parentFolderType='user', name='Private'))
+    except StopIteration:
+        raise Exception("User doesn't have a Private folder.")
+
+    yield folder
+
+
+@pytest.fixture(scope='module')
+def test_file_in_girder(girder_client, private_folder,  test_file):
+    file = None
+    try:
+        size = os.path.getsize(test_file)
+        with open(test_file) as f:
+            file = girder_client.uploadFile(
+                private_folder['_id'], f, 'test_file', size, parentType='folder')
+
+        yield file
+    finally:
+        if file is not None:
+            girder_client.delete('item/%s' % file['itemId'])
+
+
+@pytest.fixture(scope='function')
+def test_item(girder_client, private_folder):
+    try:
+        item = girder_client.createItem(private_folder['_id'], 'test')
+        yield item
+    finally:
+        if file is not None:
+            girder_client.delete('item/%s' % item['_id'])
 
 
 # pytest hooks for ordering test items after they have been collected

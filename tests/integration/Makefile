@@ -38,7 +38,7 @@ test:
 	  docker run --volumes-from girder_worker_data_volume \
                      --network container:gw_integration_test_girder_ci \
             python:2.7.13 \
-            /bin/bash -c "cd /girder_worker/tests/integration && make && pytest --girder http://girder:8989/api/v1/ -v -x -n4"; \
+            /bin/bash -c "cd /girder_worker/tests/integration && make && pytest --girder http://girder:8989/api/v1/ -v -x -n4 -m 'not docker'"; \
 	else \
 	  pytest -v -x -n4; \
 	fi
