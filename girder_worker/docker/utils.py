@@ -14,10 +14,10 @@ def select_loop(exit_condition=lambda: True, readers=None, writers=None):
         loop should terminate if all pipes are empty.
     :type exit_condition: function
     :param readers: The list of ReaderStreamConnector's that will be added to the
-        select call..
+        select call.
     :type readers: list
     :param writers: The list of WriteStreamConnector's that will be added to the
-        select call..
+        select call.
     :type writers: list
     """
 
