@@ -6,8 +6,16 @@ USER root
 RUN sed -i  's|^broker.*=.*$|broker = amqp://guest:guest@rabbit/|' /girder_worker/girder_worker/worker.local.cfg
 
 RUN apt-get update && apt-get install -y sudo
+
+RUN apt-get install -y apt-transport-https ca-certificates curl software-properties-common && \
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
+  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && \
+  apt-get update && \
+  apt-get install -y docker-ce
+
 RUN pip install docker
 
+RUN usermod -aG docker worker
 
 VOLUME /girder_worker
 

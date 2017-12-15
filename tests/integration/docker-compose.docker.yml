@@ -1,0 +1,5 @@
+version: '2'
+services:
+  girder_worker:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
