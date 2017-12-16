@@ -291,7 +291,10 @@ class DockerTestEndpoints(Resource):
     def test_docker_run_temporary_volume_root(self, params):
         prefix = params.get('prefix')
         root = os.path.join(tempfile.gettempdir(), prefix)
-        volume = TemporaryVolume(host_dir=root)
+        # We set the mode to 0777 because the worker container is
+        # running as the 'worker' user and needs to be able to have
+        # read/write access to the TemporaryVolume
+        volume = TemporaryVolume(host_dir=root, mode=0777)
 
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True, container_args=['print_path', '-p', volume],
