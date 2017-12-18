@@ -39,9 +39,8 @@ def _pull_image(image):
     client = docker.from_env(version='auto')
     try:
         client.images.pull(image)
-    except DockerException as dex:
-        logger.error('Error pulling Docker image %s:' % image)
-        logger.exception(dex)
+    except DockerException:
+        logger.exception('Error pulling Docker image %s:' % image)
         raise
 
 
@@ -55,8 +54,16 @@ def _run_container(image, container_args,  **kwargs):
                 % (image, container_args, kwargs))
     try:
         return client.containers.run(image, container_args, **kwargs)
-    except DockerException as dex:
-        logger.error(dex)
+    except nvidia.NvidiaConnectionError:
+        try:
+            logger.info('Running nvidia container without nvidia support: image: %s' % image)
+            client = docker.from_env(version='auto')
+            return client.containers.run(image, container_args, **kwargs)
+        except DockerException:
+            logger.exception('Exception when running docker container without nvidia support.')
+            raise
+    except DockerException:
+        logger.exception('Exception when running docker container')
         raise
 
 
