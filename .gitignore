@@ -13,3 +13,5 @@ __pycache__
 *.retry
 /devops/ansible/examples/*/playbooks/*/roles
 .vagrant
+.tox
+.cache
