@@ -3,7 +3,11 @@ from importlib import import_module
 from girder_worker_utils import decorators
 import six
 from stevedore import extension
-import celery
+
+try:
+    from celery import current_app
+except ImportError:
+    current_app = None
 
 #: Defines the namespace used for plugin entrypoints
 NAMESPACE = 'girder_worker_plugins'
@@ -34,7 +38,7 @@ def _handle_entrypoint_errors(mgr, entrypoint, exc):
 def get_extension_manager(app=None):
     """Get an extension manager for the plugin namespace."""
     if app is None:
-        app = celery.current_app
+        app = current_app
 
     return extension.ExtensionManager(
         namespace=NAMESPACE,
