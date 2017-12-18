@@ -1,5 +1,6 @@
 from girder_worker.app import app
-from girder_worker.describe import argument, types
+from girder_worker_utils import types
+from girder_worker_utils.decorators import argument
 
 
 def not_a_task():
