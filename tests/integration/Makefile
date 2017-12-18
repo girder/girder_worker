@@ -3,16 +3,10 @@
 COMPOSE_FILE=docker-compose.yml
 ANSIBLE_INVENTORY=inventory
 ANSIBLE_EXTRA_VARS=-e girder_host=girder -e girder_port=8989 -e celery_broker="amqp://guest:guest@rabbit/"
-RUN_IN_CI=0
 
 initialize:
 	pip install -U -r requirements.txt
 	ansible-galaxy install --force --roles-path ./scripts/roles girder.girder
-
-ci:
-	$(eval RUN_IN_CI=1)
-	$(eval COMPOSE_FILE=docker-compose.ci.yml)
-	$(eval ANSIBLE_INVENTORY=inventory.ci)
 
 run:
 	docker-compose -f $(COMPOSE_FILE) up -d
@@ -37,4 +31,4 @@ test:
 	pytest -v -x -n4  -m 'not docker'
 
 
-.PHONY: initialize dev ci clean nuke test init run
+.PHONY: initialize dev clean nuke test init run
