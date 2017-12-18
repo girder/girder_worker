@@ -20,7 +20,7 @@ class TestPlugin1(BaseTestPlugin):
 
 class TestPlugin2(BaseTestPlugin):
     def task_imports(self):
-        return ['girder_worker.tests.tasks']
+        return ['girder_worker._test_plugins.tasks']
 
 
 def TestPluginException1(BaseTestPlugin):
