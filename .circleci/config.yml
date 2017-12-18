@@ -15,12 +15,12 @@ jobs:
       - run:
           name: Get the environment up and running with Docker Compose
           command: |
-            cd tests/integration && make && make ci run
+            cd tests/integration && make && make run
 
       - run:
           name: Run integration tests
           command: |
-            cd tests/integration && make ci test
+            cd tests/integration && make test
 
       - deploy:
           command: |

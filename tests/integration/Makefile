@@ -34,14 +34,7 @@ nuke: clean
 	  girder/girder_worker:gw_integration_test
 
 test:
-	if [ $(RUN_IN_CI) -eq 1 ]; then \
-	  docker run --volumes-from girder_worker_data_volume \
-                     --network container:gw_integration_test_girder_ci \
-            python:2.7.13 \
-            /bin/bash -c "cd /girder_worker/tests/integration && make && pytest --girder http://girder:8989/api/v1/ -v -x -n4 -m 'not docker'"; \
-	else \
-	  pytest -v -x -n4; \
-	fi
+	pytest -v -x -n4  -m 'not docker'
 
 
 .PHONY: initialize dev ci clean nuke test init run
