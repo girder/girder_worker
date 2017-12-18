@@ -1,9 +1,9 @@
 include(CMakeParseArguments)
 
-set(py_coverage_rc "${PROJECT_BINARY_DIR}/tests/girder_worker.coveragerc")
-set(flake8_config "${PROJECT_SOURCE_DIR}/tests/flake8.cfg")
+set(py_coverage_rc "${PROJECT_BINARY_DIR}/girder_worker/core/tests/girder_worker.coveragerc")
+set(flake8_config "${PROJECT_SOURCE_DIR}/girder_worker/core/tests/flake8.cfg")
 set(coverage_html_dir "${PROJECT_SOURCE_DIR}/docs/_build/html/py_coverage")
-set(py_testdir "${PROJECT_SOURCE_DIR}/tests")
+set(py_testdir "${PROJECT_SOURCE_DIR}/girder_worker/core/tests")
 
 if(PYTHON_BRANCH_COVERAGE)
   set(_py_branch_cov True)
@@ -12,7 +12,7 @@ else()
 endif()
 
 configure_file(
-  "${PROJECT_SOURCE_DIR}/tests/girder_worker.coveragerc.in"
+  "${PROJECT_SOURCE_DIR}/girder_worker/core/tests/girder_worker.coveragerc.in"
   "${py_coverage_rc}"
   @ONLY
 )
@@ -37,7 +37,7 @@ function(add_python_test case)
     set(name "plugins.${fn_PLUGIN}.${case}")
     set(module girder_worker.plugins.${fn_PLUGIN}.tests.${case}_test)
   else()
-    set(module tests.${case}_test)
+    set(module girder_worker.core.tests.${case}_test)
   endif()
 
   if(PYTHON_COVERAGE)

@@ -35,13 +35,13 @@ endif()
 
 if(PYTHON_STYLE_TESTS)
   add_python_flake8_test(flake8_style_core "${PROJECT_SOURCE_DIR}/girder_worker")
-  add_python_flake8_test(flake8_style_tests "${PROJECT_SOURCE_DIR}/tests")
+  add_python_flake8_test(flake8_style_tests "${PROJECT_SOURCE_DIR}/girder_worker/core/tests")
 endif()
 
 add_test(
   NAME packaging
   WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  COMMAND "${PROJECT_SOURCE_DIR}/tests/packaging_test.sh"
+  COMMAND "${PROJECT_SOURCE_DIR}/girder_worker/core/tests/packaging_test.sh"
           "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}"
 )
 
@@ -64,9 +64,6 @@ add_python_test(pickle PLUGINS_ENABLED types)
 add_python_test(spec PLUGINS_ENABLED types)
 add_python_test(stream)
 add_python_test(directory PLUGINS_ENABLED types)
-add_python_test(task_plugin)
-add_python_test(task_signal)
-add_python_test(task_cancellation)
 
 add_docstring_test(girder_worker.core.specs.spec)
 add_docstring_test(girder_worker.core.specs.task)
