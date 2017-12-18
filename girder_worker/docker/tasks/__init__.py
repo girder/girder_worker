@@ -55,6 +55,14 @@ def _run_container(image, container_args,  **kwargs):
                 % (image, container_args, kwargs))
     try:
         return client.containers.run(image, container_args, **kwargs)
+    except nvidia.NvidiaConnectionError:
+        try:
+            logger.info('Running nvidia container without nvidia support: image: %s' % image)
+            client = docker.from_env(version='auto')
+            return client.containers.run(image, container_args, **kwargs)
+        except DockerException as dex:
+            logger.error(dex)
+            raise
     except DockerException as dex:
         logger.error(dex)
         raise
