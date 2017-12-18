@@ -54,8 +54,7 @@ def girder_client(request, api_url):
 @pytest.fixture(scope='module')
 def test_file(tmpdir_factory):
     path = tmpdir_factory.mktemp('test').join('test.txt')
-    # Three times our read buffer for docker tests
-    path.write('abc'*65536)
+    path.write('abc'*65546)
 
     yield str(path)
 

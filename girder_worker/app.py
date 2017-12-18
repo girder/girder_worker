@@ -1,4 +1,8 @@
 import sys
+
+import girder_worker
+from girder_worker import logger
+from girder_worker_utils.decorators import describe_function
 import traceback as tb
 from distutils.version import LooseVersion
 import celery
@@ -16,8 +20,6 @@ from celery.signals import (
 
 from celery.task.control import inspect
 from girder_client import GirderClient
-import girder_worker
-from girder_worker import logger
 from girder_worker_utils import _walk_obj
 import jsonpickle
 from kombu.serialization import register
@@ -135,9 +137,6 @@ class Task(celery.Task):
         return is_revoked(self)
 
     def describe(self):
-        # The describe module indirectly depends on this module, so to
-        # avoid circular imports, we import describe_function here.
-        from describe import describe_function
         return describe_function(self.run)
 
     def call_item_task(self, inputs, outputs={}):

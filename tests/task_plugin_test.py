@@ -3,7 +3,9 @@ import mock
 from StringIO import StringIO
 import unittest
 
-from girder_worker import entrypoint, describe
+from girder_worker_utils import decorators
+from girder_worker_utils import types
+from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from girder_worker.app import app
 
@@ -113,12 +115,12 @@ class TestTaskPlugin(unittest.TestCase):
 
     def test_register_extension(self):
 
-        @describe.argument('n', describe.types.Integer)
+        @decorators.argument('n', types.Integer)
         def echo(n):
             return n
 
         @app.task
-        @describe.argument('n', describe.types.Integer)
+        @decorators.argument('n', types.Integer)
         def echo_celery(n):
             return n
 

@@ -259,7 +259,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
         'detach': True
     }
 
-    # Allow run args to overridden,filter out any we don't want to override
+    # Allow run args to be overridden,filter out any we don't want to override
     extra_run_kwargs = {k: v for k, v in kwargs.items() if k not
                         in BLACKLISTED_DOCKER_RUN_ARGS}
     run_kwargs.update(extra_run_kwargs)
@@ -297,7 +297,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
             else:
                 container.remove()
 
-    # return a array of None's equal to number of entries in the girder_result_hooks
+    # return an array of None's equal to number of entries in the girder_result_hooks
     # header, in order to trigger processing of the container outputs.
     results = []
     if hasattr(task.request, 'girder_result_hooks'):

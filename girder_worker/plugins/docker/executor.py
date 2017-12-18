@@ -210,7 +210,7 @@ def run(task, inputs, outputs, task_inputs, task_outputs, **kwargs):
     stream_connectors = _setup_streams(
         task_inputs, inputs, task_outputs, outputs, tempdir, job_mgr, progress_pipe)
 
-    (stdout_fetch_adapter, stderr_fetch_adapter) = _setup_std_streams(task_outputs, outputs)
+    stdout_fetch_adapter, stderr_fetch_adapter = _setup_std_streams(task_outputs, outputs)
 
     # Connect up stdout and strerr ContainerStdOut() and ContainerStdErr() will be
     # replaced with the real streams when the container is started.

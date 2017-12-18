@@ -7,7 +7,7 @@ RUN_IN_CI=0
 
 initialize:
 	pip install -U -r requirements.txt
-	ansible-galaxy install --roles-path ./scripts/roles girder.girder
+	ansible-galaxy install --force --roles-path ./scripts/roles girder.girder
 
 ci:
 	$(eval RUN_IN_CI=1)
@@ -48,4 +48,4 @@ test:
 	fi
 
 
-.PHONY: initialize dev ci clean nuke test init
+.PHONY: initialize dev ci clean nuke test init run
