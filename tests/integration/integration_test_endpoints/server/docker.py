@@ -235,7 +235,6 @@ class DockerTestEndpoints(Resource):
 
         return result.job
 
-
     @access.token
     @autoDescribeRoute(
         Description('Accept transfer encoding request. Used by '

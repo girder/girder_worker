@@ -235,6 +235,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
     with open(test_file) as fp:
         assert contents == fp.read()
 
+
 @pytest.mark.docker
 def test_docker_run_temporary_volume_root(session):
     params = {
