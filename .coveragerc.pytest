@@ -1,0 +1,7 @@
+[run]
+data_file=.cov/coverage.pytest
+branch = True
+omit =
+  girder_worker/core/*
+  girder_worker/plugins/*
+  girder_worker/_test_plugins/*
