@@ -32,7 +32,7 @@ nuke: clean
 	  girder/girder_worker:gw_integration_test
 
 test:
-	pytest -v -x -n4  -m 'not docker'
+	pytest -v -x -n4
 
 
 .PHONY: initialize dev clean nuke test init run
