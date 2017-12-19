@@ -22,6 +22,18 @@ jobs:
           command: |
             cd tests/integration && make test
 
+      - run:
+          name: Dump girder docker logs
+          command: |
+            cd tests/integration && docker-compose logs girder
+          when: on_fail
+
+      - run:
+          name: Dump girder_worker docker logs
+          command: |
+            cd tests/integration && docker-compose logs girder_worker
+          when: on_fail
+
       - deploy:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
