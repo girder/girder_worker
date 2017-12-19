@@ -35,10 +35,10 @@ def test_docker_run_volume(session):
             [JobStatus.RUNNING, JobStatus.SUCCESS]
 
         log = job['log']
-        assert len(log) == 2
+        assert len(log) == 1
         filepath = os.path.join(fixture_dir, 'read.txt')
         with open(filepath) as fp:
-            assert log[0] == fp.read()
+            assert log[0] == '%s\n' % fp.read()
 
 
 @pytest.mark.docker
@@ -153,10 +153,10 @@ def test_docker_run_idiomatic_volume(session):
             [JobStatus.RUNNING, JobStatus.SUCCESS]
 
         log = job['log']
-        assert len(log) == 2
+        assert len(log) == 1
         filepath = os.path.join(fixture_dir, 'read.txt')
         with open(filepath) as fp:
-            assert log[0] == fp.read()
+            assert log[0] == '%s\n' % fp.read()
 
 
 @pytest.mark.docker
