@@ -10,23 +10,23 @@ if(PYTHON_COVERAGE)
   add_test(
     NAME py_coverage_combine
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" combine
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" combine "--rcfile=${py_coverage_rc}"
   )
   add_test(
     NAME py_coverage
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" report --fail-under=${COVERAGE_MINIMUM_PASS}
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" report "--rcfile=${py_coverage_rc}" --fail-under=${COVERAGE_MINIMUM_PASS}
   )
   add_test(
     NAME py_coverage_html
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" html -d "${coverage_html_dir}"
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" html "--rcfile=${py_coverage_rc}" -d "${coverage_html_dir}"
             "--title=Worker Coverage Report"
   )
   add_test(
     NAME py_coverage_xml
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" xml -o "${PROJECT_BINARY_DIR}/coverage.xml"
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" xml "--rcfile=${py_coverage_rc}" -o "${PROJECT_BINARY_DIR}/coverage.xml"
   )
   set_property(TEST py_coverage PROPERTY DEPENDS py_coverage_combine)
   set_property(TEST py_coverage_html PROPERTY DEPENDS py_coverage)
