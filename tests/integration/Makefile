@@ -9,11 +9,7 @@ initialize:
 	ansible-galaxy install --force --roles-path ./scripts/roles girder.girder
 
 run:
-	if [ $(RUN_IN_CI) -eq 1 ]; then \
-		docker-compose -f $(COMPOSE_FILE) up -d; \
-	else \
-		docker-compose -f $(COMPOSE_FILE) -f docker-compose.docker.yml up -d; \
-	fi
+	docker-compose -f $(COMPOSE_FILE) -f docker-compose.docker.yml up -d; \
 	cd scripts/ && ansible-playbook -i $(ANSIBLE_INVENTORY) $(ANSIBLE_EXTRA_VARS) setup.yml
 
 
