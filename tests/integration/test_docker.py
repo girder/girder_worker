@@ -42,9 +42,9 @@ def test_docker_run_volume(session):
 
 
 @pytest.mark.docker
-def test_docker_run_named_pipe_output(session, tmpdir):
+def test_docker_run_named_pipe_output(session, all_writable_tmpdir):
     params = {
-        'tmpDir': tmpdir,
+        'tmpDir': all_writable_tmpdir,
         'message': 'Dydh da'
     }
     r = session.post('integration_tests/docker/test_docker_run_named_pipe_output',
@@ -61,10 +61,11 @@ def test_docker_run_named_pipe_output(session, tmpdir):
 
 
 @pytest.mark.docker
-def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_girder, tmpdir):
+def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_girder,
+                                              all_writable_tmpdir):
 
     params = {
-        'tmpDir': tmpdir,
+        'tmpDir': all_writable_tmpdir,
         'fileId': test_file_in_girder['_id']
     }
     r = session.post('integration_tests/docker/test_docker_run_girder_file_to_named_pipe',
