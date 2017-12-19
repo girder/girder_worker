@@ -45,7 +45,6 @@ add_test(
           "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}"
 )
 
-add_python_test(config)
 add_python_test(format PLUGINS_ENABLED types)
 add_python_test(graph PLUGINS_ENABLED types)
 add_python_test(image PLUGINS_ENABLED types)

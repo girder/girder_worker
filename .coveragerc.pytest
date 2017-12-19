@@ -1,6 +1,6 @@
 [run]
 data_file=.coverage.pytest
-branch = True
+branch = False
 omit =
   girder_worker/tasks.py
   girder_worker/core/*
