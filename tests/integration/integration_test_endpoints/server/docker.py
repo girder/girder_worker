@@ -244,7 +244,6 @@ class DockerTestEndpoints(Resource):
                     level=AccessType.READ, paramType='query')
         .param('delimiter', 'Delimiter to use when writing out chunks.'))
     def input_stream(self, item, delimiter):
-        # Read body 5 bytes at a time so we can test chunking a small body
         chunks = six.BytesIO()
         for chunk in iterBody(1):
             chunks.write(chunk.decode())

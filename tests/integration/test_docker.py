@@ -229,12 +229,11 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
     chunks = file_contents.read().split(delimiter)
     chunks = [c for c in chunks if c != '']
 
-    assert len(chunks) == 4
-
+    # We should have at least 4 chunks
+    assert len(chunks) >= 4
+    contents = ''.join(chunks)
     with open(test_file) as fp:
-        for chunk in chunks:
-            assert chunk == fp.read(1024*64)
-
+        assert contents == fp.read()
 
 @pytest.mark.docker
 def test_docker_run_temporary_volume_root(session):
