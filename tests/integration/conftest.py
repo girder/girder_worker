@@ -97,6 +97,17 @@ def test_item(girder_client, private_folder):
             girder_client.delete('item/%s' % item['_id'])
 
 
+@pytest.fixture(scope='function')
+def all_writable_tmpdir(tmpdir):
+    """
+    A temp directory that can be written to by anyone.
+    """
+    writable = tmpdir.mkdtemp()
+    os.chmod(writable.strpath, 0777)
+
+    yield writable
+
+
 # pytest hooks for ordering test items after they have been collected
 # and ensuring tests marked with sanitycheck run first.
 # pytest_runtest_makereport and pytest_runtest_setup are used to xfail

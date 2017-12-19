@@ -119,9 +119,15 @@ class _TemporaryVolumeBase(Volume):
         super(_TemporaryVolumeBase, self).__init__(*arg, **kwargs)
         self._transformed = False
 
-    def _make_paths(self, host_dir=None):
+    def _make_paths(self, host_dir=None, mode=0755):
         if host_dir is not None and not os.path.exists(host_dir):
             os.makedirs(host_dir)
+            # Sometimes we need to explicitly set the mode of the
+            # directory to 0777 (e.g. when running the integration
+            # tests). To do this explicitly (without the user's umask
+            # getting in the way) we must make a separate call to
+            # os.chmod.
+            os.chmod(host_dir, mode)
         self._host_path = tempfile.mkdtemp(dir=host_dir)
         self._container_path = os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex)
 
@@ -135,21 +141,26 @@ class TemporaryVolume(_TemporaryVolumeBase):
     A temporary volume can also be create in a particular host directory by providing the
     `host_dir` param.
     """
-    def __init__(self, host_dir=None):
+    # Note that this mode is explicitly set with os.chmod. What you
+    # set, is what you get - no os.makedirs umask shenanigans.
+    def __init__(self, host_dir=None, mode=0755):
         """
         :param host_dir: The root directory on the host to use when creating the
             the temporary host path.
+        :param mode: The default mode applied to the temporary volume if it does
+            not already exist.
         :type host_dir: str
         """
         super(TemporaryVolume, self).__init__(None, None)
         self.host_dir = host_dir
+        self._mode = mode
         self._instance = None
         self._transformed = False
 
     def transform(self, **kwargs):
         if not self._transformed:
             self._transformed = True
-            self._make_paths(self.host_dir)
+            self._make_paths(self.host_dir, mode=self._mode)
 
         return super(TemporaryVolume, self).transform(**kwargs)
 
