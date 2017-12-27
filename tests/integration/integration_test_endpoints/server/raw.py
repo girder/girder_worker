@@ -205,7 +205,7 @@ class CeleryTestEndpoints(Resource):
         user = self.getCurrentUser()
         # F(F(F(6))) --> F(F(8)) --> F(21) --> 10946
         result = (fibonacci.s(6) | fibonacci.s() | fibonacci.s()).delay()
-        result.wait(timeout=2)
+        result.wait(timeout=10)
         job_1 = result.job
         job_2 = jobModel.load(job_1['parentId'], user=user)
         job_3 = jobModel.load(job_2['parentId'], user=user)
