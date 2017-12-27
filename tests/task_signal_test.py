@@ -63,7 +63,7 @@ class TestSignals(unittest.TestCase):
         with mock_worker_plugin_utils():
             girder_before_task_publish(**inputs)
 
-        self.assertTrue(not gcu.called)
+        gcu.assert_called_once()
         self.assertTrue(not create_job.called)
 
     @mock.patch('girder.utility.model_importer.ModelImporter')

@@ -104,3 +104,35 @@ def test_celery_task_revoke_in_queue(session):
     with session.wait_for_canceled(r.json()['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.CANCELED]
+
+
+def test_celery_chained_tasks(session):
+    url = 'integration_tests/celery/test_task_chained'
+    r = session.post(url)
+    assert r.status_code == 200, r.content
+    jobs = r.json()
+
+    # Check the if the args are correct
+    assert sorted([i['args'][0] for i in jobs]) == [6, 8, 21]
+
+    # Check jobinfospec is attached
+    assert all('jobInfoSpec' in i for i in jobs)
+
+    # Check girder tokens are different on jobinfospec
+    tokens = [i['jobInfoSpec']['headers']['Girder-Token'] for i in jobs]
+    assert len(tokens) == len(set(tokens))
+
+    # Check if parent id's are correctly set
+    assert jobs[2]['parentId'] is None
+    assert jobs[1]['parentId'] == jobs[2]['_id']
+    assert jobs[0]['parentId'] == jobs[1]['_id']
+
+
+def test_celery_chained_task_bad_token_fails(session):
+    r = session.post('integration_tests/celery/test_task_chained_bad_token_fails')
+    assert r.status_code == 200, r.content
+
+    assert r.json()[1]['status'] == JobStatus.SUCCESS
+    with session.wait_for_error(r.json()[0]['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.ERROR]

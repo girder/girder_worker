@@ -38,6 +38,10 @@ class CeleryTestEndpoints(Resource):
                    self.test_celery_task_revoke)
         self.route('POST', ('test_task_revoke_in_queue', ),
                    self.test_celery_task_revoke_in_queue)
+        self.route('POST', ('test_task_chained', ),
+                   self.test_celery_task_chained)
+        self.route('POST', ('test_task_chained_bad_token_fails', ),
+                   self.test_celery_task_chained_bad_token_fails)
 
         self.route('POST', ('test_task_delay_with_custom_job_options', ),
                    self.test_celery_task_delay_with_custom_job_options)
@@ -48,7 +52,6 @@ class CeleryTestEndpoints(Resource):
                    self.test_celery_girder_client_generation)
         self.route('POST', ('test_girder_client_bad_token_fails', ),
                    self.test_celery_girder_client_bad_token_fails)
-
     # Testing custom job option API for celery tasks
 
     @access.token
@@ -191,3 +194,41 @@ class CeleryTestEndpoints(Resource):
             blocker.revoke()
 
         return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test chained celery tasks')
+    )
+    def test_celery_task_chained(self, params):
+        jobModel = ModelImporter.model('job', 'jobs')
+        user = self.getCurrentUser()
+        # F(F(F(6))) --> F(F(8)) --> F(21) --> 10946
+        result = (fibonacci.s(6) | fibonacci.s() | fibonacci.s()).delay()
+        result.wait(timeout=2)
+        job_1 = result.job
+        job_2 = jobModel.load(job_1['parentId'], user=user)
+        job_3 = jobModel.load(job_2['parentId'], user=user)
+
+        return [job_1, job_2, job_3]
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test chained celery tasks with a bad token')
+    )
+    def test_celery_task_chained_bad_token_fails(self, params):
+        jobModel = ModelImporter.model('job', 'jobs')
+        result = (fibonacci.s(5) |
+                  request_private_path.si('admin', girder_client_token='')).delay()
+
+        # Bypass the raised exception from the second job
+        try:
+            result.wait(timeout=10)
+        except Exception:
+            pass
+
+        user = self.getCurrentUser()
+        job_1 = result.job
+        job_2 = jobModel.load(job_1['parentId'], user=user)
+        return [job_1, job_2]
