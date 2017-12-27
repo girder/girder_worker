@@ -7,6 +7,7 @@
 alabaster==0.7.10         # via sphinx
 amqp==2.2.2               # via kombu
 asn1crypto==0.23.0        # via cryptography
+attrs==17.3.0             # via pytest
 babel==2.5.1              # via sphinx
 backports.ssl-match-hostname==3.5.0.1  # via docker
 bcrypt==3.1.4             # via girder
@@ -61,8 +62,10 @@ mock==2.0.0
 networkx==1.11
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4.2
+pluggy==0.6.0             # via pytest, tox
 portend==2.2              # via cherrypy
 psutil==5.3.1             # via girder
+py==1.5.2                 # via pytest, tox
 pycodestyle==2.3.1        # via flake8
 pycparser==2.18           # via cffi
 pydocstyle==2.0.0
@@ -70,6 +73,8 @@ pyflakes==1.5.0           # via flake8
 pygments==2.2.0           # via sphinx
 pymongo==3.5.1
 pyopenssl==17.3.0         # via requests, urllib3
+pytest-cov==2.5.1
+pytest==3.3.1
 python-dateutil==2.6.1    # via botocore, girder
 pytz==2017.2              # via babel, celery, girder, tempora
 pyyaml==3.12              # via girder
@@ -86,7 +91,9 @@ sphinx==1.6.4
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.27.1
 tempora==1.9              # via portend
+tox==2.9.1
 typing==3.6.2             # via sphinx
 urllib3[secure]==1.22     # via coveralls, requests
 vine==1.1.4               # via amqp
+virtualenv==15.1.0        # via tox
 websocket-client==0.44.0  # via docker

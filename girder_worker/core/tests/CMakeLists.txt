@@ -10,23 +10,23 @@ if(PYTHON_COVERAGE)
   add_test(
     NAME py_coverage_combine
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" combine
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" combine "--rcfile=${py_coverage_rc}"
   )
   add_test(
     NAME py_coverage
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" report --fail-under=${COVERAGE_MINIMUM_PASS}
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" report "--rcfile=${py_coverage_rc}" --fail-under=${COVERAGE_MINIMUM_PASS}
   )
   add_test(
     NAME py_coverage_html
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" html -d "${coverage_html_dir}"
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" html "--rcfile=${py_coverage_rc}" -d "${coverage_html_dir}"
             "--title=Worker Coverage Report"
   )
   add_test(
     NAME py_coverage_xml
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" xml -o "${PROJECT_BINARY_DIR}/coverage.xml"
+    COMMAND "${PYTHON_COVERAGE_EXECUTABLE}" xml "--rcfile=${py_coverage_rc}" -o "${PROJECT_BINARY_DIR}/coverage.xml"
   )
   set_property(TEST py_coverage PROPERTY DEPENDS py_coverage_combine)
   set_property(TEST py_coverage_html PROPERTY DEPENDS py_coverage)
@@ -35,17 +35,16 @@ endif()
 
 if(PYTHON_STYLE_TESTS)
   add_python_flake8_test(flake8_style_core "${PROJECT_SOURCE_DIR}/girder_worker")
-  add_python_flake8_test(flake8_style_tests "${PROJECT_SOURCE_DIR}/tests")
+  add_python_flake8_test(flake8_style_tests "${PROJECT_SOURCE_DIR}/girder_worker/core/tests")
 endif()
 
 add_test(
   NAME packaging
   WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  COMMAND "${PROJECT_SOURCE_DIR}/tests/packaging_test.sh"
+  COMMAND "${PROJECT_SOURCE_DIR}/girder_worker/core/tests/packaging_test.sh"
           "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}"
 )
 
-add_python_test(config)
 add_python_test(format PLUGINS_ENABLED types)
 add_python_test(graph PLUGINS_ENABLED types)
 add_python_test(image PLUGINS_ENABLED types)
@@ -64,9 +63,6 @@ add_python_test(pickle PLUGINS_ENABLED types)
 add_python_test(spec PLUGINS_ENABLED types)
 add_python_test(stream)
 add_python_test(directory PLUGINS_ENABLED types)
-add_python_test(task_plugin)
-add_python_test(task_signal)
-add_python_test(task_cancellation)
 
 add_docstring_test(girder_worker.core.specs.spec)
 add_docstring_test(girder_worker.core.specs.task)

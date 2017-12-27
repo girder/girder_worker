@@ -25,7 +25,8 @@ class TestGraph(unittest.TestCase):
             }
         }
 
-        with open(os.path.join('tests', 'data', 'clique.json'), 'rb') as fixture:
+        with open(os.path.join('girder_worker', 'core', 'tests',
+                               'data', 'clique.json'), 'rb') as fixture:
             self.test_input['alphabetGraph']['data'] = fixture.read()
 
     def test_clique(self):

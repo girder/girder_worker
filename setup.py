@@ -112,17 +112,17 @@ setuptools.setup(
             'core = girder_worker:GirderWorkerPlugin',
             'docker = girder_worker.docker:DockerPlugin [docker]'
         ],
-        'girder_worker.test.valid_plugins': [
-            'core = girder_worker.tests.plugins:TestCore',
-            'plugin1 = girder_worker.tests.plugins:TestPlugin1',
-            'plugin2 = girder_worker.tests.plugins:TestPlugin2'
+        'girder_worker._test_plugins.valid_plugins': [
+            'core = girder_worker._test_plugins.plugins:TestCore',
+            'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
+            'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
         ],
-        'girder_worker.test.invalid_plugins': [
-            'core = girder_worker.tests.plugins:TestCore',
-            'exception1 = girder_worker.tests.plugins:TestPluginException1',
-            'exception2 = girder_worker.tests.plugins:TestPluginException2',
-            'import = girder_worker.tests.plugins:TestPluginInvalidModule',
-            'invalid = girder_worker.tests.plugins:NotAValidClass'
+        'girder_worker._test_plugins.invalid_plugins': [
+            'core = girder_worker._test_plugins.plugins:TestCore',
+            'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
+            'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
+            'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
+            'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ]
     }
 )

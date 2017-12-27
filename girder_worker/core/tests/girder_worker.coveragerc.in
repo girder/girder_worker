@@ -1,4 +1,8 @@
 # Configuration for Python coverage
 [run]
+data_file=.coverage.legacy
 branch = @_py_branch_cov@
+source =
+  girder_worker/core/
+  girder_worker/plugins/
 omit = */tests/*

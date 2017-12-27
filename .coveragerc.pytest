@@ -1,0 +1,8 @@
+[run]
+data_file=.coverage.pytest
+branch = False
+omit =
+  girder_worker/tasks.py
+  girder_worker/core/*
+  girder_worker/plugins/*
+  girder_worker/_test_plugins/*

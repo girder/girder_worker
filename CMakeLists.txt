@@ -25,6 +25,6 @@ if(SPHINX_DOCTEST)
 endif()
 
 if(BUILD_TESTING)
-  include(tests/PythonTests.cmake)
-  add_subdirectory(tests)
+  include(girder_worker/core/tests/PythonTests.cmake)
+  add_subdirectory(girder_worker/core/tests)
 endif()

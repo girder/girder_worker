@@ -9,5 +9,8 @@ httmock
 lxml
 mock
 pydocstyle>=2,<2.1  # < 2.1 required for flake8-docstrings<=1.1
+pytest
+pytest-cov
 Sphinx
 sphinx-rtd-theme
+tox
