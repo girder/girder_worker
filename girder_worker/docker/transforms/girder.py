@@ -22,14 +22,12 @@ class ProgressPipe(Transform):
         self._volume = volume
 
     def transform(self, task=None, **kwargs):
-        from girder_worker.core.utils import JobProgressAdapter
+        from girder_worker.docker.stream_adapter import JobProgressAdapter
 
         self._volume.transform(**kwargs)
 
         # TODO What do we do is job_manager is None? When can it me None?
         job_mgr = task.job_manager
-        # For now we are using JobProgressAdapter which is part of core, we should
-        # probably add a copy to the docker package to break to reference to core.
         return Connect(NamedOutputPipe(self.name, self._volume),
                        JobProgressAdapter(job_mgr)).transform(**kwargs)
 
