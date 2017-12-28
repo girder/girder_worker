@@ -4,6 +4,10 @@ import pytest
 
 from girder_worker_utils.transform import Transform
 
+from girder_worker.app import Task
+from girder_worker.utils import JobManager
+from girder_client import GirderClient
+
 from girder_worker.docker.io import (
     ChunkedTransferEncodingStreamWriter,
     FDReadStreamConnector,
@@ -12,6 +16,11 @@ from girder_worker.docker.io import (
     NamedPipeWriter,
     StdStreamWriter
 )
+
+from girder_worker.docker.io.girder import (
+    GirderFileStreamReader
+)
+
 
 from girder_worker.docker.transforms import (
     ChunkedTransferEncodingStream,
@@ -28,6 +37,13 @@ from girder_worker.docker.transforms import (
     Volume,
     VolumePath,
     _maybe_transform
+)
+
+from girder_worker.docker.transforms.girder import (
+    ProgressPipe,
+    GirderFileIdToStream,
+    GirderFileIdToVolume,
+    GirderUploadVolumePathToItem
 )
 
 
@@ -228,3 +244,73 @@ def test_ChunkedTransferEncodingStream_transform_calls_ChunkedTransferEncodingWr
         ctesw_class_mock.assert_called_once_with(
             'http://bogusurl.com',
             {'Key1': 'Value1', 'Key2': 'Value2'})
+
+
+def test_ProgressPipe_transform_returns_FDReadStreamConnector():
+    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
+    task = mock.MagicMock(spec=Task)
+    task.job_manager = mock.MagicMock(spec=JobManager)
+    with mock.patch('girder_worker.docker.io.os.mkfifo'):
+
+        pp = ProgressPipe(name='test', volume=v)
+        assert isinstance(pp.transform(task=task), FDReadStreamConnector)
+
+
+def test_GirderFileIdToStream_returns_GirderFileStreamReader():
+    gfis = GirderFileIdToStream('BOGUS_ID', gc='BOGUS_GC')
+    assert isinstance(gfis.transform(), GirderFileStreamReader)
+
+
+def test_GirderFileIdToStream_calls_GirderFileStreamReader_correctly():
+    gfis = GirderFileIdToStream('BOGUS_ID', gc='BOGUS_GC')
+    with mock.patch('girder_worker.docker.io.girder.GirderFileStreamReader') as mock_class_gfsr:
+        gfis.transform()
+        mock_class_gfsr.assert_called_with('BOGUS_GC', 'BOGUS_ID')
+
+
+def test_GirderFileIdToVolume_transform_returns_volume_container_path_plus_id():
+    mock_gc = mock.MagicMock(spec=GirderClient)
+    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=v, gc=mock_gc)
+    assert gfitv.transform() == '/bogus/volume/container_path/BOGUS_ID'
+
+
+def test_GirderFileIdToVolume_transform_calls_gc_downloadFile():
+    mock_gc = mock.MagicMock(spec=GirderClient)
+    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=v, gc=mock_gc)
+    gfitv.transform()
+    mock_gc.downloadFile.assert_called_once_with(
+        'BOGUS_ID', '/bogus/volume/host_path/BOGUS_ID')
+
+
+def test_GirderFileIdToVolume_cleanup_removes_filepath():
+    mock_gc = mock.MagicMock(spec=GirderClient)
+    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=v, gc=mock_gc)
+    gfitv.transform()
+    with mock.patch('girder_worker.docker.transforms.girder.shutil.rmtree') as mock_rmtree:
+        gfitv.cleanup()
+        mock_rmtree.assert_called_once_with(
+            '/bogus/volume/host_path/BOGUS_ID', ignore_errors=True)
+
+
+def test_girderUploadVolumePathToItem_transform_returns_item_id():
+    mock_gc = mock.MagicMock(spec=GirderClient)
+    vp = VolumePath(
+        'test', Volume('/bogus/volume/host_path',
+                       '/bogus/volume/container_path'))
+
+    guvpti = GirderUploadVolumePathToItem(vp, 'BOGUS_ITEM_ID', gc=mock_gc)
+    assert guvpti.transform() == 'BOGUS_ITEM_ID'
+
+
+def test_GirderUploadVolumePathToItem_transform_calls_gc_uploadFile():
+    mock_gc = mock.MagicMock(spec=GirderClient)
+    vp = VolumePath(
+        'test', Volume('/bogus/volume/host_path',
+                       '/bogus/volume/container_path'))
+
+    GirderUploadVolumePathToItem(vp, 'BOGUS_ITEM_ID', gc=mock_gc).transform()
+    mock_gc.uploadFileToItem.assert_called_once_with(
+        'BOGUS_ITEM_ID', '/bogus/volume/container_path/test')
