@@ -148,6 +148,7 @@ class Task(celery.Task):
             if hasattr(grh, 'transform') and \
                six.callable(grh.transform):
                 return grh.transform(result, **kwargs)
+            return result
         except IndexError:
             return result
 
@@ -168,11 +169,11 @@ class Task(celery.Task):
             results = super(Task, self).__call__(*_t_args, **_t_kwargs)
 
             if hasattr(self.request, 'girder_result_hooks'):
-                if not isinstance(results, tuple):
-                    results = (results, )
-
-                results = tuple([self._maybe_transform_result(i, r)
-                                 for i, r in enumerate(results)])
+                if isinstance(results, tuple):
+                    results = tuple([self._maybe_transform_result(i, r)
+                                     for i, r in enumerate(results)])
+                else:
+                    results = self._maybe_transform_result(0, results)
 
             return results
         finally:
