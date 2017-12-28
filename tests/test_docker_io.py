@@ -1,10 +1,8 @@
 import httplib
-import io
 import itertools
+import mock
 import os
 import pytest
-import mock
-import random
 
 from girder_worker.docker.io import (
     ChunkedTransferEncodingStreamWriter,
@@ -20,32 +18,6 @@ from girder_worker.docker.io import (
 
 from girder_worker.docker.io.girder import GirderFileStreamReader
 from girder_client import GirderClient
-
-
-@pytest.fixture
-def stream():
-    class MockFileStream(io.BytesIO):
-        def __init__(self, fd, *args, **kwargs):
-            self._fd = fd
-            super(MockFileStream, self).__init__(*args, **kwargs)
-
-        def fileno(self):
-            return self._fd
-
-        @property
-        def data(self):
-            return self.getvalue()
-
-        @data.setter
-        def data(self, data):
-            self.truncate()
-            self.write(data)
-            self.seek(0)
-    return MockFileStream(random.randrange(4, 100))
-
-
-istream = stream
-ostream = stream
 
 
 def test_FDWriteStreamConnector_fileno_same_as_output_fileno(istream, ostream):
