@@ -1,5 +1,60 @@
-from girder_worker.core.utils import StreamPushAdapter
 import struct
+import json
+
+
+class StreamPushAdapter(object):
+    """
+    This represents the interface that must be implemented by push adapters for
+    IO modes that want to implement streaming output.
+    """
+
+    def write(self, buf):
+        """
+        Write a chunk of data to the output stream.
+        """
+        raise NotImplemented
+
+    def close(self):
+        """
+        Close the output stream. Called after the last data is sent.
+        """
+        pass
+
+
+class JobProgressAdapter(StreamPushAdapter):
+    def __init__(self, job_manager):
+        """
+        This reads structured JSON documents one line at a time and sends
+        them as progress events via the JobManager.
+
+        :param job_manager: The job manager to use to send the progress events.
+        :type job_manager: girder_worker.utils.JobManager
+        """
+        super(JobProgressAdapter, self).__init__()
+
+        self.job_manager = job_manager
+        self._buf = b''
+
+    def write(self, buf):
+        lines = buf.split(b'\n')
+        if self._buf:
+            lines[0] = self._buf + lines[0]
+        self._buf = lines[-1]
+
+        for line in lines[:-1]:
+            self._parse(line)
+
+    def _parse(self, line):
+        try:
+            doc = json.loads(line.decode('utf8'))
+        except ValueError:
+            return  # TODO log?
+
+        if not isinstance(doc, dict):
+            return  # TODO log?
+
+        self.job_manager.updateProgress(
+            total=doc.get('total'), current=doc.get('current'), message=doc.get('message'))
 
 
 class DockerStreamPushAdapter(StreamPushAdapter):
