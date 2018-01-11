@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  integration_tests:
     machine: true
     working_directory: /home/circleci/project
     steps:
@@ -39,3 +39,47 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
                 ./scripts/galaxy_deploy.sh
             fi
+
+  py2_unit_tests:
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - run:
+          name: Create virtual environment (if necessary)
+          command: if [ ! -d girder_env ]; then virtualenv girder_env; fi
+      - run:
+          name: Activate virtual environment
+          command: echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
+      - run:
+          name: Install tox
+          command: pip install tox
+      - run:
+          name: Run unit tests
+          command: tox -e py27
+
+  py3_unit_tests:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run:
+          name: Create virtual environment (if necessary)
+          command: if [ ! -d girder_env ]; then python3 -m venv girder_env; fi
+      - run:
+          name: Activate virtual environment
+          command: echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
+      - run:
+          name: Install tox
+          command: pip install tox
+      - run:
+          name: Run unit tests
+          command: tox -e py36
+
+workflows:
+  version: 2
+  ci:
+    jobs:
+      - py2_unit_tests
+      - py3_unit_tests
+      - integration_tests
