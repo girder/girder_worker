@@ -2,11 +2,10 @@ import os
 import errno
 import stat
 import abc
-import httplib
-import urlparse
 import ssl
 import sys
 import six
+from six.moves import http_client as httplib, urllib
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -324,7 +323,7 @@ class ChunkedTransferEncodingStreamWriter(StreamWriter):
         """
         self._closed = False
 
-        parts = urlparse.urlparse(self._url)
+        parts = urllib.parse.urlparse(self._url)
         if parts.scheme == 'https':
             ssl_context = ssl.create_default_context()
             conn = httplib.HTTPSConnection(parts.netloc, context=ssl_context)

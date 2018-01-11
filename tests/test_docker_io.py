@@ -1,4 +1,3 @@
-import httplib
 import itertools
 import mock
 import os
@@ -18,6 +17,7 @@ from girder_worker.docker.io import (
 
 from girder_worker.docker.io.girder import GirderFileStreamReader
 from girder_client import GirderClient
+from six.moves import http_client as httplib
 
 
 def test_FDWriteStreamConnector_fileno_same_as_output_fileno(istream, ostream):
@@ -162,7 +162,7 @@ def test_NamedPipe_throws_exception_for_non_readable_path(tmpdir):
     np = NamedPipe(path)
 
     # permissions: --w--w----
-    os.chmod(path, 0220)
+    os.chmod(path, 0o220)
 
     with pytest.raises(Exception):
         np.open(os.O_RDONLY)

@@ -82,8 +82,7 @@ def import_all_includes(core=True):
 
 def get_extensions(app=None):
     """Get a list of install extensions."""
-    return [ext.name for ext in get_extension_manager(app)] + \
-        _extensions.keys()
+    return [ext.name for ext in get_extension_manager(app)] + list(_extensions.keys())
 
 
 def get_module_tasks(module_name):
