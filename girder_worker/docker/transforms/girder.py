@@ -28,7 +28,9 @@ class ProgressPipe(Transform):
 
         # TODO What do we do is job_manager is None? When can it me None?
         job_mgr = task.job_manager
-        return Connect(NamedOutputPipe(self.name, self._volume),
+        # For now we are using JobProgressAdapter which is part of core, we should
+        # probably add a copy to the docker package to break to reference to core.
+        return Connect(NamedOutputPipe(self.name, volume=self._volume),
                        JobProgressAdapter(job_mgr)).transform(**kwargs)
 
 

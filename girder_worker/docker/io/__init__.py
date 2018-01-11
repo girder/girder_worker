@@ -365,7 +365,7 @@ class ChunkedTransferEncodingStreamWriter(StreamWriter):
             resp = self.conn.getresponse()
             sys.stderr.write(
                 'Exception while sending HTTP chunk to %s, status was %s, '
-                'message was:\n%s\n' % (self.output_spec['url'], resp.status,
+                'message was:\n%s\n' % (self._url, resp.status,
                                         resp.read()))
             self.conn.close()
             self._closed = True
