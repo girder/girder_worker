@@ -87,7 +87,7 @@ def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_g
 @pytest.mark.docker
 def test_docker_run_file_upload_to_item(session, girder_client, test_item):
 
-    contents = 'Balaenoptera musculus'
+    contents = b'Balaenoptera musculus'
     params = {
         'itemId': test_item['_id'],
         'contents': contents
