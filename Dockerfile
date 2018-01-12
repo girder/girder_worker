@@ -28,20 +28,19 @@ COPY scripts /girder_worker/scripts
 COPY girder_worker /girder_worker/girder_worker
 COPY docker-entrypoint.sh /girder_worker/docker-entrypoint.sh
 
-VOLUME /girder_worker
-
 RUN pip install -e .
 
 RUN useradd -D --shell=/bin/bash && useradd -m worker
 
-RUN cp girder_worker/worker.dist.cfg girder_worker/worker.local.cfg && \
-    sed -i girder_worker/worker.local.cfg \
-    -e '/^broker/ s/guest@localhost/%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/'
-
 # RUN /usr/local/bin/girder-worker-config set girder_worker tmp_root /tmp
-
 RUN chown -R worker:worker /girder_worker
 
 USER worker
+
+RUN cp /girder_worker/girder_worker/worker.dist.cfg /girder_worker/girder_worker/worker.local.cfg && \
+    sed -i girder_worker/worker.local.cfg \
+    -e '/^broker/ s/guest@localhost/%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/'
+
+VOLUME /girder_worker
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
