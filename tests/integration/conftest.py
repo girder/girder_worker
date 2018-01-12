@@ -89,6 +89,7 @@ def test_file_in_girder(girder_client, private_folder,  test_file):
 
 @pytest.fixture(scope='function')
 def test_item(girder_client, private_folder):
+    file = None
     try:
         item = girder_client.createItem(private_folder['_id'], 'test')
         yield item
@@ -103,7 +104,7 @@ def all_writable_tmpdir(tmpdir):
     A temp directory that can be written to by anyone.
     """
     writable = tmpdir.mkdtemp()
-    os.chmod(writable.strpath, 0777)
+    os.chmod(writable.strpath, 0o777)
 
     yield writable
 
