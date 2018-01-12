@@ -46,17 +46,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create virtual environment (if necessary)
-          command: if [ ! -d girder_env ]; then virtualenv girder_env; fi
+          name: Setup virtual environment
+          command: |
+            if [ ! -d girder_env ]; then virtualenv girder_env; fi
+            echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
       - run:
-          name: Activate virtual environment
-          command: echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install tox
-          command: pip install tox
+          name: Install CI dependencies
+          command: pip install codecov tox
       - run:
           name: Run unit tests
           command: tox -e py27
+      - run:
+          name: Upload coverage to codecov
+          command: coverage combine && codecov
 
   py3_unit_tests:
     docker:
@@ -64,17 +66,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create virtual environment (if necessary)
-          command: if [ ! -d girder_env ]; then python3 -m venv girder_env; fi
+          name: Setup virtual environment
+          command: |
+            if [ ! -d girder_env ]; then python3 -m venv girder_env; fi &&
+            echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
       - run:
-          name: Activate virtual environment
-          command: echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install tox
-          command: pip install tox
+          name: Install CI dependencies
+          command: pip install codecov tox
       - run:
           name: Run unit tests
           command: tox -e py36
+      - run:
+          name: Upload coverage to codecov
+          command: coverage combine && codecov
 
   lint:
     docker:
