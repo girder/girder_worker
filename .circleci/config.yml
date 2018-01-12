@@ -76,6 +76,24 @@ jobs:
           name: Run unit tests
           command: tox -e py36
 
+  lint:
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - run:
+          name: Create virtual environment (if necessary)
+          command: if [ ! -d girder_env ]; then virtualenv girder_env; fi
+      - run:
+          name: Activate virtual environment
+          command: echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
+      - run:
+          name: Install tox
+          command: pip install tox
+      - run:
+          name: Run linting tests
+          command: tox -e lint
+
 workflows:
   version: 2
   ci:
@@ -83,3 +101,4 @@ workflows:
       - py2_unit_tests
       - py3_unit_tests
       - integration_tests
+      - lint
