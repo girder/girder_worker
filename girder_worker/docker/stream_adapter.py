@@ -73,7 +73,7 @@ class DockerStreamPushAdapter(StreamPushAdapter):
         self._reset()
 
     def _reset(self):
-        self._header = ''
+        self._header = b''
         self._header_bytes_read = 0
         self._payload_bytes_read = 0
         self._payload_size = None

@@ -119,11 +119,11 @@ class _TemporaryVolumeBase(Volume):
         super(_TemporaryVolumeBase, self).__init__(*arg, **kwargs)
         self._transformed = False
 
-    def _make_paths(self, host_dir=None, mode=0755):
+    def _make_paths(self, host_dir=None, mode=0o755):
         if host_dir is not None and not os.path.exists(host_dir):
             os.makedirs(host_dir)
             # Sometimes we need to explicitly set the mode of the
-            # directory to 0777 (e.g. when running the integration
+            # directory to 0o777 (e.g. when running the integration
             # tests). To do this explicitly (without the user's umask
             # getting in the way) we must make a separate call to
             # os.chmod.
@@ -143,7 +143,7 @@ class TemporaryVolume(_TemporaryVolumeBase):
     """
     # Note that this mode is explicitly set with os.chmod. What you
     # set, is what you get - no os.makedirs umask shenanigans.
-    def __init__(self, host_dir=None, mode=0755):
+    def __init__(self, host_dir=None, mode=0o755):
         """
         :param host_dir: The root directory on the host to use when creating the
             the temporary host path.

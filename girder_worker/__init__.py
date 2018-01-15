@@ -1,7 +1,7 @@
 import abc
 import os
 from . import log_utils
-from ConfigParser import SafeConfigParser
+from six.moves.configparser import SafeConfigParser
 
 __version__ = '0.3.1'
 __license__ = 'Apache 2.0'

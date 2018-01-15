@@ -4,7 +4,7 @@ from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 
 class CaptureAdapter(object):
     def __init__(self):
-        self._captured = ''
+        self._captured = b''
 
     def write(self, data):
         self._captured += data
@@ -16,7 +16,7 @@ class CaptureAdapter(object):
 class TestDemultiplexerPushAdapter(unittest.TestCase):
     def testSinglePayload(self):
         data = [
-            '\x02\x00\x00\x00\x00\x00\x00\x14this is stderr data\n'
+            b'\x02\x00\x00\x00\x00\x00\x00\x14this is stderr data\n'
         ]
 
         capture = CaptureAdapter()
@@ -24,11 +24,11 @@ class TestDemultiplexerPushAdapter(unittest.TestCase):
         for d in data:
             adapter.write(d)
 
-        self.assertEqual(capture.captured(), 'this is stderr data\n')
+        self.assertEqual(capture.captured(), b'this is stderr data\n')
 
     def testAdapterBrokenUp(self):
         data = [
-            '\x02\x00\x00\x00', '\x00\x00' '\x00\x14', 'this is stderr data\n'
+            b'\x02\x00\x00\x00', b'\x00\x00', b'\x00\x14', b'this is stderr data\n'
         ]
 
         capture = CaptureAdapter()
@@ -36,13 +36,13 @@ class TestDemultiplexerPushAdapter(unittest.TestCase):
         for d in data:
             adapter.write(d)
 
-        self.assertEqual(capture.captured(), 'this is stderr data\n')
+        self.assertEqual(capture.captured(), b'this is stderr data\n')
 
     def testMultiplePayload(self):
         data = [
-            '\x02\x00\x00\x00\x00\x00\x00\x14this is stderr data\n',
-            '\x01\x00\x00\x00\x00\x00\x00\x14this is stdout data\n',
-            '\x01\x00\x00\x00\x00\x00\x00\x0chello world!'
+            b'\x02\x00\x00\x00\x00\x00\x00\x14this is stderr data\n',
+            b'\x01\x00\x00\x00\x00\x00\x00\x14this is stdout data\n',
+            b'\x01\x00\x00\x00\x00\x00\x00\x0chello world!'
         ]
 
         capture = CaptureAdapter()
@@ -51,13 +51,13 @@ class TestDemultiplexerPushAdapter(unittest.TestCase):
             adapter.write(d)
 
         self.assertEqual(capture.captured(),
-                         'this is stderr data\nthis is stdout data\nhello world!')
+                         b'this is stderr data\nthis is stdout data\nhello world!')
 
     def testMultiplePayloadOneRead(self):
         data = [
-            '\x02\x00\x00\x00\x00\x00\x00\x14this is stderr data\n' +
-            '\x01\x00\x00\x00\x00\x00\x00\x14this is stdout data\n' +
-            '\x01\x00\x00\x00\x00\x00\x00\x0chello world!'
+            b'\x02\x00\x00\x00\x00\x00\x00\x14this is stderr data\n' +
+            b'\x01\x00\x00\x00\x00\x00\x00\x14this is stdout data\n' +
+            b'\x01\x00\x00\x00\x00\x00\x00\x0chello world!'
         ]
 
         capture = CaptureAdapter()
@@ -66,4 +66,4 @@ class TestDemultiplexerPushAdapter(unittest.TestCase):
             adapter.write(d)
 
         self.assertEqual(capture.captured(),
-                         'this is stderr data\nthis is stdout data\nhello world!')
+                         b'this is stderr data\nthis is stdout data\nhello world!')

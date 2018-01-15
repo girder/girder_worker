@@ -1,4 +1,4 @@
-from ConfigParser import NoSectionError, NoOptionError
+from six.moves.configparser import NoSectionError, NoOptionError
 
 from . import config
 from .app import app

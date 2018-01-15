@@ -2,6 +2,8 @@ import sys
 import time
 import requests
 
+import six
+
 from requests import HTTPError
 
 
@@ -86,7 +88,7 @@ class JobManager(object):
         self.reference = reference
 
         self._last = time.time()
-        self._buf = ''
+        self._buf = b''
         self._progressTotal = None
         self._progressCurrent = None
         self._progressMessage = None
@@ -123,7 +125,7 @@ class JobManager(object):
                     'progressMessage': self._progressMessage
                 })
             req.raise_for_status()
-            self._buf = ''
+            self._buf = b''
 
             self._redirectPipes(True)
 
@@ -150,10 +152,11 @@ class JobManager(object):
         if self.logPrint:
             self._pipes[0].write(message)
 
-        if type(message) == unicode:
+        if isinstance(message, six.text_type):
             message = message.encode('utf8')
 
         self._buf += message
+
         if forceFlush or time.time() - self._last > self.interval:
             self._flush()
             self._last = time.time()

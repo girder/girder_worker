@@ -1,6 +1,5 @@
 import functools
 import mock
-from StringIO import StringIO
 import unittest
 
 from girder_worker_utils import decorators
@@ -8,6 +7,7 @@ from girder_worker_utils import types
 from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from girder_worker.app import app
+from six import StringIO
 
 
 class set_namespace(object):
@@ -135,4 +135,4 @@ class TestTaskPlugin(unittest.TestCase):
         self.assertEqual(entrypoint.get_extension_tasks('echo_tasks'), tasks)
 
         celery_tasks = entrypoint.get_extension_tasks('echo_tasks', celery_only=True)
-        self.assertEqual(celery_tasks.keys(), ['%s.echo_celery' % __name__])
+        self.assertEqual(list(celery_tasks.keys()), ['%s.echo_celery' % __name__])
