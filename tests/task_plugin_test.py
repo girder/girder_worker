@@ -1,138 +1,145 @@
-import functools
-import mock
-import unittest
+import re
 
-from girder_worker_utils import decorators
-from girder_worker_utils import types
 from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from girder_worker.app import app
-from six import StringIO
+
+from girder_worker_utils import decorators
+from girder_worker_utils import types
+
+import mock
+import pytest
+import six
 
 
-class set_namespace(object):
-    def __init__(self, namespace):
-        self.namespace = namespace
-
-    def __call__(self, func):
-        @functools.wraps(func)
-        def wrapped(*args, **kwargs):
-            original = entrypoint.NAMESPACE
-            entrypoint.NAMESPACE = self.namespace
-            try:
-                result = func(*args, **kwargs)
-            finally:
-                entrypoint.NAMESPACE = original
-            return result
-        return wrapped
+def setup_function(func):
+    if hasattr(func, 'namespace'):
+        namespace = func.namespace.args[0]
+        func.original = entrypoint.NAMESPACE
+        entrypoint.NAMESPACE = namespace
 
 
-class TestTaskPlugin(unittest.TestCase):
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    def test_get_extension_manager(self):
-        mgr = entrypoint.get_extension_manager()
-        names = sorted(mgr.names())
-        self.assertEqual(names, ['core', 'plugin1', 'plugin2'])
+def teardown_function(func):
+    if hasattr(func, 'original'):
+        entrypoint.NAMESPACE = func.original
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    def test_get_core_task_modules(self):
-        modules = entrypoint.get_core_task_modules()
-        self.assertEqual(modules, ['os.path'])
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    @mock.patch('girder_worker.entrypoint.import_module')
-    def test_import_all_includes(self, imp):
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_get_extension_manager():
+    mgr = entrypoint.get_extension_manager()
+    names = sorted(mgr.names())
+    assert names == ['core', 'plugin1', 'plugin2']
+
+
+@pytest.mark.skipif(six.PY3, reason='Python 2 only')
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_get_core_task_modules():
+    modules = entrypoint.get_core_task_modules()
+    assert modules == ['os.path']
+
+
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_import_all_includes():
+    with mock.patch('girder_worker.entrypoint.import_module') as imp:
         entrypoint.import_all_includes()
         imp.assert_has_calls(
             (mock.call('os.path'), mock.call('girder_worker._test_plugins.tasks')),
-            any_order=True
-        )
+            any_order=True)
 
-    @set_namespace('girder_worker._test_plugins.invalid_plugins')
-    @mock.patch('sys.stderr', new_callable=StringIO)
-    @mock.patch('sys.stdout', new_callable=StringIO)
-    def test_invalid_plugins(self, stdout, stderr):
-        entrypoint.get_plugin_task_modules()
-        lines = stdout.getvalue().splitlines()
-        self.assertEqual(len(lines), 4)
-        for line in lines:
-            self.assertRegexpMatches(
-                line, '^Problem.*(exception[12]|invalid|import), skipping$'
-            )
 
-        self.assertEqual(entrypoint.get_core_task_modules(), ['os.path'])
+@pytest.mark.namespace('girder_worker._test_plugins.invalid_plugins')
+def test_invalid_plugins(capsys):
+    entrypoint.get_plugin_task_modules()
+    out, err = capsys.readouterr()
+    # Note:  last element of split('\n') will be an empty line
+    out = out.split('\n')[:-1]
 
-    @mock.patch('girder_worker.__main__.app')
-    def test_core_plugin(self, app):
+    assert len(out) == 4
+    for line in out:
+        assert re.search('^Problem.*(exception[12]|invalid|import), skipping$', line)
+
+    assert entrypoint.get_core_task_modules() == ['os.path']
+
+
+@pytest.mark.skipif(six.PY3, reason='Python 2 only')
+def test_core_plugin():
+    with mock.patch('girder_worker.__main__.app') as app:
         main()
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                          ['girder_worker.tasks']})
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    @mock.patch('girder_worker.__main__.app')
-    def test_external_plugins(self, app):
+
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_external_plugins():
+    with mock.patch('girder_worker.__main__.app') as app:
         main()
-        app.conf.update.assert_any_call({'CELERY_IMPORTS':
-                                         ['os.path']})
+        if six.PY2:
+            app.conf.update.assert_any_call({'CELERY_IMPORTS':
+                                             ['os.path']})
         app.conf.update.assert_any_call({'CELERY_INCLUDE':
                                          ['girder_worker._test_plugins.tasks']})
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    @mock.patch('girder_worker.__main__.app')
-    def test_get_extensions(self, app):
+
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_get_extensions():
+    with mock.patch('girder_worker.__main__.app'):
         main()
         extensions = sorted(entrypoint.get_extensions())
-        self.assertEqual(extensions, ['core', 'plugin1', 'plugin2'])
+        assert extensions == ['core', 'plugin1', 'plugin2']
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    @mock.patch('girder_worker.__main__.app')
-    def test_get_module_tasks(self, app):
+
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_get_module_tasks():
+    with mock.patch('girder_worker.__main__.app'):
         main()
         extensions = sorted(entrypoint.get_module_tasks('girder_worker._test_plugins.tasks'))
-        self.assertEqual(extensions, [
+        assert extensions == [
             'girder_worker._test_plugins.tasks.celery_task',
             'girder_worker._test_plugins.tasks.function_task'
-        ])
+        ]
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    @mock.patch('girder_worker.__main__.app')
-    def test_get_extension_tasks(self, app):
+
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_get_extension_tasks():
+    with mock.patch('girder_worker.__main__.app'):
         main()
         extensions = sorted(entrypoint.get_extension_tasks('plugin2'))
-        self.assertEqual(extensions, [
+        assert extensions == [
             'girder_worker._test_plugins.tasks.celery_task',
             'girder_worker._test_plugins.tasks.function_task'
-        ])
+        ]
 
-    @set_namespace('girder_worker._test_plugins.valid_plugins')
-    @mock.patch('girder_worker.__main__.app')
-    def test_get_extension_tasks_celery(self, app):
+
+@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
+def test_get_extension_tasks_celery():
+    with mock.patch('girder_worker.__main__.app'):
         main()
         extensions = sorted(entrypoint.get_extension_tasks('plugin2', celery_only=True))
-        self.assertEqual(extensions, [
+        assert extensions == [
             'girder_worker._test_plugins.tasks.celery_task'
-        ])
+        ]
 
-    def test_register_extension(self):
 
-        @decorators.argument('n', types.Integer)
-        def echo(n):
-            return n
+def test_register_extension():
 
-        @app.task
-        @decorators.argument('n', types.Integer)
-        def echo_celery(n):
-            return n
+    @decorators.argument('n', types.Integer)
+    def echo(n):
+        return n
 
-        tasks = {
-            '%s.echo' % __name__: echo,
-            '%s.echo_celery' % __name__: echo_celery
-        }
-        entrypoint.register_extension('echo_tasks', tasks)
+    @app.task
+    @decorators.argument('n', types.Integer)
+    def echo_celery(n):
+        return n
 
-        exts = entrypoint.get_extensions()
-        self.assertIn('echo_tasks', exts)
-        self.assertEqual(entrypoint.get_extension_tasks('echo_tasks'), tasks)
+    tasks = {
+        '%s.echo' % __name__: echo,
+        '%s.echo_celery' % __name__: echo_celery
+    }
+    entrypoint.register_extension('echo_tasks', tasks)
 
-        celery_tasks = entrypoint.get_extension_tasks('echo_tasks', celery_only=True)
-        self.assertEqual(list(celery_tasks.keys()), ['%s.echo_celery' % __name__])
+    exts = entrypoint.get_extensions()
+    assert 'echo_tasks' in exts
+    assert entrypoint.get_extension_tasks('echo_tasks') == tasks
+
+    celery_tasks = entrypoint.get_extension_tasks('echo_tasks', celery_only=True)
+    assert list(celery_tasks.keys()) == ['%s.echo_celery' % __name__]
