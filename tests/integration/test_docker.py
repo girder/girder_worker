@@ -205,7 +205,7 @@ def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girde
 @pytest.mark.docker
 def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
                                              test_file_in_girder, test_item):
-    delimiter = '_please_dont_common_up_randomly_if_you_do_i_will_eat_my_hat!'
+    delimiter = b'_please_dont_common_up_randomly_if_you_do_i_will_eat_my_hat!'
     params = {
         'itemId': test_item['_id'],
         'fileId': test_file_in_girder['_id'],
@@ -231,8 +231,8 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
 
     # We should have at least 4 chunks
     assert len(chunks) >= 4
-    contents = ''.join(chunks)
-    with open(test_file) as fp:
+    contents = b''.join(chunks)
+    with open(test_file, 'rb') as fp:
         assert contents == fp.read()
 
 

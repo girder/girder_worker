@@ -246,8 +246,8 @@ class DockerTestEndpoints(Resource):
     def input_stream(self, item, delimiter):
         chunks = six.BytesIO()
         for chunk in iterBody(1):
-            chunks.write(chunk.decode())
-            chunks.write(delimiter)
+            chunks.write(chunk)
+            chunks.write(delimiter.encode('utf-8'))
 
         chunks.seek(0)
         contents = chunks.read()
