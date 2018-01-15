@@ -2,6 +2,8 @@ import sys
 import time
 import requests
 
+import six
+
 from requests import HTTPError
 
 
@@ -150,10 +152,10 @@ class JobManager(object):
         if self.logPrint:
             self._pipes[0].write(message)
 
-        try:
-            self._buf += message
-        except TypeError:
-            self._buf += message.encode('utf8')
+        if isinstance(message, six.text_type):
+            message = message.encode('utf8')
+
+        self._buf += message
 
         if forceFlush or time.time() - self._last > self.interval:
             self._flush()
