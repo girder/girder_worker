@@ -246,8 +246,8 @@ class DockerTestEndpoints(Resource):
     def input_stream(self, item, delimiter):
         chunks = six.BytesIO()
         for chunk in iterBody(1):
-            chunks.write(chunk.decode())
-            chunks.write(delimiter)
+            chunks.write(chunk)
+            chunks.write(delimiter.encode('utf-8'))
 
         chunks.seek(0)
         contents = chunks.read()
@@ -290,10 +290,10 @@ class DockerTestEndpoints(Resource):
     def test_docker_run_temporary_volume_root(self, params):
         prefix = params.get('prefix')
         root = os.path.join(tempfile.gettempdir(), prefix)
-        # We set the mode to 0777 because the worker container is
+        # We set the mode to 0o777 because the worker container is
         # running as the 'worker' user and needs to be able to have
         # read/write access to the TemporaryVolume
-        volume = TemporaryVolume(host_dir=root, mode=0777)
+        volume = TemporaryVolume(host_dir=root, mode=0o777)
 
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True, container_args=['print_path', '-p', volume],
