@@ -54,6 +54,3 @@ script:
   - ctest -VV -S ../cmake/travis_continuous.cmake || true
   - if [ -f test_failed ] ; then false ; fi
   - cd ..
-
-after_success:
-  - coveralls
