@@ -19,14 +19,6 @@
         editable: true
 
 
-    # Note that this will force a server restart
-    - name: Set the server.socket_host to 0.0.0.0
-      lineinfile:
-        path: /girder/girder/conf/girder.local.cfg
-        regexp: '^server.socket_host'
-        line: 'server.socket_host = "0.0.0.0"'
-
-
     - name: Wait Girder to come up
       wait_for:
         port: "{{ girder_port }}"
