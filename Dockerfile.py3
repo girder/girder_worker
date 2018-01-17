@@ -37,9 +37,7 @@ RUN chown -R worker:worker /girder_worker
 
 USER worker
 
-RUN cp /girder_worker/girder_worker/worker.dist.cfg /girder_worker/girder_worker/worker.local.cfg && \
-    sed -i girder_worker/worker.local.cfg \
-    -e '/^broker/ s/guest@localhost/%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/'
+RUN girder-worker-config set celery broker "amqp://%(RABBITMQ_USER)s:%(RABBITMQ_PASS)s@%(RABBITMQ_HOST)s/"
 
 VOLUME /girder_worker
 
