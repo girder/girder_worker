@@ -49,7 +49,7 @@ class GirderFileIdToStream(GirderClientTransform):
 class GirderFileIdToVolume(GirderClientTransform):
     def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
         super(GirderFileIdToVolume, self).__init__(**kwargs)
-        self._file_id = _id
+        self._file_id = str(_id)
         self._volume = volume
         self._file_path = None
 
