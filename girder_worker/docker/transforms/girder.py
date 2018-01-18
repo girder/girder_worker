@@ -88,6 +88,7 @@ class GirderFileIdToVolume(GirderClientTransform):
 
 class GirderUploadVolumePathToItem(GirderUploadToItem):
     def __init__(self, volumepath, item_id,  delete_file=False, **kwargs):
+        item_id = str(item_id)
         super(GirderUploadVolumePathToItem, self).__init__(item_id, delete_file, **kwargs)
         self._volumepath = volumepath
 
