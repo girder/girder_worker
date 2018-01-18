@@ -47,22 +47,23 @@ class GirderFileIdToStream(GirderClientTransform):
 
 
 class GirderFileIdToVolume(GirderClientTransform):
-    def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
+    def __init__(self, _id, volume=TemporaryVolume.default, filename=None, **kwargs):
         super(GirderFileIdToVolume, self).__init__(**kwargs)
-        self._file_id = _id
+        self._file_id = str(_id)
         self._volume = volume
+        self._filename = filename
         self._file_path = None
 
     def transform(self, **kwargs):
         self._volume.transform(**kwargs)
         dir = self._volume.host_path
-        self._file_path = os.path.join(
-            dir, self._file_id)
+        filename = self._filename or self._file_id
+        self._file_path = os.path.join(dir, filename)
 
         self.gc.downloadFile(self._file_id, self._file_path)
 
         # Return the path inside the container
-        return os.path.join(self._volume.container_path, self._file_id)
+        return os.path.join(self._volume.container_path, filename)
 
     def cleanup(self, **kwargs):
         if self._file_path is not None:
@@ -71,6 +72,7 @@ class GirderFileIdToVolume(GirderClientTransform):
 
 class GirderUploadVolumePathToItem(GirderUploadToItem):
     def __init__(self, volumepath, item_id,  delete_file=False, **kwargs):
+        item_id = str(item_id)
         super(GirderUploadVolumePathToItem, self).__init__(item_id, delete_file, **kwargs)
         self._volumepath = volumepath
 
