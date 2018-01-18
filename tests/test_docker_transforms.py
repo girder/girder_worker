@@ -1,7 +1,9 @@
 import json
 import mock
+import os
 import pytest
 
+from bson.objectid import ObjectId
 from girder_worker_utils.transform import Transform
 
 from girder_worker.app import Task
@@ -46,6 +48,9 @@ from girder_worker.docker.transforms.girder import (
     GirderUploadVolumePathToItem
 )
 
+BOGUS_HOST_PATH = '/bogus/volume/host_path'
+BOGUS_CONTAINER_PATH = '/bogus/volume/container_path'
+
 
 def test_maybe_transform_transforms():
     class T(Transform):
@@ -53,6 +58,24 @@ def test_maybe_transform_transforms():
             return 'FOOBAR'
 
     assert _maybe_transform(T()) == 'FOOBAR'
+
+
+@pytest.fixture
+def mock_gc():
+    mgc = mock.MagicMock(spec=GirderClient)
+    mgc.getFile.return_value = {'_id': 'BOGUS_ID', 'name': 'bogus.txt'}
+    yield mgc
+
+
+@pytest.fixture
+def patch_mkdir():
+    with mock.patch('os.mkdir') as mkdir_mock:
+        yield mkdir_mock
+
+
+@pytest.fixture
+def bogus_volume():
+    yield Volume(BOGUS_HOST_PATH, BOGUS_CONTAINER_PATH)
 
 
 @pytest.mark.parametrize('obj', [
@@ -87,24 +110,20 @@ def test_ContainerStdErr_transform_retuns_self():
     assert cse.transform() == cse
 
 
-def test_Volume_container_path_is_container_path():
-    v = Volume('/bogus/host_path', '/bogus/container_path')
-    assert v.container_path == '/bogus/container_path'
+def test_Volume_container_path_is_container_path(bogus_volume):
+    assert bogus_volume.container_path == BOGUS_CONTAINER_PATH
 
 
-def test_Volume_host_path_is_host_path():
-    v = Volume('/bogus/host_path', '/bogus/container_path')
-    assert v.host_path == '/bogus/host_path'
+def test_Volume_host_path_is_host_path(bogus_volume):
+    assert bogus_volume.host_path == BOGUS_HOST_PATH
 
 
-def test_Volume_transform_is_container_path():
-    v = Volume('/bogus/host_path/', '/bogus/container_path')
-    assert v.transform() == '/bogus/container_path'
+def test_Volume_transform_is_container_path(bogus_volume):
+    assert bogus_volume.transform() == BOGUS_CONTAINER_PATH
 
 
-def test_Volume_repr_json_is_json_serializable():
-    v = Volume('/bogus/host_path/', '/bogus/container_path')
-    json.dumps(v._repr_json_())
+def test_Volume_repr_json_is_json_serializable(bogus_volume):
+    json.dumps(bogus_volume._repr_json_())
 
 
 def test_TemporaryVolume_transform_creates_container_path():
@@ -152,18 +171,14 @@ def test_NamedPipeBase_host_path_returns_host_path_plus_name():
     assert npb.host_path == '/bogus/host_path/test'
 
 
-def test_NamedPipeBase_pass_volume_return_volume_container_path_plus_name():
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    npb = NamedPipeBase('test', volume=v)
-
-    assert npb.container_path == '/bogus/volume/container_path/test'
+def test_NamedPipeBase_pass_volume_return_volume_container_path_plus_name(bogus_volume):
+    npb = NamedPipeBase('test', volume=bogus_volume)
+    assert npb.container_path == os.path.join(BOGUS_CONTAINER_PATH, 'test')
 
 
-def test_NamedPipeBase_pass_volume_return_volume_host_path_plus_name():
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    npb = NamedPipeBase('test', volume=v)
-
-    assert npb.host_path == '/bogus/volume/host_path/test'
+def test_NamedPipeBase_pass_volume_return_volume_host_path_plus_name(bogus_volume):
+    npb = NamedPipeBase('test', volume=bogus_volume)
+    assert npb.host_path == os.path.join(BOGUS_HOST_PATH, 'test')
 
 
 def test_NamedInputPipe_transform_returns_NamedPipeWriterr():
@@ -182,18 +197,14 @@ def test_NamedOutputPipe_transform_returns_NamedPipeReader():
         assert isinstance(nop.transform(), NamedPipeReader)
 
 
-def test_VolumePath_transform_returns_container_path_with_no_args():
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    vp = VolumePath('test', v)
-
-    assert vp.transform() == '/bogus/volume/container_path/test'
+def test_VolumePath_transform_returns_container_path_with_no_args(bogus_volume):
+    vp = VolumePath('test', bogus_volume)
+    assert vp.transform() == os.path.join(BOGUS_CONTAINER_PATH, 'test')
 
 
-def test_VolumePath_transform_returns_host_path_with_args():
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    vp = VolumePath('test', v)
-
-    assert vp.transform('TASK_DATA') == '/bogus/volume/host_path/test'
+def test_VolumePath_transform_returns_host_path_with_args(bogus_volume):
+    vp = VolumePath('test', bogus_volume)
+    assert vp.transform('TASK_DATA') == os.path.join(BOGUS_HOST_PATH, 'test')
 
 
 def test_Connect_transform_returns_FDWriteStreamConnector_if_output_is_NamedInputPipe(istream):
@@ -246,13 +257,12 @@ def test_ChunkedTransferEncodingStream_transform_calls_ChunkedTransferEncodingWr
             {'Key1': 'Value1', 'Key2': 'Value2'})
 
 
-def test_ProgressPipe_transform_returns_FDReadStreamConnector():
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
+def test_ProgressPipe_transform_returns_FDReadStreamConnector(bogus_volume):
     task = mock.MagicMock(spec=Task)
     task.job_manager = mock.MagicMock(spec=JobManager)
     with mock.patch('girder_worker.docker.io.os.mkfifo'):
 
-        pp = ProgressPipe(name='test', volume=v)
+        pp = ProgressPipe(name='test', volume=bogus_volume)
         assert isinstance(pp.transform(task=task), FDReadStreamConnector)
 
 
@@ -268,49 +278,60 @@ def test_GirderFileIdToStream_calls_GirderFileStreamReader_correctly():
         mock_class_gfsr.assert_called_with('BOGUS_GC', 'BOGUS_ID')
 
 
-def test_GirderFileIdToVolume_transform_returns_volume_container_path_plus_id():
-    mock_gc = mock.MagicMock(spec=GirderClient)
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=v, gc=mock_gc)
-    assert gfitv.transform() == '/bogus/volume/container_path/BOGUS_ID'
+def test_GirderFileIdToVolume_transform_returns_volume_container_path_plus_id_plus_name(
+        mock_gc, patch_mkdir, bogus_volume):
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, gc=mock_gc)
+    assert gfitv.transform() == os.path.join(BOGUS_CONTAINER_PATH, 'BOGUS_ID', 'bogus.txt')
+    patch_mkdir.assert_called_once_with(os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID'))
 
 
-def test_GirderFileIdToVolume_transform_calls_gc_downloadFile():
-    mock_gc = mock.MagicMock(spec=GirderClient)
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=v, gc=mock_gc)
+def test_GirderFileIdToVolume_transform_respects_filename_if_passed(mock_gc, bogus_volume):
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, filename='foo.txt', gc=mock_gc)
+    assert gfitv.transform() == os.path.join(BOGUS_CONTAINER_PATH, 'foo.txt')
+    mock_gc.downloadFile.assert_called_once_with(
+        'BOGUS_ID', os.path.join(BOGUS_HOST_PATH, 'foo.txt'))
+
+
+def test_GirderFileIdToVolume_transform_calls_gc_downloadFile(mock_gc, patch_mkdir, bogus_volume):
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, gc=mock_gc)
     gfitv.transform()
     mock_gc.downloadFile.assert_called_once_with(
-        'BOGUS_ID', '/bogus/volume/host_path/BOGUS_ID')
+        'BOGUS_ID', os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID', 'bogus.txt'))
 
 
-def test_GirderFileIdToVolume_cleanup_removes_filepath():
-    mock_gc = mock.MagicMock(spec=GirderClient)
-    v = Volume('/bogus/volume/host_path', '/bogus/volume/container_path')
-    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=v, gc=mock_gc)
+def test_GirderFileIdToVolume_cleanup_removes_filepath(mock_gc, patch_mkdir, bogus_volume):
+    gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, gc=mock_gc)
     gfitv.transform()
     with mock.patch('girder_worker.docker.transforms.girder.shutil.rmtree') as mock_rmtree:
         gfitv.cleanup()
         mock_rmtree.assert_called_once_with(
-            '/bogus/volume/host_path/BOGUS_ID', ignore_errors=True)
+            os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID', 'bogus.txt'), ignore_errors=True)
 
 
-def test_girderUploadVolumePathToItem_transform_returns_item_id():
-    mock_gc = mock.MagicMock(spec=GirderClient)
-    vp = VolumePath(
-        'test', Volume('/bogus/volume/host_path',
-                       '/bogus/volume/container_path'))
+def test_GirderFileIdToVolume_accepts_ObjectId(mock_gc, patch_mkdir, bogus_volume):
+    hash = '5a5fc09ec2231b9487ce42db'
+    GirderFileIdToVolume(ObjectId(hash), volume=bogus_volume, gc=mock_gc).transform()
+    mock_gc.downloadFile.assert_called_once_with(
+        hash, os.path.join(BOGUS_HOST_PATH, hash, 'bogus.txt'))
+
+
+def test_girderUploadVolumePathToItem_transform_returns_item_id(mock_gc, bogus_volume):
+    vp = VolumePath('test', bogus_volume)
 
     guvpti = GirderUploadVolumePathToItem(vp, 'BOGUS_ITEM_ID', gc=mock_gc)
     assert guvpti.transform() == 'BOGUS_ITEM_ID'
 
 
-def test_GirderUploadVolumePathToItem_transform_calls_gc_uploadFile():
-    mock_gc = mock.MagicMock(spec=GirderClient)
-    vp = VolumePath(
-        'test', Volume('/bogus/volume/host_path',
-                       '/bogus/volume/container_path'))
-
+def test_GirderUploadVolumePathToItem_transform_calls_gc_uploadFile(mock_gc, bogus_volume):
+    vp = VolumePath('test', bogus_volume)
     GirderUploadVolumePathToItem(vp, 'BOGUS_ITEM_ID', gc=mock_gc).transform()
     mock_gc.uploadFileToItem.assert_called_once_with(
-        'BOGUS_ITEM_ID', '/bogus/volume/container_path/test')
+        'BOGUS_ITEM_ID', os.path.join(BOGUS_CONTAINER_PATH, 'test'))
+
+
+def test_GirderUploadVolumePathToItem_transform_accepts_ObjectId(mock_gc, bogus_volume):
+    vp = VolumePath('test', bogus_volume)
+    hash = '5a5fc09ec2231b9487ce42db'
+    GirderUploadVolumePathToItem(vp, ObjectId(hash), gc=mock_gc).transform()
+    mock_gc.uploadFileToItem.assert_called_once_with(
+        hash, os.path.join(BOGUS_CONTAINER_PATH, 'test'))
