@@ -1,3 +1,4 @@
+import errno
 import os
 import shutil
 from girder_worker_utils.transform import Transform
@@ -54,16 +55,31 @@ class GirderFileIdToVolume(GirderClientTransform):
         self._filename = filename
         self._file_path = None
 
+    def _create_file_path(self, root):
+        if self._filename is None:
+            # If no filename is explicitly passed, we read the filename from Girder
+            # and put it in its own directory named by its UUID.
+            filename = self.gc.getFile(self._file_id)['name']
+            path = os.path.join(root, self._file_id)
+            try:
+                os.mkdir(path)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+            return os.path.join(self._file_id, filename), os.path.join(path, filename)
+        else:
+            return self._filename, os.path.join(root, self._filename)
+
     def transform(self, **kwargs):
         self._volume.transform(**kwargs)
         dir = self._volume.host_path
-        filename = self._filename or self._file_id
-        self._file_path = os.path.join(dir, filename)
+        rel_path, self._file_path = self._create_file_path(dir)
 
         self.gc.downloadFile(self._file_id, self._file_path)
 
         # Return the path inside the container
-        return os.path.join(self._volume.container_path, filename)
+        return os.path.join(self._volume.container_path, rel_path)
 
     def cleanup(self, **kwargs):
         if self._file_path is not None:
