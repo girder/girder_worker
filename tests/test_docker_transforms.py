@@ -62,7 +62,15 @@ def test_maybe_transform_transforms():
 
 @pytest.fixture
 def mock_gc():
-    yield mock.MagicMock(spec=GirderClient)
+    mgc = mock.MagicMock(spec=GirderClient)
+    mgc.getFile.return_value = {'_id': 'BOGUS_ID', 'name': 'bogus.txt'}
+    yield mgc
+
+
+@pytest.fixture
+def patch_mkdir():
+    with mock.patch('os.mkdir') as mkdir_mock:
+        yield mkdir_mock
 
 
 @pytest.fixture
@@ -270,10 +278,11 @@ def test_GirderFileIdToStream_calls_GirderFileStreamReader_correctly():
         mock_class_gfsr.assert_called_with('BOGUS_GC', 'BOGUS_ID')
 
 
-def test_GirderFileIdToVolume_transform_returns_volume_container_path_plus_id(
-        mock_gc, bogus_volume):
+def test_GirderFileIdToVolume_transform_returns_volume_container_path_plus_id_plus_name(
+        mock_gc, patch_mkdir, bogus_volume):
     gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, gc=mock_gc)
-    assert gfitv.transform() == os.path.join(BOGUS_CONTAINER_PATH, 'BOGUS_ID')
+    assert gfitv.transform() == os.path.join(BOGUS_CONTAINER_PATH, 'BOGUS_ID', 'bogus.txt')
+    patch_mkdir.assert_called_once_with(os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID'))
 
 
 def test_GirderFileIdToVolume_transform_respects_filename_if_passed(mock_gc, bogus_volume):
@@ -283,26 +292,27 @@ def test_GirderFileIdToVolume_transform_respects_filename_if_passed(mock_gc, bog
         'BOGUS_ID', os.path.join(BOGUS_HOST_PATH, 'foo.txt'))
 
 
-def test_GirderFileIdToVolume_transform_calls_gc_downloadFile(mock_gc, bogus_volume):
+def test_GirderFileIdToVolume_transform_calls_gc_downloadFile(mock_gc, patch_mkdir, bogus_volume):
     gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, gc=mock_gc)
     gfitv.transform()
     mock_gc.downloadFile.assert_called_once_with(
-        'BOGUS_ID', os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID'))
+        'BOGUS_ID', os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID', 'bogus.txt'))
 
 
-def test_GirderFileIdToVolume_cleanup_removes_filepath(mock_gc, bogus_volume):
+def test_GirderFileIdToVolume_cleanup_removes_filepath(mock_gc, patch_mkdir, bogus_volume):
     gfitv = GirderFileIdToVolume('BOGUS_ID', volume=bogus_volume, gc=mock_gc)
     gfitv.transform()
     with mock.patch('girder_worker.docker.transforms.girder.shutil.rmtree') as mock_rmtree:
         gfitv.cleanup()
         mock_rmtree.assert_called_once_with(
-            os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID'), ignore_errors=True)
+            os.path.join(BOGUS_HOST_PATH, 'BOGUS_ID', 'bogus.txt'), ignore_errors=True)
 
 
-def test_GirderFileIdToVolume_accepts_ObjectId(mock_gc, bogus_volume):
+def test_GirderFileIdToVolume_accepts_ObjectId(mock_gc, patch_mkdir, bogus_volume):
     hash = '5a5fc09ec2231b9487ce42db'
     GirderFileIdToVolume(ObjectId(hash), volume=bogus_volume, gc=mock_gc).transform()
-    mock_gc.downloadFile.assert_called_once_with(hash, os.path.join(BOGUS_HOST_PATH, hash))
+    mock_gc.downloadFile.assert_called_once_with(
+        hash, os.path.join(BOGUS_HOST_PATH, hash, 'bogus.txt'))
 
 
 def test_girderUploadVolumePathToItem_transform_returns_item_id(mock_gc, bogus_volume):
