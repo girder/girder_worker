@@ -317,3 +317,11 @@ def test_GirderUploadVolumePathToItem_transform_calls_gc_uploadFile(mock_gc, bog
     GirderUploadVolumePathToItem(vp, 'BOGUS_ITEM_ID', gc=mock_gc).transform()
     mock_gc.uploadFileToItem.assert_called_once_with(
         'BOGUS_ITEM_ID', os.path.join(BOGUS_CONTAINER_PATH, 'test'))
+
+
+def test_GirderUploadVolumePathToItem_transform_accepts_ObjectId(mock_gc, bogus_volume):
+    vp = VolumePath('test', bogus_volume)
+    hash = '5a5fc09ec2231b9487ce42db'
+    GirderUploadVolumePathToItem(vp, ObjectId(hash), gc=mock_gc).transform()
+    mock_gc.uploadFileToItem.assert_called_once_with(
+        hash, os.path.join(BOGUS_CONTAINER_PATH, 'test'))
