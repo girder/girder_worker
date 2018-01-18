@@ -194,4 +194,8 @@ and start reading. Below is an example python entry point:
     with open(sys.argv[1]) as fp:
         fp.read() # This will be reading the files contents
 
+MacOS Volume mounting issue workaround
+--------------------------------------
+
+Due to some odd symlinking behavior by Docker engine on MacOS, it may be necessary to add a workaround when running the girder_worker. If your ``TMPDIR`` environment variable is underneath the ``/var`` directory and you see errors from Docker about ``MountsDenied``, try running girder worker with the ``TMPDIR`` set underneath ``/private/var`` instead of ``/var``. The location should be equivalent since ``/var`` is a symlink to ``/private/var``.
 
