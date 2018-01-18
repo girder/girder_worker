@@ -178,3 +178,14 @@ def test_docker_run_temporary_volume_root(session):
     with session.wait_for_success(r.json()['_id']) as job:
         _assert_job_statuses(job)
         assert len(job['log']) == 1
+
+
+@pytest.mark.docker
+def test_docker_run_bad_exit_code(session):
+    r = session.post('integration_tests/docker/test_docker_run_raises_exception')
+    assert r.status_code == 200, r.content
+    with session.wait_for_success(r.json()['_id']) as job:
+        log = ''.join(job['log'])
+        assert job['status'] == JobStatus.ERROR
+        assert 'girder docker exception' in log
+        assert 'Non-zero exit code from docker container' in log

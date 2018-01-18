@@ -63,6 +63,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_transfer_encoding_stream)
         self.route('POST', ('test_docker_run_temporary_volume_root', ),
                    self.test_docker_run_temporary_volume_root)
+        self.route('POST', ('test_docker_run_raises_exception', ),
+                   self.test_docker_run_raises_exception)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -73,6 +75,15 @@ class DockerTestEndpoints(Resource):
             TEST_IMAGE, pull_image=True, container_args=['stdio', '-m', 'hello docker!'],
             remove_container=True)
 
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test docker run that raises an exception.'))
+    def test_docker_run_raises_exception(self, params):
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['raise_exception'], remove_container=True)
         return result.job
 
     @access.token
