@@ -149,6 +149,10 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
                 logger.error(dex)
                 raise
 
+        container.reload()
+        exit_code = container.attrs['State']['ExitCode']
+        if exit_code != 0:
+            raise DockerException('Non-zero exit code from docker container (%d).' % exit_code)
     finally:
         # Close our stdout and stderr sockets
         if stdout:

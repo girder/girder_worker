@@ -5,6 +5,28 @@ import json
 from girder_worker.utils import JobStatus
 import pytest
 
+FIXTURE_DIR = os.path.join('..', os.path.dirname(__file__), 'fixtures')
+
+
+def _assert_job_statuses(job):
+    assert [ts['status'] for ts in job['timestamps']] == [JobStatus.RUNNING, JobStatus.SUCCESS]
+
+
+def _assert_job_contents(r, session, test_file, remove_newline=True):
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_success(r.json()['_id']) as job:
+        _assert_job_statuses(job)
+
+        # Remove escaped chars
+        log = ''.join(str(l) for l in job['log'])
+        # Remove trailing \n added by test script
+        if remove_newline:
+            log = log[:-1]
+
+        with open(test_file) as fp:
+            assert log == fp.read()
+
 
 @pytest.mark.docker
 def test_docker_run(session):
@@ -12,33 +34,20 @@ def test_docker_run(session):
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        log = job['log']
-        assert len(log) == 1
-        assert log[0] == 'hello docker!\n'
+        _assert_job_statuses(job)
+        assert job['log'] == ['hello docker!\n']
 
 
 @pytest.mark.docker
-def test_docker_run_volume(session):
-    fixture_dir = os.path.join('..', os.path.dirname(__file__), 'fixtures')
-    params = {
-        'fixtureDir': fixture_dir
-    }
-    r = session.post('integration_tests/docker/test_docker_run_mount_volume',
-                     params=params)
-    assert r.status_code == 200, r.content
-
-    with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        log = job['log']
-        assert len(log) == 1
-        filepath = os.path.join(fixture_dir, 'read.txt')
-        with open(filepath) as fp:
-            assert log[0] == '%s\n' % fp.read()
+@pytest.mark.parametrize('url', [
+    'integration_tests/docker/test_docker_run_mount_volume',
+    'integration_tests/docker/test_docker_run_mount_idiomatic_volume'
+])
+def test_docker_run_volumes(url, session):
+    r = session.post(url, params={
+        'fixtureDir': FIXTURE_DIR
+    })
+    _assert_job_contents(r, session, os.path.join(FIXTURE_DIR, 'read.txt'))
 
 
 @pytest.mark.docker
@@ -47,46 +56,28 @@ def test_docker_run_named_pipe_output(session, all_writable_tmpdir):
         'tmpDir': all_writable_tmpdir,
         'message': 'Dydh da'
     }
-    r = session.post('integration_tests/docker/test_docker_run_named_pipe_output',
-                     params=params)
+    r = session.post('integration_tests/docker/test_docker_run_named_pipe_output', params=params)
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        log = job['log']
-        assert len(log) == 1
-        assert log[0] == params['message']
+        _assert_job_statuses(job)
+        assert job['log'] == [params['message']]
 
 
 @pytest.mark.docker
-def test_docker_run_girder_file_to_named_pipe(session, test_file, test_file_in_girder,
-                                              all_writable_tmpdir):
-
+def test_docker_run_girder_file_to_named_pipe(
+        session, test_file, test_file_in_girder, all_writable_tmpdir):
     params = {
         'tmpDir': all_writable_tmpdir,
         'fileId': test_file_in_girder['_id']
     }
-    r = session.post('integration_tests/docker/test_docker_run_girder_file_to_named_pipe',
-                     params=params)
-    assert r.status_code == 200, r.content
-
-    with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        # Remove escaped chars
-        log = [str(l) for l in job['log']]
-        # join and remove trailing \n added by test script
-        log = ''.join(log)[:-1]
-        with open(test_file) as fp:
-            assert log == fp.read()
+    r = session.post(
+        'integration_tests/docker/test_docker_run_girder_file_to_named_pipe', params=params)
+    _assert_job_contents(r, session, test_file)
 
 
 @pytest.mark.docker
 def test_docker_run_file_upload_to_item(session, girder_client, test_item):
-
     contents = b'Balaenoptera musculus'
     params = {
         'itemId': test_item['_id'],
@@ -97,8 +88,7 @@ def test_docker_run_file_upload_to_item(session, girder_client, test_item):
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
+        _assert_job_statuses(job)
 
     files = list(girder_client.listFile(test_item['_id']))
 
@@ -112,51 +102,15 @@ def test_docker_run_file_upload_to_item(session, girder_client, test_item):
 
 
 @pytest.mark.docker
-def test_docker_run_girder_file_to_named_pipe_on_temp_vol(session, test_file, test_file_in_girder):
-    """
-    This is a simplified version of test_docker_run_girder_file_to_named_pipe
-    it uses the TemporaryVolume, rather than having to setup the volumes
-    'manually', this is the approach we should encourage.
-    """
-
-    params = {
+@pytest.mark.parametrize('url,strip_lf', [
+    ('integration_tests/docker/test_docker_run_girder_file_to_named_pipe_on_temp_vol', True),
+    ('integration_tests/docker/test_docker_run_girder_file_to_volume', False)
+])
+def test_docker_run_girder_file(url, strip_lf, session, test_file, test_file_in_girder):
+    r = session.post(url, params={
         'fileId': test_file_in_girder['_id']
-    }
-    url = 'integration_tests/docker/test_docker_run_girder_file_to_named_pipe_on_temp_vol'
-    r = session.post(url, params=params)
-    assert r.status_code == 200, r.content
-
-    with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        # Remove escaped chars
-        log = [str(l) for l in job['log']]
-        # join and remove trailing \n added by test script
-        log = ''.join(log)[:-1]
-        with open(test_file) as fp:
-            assert log == fp.read()
-
-
-@pytest.mark.docker
-def test_docker_run_idiomatic_volume(session):
-    fixture_dir = os.path.join('..', os.path.dirname(__file__), 'fixtures')
-    params = {
-        'fixtureDir': fixture_dir
-    }
-    r = session.post('integration_tests/docker/test_docker_run_mount_idiomatic_volume',
-                     params=params)
-    assert r.status_code == 200, r.content
-
-    with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        log = job['log']
-        assert len(log) == 1
-        filepath = os.path.join(fixture_dir, 'read.txt')
-        with open(filepath) as fp:
-            assert log[0] == '%s\n' % fp.read()
+    })
+    _assert_job_contents(r, session, test_file, remove_newline=strip_lf)
 
 
 @pytest.mark.docker
@@ -173,33 +127,12 @@ def test_docker_run_progress_pipe(session):
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
+        _assert_job_statuses(job)
 
         progress = job['progress']
 
         del progress['notificationId']
         assert progress == progressions[-1]
-
-
-@pytest.mark.docker
-def test_docker_run_girder_file_to_volume(session, test_file, test_file_in_girder):
-    params = {
-        'fileId': test_file_in_girder['_id']
-    }
-    r = session.post('integration_tests/docker/test_docker_run_girder_file_to_volume',
-                     params=params)
-    assert r.status_code == 200, r.content
-
-    with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
-
-        # Remove escaped chars
-        log = [str(l) for l in job['log']]
-        log = ''.join(log)
-        with open(test_file) as fp:
-            assert log == fp.read()
 
 
 @pytest.mark.docker
@@ -216,8 +149,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
+        _assert_job_statuses(job)
 
     files = list(girder_client.listFile(test_item['_id']))
 
@@ -227,7 +159,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
     girder_client.downloadFile(files[0]['_id'], file_contents)
     file_contents.seek(0)
     chunks = file_contents.read().split(delimiter)
-    chunks = [c for c in chunks if c != '']
+    chunks = [c for c in chunks if c]
 
     # We should have at least 4 chunks
     assert len(chunks) >= 4
@@ -238,14 +170,22 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
 
 @pytest.mark.docker
 def test_docker_run_temporary_volume_root(session):
-    params = {
+    r = session.post('integration_tests/docker/test_docker_run_temporary_volume_root', params={
         'prefix': 'prefix'
-    }
-    r = session.post('integration_tests/docker/test_docker_run_temporary_volume_root',
-                     params=params)
+    })
     assert r.status_code == 200, r.content
 
     with session.wait_for_success(r.json()['_id']) as job:
-        assert [ts['status'] for ts in job['timestamps']] == \
-            [JobStatus.RUNNING, JobStatus.SUCCESS]
+        _assert_job_statuses(job)
         assert len(job['log']) == 1
+
+
+@pytest.mark.docker
+def test_docker_run_bad_exit_code(session):
+    r = session.post('integration_tests/docker/test_docker_run_raises_exception')
+    assert r.status_code == 200, r.content
+    with session.wait_for_success(r.json()['_id']) as job:
+        log = ''.join(job['log'])
+        assert job['status'] == JobStatus.ERROR
+        assert 'girder docker exception' in log
+        assert 'Non-zero exit code from docker container' in log
