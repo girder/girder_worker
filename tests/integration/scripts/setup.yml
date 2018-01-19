@@ -1,11 +1,11 @@
 ---
 - hosts: girder
   vars:
-    girder_host: localhost
-    girder_port: 8080
+    girder_host: girder
+    girder_port: 8989
     girder_user: "admin"
     girder_pass: "letmein"
-    celery_broker: amqp://guest:guest@localhost/
+    celery_broker: amqp://guest:guest@rabbit/
   tasks:
 
     - name: Install Girder Worker
