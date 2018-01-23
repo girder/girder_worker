@@ -171,7 +171,7 @@ class _DefaultTemporaryVolume(TemporaryVolume):
     An instance of the class is returned each time `TemporaryVolume.default` is accessed.
     When the docker_run task is executed the transform(...) method is call with an instance
     containing information about the actual default temporary volume associated with the
-    task. The place holder then delgates all functionality to this instance.
+    task. The place holder then delegates all functionality to this instance.
     """
     def transform(self, _default_temp_volume=None, **kwargs):
         self._instance = _default_temp_volume
