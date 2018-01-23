@@ -16,7 +16,6 @@ from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 from girder_worker.docker.io import (
     FDWriteStreamConnector,
     FDReadStreamConnector,
-    FileDescriptorReader,
     FDStreamConnector,
     StdStreamWriter
 )
