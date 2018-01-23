@@ -93,34 +93,30 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         stdout_connected = False
         for read_stream_connector in read_stream_connectors:
             if isinstance(read_stream_connector.input, ContainerStdOut):
-                stdout_reader = FileDescriptorReader(stdout.fileno())
                 read_stream_connector.output = DockerStreamPushAdapter(read_stream_connector.output)
-                read_stream_connector.input = stdout_reader
+                read_stream_connector.input = stdout
                 stdout_connected = True
                 break
 
         stderr_connected = False
         for read_stream_connector in read_stream_connectors:
             if isinstance(read_stream_connector.input, ContainerStdErr):
-                stderr_reader = FileDescriptorReader(stderr.fileno())
                 read_stream_connector.output = DockerStreamPushAdapter(read_stream_connector.output)
-                read_stream_connector.input = stderr_reader
+                read_stream_connector.input = stderr
                 stderr_connected = True
                 break
 
         # If not stdout and stderr connection has been provided just use
         # sys.stdXXX
         if not stdout_connected:
-            stdout_reader = FileDescriptorReader(stdout.fileno())
             connector = FDReadStreamConnector(
-                stdout_reader,
+                stdout,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stdout)))
             read_stream_connectors.append(connector)
 
         if not stderr_connected:
-            stderr_reader = FileDescriptorReader(stderr.fileno())
             connector = FDReadStreamConnector(
-                stderr_reader,
+                stderr,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stderr)))
             read_stream_connectors.append(connector)
 
