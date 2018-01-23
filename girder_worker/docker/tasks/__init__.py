@@ -242,15 +242,18 @@ class DockerTask(Task):
 
         # Set the permission to allow cleanup of temp directories
         temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
-        if len(temp_volumes) > 0:
-            to_chmod = temp_volumes[:]
-            # If our default_temp_volume instance has been transformed then we
-            # know it has been used and we have to clean it up.
-            if default_temp_volume._transformed:
-                to_chmod.append(default_temp_volume)
+        to_chmod = temp_volumes[:]
+        # If our default_temp_volume instance has been transformed then we
+        # know it has been used and we have to clean it up.
+        if default_temp_volume._transformed:
+            to_chmod.append(default_temp_volume)
+            temp_volumes.append(default_temp_volume)
+
+        if len(to_chmod) > 0:
             utils.chmod_writable([v.host_path for v in to_chmod])
-            for v in temp_volumes + [default_temp_volume]:
-                shutil.rmtree(v.host_path)
+
+        for v in temp_volumes:
+            shutil.rmtree(v.host_path)
 
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
