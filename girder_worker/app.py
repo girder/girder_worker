@@ -470,7 +470,6 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
                     retval=None, state=None, **rest):
     try:
         task.job_manager._flush()
-        task.job_manager._redirectPipes(False)
     except AttributeError:
         pass
 
