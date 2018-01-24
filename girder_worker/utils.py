@@ -1,11 +1,8 @@
-import sys
 import time
+from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
 import requests
-
-import six
-
 from requests import HTTPError
-from girder_worker_utils.tee import Tee, tee_stdout, tee_stderr
+import six
 
 
 def girder_job(title=None, type='celery', public=False,
@@ -57,7 +54,6 @@ class StateTransitionException(Exception):
     pass
 
 
-
 class TeeCustomWrite(Tee):
     def __init__(self, func, *args, **kwargs):
         super(TeeCustomWrite, self).__init__(*args, **kwargs)
@@ -67,13 +63,16 @@ class TeeCustomWrite(Tee):
         self._write_func(*args, **kwargs)
         super(TeeCustomWrite, self).write(*args, **kwargs)
 
+
 @tee_stdout
 class TeeStdOutCustomWrite(TeeCustomWrite):
     pass
 
+
 @tee_stderr
 class TeeStdErrCustomWrite(TeeCustomWrite):
     pass
+
 
 class JobManager(object):
     """
@@ -116,6 +115,10 @@ class JobManager(object):
             self._stdout = TeeStdOutCustomWrite(self.write)
             self._stderr = TeeStdErrCustomWrite(self.write)
 
+    def cleanup(self):
+        if self.logPrint:
+            self._stdout.reset()
+            self._stderr.reset()
 
     def _flush(self):
         """
@@ -138,7 +141,6 @@ class JobManager(object):
                 })
             req.raise_for_status()
             self._buf = b''
-
 
     def write(self, message, forceFlush=False):
         """

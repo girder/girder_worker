@@ -13,6 +13,7 @@
         name: /girder_worker
         editable: true
 
+
     - name: Install Common Tasks plugin
       pip:
         name: /girder_worker/tests/integration/common_tasks/
