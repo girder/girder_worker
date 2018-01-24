@@ -1,4 +1,3 @@
-import six
 from six.moves.configparser import NoSectionError, NoOptionError
 
 from . import config
@@ -7,14 +6,11 @@ from .entrypoint import get_core_task_modules, get_plugin_task_modules
 
 
 def main():
-    if six.PY2:
-        try:
-            include_core_tasks = config.getboolean(
-                'girder_worker', 'core_tasks')
-        except (NoSectionError, NoOptionError):
-            include_core_tasks = True
-    else:
-        include_core_tasks = False
+    try:
+        include_core_tasks = config.getboolean(
+            'girder_worker', 'core_tasks')
+    except (NoSectionError, NoOptionError):
+        include_core_tasks = True
 
     if include_core_tasks:
         app.conf.update({
