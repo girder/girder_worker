@@ -64,7 +64,7 @@ def test_maybe_transform_transforms():
 def mock_gc():
     mgc = mock.MagicMock(spec=GirderClient)
     mgc.getFile.return_value = {'_id': 'BOGUS_ID', 'name': 'bogus.txt'}
-    yield mgc
+    return mgc
 
 
 @pytest.fixture
@@ -335,3 +335,14 @@ def test_GirderUploadVolumePathToItem_transform_accepts_ObjectId(mock_gc, bogus_
     GirderUploadVolumePathToItem(vp, ObjectId(hash), gc=mock_gc).transform()
     mock_gc.uploadFileToItem.assert_called_once_with(
         hash, os.path.join(BOGUS_CONTAINER_PATH, 'test'))
+
+
+@pytest.mark.parametrize('obj,expected_repr', (
+    (VolumePath('test', bogus_volume), '<girder_worker.docker.transforms.VolumePath: "test">'),
+    (GirderFileIdToVolume('123', gc=mock_gc()),
+     '<girder_worker.docker.transforms.girder.GirderFileIdToVolume: File ID=123>'),
+    (GirderFileIdToVolume('123', filename='foo.txt', gc=mock_gc()),
+     '<girder_worker.docker.transforms.girder.GirderFileIdToVolume: File ID=123 -> "foo.txt">')
+))
+def test_docker_repr_models(obj, expected_repr):
+    assert obj._repr_model_() == expected_repr

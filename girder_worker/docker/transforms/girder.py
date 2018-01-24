@@ -85,6 +85,15 @@ class GirderFileIdToVolume(GirderClientTransform):
         if self._file_path is not None:
             shutil.rmtree(self._file_path, ignore_errors=True)
 
+    def _repr_model_(self):
+        if self._filename:
+            template = u'<{module}.{cls}: File ID={id} -> "{fname}">'
+        else:
+            template = u'<{module}.{cls}: File ID={id}>'
+        return template.format(
+            module=self.__module__, cls=self.__class__.__name__, id=self._file_id,
+            fname=self._filename)
+
 
 class GirderUploadVolumePathToItem(GirderUploadToItem):
     def __init__(self, volumepath, item_id,  delete_file=False, **kwargs):

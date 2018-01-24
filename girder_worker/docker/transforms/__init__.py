@@ -318,6 +318,9 @@ class VolumePath(Transform):
         else:
             return os.path.join(self._volume.container_path, self.filename)
 
+    def _repr_model_(self):
+        return '<%s.%s: "%s">' % (self.__module__, self.__class__.__name__, self.filename)
+
 
 class Connect(Transform):
     """
