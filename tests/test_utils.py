@@ -1,15 +1,18 @@
 import sys
-from girder_worker.utils import TeeStdOutCustomWrite, TeeStdErrCustomWrite, JobManager
+from girder_worker.utils import TeeStdOutCustomWrite
 
 
-def test_TeeStdOutCustomeWrite(capfd):
-    _nonlocal = {'data': ''}
+def test_TeeStdOutCustomWrite(capfd):
+    nonlocal_ = {'data': ''}
 
     def _append_to_data(message, **kwargs):
-        _nonlocal['data'] += message
+        nonlocal_['data'] += message
 
     with TeeStdOutCustomWrite(_append_to_data):
         sys.stdout.write('Test String')
         sys.stdout.flush()
 
-    assert _nonlocal['data'] == 'Test String'
+    assert nonlocal_['data'] == 'Test String'
+
+    out, err = capfd.readouterr()
+    assert out == 'Test String'
