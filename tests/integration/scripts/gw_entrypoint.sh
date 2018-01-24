@@ -1,19 +1,22 @@
 #!/bin/bash
 
+PIP=${PIP_BIN:-pip}
+PYTHON=${PYTHON_BIN:-python}
+
 # If /girder_worker/setup.py exists then we've
 # mounted girder_worker at run time,  make sure it
 # is properly installed before continuing
 if [ -e /girder_worker/setup.py ]; then
-    pip uninstall -y girder-worker
-    pip install -e /girder_worker
+    $PIP uninstall -y girder-worker
+    $PIP install -e /girder_worker
 fi
 
 # If /girder_worker/setup.py exists then we've
 # mounted girder_worker at run time,  make sure it
 # is properly installed before continuing
 if [ -e /girder_worker/tests/integration/common_tasks/setup.py ]; then
-    pip uninstall -y common-tasks
-    pip install -e /girder_worker/tests/integration/common_tasks/
+    $PIP uninstall -y common-tasks
+    $PIP install -e /girder_worker/tests/integration/common_tasks/
 fi
 
 # Hack to make sure docker.sock has a real group, and that the
@@ -30,4 +33,4 @@ fi
 mkdir tmp
 chmod 777 tmp
 
-sudo --preserve-env -u worker python -m girder_worker -l info
+sudo --preserve-env -u worker $PYTHON -m girder_worker -l info

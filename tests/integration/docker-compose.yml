@@ -8,6 +8,8 @@ services:
     container_name: gw_integration_test_girder
     volumes:
       - ../../:/girder_worker
+      - /tmp:/tmp
+
     ports:
       - 8989:8989
       - 4444:4444
@@ -28,6 +30,9 @@ services:
       - 4445:4444
     volumes:
       - ../../:/girder_worker
+      - /tmp:/tmp
+      - /var/run/docker.sock:/var/run/docker.sock
+
     environment:
       - GIRDER_WORKER_BROKER=amqp://guest:guest@rabbit/
       - GIRDER_WORKER_BACKEND=amqp://guest:guest@rabbit/
