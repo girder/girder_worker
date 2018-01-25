@@ -3,7 +3,7 @@ import os
 from . import log_utils
 from six.moves.configparser import SafeConfigParser
 
-__version__ = '0.3.1'
+__version__ = '0.4.0'
 __license__ = 'Apache 2.0'
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
