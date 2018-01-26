@@ -281,7 +281,7 @@ class DockerTask(Task):
 
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-                volumes={}, remove_container=False, stream_connectors=[], **kwargs):
+                volumes={}, remove_container=True, stream_connectors=[], **kwargs):
 
     if pull_image:
         logger.info('Pulling Docker image: %s', image)
@@ -346,7 +346,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
 
 @app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-               volumes={}, remove_container=False, **kwargs):
+               volumes={}, remove_container=True, **kwargs):
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
         remove_container, **kwargs)
