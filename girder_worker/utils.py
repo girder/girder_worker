@@ -1,10 +1,8 @@
-import sys
 import time
+from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
 import requests
-
-import six
-
 from requests import HTTPError
+import six
 
 
 def girder_job(title=None, type='celery', public=False,
@@ -56,6 +54,26 @@ class StateTransitionException(Exception):
     pass
 
 
+class TeeCustomWrite(Tee):
+    def __init__(self, func, *args, **kwargs):
+        super(TeeCustomWrite, self).__init__(*args, **kwargs)
+        self._write_func = func
+
+    def write(self, *args, **kwargs):
+        self._write_func(*args, **kwargs)
+        super(TeeCustomWrite, self).write(*args, **kwargs)
+
+
+@tee_stdout
+class TeeStdOutCustomWrite(TeeCustomWrite):
+    pass
+
+
+@tee_stderr
+class TeeStdErrCustomWrite(TeeCustomWrite):
+    pass
+
+
 class JobManager(object):
     """
     This class can be used to write log messages to Girder by capturing
@@ -94,15 +112,13 @@ class JobManager(object):
         self._progressMessage = None
 
         if logPrint:
-            self._pipes = sys.stdout, sys.stderr
-            sys.stdout, sys.stderr = self, self
+            self._stdout = TeeStdOutCustomWrite(self.write)
+            self._stderr = TeeStdErrCustomWrite(self.write)
 
-    def _redirectPipes(self, redirect):
+    def cleanup(self):
         if self.logPrint:
-            if redirect:
-                sys.stdout, sys.stderr = self, self
-            else:
-                sys.stdout, sys.stderr = self._pipes
+            self._stdout.reset()
+            self._stderr.reset()
 
     def _flush(self):
         """
@@ -114,7 +130,6 @@ class JobManager(object):
 
         if len(self._buf) or self._progressTotal or self._progressMessage or \
                 self._progressCurrent is not None:
-            self._redirectPipes(False)
 
             req = requests.request(
                 self.method.upper(), self.url, allow_redirects=True,
@@ -126,15 +141,6 @@ class JobManager(object):
                 })
             req.raise_for_status()
             self._buf = b''
-
-            self._redirectPipes(True)
-
-    def flush(self):
-        """
-        This API call is required to conform to file-like objects,
-        but in this case is a no-op to avoid circumventing rate-limiting.
-        """
-        pass
 
     def write(self, message, forceFlush=False):
         """
@@ -149,9 +155,6 @@ class JobManager(object):
             server. Useful if you don't expect another update for some time.
         :type forceFlush: bool
         """
-        if self.logPrint:
-            self._pipes[0].write(message)
-
         if isinstance(message, six.text_type):
             message = message.encode('utf8')
 
@@ -175,7 +178,6 @@ class JobManager(object):
         self._flush()
         self.status = status
         try:
-            self._redirectPipes(False)
             req = requests.request(self.method.upper(), self.url, headers=self.headers,
                                    data={'status': status}, allow_redirects=True)
             req.raise_for_status()
@@ -189,8 +191,6 @@ class JobManager(object):
                     raise
             else:
                 raise
-        finally:
-            self._redirectPipes(True)
 
     def updateProgress(self, total=None, current=None, message=None,
                        forceFlush=False):
@@ -222,11 +222,7 @@ class JobManager(object):
         """
         Refresh the status field from Girder
         """
-        try:
-            self._redirectPipes(False)
-            r = requests.get(self.url, headers=self.headers, allow_redirects=True)
-            self.status = r.json()['status']
+        r = requests.get(self.url, headers=self.headers, allow_redirects=True)
+        self.status = r.json()['status']
 
-            return self.status
-        finally:
-            self._redirectPipes(True)
+        return self.status

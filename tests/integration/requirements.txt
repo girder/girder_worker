@@ -4,3 +4,4 @@ pytest-xdist==1.17.1
 requests-toolbelt==0.8.0
 six==1.10.0
 girder_client==2.3.0
+girder-worker-utils>=0.8.0

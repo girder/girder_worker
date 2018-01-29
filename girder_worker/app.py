@@ -1,14 +1,11 @@
+import json
 import sys
 
-import girder_worker
-from girder_worker import logger
-from girder_worker_utils.decorators import describe_function
 import traceback as tb
 from distutils.version import LooseVersion
+
 import celery
 from celery import Celery, __version__
-import requests
-
 from celery.result import AsyncResult
 from celery.signals import (
     before_task_publish,
@@ -18,15 +15,22 @@ from celery.signals import (
     task_revoked,
     task_success,
     worker_ready)
-
 from celery.task.control import inspect
+
 from girder_client import GirderClient
+
+import girder_worker
+from girder_worker import logger
+
 from girder_worker_utils import _walk_obj
+from girder_worker_utils.decorators import describe_function
+
 import jsonpickle
 from kombu.serialization import register
+import requests
 import six
+
 from .utils import JobStatus, StateTransitionException
-import json
 
 
 class GirderAsyncResult(AsyncResult):
@@ -398,7 +402,6 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     their task and have access to the job_manager for logging and
     updating their status in girder.
     """
-
     try:
         task.job_manager = _job_manager(task.request, task.request.headers)
         _update_status(task, JobStatus.RUNNING)
@@ -458,8 +461,8 @@ def gw_task_failure(sender=None, exception=None,
             ''.join(tb.format_tb(traceback)))
 
         sender.job_manager.write(msg)
-
         _update_status(sender, JobStatus.ERROR)
+
     except AttributeError:
         pass
 
@@ -470,9 +473,14 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
                     retval=None, state=None, **rest):
     try:
         task.job_manager._flush()
-        task.job_manager._redirectPipes(False)
     except AttributeError:
         pass
+    finally:
+        # Release stdout/stderr
+        if hasattr(task, 'job_manager') and \
+           hasattr(task.job_manager, 'cleanup') and \
+           six.callable(task.job_manager.cleanup):
+            task.job_manager.cleanup()
 
 
 @task_revoked.connect

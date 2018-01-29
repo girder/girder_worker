@@ -44,7 +44,7 @@ before_install:
 # install dependencies
 install:
   # install Python packages for core and plugins
-  - pip install -r requirements.txt -r girder_worker/plugins/r/requirements.txt -r girder_worker/plugins/types/requirements.txt -e .
+  - pip install -r requirements2.txt -r girder_worker/plugins/r/requirements.txt -r girder_worker/plugins/types/requirements.txt -e .
 
 # run tests
 script:

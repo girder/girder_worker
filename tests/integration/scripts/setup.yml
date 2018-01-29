@@ -18,7 +18,6 @@
         name: /girder_worker/tests/integration/common_tasks/
         editable: true
 
-
     - name: Wait Girder to come up
       wait_for:
         port: "{{ girder_port }}"
@@ -27,7 +26,6 @@
     - name: Install integration_test_endpoints
       command:
         girder-install plugin -s /girder_worker/tests/integration/integration_test_endpoints/
-
 
     - name: Create 'admin' User with password 'letmein'
       girder:

@@ -2,6 +2,7 @@
 
 
 initialize:
+	pip install -U pip
 	pip install -U -r requirements.txt
 	ansible-galaxy install --force --roles-path ./scripts/roles girder.girder
 
