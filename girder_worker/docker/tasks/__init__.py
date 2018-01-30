@@ -281,15 +281,17 @@ class DockerTask(Task):
 
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-                volumes={}, remove_container=True, stream_connectors=[], **kwargs):
+                volumes=None, remove_container=True, stream_connectors=None, **kwargs):
+    volumes = volumes or {}
+    stream_connectors = stream_connectors or []
+    container_args = container_args or []
 
     if pull_image:
         logger.info('Pulling Docker image: %s', image)
         _pull_image(image)
 
-    if entrypoint is not None:
-        if not isinstance(entrypoint, (list, tuple)):
-            entrypoint = [entrypoint]
+    if entrypoint is not None and not isinstance(entrypoint, (list, tuple)):
+        entrypoint = [entrypoint]
 
     run_kwargs = {
         'tty': False,
@@ -298,15 +300,13 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     }
 
     # Allow run args to be overridden,filter out any we don't want to override
-    extra_run_kwargs = {k: v for k, v in kwargs.items() if k not
-                        in BLACKLISTED_DOCKER_RUN_ARGS}
+    extra_run_kwargs = {k: v for k, v in kwargs.items() if k not in BLACKLISTED_DOCKER_RUN_ARGS}
     run_kwargs.update(extra_run_kwargs)
 
     if entrypoint is not None:
         run_kwargs['entrypoint'] = entrypoint
 
-    (container_args, read_streams, write_streams) = \
-        _handle_streaming_args(container_args)
+    container_args, read_streams, write_streams = _handle_streaming_args(container_args)
 
     for connector in stream_connectors:
         if isinstance(connector, FDReadStreamConnector):
@@ -346,7 +346,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
 
 @app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-               volumes={}, remove_container=True, **kwargs):
+               volumes=None, remove_container=True, **kwargs):
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
         remove_container, **kwargs)
