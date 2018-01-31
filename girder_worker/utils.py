@@ -4,6 +4,48 @@ import requests
 from requests import HTTPError
 import six
 
+from celery.task.control import inspect
+
+
+def _maybe_model_repr(obj):
+    if hasattr(obj, '_repr_model_') and six.callable(obj._repr_model_):
+        return obj._repr_model_()
+    return obj
+
+
+# Access to the correct "Inspect" instance for this worker
+_inspector = None
+
+
+def _worker_inspector(task):
+    global _inspector
+    if _inspector is None:
+        _inspector = inspect([task.request.hostname])
+
+    return _inspector
+
+
+# Get this list of currently revoked tasks for this worker
+def _revoked_tasks(task):
+    _revoked = _worker_inspector(task).revoked()
+
+    if _revoked is None:
+        return []
+
+    return _revoked.get(task.request.hostname, [])
+
+
+def is_revoked(task):
+    """
+    Utility function to check is a task has been revoked.
+
+    :param task: The task.
+    :type task: celery.app.task.Task
+    :return True, if this task is in the revoked list for this worker, False
+            otherwise.
+    """
+    return task.request.id in _revoked_tasks(task)
+
 
 def girder_job(title=None, type='celery', public=False,
                handler='celery_handler', otherFields=None):

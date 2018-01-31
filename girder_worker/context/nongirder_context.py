@@ -1,0 +1,65 @@
+import json
+import requests
+
+from celery import current_app
+
+from girder_worker import logger
+from girder_client import GirderClient
+from girder_worker.utils import _maybe_model_repr
+from girder_worker_utils import _walk_obj
+from girder_worker.task import Task
+
+
+class MissingJobArguments(RuntimeError):
+    pass
+
+
+def handle_jobInfoSpec(sender=None, body=None, exchange=None,
+                       routing_key=None, headers=None, properties=None,
+                       declare=None, retry_policy=None, **kwargs):
+    parent_task = current_app.current_task
+    try:
+        if parent_task is None:
+            raise MissingJobArguments('Parent task is None')
+        if parent_task.request is None:
+            raise MissingJobArguments("Parent task's request is None")
+        if not hasattr(parent_task.request, 'girder_api_url'):
+            raise MissingJobArguments(
+                "Parent task's request does not contain girder_api_url")
+        if not hasattr(parent_task.request, 'girder_client_token'):
+            raise MissingJobArguments(
+                "Parent task's request does not contain girder_client_token")
+        if not hasattr(parent_task.request, 'id'):
+            raise MissingJobArguments(
+                "Parent task's request does not contain id")
+        if 'id' not in headers:
+            raise MissingJobArguments('id is not in headers')
+
+        gc = GirderClient(apiUrl=parent_task.request.girder_api_url)
+        gc.token = parent_task.request.girder_client_token
+
+        task_args = tuple(_walk_obj(body[0], _maybe_model_repr))
+        task_kwargs = _walk_obj(body[1], _maybe_model_repr)
+        parameters = {
+            'title': headers.pop('girder_job_title', Task._girder_job_title),
+            'type': headers.pop('girder_job_type', Task._girder_job_type),
+            'handler': headers.pop('girder_job_handler', Task._girder_job_handler),
+            'public': headers.pop('girder_job_public', Task._girder_job_public),
+            'args': json.dumps(task_args),
+            'kwargs': task_kwargs,
+            'otherFields': json.dumps(
+                dict(celeryTaskId=headers['id'],
+                     celeryParentTaskId=parent_task.request.id,
+                     **headers.pop('girder_job_other_fields',
+                                   Task._girder_job_other_fields)))
+        }
+
+        try:
+            response = gc.post('job', parameters=parameters, jsonResp=False)
+            if response.ok:
+                headers['jobInfoSpec'] = response.json().get('jobInfoSpec')
+        except requests.exceptions.RequestException as e:
+            logger.warn('Failed to post job: {}'.format(e))
+
+    except MissingJobArguments as e:
+        logger.warn('Girder job not created: {}'.format(str(e)))

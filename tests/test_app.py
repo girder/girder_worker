@@ -2,9 +2,11 @@ import celery
 import pytest
 import mock
 
-from girder_worker.app import (
+from girder_worker.task import (
     GirderAsyncResult,
-    Task,
+    Task
+)
+from girder_worker.utils import (
     _maybe_model_repr
 )
 
@@ -96,7 +98,7 @@ def test_Task_AsynResult_of_type_GirderAsyncResult():
 
 @pytest.mark.parametrize('header,expected', RESERVED_HEADERS)
 def test_Task_apply_async_reserved_headers_in_options(header, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().apply_async((), {},  **{header: expected})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -106,7 +108,7 @@ def test_Task_apply_async_reserved_headers_in_options(header, expected):
 
 @pytest.mark.parametrize('header,expected', RESERVED_HEADERS)
 def test_Task_apply_async_reserved_headers_in_kwargs(header, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().apply_async((), {header: expected})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -116,7 +118,7 @@ def test_Task_apply_async_reserved_headers_in_kwargs(header, expected):
 
 @pytest.mark.parametrize('header,expected', RESERVED_HEADERS)
 def test_Task_delay_reserved_headers_in_kwargs(header, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().delay(**{header: expected})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -126,7 +128,7 @@ def test_Task_delay_reserved_headers_in_kwargs(header, expected):
 
 @pytest.mark.parametrize('option,expected', RESERVED_OPTIONS)
 def test_Task_apply_async_reserved_options_in_options(option, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().apply_async((), **{option: expected})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -136,7 +138,7 @@ def test_Task_apply_async_reserved_options_in_options(option, expected):
 
 @pytest.mark.parametrize('option,expected', RESERVED_OPTIONS)
 def test_Task_apply_async_reserved_options_in_kwargs(option, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().apply_async((), {option: expected})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -146,7 +148,7 @@ def test_Task_apply_async_reserved_options_in_kwargs(option, expected):
 
 @pytest.mark.parametrize('option,expected', RESERVED_OPTIONS)
 def test_Task_delay_reserved_options_in_kwargs(option, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().delay(**{option: expected})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -156,7 +158,7 @@ def test_Task_delay_reserved_options_in_kwargs(option, expected):
 
 @pytest.mark.parametrize('header,expected', RESERVED_HEADERS + RESERVED_OPTIONS)
 def test_Task_apply_async_reserved_in_options_with_existing_header_option(header, expected):
-    with mock.patch('girder_worker.app.celery.Task.apply_async', spec=True) as mock_apply_async:
+    with mock.patch('girder_worker.task.celery.Task.apply_async', spec=True) as mock_apply_async:
         Task().apply_async((), {}, **{header: expected, 'headers': {'some': 'header'}})
         margs, mkwargs = mock_apply_async.call_args
         assert 'headers' in mkwargs
@@ -217,7 +219,7 @@ def test_Task_apply_async_reserved_in_options_with_existing_header_option(header
     'Complex'
 ])
 def test_Task___call___transforms_or_passes_through_arguments(arguments, transformed):
-    with mock.patch('girder_worker.app.celery.Task.__call__', spec=True) as mock_call:
+    with mock.patch('girder_worker.task.celery.Task.__call__', spec=True) as mock_call:
         task = _task_with_request()
         task(*arguments)
         mock_call.assert_called_once_with(*transformed)
@@ -272,7 +274,7 @@ ids=[
     'Complex'
 ])
 def test_Task___call___transforms_or_passes_through_kwargs(kwargs, transformed):
-    with mock.patch('girder_worker.app.celery.Task.__call__', spec=True) as mock_call:
+    with mock.patch('girder_worker.task.celery.Task.__call__', spec=True) as mock_call:
         task = _task_with_request()
         task('FIXME', **kwargs)
         mock_call.assert_called_once_with('FIXME', **transformed)
@@ -303,7 +305,7 @@ ids=[
 ])
 def test_Task___call___transforms_or_passes_through_girder_result_hooks(
         results, hooks, transformed):
-    with mock.patch('girder_worker.app.celery.Task.__call__',
+    with mock.patch('girder_worker.task.celery.Task.__call__',
                     return_value=results):
         task = _task_with_request(girder_result_hooks=hooks)
         assert task('ARG1', kwarg='KWARG1') == transformed
