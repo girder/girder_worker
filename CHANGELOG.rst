@@ -41,4 +41,4 @@ Changes
 -------
 
 * Remove container by default in docker mode, at end of run. (`#264 <https://github.com/girder/girder_worker/pull/264>`_)
-* Refactor JobManager to use Tee objects for stderr/stdout redirection. (`#260 <https://github.com/girder/girder_worker/pull/260>`_)
+* More robust standard pipe handling in tasks that communicate with Girder jobs. (`#260 <https://github.com/girder/girder_worker/pull/260>`_)
