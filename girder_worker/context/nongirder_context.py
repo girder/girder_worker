@@ -63,3 +63,38 @@ def handle_jobInfoSpec(sender=None, body=None, exchange=None,
 
     except MissingJobArguments as e:
         logger.warn('Girder job not created: {}'.format(str(e)))
+
+
+def handle_girder_api_url(sender=None, body=None, exchange=None,
+                          routing_key=None, headers=None, properties=None,
+                          declare=None, retry_policy=None, **kwargs):
+    parent_task = current_app.current_task
+    try:
+        if parent_task is None:
+            raise MissingJobArguments('Parent task is None')
+        if parent_task.request is None:
+            raise MissingJobArguments("Parent task's request is None")
+        if not hasattr(parent_task.request, 'girder_api_url'):
+            raise MissingJobArguments(
+                "Parent task's request does not contain girder_api_url")
+        headers['girder_api_url'] = parent_task.request.girder_api_url
+    except MissingJobArguments as e:
+        logger.warn('Could not get girder_api_url from parent task: {}'.format(str(e)))
+
+
+def handle_girder_client_token(sender=None, body=None, exchange=None,
+                               routing_key=None, headers=None, properties=None,
+                               declare=None, retry_policy=None, **kwargs):
+    parent_task = current_app.current_task
+    try:
+        if parent_task is None:
+            raise MissingJobArguments('Parent task is None')
+        if parent_task.request is None:
+            raise MissingJobArguments("Parent task's request is None")
+        if not hasattr(parent_task.request, 'girder_client_token'):
+            raise MissingJobArguments(
+                "Parent task's request does not contain girder_client_token")
+
+        headers['girder_client_token'] = parent_task.request.girder_client_token
+    except MissingJobArguments as e:
+        logger.warn('Could not get token from parent task: {}'.format(str(e)))

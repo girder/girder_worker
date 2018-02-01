@@ -3,7 +3,7 @@ import sys
 import traceback as tb
 from distutils.version import LooseVersion
 
-from celery import Celery, __version__, current_app
+from celery import Celery, __version__
 
 from celery.signals import (
     before_task_publish,
@@ -20,8 +20,6 @@ from girder_client import GirderClient
 import girder_worker
 from girder_worker import logger
 from girder_worker.context import get_context
-# Temporary
-from girder_worker.context.nongirder_context import MissingJobArguments
 from girder_worker.task import Task
 from girder_worker.utils import JobStatus, StateTransitionException, is_revoked
 
@@ -45,48 +43,16 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                                        retry_policy=retry_policy, **kwargs)
 
         if 'girder_api_url' not in headers:
-            try:
-                from girder.plugins.worker import utils
-                headers['girder_api_url'] = utils.getWorkerApiUrl()
-            except ImportError:
-                parent_task = current_app.current_task
-                try:
-                    if parent_task is None:
-                        raise MissingJobArguments('Parent task is None')
-                    if parent_task.request is None:
-                        raise MissingJobArguments("Parent task's request is None")
-                    if not hasattr(parent_task.request, 'girder_api_url'):
-                        raise MissingJobArguments(
-                            "Parent task's request does not contain girder_api_url")
-                    headers['girder_api_url'] = parent_task.request.girder_api_url
-                except MissingJobArguments as e:
-                    logger.warn('Could not get girder_api_url from parent task: {}'.format(str(e)))
+            context.handle_girder_api_url(sender=sender, body=body, exchange=exchange,
+                                          routing_key=routing_key, headers=headers,
+                                          properties=properties, declare=declare,
+                                          retry_policy=retry_policy, **kwargs)
 
         if 'girder_client_token' not in headers:
-            try:
-                from girder.utility.model_importer import ModelImporter
-                from girder.api.rest import getCurrentUser
-                token_model = ModelImporter.model('token')
-                scope = 'jobs.rest.create_job'
-                try:
-                    token = token_model.createToken(scope=scope, user=user)
-                except NameError:
-                    token = token_model.createToken(scope=scope, user=getCurrentUser())
-                headers['girder_client_token'] = token['_id']
-            except ImportError:
-                parent_task = current_app.current_task
-                try:
-                    if parent_task is None:
-                        raise MissingJobArguments('Parent task is None')
-                    if parent_task.request is None:
-                        raise MissingJobArguments("Parent task's request is None")
-                    if not hasattr(parent_task.request, 'girder_client_token'):
-                        raise MissingJobArguments(
-                            "Parent task's request does not contain girder_client_token")
-
-                    headers['girder_client_token'] = parent_task.request.girder_client_token
-                except MissingJobArguments as e:
-                    logger.warn('Could not get token from parent task: {}'.format(str(e)))
+            context.handle_girder_client_token(sender=sender, body=body, exchange=exchange,
+                                               routing_key=routing_key, headers=headers,
+                                               properties=properties, declare=declare,
+                                               retry_policy=retry_policy, **kwargs)
 
         if 'girder_result_hooks' in headers:
             # Celery task headers are not automatically serialized by celery

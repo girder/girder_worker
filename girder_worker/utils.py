@@ -1,10 +1,13 @@
 import time
+from celery.task.control import inspect
+
 from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
+
 import requests
 from requests import HTTPError
-import six
 
-from celery.task.control import inspect
+
+import six
 
 
 def _maybe_model_repr(obj):

@@ -440,7 +440,7 @@ def test_girder_before_task_publish_celery_context_no_parent_task_no_api_url(war
 @mock.patch('girder_worker.logger.warn')
 def test_girder_before_task_publish_celery_context_no_parent_task_request_no_api_url(warn):
     with girder_not_importable():
-        with mock.patch('girder_worker.app.current_app') as mocked_app:
+        with mock.patch('girder_worker.context.nongirder_context.current_app') as mocked_app:
             mocked_app.current_task.request = None
             inputs = dict(
                 body=[(), {}, {}],
@@ -494,7 +494,7 @@ def test_girder_before_task_publish_celery_context_no_parent_task_no_token(warn)
 @mock.patch('girder_worker.logger.warn')
 def test_girder_before_task_publish_celery_context_no_parent_task_request_no_token(warn):
     with girder_not_importable():
-        with mock.patch('girder_worker.app.current_app') as mocked_app:
+        with mock.patch('girder_worker.context.nongirder_context.current_app') as mocked_app:
             mocked_app.current_task.request = None
             inputs = dict(
                 body=[(), {}, {}],
