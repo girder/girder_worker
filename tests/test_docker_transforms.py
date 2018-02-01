@@ -36,7 +36,7 @@ from girder_worker.docker.transforms import (
     NamedPipeBase,
     TEMP_VOLUME_MOUNT_PREFIX,
     TemporaryVolume,
-    Volume,
+    BindMountVolume,
     VolumePath,
     _maybe_transform
 )
@@ -75,7 +75,7 @@ def patch_mkdir():
 
 @pytest.fixture
 def bogus_volume():
-    yield Volume(BOGUS_HOST_PATH, BOGUS_CONTAINER_PATH)
+    yield BindMountVolume(BOGUS_HOST_PATH, BOGUS_CONTAINER_PATH)
 
 
 @pytest.mark.parametrize('obj', [
