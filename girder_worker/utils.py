@@ -38,6 +38,40 @@ def _revoked_tasks(task):
     return _revoked.get(task.request.hostname, [])
 
 
+def deserialize_job_info_spec(**kwargs):
+    return JobManager(**kwargs)
+
+
+class JobSpecNotFound(Exception):
+    pass
+
+
+def _job_manager(request=None, headers=None, kwargs=None):
+    if hasattr(request, 'jobInfoSpec'):
+        jobSpec = request.jobInfoSpec
+
+    # We are being called from revoked signal
+    elif headers is not None and \
+            'jobInfoSpec' in headers:
+        jobSpec = headers['jobInfoSpec']
+
+    # Deprecated: This method of passing job information
+    # to girder_worker is deprecated. Newer versions of girder
+    # pass this information automatically as apart of the
+    # header metadata in the worker scheduler.
+    elif kwargs and 'jobInfo' in kwargs:
+        jobSpec = kwargs.pop('jobInfo', {})
+
+    else:
+        raise JobSpecNotFound
+
+    return deserialize_job_info_spec(**jobSpec)
+
+
+def _update_status(task, status):
+    task.job_manager.updateStatus(status)
+
+
 def is_revoked(task):
     """
     Utility function to check is a task has been revoked.

@@ -21,7 +21,14 @@ import girder_worker
 from girder_worker import logger
 from girder_worker.context import get_context
 from girder_worker.task import Task
-from girder_worker.utils import JobStatus, StateTransitionException, is_revoked
+from girder_worker.utils import (
+    JobSpecNotFound,
+    JobStatus,
+    StateTransitionException,
+    _job_manager,
+    _update_status,
+    is_revoked
+)
 
 import jsonpickle
 from kombu.serialization import register
@@ -76,40 +83,6 @@ def check_celery_version(*args, **kwargs):
         sys.exit("""You are running Celery {}.
 
 girder-worker requires celery>=4.0.0""".format(__version__))
-
-
-def deserialize_job_info_spec(**kwargs):
-    return girder_worker.utils.JobManager(**kwargs)
-
-
-class JobSpecNotFound(Exception):
-    pass
-
-
-def _job_manager(request=None, headers=None, kwargs=None):
-    if hasattr(request, 'jobInfoSpec'):
-        jobSpec = request.jobInfoSpec
-
-    # We are being called from revoked signal
-    elif headers is not None and \
-            'jobInfoSpec' in headers:
-        jobSpec = headers['jobInfoSpec']
-
-    # Deprecated: This method of passing job information
-    # to girder_worker is deprecated. Newer versions of girder
-    # pass this information automatically as apart of the
-    # header metadata in the worker scheduler.
-    elif kwargs and 'jobInfo' in kwargs:
-        jobSpec = kwargs.pop('jobInfo', {})
-
-    else:
-        raise JobSpecNotFound
-
-    return deserialize_job_info_spec(**jobSpec)
-
-
-def _update_status(task, status):
-    task.job_manager.updateStatus(status)
 
 
 @task_prerun.connect
@@ -222,6 +195,6 @@ register('girder_io', jsonpickle.encode, jsonpickle.decode,
 
 app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
-    task_cls='girder_worker.app:Task')
+    task_cls='girder_worker.task:Task')
 
 app.config_from_object('girder_worker.celeryconfig')
