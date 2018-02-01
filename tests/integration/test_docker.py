@@ -189,3 +189,31 @@ def test_docker_run_bad_exit_code(session):
         assert job['status'] == JobStatus.ERROR
         assert 'girder docker exception' in log
         assert 'Non-zero exit code from docker container' in log
+
+
+@pytest.mark.docker
+def test_docker_run_cancel_sigterm(session):
+    params = {
+        'mode': 'sigterm'
+    }
+    r = session.post('integration_tests/docker/test_docker_run_cancel',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_canceled(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.CANCELED]
+
+
+@pytest.mark.docker
+def test_docker_run_cancel_sigkill(session):
+    params = {
+        'mode': 'sigkill'
+    }
+    r = session.post('integration_tests/docker/test_docker_run_cancel',
+                     params=params)
+    assert r.status_code == 200, r.content
+
+    with session.wait_for_canceled(r.json()['_id']) as job:
+        assert [ts['status'] for ts in job['timestamps']] == \
+            [JobStatus.RUNNING, JobStatus.CANCELED]

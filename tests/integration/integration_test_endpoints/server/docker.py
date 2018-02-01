@@ -33,6 +33,8 @@ from girder_worker.docker.transforms.girder import (
     ProgressPipe,
     GirderFileIdToVolume,
 )
+from girder_worker.utils import JobStatus
+from .utilities import wait_for_status
 
 TEST_IMAGE = 'girder/girder_worker_test:ng'
 
@@ -65,6 +67,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_temporary_volume_root)
         self.route('POST', ('test_docker_run_raises_exception', ),
                    self.test_docker_run_raises_exception)
+        self.route('POST', ('test_docker_run_cancel', ),
+                   self.test_docker_run_cancel)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -309,5 +313,20 @@ class DockerTestEndpoints(Resource):
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True, container_args=['print_path', '-p', volume],
             remove_container=True, volumes=[volume])
+
+        return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test cancel docker_run.'))
+    def test_docker_run_cancel(self, params):
+        mode = params.get('mode')
+        result = docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=[mode],
+            remove_container=True)
+
+        assert wait_for_status(self.getCurrentUser(), result.job, JobStatus.RUNNING)
+        result.revoke()
 
         return result.job
