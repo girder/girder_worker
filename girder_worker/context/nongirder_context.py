@@ -14,9 +14,9 @@ class MissingJobArguments(RuntimeError):
     pass
 
 
-def handle_jobInfoSpec(sender=None, body=None, exchange=None,
-                       routing_key=None, headers=None, properties=None,
-                       declare=None, retry_policy=None, **kwargs):
+def create_task_job(sender=None, body=None, exchange=None,
+                    routing_key=None, headers=None, properties=None,
+                    declare=None, retry_policy=None, **kwargs):
     parent_task = current_app.current_task
     try:
         if parent_task is None:
@@ -65,7 +65,7 @@ def handle_jobInfoSpec(sender=None, body=None, exchange=None,
         logger.warn('Girder job not created: {}'.format(str(e)))
 
 
-def handle_girder_api_url(sender=None, body=None, exchange=None,
+def attach_girder_api_url(sender=None, body=None, exchange=None,
                           routing_key=None, headers=None, properties=None,
                           declare=None, retry_policy=None, **kwargs):
     parent_task = current_app.current_task
@@ -82,7 +82,7 @@ def handle_girder_api_url(sender=None, body=None, exchange=None,
         logger.warn('Could not get girder_api_url from parent task: {}'.format(str(e)))
 
 
-def handle_girder_client_token(sender=None, body=None, exchange=None,
+def attach_girder_client_token(sender=None, body=None, exchange=None,
                                routing_key=None, headers=None, properties=None,
                                declare=None, retry_policy=None, **kwargs):
     parent_task = current_app.current_task

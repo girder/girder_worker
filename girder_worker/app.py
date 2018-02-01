@@ -37,19 +37,19 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
     try:
         context = get_context()
         if 'jobInfoSpec' not in headers:
-            context.handle_jobInfoSpec(sender=sender, body=body, exchange=exchange,
-                                       routing_key=routing_key, headers=headers,
-                                       properties=properties, declare=declare,
-                                       retry_policy=retry_policy, **kwargs)
+            context.create_task_job(sender=sender, body=body, exchange=exchange,
+                                    routing_key=routing_key, headers=headers,
+                                    properties=properties, declare=declare,
+                                    retry_policy=retry_policy, **kwargs)
 
         if 'girder_api_url' not in headers:
-            context.handle_girder_api_url(sender=sender, body=body, exchange=exchange,
+            context.attach_girder_api_url(sender=sender, body=body, exchange=exchange,
                                           routing_key=routing_key, headers=headers,
                                           properties=properties, declare=declare,
                                           retry_policy=retry_policy, **kwargs)
 
         if 'girder_client_token' not in headers:
-            context.handle_girder_client_token(sender=sender, body=body, exchange=exchange,
+            context.attach_girder_client_token(sender=sender, body=body, exchange=exchange,
                                                routing_key=routing_key, headers=headers,
                                                properties=properties, declare=declare,
                                                retry_policy=retry_policy, **kwargs)
