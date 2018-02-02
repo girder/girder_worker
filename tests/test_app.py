@@ -78,11 +78,16 @@ def test_GirderAsyncResult_job_property_returns_None_on_ImportError():
 
 def test_GirderAsyncResult_job_property_calls_findOne_on_girder_job_model():
     gar = GirderAsyncResult('BOGUS_TASK_ID')
-    with mock.patch('girder.utility.model_importer.ModelImporter') as mi:
-        gar.job
-        mi.model.return_value.findOne.assert_called_once_with({
-            'celeryTaskId': 'BOGUS_TASK_ID'
-        })
+
+    with mock.patch.dict('sys.modules',
+                         **{'girder.plugins': mock.MagicMock(),
+                            'girder.plugins.worker': mock.MagicMock(),
+                            'girder.plugins.worker.utils': mock.MagicMock()}):
+        with mock.patch('girder.utility.model_importer.ModelImporter') as mi:
+            gar.job
+            mi.model.return_value.findOne.assert_called_once_with({
+                'celeryTaskId': 'BOGUS_TASK_ID'
+            })
 
 
 def test_GirderAsyncResult_job_property_returns_None_if_no_jobs_found():

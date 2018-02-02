@@ -1,22 +1,21 @@
 import json
-import requests
-
 from celery import current_app
-
-from girder_worker import logger
 from girder_client import GirderClient
+from girder_worker import logger
 from girder_worker.utils import _maybe_model_repr
 from girder_worker_utils import _walk_obj
-from girder_worker.task import Task
+
+import requests
 
 
 class MissingJobArguments(RuntimeError):
     pass
 
 
-def create_task_job(sender=None, body=None, exchange=None,
-                    routing_key=None, headers=None, properties=None,
-                    declare=None, retry_policy=None, **kwargs):
+def create_task_job(job_defaults, sender=None, body=None,
+                    exchange=None, routing_key=None, headers=None,
+                    properties=None, declare=None, retry_policy=None,
+                    **kwargs):
     parent_task = current_app.current_task
     try:
         if parent_task is None:
@@ -41,17 +40,21 @@ def create_task_job(sender=None, body=None, exchange=None,
         task_args = tuple(_walk_obj(body[0], _maybe_model_repr))
         task_kwargs = _walk_obj(body[1], _maybe_model_repr)
         parameters = {
-            'title': headers.pop('girder_job_title', Task._girder_job_title),
-            'type': headers.pop('girder_job_type', Task._girder_job_type),
-            'handler': headers.pop('girder_job_handler', Task._girder_job_handler),
-            'public': headers.pop('girder_job_public', Task._girder_job_public),
+            'title': headers.pop('girder_job_title',
+                                 job_defaults.get('girder_job_title', '')),
+            'type': headers.pop('girder_job_type',
+                                job_defaults.get('girder_job_type', '')),
+            'handler': headers.pop('girder_job_handler',
+                                   job_defaults.get('girder_job_handler', '')),
+            'public': headers.pop('girder_job_public',
+                                  job_defaults.get('girder_job_public', '')),
             'args': json.dumps(task_args),
             'kwargs': task_kwargs,
             'otherFields': json.dumps(
                 dict(celeryTaskId=headers['id'],
                      celeryParentTaskId=parent_task.request.id,
                      **headers.pop('girder_job_other_fields',
-                                   Task._girder_job_other_fields)))
+                                   job_defaults.get('girder_job_other_fields', ''))))
         }
 
         try:
@@ -98,3 +101,8 @@ def attach_girder_client_token(sender=None, body=None, exchange=None,
         headers['girder_client_token'] = parent_task.request.girder_client_token
     except MissingJobArguments as e:
         logger.warn('Could not get token from parent task: {}'.format(str(e)))
+
+
+def get_async_result_job_property(async_result):
+    # NOT IMPLEMENTED!
+    return None

@@ -1,6 +1,7 @@
 import celery
 from celery.result import AsyncResult
 
+from girder_worker.context import get_context
 from girder_worker.utils import is_revoked
 
 from girder_worker_utils import _walk_obj
@@ -15,30 +16,9 @@ class GirderAsyncResult(AsyncResult):
 
     @property
     def job(self):
+        context = get_context()
         if self._job is None:
-            try:
-                # GirderAsyncResult() objects may be instantiated in
-                # either a girder REST request, or in some other
-                # context (e.g. from a running girder_worker instance
-                # if there is a chain).  If we are in a REST request
-                # we should have access to the girder package and can
-                # directly access the database If we are in a
-                # girder_worker context (or even in python console or
-                # a testing context) then we should get an ImportError
-                # and we can make a REST request to get the
-                # information we need.
-                from girder.utility.model_importer import ModelImporter
-                job_model = ModelImporter.model('job', 'jobs')
-
-                try:
-                    return job_model.findOne({'celeryTaskId': self.task_id})
-                except IndexError:
-                    return None
-
-            except ImportError:
-                # Make a rest request to get the job info
-                return None
-
+            self._job = context.get_async_result_job_property(self)
         return self._job
 
 
@@ -50,6 +30,16 @@ class Task(celery.Task):
     _girder_job_public = False
     _girder_job_handler = 'celery_handler'
     _girder_job_other_fields = {}
+
+    @classmethod
+    def girder_job_defaults(cls):
+        return {
+            'girder_job_title': cls._girder_job_title,
+            'girder_job_type': cls._girder_job_type,
+            'girder_job_public': cls._girder_job_public,
+            'girder_job_handler': cls._girder_job_handler,
+            'girder_job_other_fields': cls._girder_job_other_fields
+        }
 
     # These keys will be removed from apply_async's kwargs or options and
     # transfered into the headers of the message.

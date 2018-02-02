@@ -44,23 +44,36 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
     try:
         context = get_context()
         if 'jobInfoSpec' not in headers:
-            context.create_task_job(sender=sender, body=body, exchange=exchange,
-                                    routing_key=routing_key, headers=headers,
-                                    properties=properties, declare=declare,
-                                    retry_policy=retry_policy, **kwargs)
+            context.create_task_job(Task.girder_job_defaults(),
+                                    sender=sender, body=body,
+                                    exchange=exchange,
+                                    routing_key=routing_key,
+                                    headers=headers,
+                                    properties=properties,
+                                    declare=declare,
+                                    retry_policy=retry_policy,
+                                    **kwargs)
 
         if 'girder_api_url' not in headers:
-            context.attach_girder_api_url(sender=sender, body=body, exchange=exchange,
-                                          routing_key=routing_key, headers=headers,
-                                          properties=properties, declare=declare,
-                                          retry_policy=retry_policy, **kwargs)
+            context.attach_girder_api_url(sender=sender, body=body,
+                                          exchange=exchange,
+                                          routing_key=routing_key,
+                                          headers=headers,
+                                          properties=properties,
+                                          declare=declare,
+                                          retry_policy=retry_policy,
+                                          **kwargs)
 
         if 'girder_client_token' not in headers:
-            context.attach_girder_client_token(sender=sender, body=body, exchange=exchange,
-                                               routing_key=routing_key, headers=headers,
-                                               properties=properties, declare=declare,
-                                               retry_policy=retry_policy, **kwargs)
-
+            context.attach_girder_client_token(sender=sender,
+                                               body=body,
+                                               exchange=exchange,
+                                               routing_key=routing_key,
+                                               headers=headers,
+                                               properties=properties,
+                                               declare=declare,
+                                               retry_policy=retry_policy,
+                                               **kwargs)
         if 'girder_result_hooks' in headers:
             # Celery task headers are not automatically serialized by celery
             # before being passed off to ampq for byte packing. We will have
