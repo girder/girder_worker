@@ -70,9 +70,9 @@ class ContainerStdErr(Transform):
         pass
 
 
-class Volume(Transform):
+class BindMountVolume(Transform):
     """
-    A docker volume that will be attached to a docker container.
+    A volume that will be bind mounted to a docker container.
     """
     def __init__(self, host_path, container_path, mode='rw'):
         """
@@ -114,7 +114,7 @@ class _TemporaryVolumeMetaClass(abc.ABCMeta):
         return _DefaultTemporaryVolume()
 
 
-class _TemporaryVolumeBase(Volume):
+class _TemporaryVolumeBase(BindMountVolume):
     def __init__(self, *arg, **kwargs):
         super(_TemporaryVolumeBase, self).__init__(*arg, **kwargs)
         self._transformed = False

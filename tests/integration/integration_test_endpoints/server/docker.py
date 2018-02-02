@@ -23,7 +23,7 @@ from girder_worker.docker.transforms import (
     NamedInputPipe,
     Connect,
     VolumePath,
-    Volume,
+    BindMountVolume,
     ChunkedTransferEncodingStream,
     TemporaryVolume
 )
@@ -211,7 +211,7 @@ class DockerTestEndpoints(Resource):
         filename = 'read.txt'
         mount_dir = '/mnt/test'
         mount_path = os.path.join(mount_dir, filename)
-        volume = Volume(fixture_dir, mount_path, 'ro')
+        volume = BindMountVolume(fixture_dir, mount_path, 'ro')
         volumepath = VolumePath(filename, volume)
 
         result = docker_run.delay(
