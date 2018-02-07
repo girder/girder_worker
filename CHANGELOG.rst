@@ -17,6 +17,10 @@ Bug fixes
 Changes
 -------
 
+* Volume transforms renamed to BindMountVolume (`#273 <https://github.com/girder/girder_worker/pull/273>`_)
+* Refactor signals to introduce 'context' in which code is being executed (`#271 <https://github.com/girder/girder_worker/pull/271>`_)
+
+
 Deprecations
 ------------
 
@@ -28,6 +32,7 @@ Removals
 
 Security Fixes
 --------------
+
 
 Girder Worker 0.4.1
 ===================
