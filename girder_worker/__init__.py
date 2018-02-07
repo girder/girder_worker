@@ -1,9 +1,18 @@
 import abc
 import os
-from . import log_utils
+from pkg_resources import DistributionNotFound, get_distribution
 from six.moves.configparser import SafeConfigParser
 
-__version__ = '0.4.1'
+from . import log_utils
+
+
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:
+    # package is not installed
+    pass
+
+
 __license__ = 'Apache 2.0'
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))

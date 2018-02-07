@@ -74,6 +74,7 @@ pyyaml==3.12              # via girder
 requests-toolbelt==0.8.0  # via girder-client
 requests[security]==2.18.4
 s3transfer==0.1.12        # via boto3
+setuptools-scm==1.15.7
 six==1.11.0
 snowballstemmer==1.2.1    # via pydocstyle, sphinx
 sphinx-rtd-theme==0.2.4
