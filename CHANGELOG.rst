@@ -14,6 +14,8 @@ Added Features
 Bug fixes
 ---------
 
+* Use cherrypy.request.app instead of ImportException to determine signal context (`#275 <https://github.com/girder/girder_worker/pull/275>`_)
+
 Changes
 -------
 

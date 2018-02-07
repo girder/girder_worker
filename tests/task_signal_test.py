@@ -74,9 +74,9 @@ class TestSignals(unittest.TestCase):
                       headers=self.headers)
 
         create_job = mi.model.return_value.createJob
-
-        with mock_worker_plugin_utils():
-            girder_before_task_publish(**inputs)
+        with mock.patch('cherrypy.request.app', return_value=True):
+            with mock_worker_plugin_utils():
+                girder_before_task_publish(**inputs)
 
         gcu.assert_called_once()
         self.assertTrue(not create_job.called)
@@ -91,9 +91,9 @@ class TestSignals(unittest.TestCase):
                       headers={'id': 'CELERY-ASYNCRESULT-ID'})
 
         create_job = mi.model.return_value.createJob
-
-        with mock_worker_plugin_utils():
-            girder_before_task_publish(**inputs)
+        with mock.patch('cherrypy.request.app', return_value=True):
+            with mock_worker_plugin_utils():
+                girder_before_task_publish(**inputs)
 
         # gcu.assert_called_once()
         create_job.assert_called_once_with(
@@ -121,9 +121,9 @@ class TestSignals(unittest.TestCase):
                                'girder_job_other_fields': {'SOME_OTHER': 'FIELD'}})
 
         create_job = mi.model.return_value.createJob
-
-        with mock_worker_plugin_utils():
-            girder_before_task_publish(**inputs)
+        with mock.patch('cherrypy.request.app', return_value=True):
+            with mock_worker_plugin_utils():
+                girder_before_task_publish(**inputs)
 
         # gcu.assert_called_once()
         create_job.assert_called_once_with(
@@ -146,11 +146,12 @@ class TestSignals(unittest.TestCase):
                       body=[(), {}, {}],
                       headers={'id': 'CELERY-ASYNCRESULT-ID'})
 
-        with mock_worker_plugin_utils() as utils:
-            girder_before_task_publish(**inputs)
+        with mock.patch('cherrypy.request.app', return_value=True):
+            with mock_worker_plugin_utils() as utils:
+                girder_before_task_publish(**inputs)
 
-            utils.jobInfoSpec.asset_called_once()
-            utils.getWorkerApiUrl.assert_called_once()
+                utils.jobInfoSpec.asset_called_once()
+                utils.getWorkerApiUrl.assert_called_once()
 
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_prerun(self, jm):
