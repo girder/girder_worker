@@ -132,9 +132,7 @@ jobs:
     machine: true
     working_directory: /home/circleci/project
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "50:b7:1d:44:fd:c4:f4:06:9a:4c:0f:16:0c:e1:3b:91"
+      - *ssh-keys
       - checkout
       - deploy:
           command: |
@@ -142,16 +140,64 @@ jobs:
                 ./scripts/galaxy_deploy.sh
             fi
 
+  release:
+    docker:
+      - image: circleci/python:2.7
+
+    steps:
+      - checkout
+      - *virtual-env
+      - run:
+          name: Install Release Dependencies
+          command: |
+            pip install twine setuptools_scm
+      - run:
+          name: Build the Project
+          command: |
+            python setup.py sdist
+      - run:
+          name: Release to PyPI
+          command: |
+            twine upload dist/*
+
 
 workflows:
   version: 2
   ci:
     jobs:
-      - py2_unit_tests
-      - py3_unit_tests
-      - py2_integration_tests
-      - py3_integration_tests
-      - lint
+      - py2_unit_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - py3_unit_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - py2_integration_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - py3_integration_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - lint:
+          filters:
+            tags:
+              only: /^v.*/
+      - release:
+          requires:
+            - py2_unit_tests
+            - py3_unit_tests
+            - py2_integration_tests
+            - py3_integration_tests
+            - lint
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
       - deploy:
           requires:
             - py2_unit_tests
