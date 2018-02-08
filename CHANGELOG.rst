@@ -19,6 +19,7 @@ Changes
 
 * Volume transforms renamed to BindMountVolume (`#273 <https://github.com/girder/girder_worker/pull/273>`_)
 * Refactor signals to introduce 'context' in which code is being executed (`#271 <https://github.com/girder/girder_worker/pull/271>`_)
+* Move entrypoint based task descovery earlier in application initialization (`#271 <https://github.com/girder/girder_worker/pull/278?`_)
 
 
 Deprecations

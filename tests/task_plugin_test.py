@@ -3,6 +3,7 @@ import re
 from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from girder_worker.app import app
+from girder_worker.entrypoint import discover_tasks
 
 from girder_worker_utils import decorators
 from girder_worker_utils import types
@@ -68,16 +69,16 @@ def test_invalid_plugins(capsys):
 
 @pytest.mark.skipif(six.PY3, reason='Python 2 only')
 def test_core_plugin():
-    with mock.patch('girder_worker.__main__.app') as app:
-        main()
+    with mock.patch('girder_worker.app.app') as app:
+        discover_tasks(app, True)
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                          ['girder_worker.tasks']})
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
 def test_external_plugins():
-    with mock.patch('girder_worker.__main__.app') as app:
-        main()
+    with mock.patch('girder_worker.app.app') as app:
+        discover_tasks(app, True)
         if six.PY2:
             app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                              ['os.path']})
