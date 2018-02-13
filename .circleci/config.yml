@@ -143,22 +143,13 @@ jobs:
   release:
     docker:
       - image: circleci/python:2.7
-
     steps:
       - checkout
       - *virtual-env
-      - run:
-          name: Install Release Dependencies
-          command: |
-            pip install twine setuptools_scm
-      - run:
-          name: Build the Project
-          command: |
-            python setup.py sdist
+      - *ci-deps
       - run:
           name: Release to PyPI
-          command: |
-            twine upload dist/*
+          command: tox -e release
 
 
 workflows:
