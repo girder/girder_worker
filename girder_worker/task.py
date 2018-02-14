@@ -2,7 +2,7 @@ import celery
 from celery.result import AsyncResult
 
 from girder_worker.context import get_context
-from girder_worker.utils import is_revoked
+from girder_worker.utils import is_internal, is_revoked
 
 from girder_worker_utils import _walk_obj
 from girder_worker_utils.decorators import describe_function
@@ -65,6 +65,11 @@ class Task(celery.Task):
     def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
                     link=None, link_error=None, shadow=None, **options):
 
+        if is_internal(self.name):
+            return super(Task, self).apply_async(
+                args=args, kwargs=kwargs, task_id=task_id, producer=producer,
+                link=link, link_error=link_error, shadow=shadow, **options)
+
         # Pass girder related job information through to
         # the signals by adding this information to options['headers']
         # This sets defaults for reserved_options based on the class defaults,
@@ -90,7 +95,10 @@ class Task(celery.Task):
                 headers[key] = options.pop(key)
 
         if 'headers' in options:
-            options['headers'].update(headers)
+            if options['headers'] is None:
+                options['headers'] = headers
+            else:
+                options['headers'].update(headers)
         else:
             options['headers'] = headers
 

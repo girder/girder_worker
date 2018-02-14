@@ -10,6 +10,10 @@ from requests import HTTPError
 import six
 
 
+def is_internal(task):
+    return task.startswith('celery')
+
+
 def _maybe_model_repr(obj):
     if hasattr(obj, '_repr_model_') and six.callable(obj._repr_model_):
         return obj._repr_model_()
