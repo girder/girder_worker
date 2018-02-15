@@ -15,7 +15,9 @@ run3:
 	docker-compose -f docker-compose.yml -f docker-compose.py3.yml up -d; \
 	cd scripts/ && ansible-playbook -i inventory -e ansible_python_interpreter=python3 setup.yml
 
-test:
+test: test2
+
+test2:
 	pytest -v -x -n4
 
 # Ignore girder_worker.run 'traditional' tests
