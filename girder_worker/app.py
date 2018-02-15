@@ -27,7 +27,7 @@ from girder_worker.utils import (
     StateTransitionException,
     _job_manager,
     _update_status,
-    is_internal,
+    is_builtin_celery_task,
     is_revoked
 
 )
@@ -43,7 +43,7 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                                routing_key=None, headers=None, properties=None,
                                declare=None, retry_policy=None, **kwargs):
 
-    if is_internal(sender):
+    if is_builtin_celery_task(sender):
         return
 
     try:
@@ -113,7 +113,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     their task and have access to the job_manager for logging and
     updating their status in girder.
     """
-    if is_internal(sender.name):
+    if is_builtin_celery_task(sender.name):
         return
 
     try:
@@ -145,7 +145,7 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
 @task_success.connect
 def gw_task_success(sender=None, **rest):
-    if is_internal(sender.name):
+    if is_builtin_celery_task(sender.name):
         return
 
     try:
@@ -171,7 +171,7 @@ def gw_task_success(sender=None, **rest):
 @task_failure.connect
 def gw_task_failure(sender=None, exception=None,
                     traceback=None, **rest):
-    if is_internal(sender.name):
+    if is_builtin_celery_task(sender.name):
         return
 
     try:

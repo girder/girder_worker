@@ -22,7 +22,7 @@ BUILTIN_CELERY_TASKS = [
     'celery.starmap']
 
 
-def is_internal(task):
+def is_builtin_celery_task(task):
     return task in BUILTIN_CELERY_TASKS
 
 
