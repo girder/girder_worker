@@ -10,21 +10,10 @@ from girder_worker.app import (
     gw_task_revoked,
     gw_task_success)
 
-from girder_worker.utils import JobStatus
+from girder_worker.utils import BUILTIN_CELERY_TASKS, JobStatus
 import mock
 import pytest
 import requests
-
-BUILTIN_CELERY_TASKS = [
-    'celery.accumulate'
-    'celery.backend_cleanup',
-    'celery.chain',
-    'celery.chord',
-    'celery.chord_unlock',
-    'celery.chunks',
-    'celery.group',
-    'celery.map',
-    'celery.starmap']
 
 
 @contextmanager

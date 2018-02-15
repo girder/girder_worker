@@ -1,25 +1,15 @@
 import celery
-import pytest
-import mock
 
 from girder_worker.task import (
     GirderAsyncResult,
     Task
 )
 from girder_worker.utils import (
+    BUILTIN_CELERY_TASKS,
     _maybe_model_repr
 )
-
-BUILTIN_CELERY_TASKS = [
-    'celery.accumulate'
-    'celery.backend_cleanup',
-    'celery.chain',
-    'celery.chord',
-    'celery.chord_unlock',
-    'celery.chunks',
-    'celery.group',
-    'celery.map',
-    'celery.starmap']
+import mock
+import pytest
 
 
 RESERVED_HEADERS = [

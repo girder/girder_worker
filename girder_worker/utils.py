@@ -10,8 +10,20 @@ from requests import HTTPError
 import six
 
 
+BUILTIN_CELERY_TASKS = [
+    'celery.accumulate'
+    'celery.backend_cleanup',
+    'celery.chain',
+    'celery.chord',
+    'celery.chord_unlock',
+    'celery.chunks',
+    'celery.group',
+    'celery.map',
+    'celery.starmap']
+
+
 def is_internal(task):
-    return task.startswith('celery')
+    return task in BUILTIN_CELERY_TASKS
 
 
 def _maybe_model_repr(obj):
