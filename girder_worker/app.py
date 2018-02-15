@@ -27,7 +27,9 @@ from girder_worker.utils import (
     StateTransitionException,
     _job_manager,
     _update_status,
+    is_builtin_celery_task,
     is_revoked
+
 )
 
 import jsonpickle
@@ -40,6 +42,9 @@ import six
 def girder_before_task_publish(sender=None, body=None, exchange=None,
                                routing_key=None, headers=None, properties=None,
                                declare=None, retry_policy=None, **kwargs):
+
+    if is_builtin_celery_task(sender):
+        return
 
     try:
         context = get_context()
@@ -108,6 +113,9 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
     their task and have access to the job_manager for logging and
     updating their status in girder.
     """
+    if is_builtin_celery_task(sender.name):
+        return
+
     try:
         task.job_manager = _job_manager(task.request, task.request.headers)
         _update_status(task, JobStatus.RUNNING)
@@ -137,6 +145,9 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
 
 @task_success.connect
 def gw_task_success(sender=None, **rest):
+    if is_builtin_celery_task(sender.name):
+        return
+
     try:
 
         if not is_revoked(sender):
@@ -160,6 +171,9 @@ def gw_task_success(sender=None, **rest):
 @task_failure.connect
 def gw_task_failure(sender=None, exception=None,
                     traceback=None, **rest):
+    if is_builtin_celery_task(sender.name):
+        return
+
     try:
 
         msg = '%s: %s\n%s' % (
