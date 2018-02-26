@@ -19,7 +19,9 @@ from girder_client import GirderClient
 
 import girder_worker
 from girder_worker import logger
+from girder_worker import config
 from girder_worker.context import get_context
+from girder_worker.entrypoint import discover_tasks
 from girder_worker.task import Task
 from girder_worker.utils import (
     JobSpecNotFound,
@@ -36,6 +38,7 @@ import jsonpickle
 from kombu.serialization import register
 
 import six
+from six.moves.configparser import NoOptionError, NoSectionError
 
 
 @before_task_publish.connect  # noqa: C901
@@ -225,3 +228,12 @@ app = Celery(
     task_cls='girder_worker.task:Task')
 
 app.config_from_object('girder_worker.celeryconfig')
+
+try:
+    include_core_tasks = config.getboolean(
+        'girder_worker', 'core_tasks')
+except (NoSectionError, NoOptionError):
+    include_core_tasks = True
+
+
+discover_tasks(app, core=include_core_tasks)
