@@ -104,7 +104,7 @@ class Task(celery.Task):
 
         return super(Task, self).apply_async(
             args=args, kwargs=kwargs, task_id=task_id, producer=producer,
-            link=link, link_error=link_error, shadow=shadow, **options)
+            link=link, link_error=link_error, shadow=shadow, serializer='girder_io', **options)
 
     @property
     def canceled(self):

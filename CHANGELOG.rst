@@ -14,7 +14,8 @@ Added Features
 Bug fixes
 ---------
 
-* Resolve issue with breaking chords (`#280 <https://github.com/girder/girder_worker/pull/280>`_)
+* Resolve multiple issues related to broken chord functionality
+  (`#280 <https://github.com/girder/girder_worker/pull/280>`_, `#282 <https://github.com/girder/girder_worker/pull/282>`_)
 * Use cherrypy.request.app instead of ImportException to determine signal context (`#275 <https://github.com/girder/girder_worker/pull/275>`_)
 
 Changes
