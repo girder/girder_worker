@@ -14,17 +14,8 @@ Added Features
 Bug fixes
 ---------
 
-* Resolve multiple issues related to broken chord functionality
-  (`#280 <https://github.com/girder/girder_worker/pull/280>`_, `#282 <https://github.com/girder/girder_worker/pull/282>`_)
-* Use cherrypy.request.app instead of ImportException to determine signal context (`#275 <https://github.com/girder/girder_worker/pull/275>`_)
-
 Changes
 -------
-
-* Volume transforms renamed to BindMountVolume (`#273 <https://github.com/girder/girder_worker/pull/273>`_)
-* Refactor signals to introduce 'context' in which code is being executed (`#271 <https://github.com/girder/girder_worker/pull/271>`_)
-* Move entrypoint based task descovery earlier in application initialization (`#271 <https://github.com/girder/girder_worker/pull/278?`_)
-
 
 Deprecations
 ------------
@@ -37,6 +28,25 @@ Removals
 
 Security Fixes
 --------------
+
+
+Girder Worker 0.5.0
+===================
+
+
+Bug fixes
+---------
+
+* Resolve multiple issues related to broken chord functionality
+  (`#280 <https://github.com/girder/girder_worker/pull/280>`_, `#282 <https://github.com/girder/girder_worker/pull/282>`_)
+* Use cherrypy.request.app instead of ImportException to determine signal context (`#275 <https://github.com/girder/girder_worker/pull/275>`_)
+
+Changes
+-------
+
+* Volume transforms renamed to BindMountVolume (`#273 <https://github.com/girder/girder_worker/pull/273>`_)
+* Refactor signals to introduce 'context' in which code is being executed (`#271 <https://github.com/girder/girder_worker/pull/271>`_)
+* Move entrypoint based task descovery earlier in application initialization (`#278 <https://github.com/girder/girder_worker/pull/278?>`_)
 
 
 Girder Worker 0.4.1
