@@ -227,13 +227,12 @@ app = Celery(
     main=girder_worker.config.get('celery', 'app_main'),
     task_cls='girder_worker.task:Task')
 
-app.config_from_object('girder_worker.celeryconfig')
-
 try:
     include_core_tasks = config.getboolean(
         'girder_worker', 'core_tasks')
 except (NoSectionError, NoOptionError):
     include_core_tasks = True
 
-
 discover_tasks(app, core=include_core_tasks)
+
+app.config_from_object('girder_worker.celeryconfig', force=True)
