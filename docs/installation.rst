@@ -1,52 +1,23 @@
 Installation
-============
+************
 
 To install the Girder Worker on your system, we recommend using ``pip`` to
-install the package. (If you wish to install from source, see the :ref:`install-from-source`
-section of the developer documentation.)
-
-First, install required system packages: ::
-
-    # Command for Ubuntu
-    sudo apt-get install libjpeg-dev zlib1g-dev libssl-dev
-
-Next, the following command will install the core dependencies: ::
+install the package. ::
 
     pip install girder-worker
 
-That will install the core girder-worker library, but not the third-party dependencies for
-any of its plugins. If you want to enable a set of plugins, their IDs should be included as
-extras to the pip install command. For instance, if you are planning to use the R plugin
-and the girder_io plugin, you would run: ::
+That will install the core girder-worker library and the built-in :ref:`plugins`.
 
-    pip install girder-worker[r,girder_io]
 
-You can run this command at any time to install dependencies of other plugins, even if
-the girder worker is already installed.
 
 .. _remoteexecution:
 
 Remote Execution
-----------------
+================
 
-Want to run things remotely? Girder worker relies on celery as its distributed task queue.  Celery
-requires a message broker, which can be Mongo, though Celery recommends using `RabbitMQ <https://www.rabbitmq.com/>`_ as your message broker.
-
-If you have followed the standard or development installation process, celery will have already been installed.
-
-Run the girder_worker, which will run a celery worker process: ::
-
-    girder-worker
-
-On the client, run a script akin to the following example: ::
-
-    python examples/example_client.py
-
-
-.. _configuration:
 
 Configuration
--------------
+=============
 
 Several aspects of the worker's behavior are controlled via its configuration file. The easiest
 way to manage configuration is using the ``girder-worker-config`` command that is installed
