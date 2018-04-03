@@ -3,6 +3,7 @@ from six.moves import configparser
 import girder_worker
 
 accept_content = ['json', 'pickle', 'yaml', 'girder_io']
+result_serializer = 'girder_io'
 
 broker_url = os.environ.get('GIRDER_WORKER_BROKER', None) or \
     girder_worker.config.get('celery', 'broker')
