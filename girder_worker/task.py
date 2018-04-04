@@ -5,7 +5,6 @@ from girder_worker.context import get_context
 from girder_worker.utils import is_builtin_celery_task, is_revoked
 
 from girder_worker_utils import _walk_obj
-from girder_worker_utils.decorators import describe_function
 import six
 
 
@@ -116,7 +115,7 @@ class Task(celery.Task):
         return is_revoked(self)
 
     def describe(self):
-        return describe_function(self.run)
+        return self.run.item_tasks_json()
 
     def call_item_task(self, inputs, outputs={}):
         return self.run.call_item_task(inputs, outputs)
