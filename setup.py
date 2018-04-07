@@ -123,7 +123,8 @@ setuptools.setup(
         'console_scripts': [
             'girder-worker = girder_worker.__main__:main',
             'girder-worker-cleanup = girder_worker.core.cleanup:main',
-            'girder-worker-config = girder_worker.configure:main'
+            'girder-worker-config = girder_worker.configure:main',
+            'gwrun = girder_worker.gwrun:main'
         ],
         'girder_worker_plugins': [
             'core = girder_worker:GirderWorkerPlugin',
