@@ -9,6 +9,11 @@ def fibonacci(n, **kwargs):
         return 1
     return fibonacci(n-1) + fibonacci(n-2)
 
+@girder_job(title='Sum Job')
+@app.task
+def sum_(l):
+    return sum(l)
+
 
 @app.task(bind=True)
 def fib_seq(self, n, **kwargs):

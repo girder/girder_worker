@@ -3,7 +3,7 @@ from girder.api.describe import Description, describeRoute
 from girder.api.rest import Resource, filtermodel
 from girder.utility.model_importer import ModelImporter
 
-from common_tasks.test_tasks.fib import fibonacci
+from common_tasks.test_tasks.fib import fibonacci, sum_
 from common_tasks.test_tasks.cancel import cancelable
 from common_tasks.test_tasks.fail import fail_after
 from common_tasks.test_tasks.girder_client import request_private_path
@@ -42,6 +42,8 @@ class CeleryTestEndpoints(Resource):
                    self.test_celery_task_chained)
         self.route('POST', ('test_task_chained_bad_token_fails', ),
                    self.test_celery_task_chained_bad_token_fails)
+        self.route('POST', ('test_task_chord', ),
+                   self.test_celery_task_chord)
 
         self.route('POST', ('test_task_delay_with_custom_job_options', ),
                    self.test_celery_task_delay_with_custom_job_options)
@@ -232,3 +234,16 @@ class CeleryTestEndpoints(Resource):
         job_1 = result.job
         job_2 = jobModel.load(job_1['parentId'], user=user)
         return [job_1, job_2]
+
+    @access.token
+    @describeRoute(
+        Description('Test celery chords')
+    )
+    def test_celery_task_chord(self, params):
+
+        import celery
+        result = (celery.group([fibonacci.s(1), fibonacci.s(2)]) | sum_.s(girder_api_url='http://localhost:8989/api/v1')).delay()
+
+        result.wait(timeout=10)
+
+        return result.job

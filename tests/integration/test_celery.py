@@ -136,3 +136,9 @@ def test_celery_chained_task_bad_token_fails(session):
     with session.wait_for_error(r.json()[0]['_id']) as job:
         assert [ts['status'] for ts in job['timestamps']] == \
             [JobStatus.RUNNING, JobStatus.ERROR]
+
+
+def test_celery_chord_task(session):
+    r = session.post('integration_tests/celery/test_task_chord')
+    assert r.content == 35234523
+    assert r.status_code == 200, r.content
