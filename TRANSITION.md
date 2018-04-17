@@ -156,7 +156,7 @@ from girder_worker.utils import girder_job
 
 @girder_job(title='Add a and b')
 @app.task(bind=True)
-def my_task(self):
+def my_task(self, a, b):
 	return a + b
 ```
 
@@ -232,7 +232,7 @@ Now consider following transform which we will say is defined in ```my_package.t
 
 ```python
 import shutil
-from girder_worker_utils.tramsforms.girder_io import GirderClientTransform
+from girder_worker_utils.transforms.girder_io import GirderClientTransform
 
 class GirderFileId(GirderClientTransform):
     def __init__(self, _id, **kwargs):
@@ -315,7 +315,7 @@ Unlike the ```Transform``` class,  classes derived from ```ResultTransform``` ex
 
 _Note_ It is best practice to return a meaningful value from a ResultTransform.transform() function. That value will be forwarded on to the Celery results back end,  and used in subsequent tasks in the case of celery task chaining.
 
-To make sure the task calls this transform we must use a special keyword argument when launching the task.  That argument is the ```girder_results_hook```:
+To make sure the task calls this transform we must use a special keyword argument when launching the task.  That argument is the ```girder_result_hooks```:
 
 ```python
 from my_package.tasks import my_task
@@ -324,16 +324,16 @@ from my_package.transforms import GirderUploadToItem
 # Some code that determins then item_id to upload the result too.
 
 my_task.delay(arg1, arg2,
-    girder_results_hook=[
+    girder_result_hooks=[
 		GirderUploadToItem(item_id),
 	])
 ```
 
-Note that ```girder_results_hook``` takes a sequence.  Should a task function return a tuple of arguments,  each argument will be passed to the coorisponding ResultTransform derived object in the sequence. E.g.:
+Note that ```girder_result_hooks``` takes a sequence.  Should a task function return a tuple of arguments,  each argument will be passed to the coorisponding ResultTransform derived object in the sequence. E.g.:
 
 ```python
 my_task.delay(arg1, arg2,
-    girder_results_hook=[
+    girder_result_hooks=[
 		GirderUploadToItem(item_id), # results[0]
 		GirderUploadToItem(item_id), # results[1]
 		# ....                       # results[...]
