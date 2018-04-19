@@ -360,4 +360,4 @@ This provides a generic mechanism to handle side effects on the results of a tas
 
 
 ## "Other" Mode Tasks
-Girder Worker no longer explicitly supports tasks written in other modes (e.g. R, scala, etc). Custom tasks could be written to support these modes based on the legacy executor.py file that implements that mode. For more information please contact the D&A team. 
+Girder Worker no longer explicitly supports tasks written in other modes (e.g. R, scala, etc). Custom tasks could be written to support these modes based on the legacy executor.py file that implements that mode. For more information please [contact the Girder Worker developers via our Gitter chat](https://gitter.im/girder/girder_worker).
