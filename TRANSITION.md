@@ -347,7 +347,7 @@ This provides a generic mechanism to handle side effects on the results of a tas
 
 1. [What if my task has complex install dependencies?](HACKING.md#what-if-my-task-has-complex-install-dependencies)
 
-2. [How do I write a custom task from scratch (e.g. without the cookiecutter)](HACKING.md#what-if-my-task-has-complex-install-dependencies). A related question: What is the cookiecutter actually doing?
+2. [How do I write a custom Celery task from scratch (e.g. without the cookiecutter)](HACKING.md#how-do-i-write-a-custom-celery-task-for-girder-worker). A related question: What is the cookiecutter actually doing?
 
 3. What about Girder I/O? How do I push and pull data?
   Please use Transforms to manage this process. The base Transform class is implemented in girder\_worker\_utils.transform.Transform. Currently there are several example implementations of transforms in girder\_worker\_utils.transforms.girder_io. We are hoping that as more projects implement common useful Transforms that these will be upstreamed into girder\_worker\_utils.
