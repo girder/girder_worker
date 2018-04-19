@@ -163,7 +163,7 @@ def my_task(self, a, b):
 Then the legacy code above may be rewritten as follows:
 
 ```python
-from my_package.tasks import example_task
+from my_package.tasks import my_task
 
 async_result = my_task.delay(1, 2)
 
@@ -186,7 +186,7 @@ For more details about manipulating Job attributes,  please read [The Celery Met
 
 ### Transformations
 
-The following steps are sufficient for converting legacy Girder Worker tasks into modern Celery based tasks. If however your task requires access to information inside Girder,  then it is recommended that you include "Transform" classes with your package.
+The previous steps are sufficient for converting legacy Girder Worker tasks into modern Celery based tasks. If however your task requires access to information inside Girder,  then it is recommended that you include "Transform" classes with your package.
 
 Classes of type ```Transform``` inherit from the [girder\_worker\_utils.transform.Transform](https://github.com/girder/girder_worker_utils/blob/master/girder_worker_utils/transform.py#L6-L26) class. This class defines a simple API which includes the ```transform``` and ```cleanup``` methods:
 
@@ -311,9 +311,9 @@ class GirderUploadToItem(GirderClientResultTransform):
 ```
 
 
-Unlike the ```Transform``` class,  classes derived from ```ResultTransform``` expect a value to be passed to the ```transform()``` method.  In the case of a task function that returns a single value, This value is the return value of the task function.  In the case of at ask function that returns a tuple of values,  this will be one of the positional return values (More on this later).  In the ```GirderUploadToItem``` transform we take the data and pass it on to the ```GirderClient.uploadFileToItem``` function. 
+Unlike the ```Transform``` class,  classes derived from ```ResultTransform``` expect a value to be passed to the ```transform()``` method.  In the case of a task function that returns a single value, this value is the return value of the task function.  In the case of a task function that returns a tuple of values,  this will be one of the positional return values (More on this later).  In the ```GirderUploadToItem``` transform we take the data and pass it on to the ```GirderClient.uploadFileToItem``` function.
 
-_Note_ It is best practice to return a meaningful value from a ResultTransform.transform() function. That value will be forwarded on to the Celery results back end,  and used in subsequent tasks in the case of celery task chaining.
+_Note_ It is best practice to return a meaningful value from a ResultTransform.transform() function. That value will be forwarded on to the Celery results back end,  and used in subsequent tasks in the case of Celery task chaining.
 
 To make sure the task calls this transform we must use a special keyword argument when launching the task.  That argument is the ```girder_result_hooks```:
 
