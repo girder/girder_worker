@@ -78,7 +78,7 @@ def example_task(self):
 # Note that other tasks may defined here as well.
 ```
 
-You will want to change the name of the task from ```example_task``` to something that meaningfully represents what the task does.  Additionally arguments and keyword arguments should be added to the task function signature that are appropriate to your task. (Note: see the [Transformations]() section for how to handle arguments that will be data from Girder).
+You will want to change the name of the task from ```example_task``` to something that meaningfully represents what the task does.  Additionally arguments and keyword arguments should be added to the task function signature that are appropriate to your task. (Note: see the [Transforms]() section for how to handle arguments that will be data from Girder).
 
 ### Install the package 
 
@@ -184,7 +184,7 @@ return async_result.job
 For more details about manipulating Job attributes,  please read [The Celery Method](https://github.com/girder/girder_worker/blob/transition-document/HACKING.md#the-celery-method) section of the HACKING document.
 
 
-### Transformations
+### Transforms
 
 The previous steps are sufficient for converting legacy Girder Worker tasks into modern Celery based tasks. If however your task requires access to information inside Girder,  then it is recommended that you include "Transform" classes with your package.
 
