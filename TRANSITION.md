@@ -1,14 +1,14 @@
 # Transitioning Legacy Girder Worker Tasks
 
-Transitioning legacy girder worker tasks to the modern framework should be a relatively painless procedure.  In broad strokes, the process can be divided into two areas of concern. The first is code changes, and the second is deployment changes. For a more detailed description of the motivation behind these changes,  please read the [HACKING](HACKING.md) document.
+Transitioning legacy girder worker tasks to the modern framework should be a relatively painless procedure. In broad strokes, the process can be divided into two areas of concern. The first is code changes, and the second is deployment changes. For a more detailed description of the motivation behind these changes, please read the [HACKING](HACKING.md) document.
 
-There are slightly different steps based on the ```mode``` your legacy task defines.
+There are slightly different steps based on the `mode` your legacy task defines.
 
 ## "Python" Mode Legacy Tasks
 
-Python mode legacy tasks rely on the python executor to evaluate (i.e. run ```eval```) on arbitrary code defined in the task dictionary. In general terms, to convert the task we must transition this code string into an actual function (a.k.a 'task') that is a part of a python package.   The package must then be installed in the girder_worker python environment (e.g virtualenv, docker container, etc) and the girder python environment. Code inside the girder requestHandler (or boundHandler) related to creating and scheduling a job will be converted to use the task function defined in the package. Optionally, if the task requires access to files/metadata in girder, transformation classes should be written to handle moving data into and out of the task. 
+Python mode legacy tasks rely on the python executor to evaluate (i.e. run `eval`) on arbitrary code defined in the task dictionary. In general terms, to convert the task we must transition this code string into an actual function (a.k.a 'task') that is a part of a python package. The package must then be installed in the girder_worker python environment (e.g virtualenv, docker container, etc) and the girder python environment. Code inside the girder requestHandler (or boundHandler) related to creating and scheduling a job will be converted to use the task function defined in the package. Optionally, if the task requires access to files/metadata in girder, transformation classes should be written to handle moving data into and out of the task.
 
-To summarize,  migrating python tasks is a three step process:
+To summarize, migrating python tasks is a three step process:
 
 1. Code Change: Transition the task(s) code into a Python package.
 2. Deployment Change: Install the package in both the girder and girder_worker environments.
@@ -19,7 +19,7 @@ _Note_: It is best to perform the following steps in a virtual environment.
 
 ### Transitioning code into a Python Package.
 
-First create a package using [Girder Worker plugin cookiecutter](https://github.com/girder/cookiecutter-gw-plugin). To do this you must first install [cookiecutter](https://github.com/girder/cookiecutter-gw-plugin): 
+First create a package using [Girder Worker plugin cookiecutter](https://github.com/girder/cookiecutter-gw-plugin). To do this you must first install [cookiecutter](https://github.com/girder/cookiecutter-gw-plugin):
 
 ```sh
 $> pip install cookiecutter
@@ -34,13 +34,13 @@ $> cookiecutter https://github.com/girder/cookiecutter-gw-plugin
 This will prompt for a number of values to template into the package (See: [Template Variables](https://github.com/girder/cookiecutter-gw-plugin#template-variables) for a description of how each variable is used):
 
 ```
-author_name [Kitware Inc]: 
-email [kitware@kitware.com]: 
+author_name [Kitware Inc]:
+email [kitware@kitware.com]:
 plugin_name [GW Task Plugin]: Example Plugin
-plugin_slug [example_plugin]: 
-plugin_camel [ExamplePlugin]: 
+plugin_slug [example_plugin]:
+plugin_camel [ExamplePlugin]:
 plugin_short_description [Boilerplate for creating a Girder Worker Task plugin]: This is an example
-version [0.0.0]: 
+version [0.0.0]:
 Select open_source_license:
 1 - Apache Software License 2.0
 2 - MIT license
@@ -51,7 +51,7 @@ Select open_source_license:
 Choose from 1, 2, 3, 4, 5, 6 [1]: 1
 ```
 
-This will generate a directory based on the ```plugin_slug``` value (in this case ```example_plugin/```). 
+This will generate a directory based on the `plugin_slug` value (in this case `example_plugin/`).
 
 ```
 .
@@ -62,7 +62,7 @@ This will generate a directory based on the ```plugin_slug``` value (in this cas
 └── setup.py
 ```
 
-Code for your task should be placed into the ```example_plugin/tasks.py``` file. On template creation this will contain the following code:
+Code for your task should be placed into the `example_plugin/tasks.py` file. On template creation this will contain the following code:
 
 ```python
 from girder_worker.app import app
@@ -78,9 +78,9 @@ def example_task(self):
 # Note that other tasks may defined here as well.
 ```
 
-You will want to change the name of the task from ```example_task``` to something that meaningfully represents what the task does.  Additionally arguments and keyword arguments should be added to the task function signature that are appropriate to your task. (Note: see the [Transforms]() section for how to handle arguments that will be data from Girder).
+You will want to change the name of the task from `example_task` to something that meaningfully represents what the task does. Additionally arguments and keyword arguments should be added to the task function signature that are appropriate to your task. (Note: see the [Transforms]() section for how to handle arguments that will be data from Girder).
 
-### Install the package 
+### Install the package
 
 If your package is very simple it maybe ready to install.
 
@@ -93,9 +93,9 @@ $> pip install .
 
 Depending on your task you may have to make other modifications in the package setup.py for the task to function (e.g. defining dependencies etc). Note that the cookiecutter just creates boilerplate code and that any or all of it may be modified as needed.
 
-Unfortunately deployment of your particular project is beyond the scope of this document. For this section to be complete it will be necessary that you can import the task you have defined in both the Girder and Girder Worker environments.  _Keep in mind_ that some of the deploy time configuration for your Girder Worker instance(s) should move into your package (e.g python dependencies used in the task). This configuration will be brought in when you pip install your package in the Girder Worker environment. 
+Unfortunately deployment of your particular project is beyond the scope of this document. For this section to be complete it will be necessary that you can import the task you have defined in both the Girder and Girder Worker environments. *Keep in mind* that some of the deploy time configuration for your Girder Worker instance(s) should move into your package (e.g python dependencies used in the task). This configuration will be brought in when you pip install your package in the Girder Worker environment.
 
-In some complex cases it may make sense to include configuration management scripts in the package and then call out to these scripts from within the larger deployment of Girder Worker. 
+In some complex cases it may make sense to include configuration management scripts in the package and then call out to these scripts from within the larger deployment of Girder Worker.
 
 
 ### Convert Girder-side 'Job' code
@@ -129,8 +129,8 @@ girder_worker_run_outputs = {'c': {'format': 'integer'}}
 job = Job().createJob(
     title='Add a and b',
     handler='worker_handler',
-    user=self.getCurrentUser(), 
-	public=False, 
+    user=self.getCurrentUser(),
+	public=False,
 	args=(girder_worker_run_analysis,),
     kwargs={'inputs': self.girder_worker_run_inputs,
             'outputs': self.girder_worker_run_outputs})
@@ -148,7 +148,7 @@ return job
 
 ```
 
-All of this is necessary to execute the script ```c = a + b``` on the arguments ```a = 1``` and ```b = 2```.  Assuming that we have a task function ```my_task``` in ```my_package.tasks```  with following code: 
+All of this is necessary to execute the script `c = a + b` on the arguments `a = 1` and `b = 2`. Assuming that we have a task function `my_task` in `my_package.tasks` with following code:
 
 ```python
 from girder_worker.app import app
@@ -170,7 +170,7 @@ async_result = my_task.delay(1, 2)
 return async_result.job
 ```
 
-All ```Job``` related code is removed in favor of importing the task directly,  and using the [Celery API for calling tasks](https://github.com/girder/girder_worker/blob/transition-document/HACKING.md#the-celery-method).  Girder Worker has been refactored to move all job related code inside the application. Various knobs and dials have been exposed to allow modifying aspects of the Girder Job that is created. For instance you may set the title of the job at call time by using the ```girder_job_title``` special keyword argument:
+All `Job` related code is removed in favor of importing the task directly, and using the [Celery API for calling tasks](https://github.com/girder/girder_worker/blob/transition-document/HACKING.md#the-celery-method). Girder Worker has been refactored to move all job related code inside the application. Various knobs and dials have been exposed to allow modifying aspects of the Girder Job that is created. For instance you may set the title of the job at call time by using the `girder_job_title` special keyword argument:
 
 ```python
 from my_package.tasks import example_task
@@ -181,30 +181,14 @@ async_result = my_task.delay(
 return async_result.job
 ```
 
-For more details about manipulating Job attributes,  please read [The Celery Method](https://github.com/girder/girder_worker/blob/transition-document/HACKING.md#the-celery-method) section of the HACKING document.
+For more details about manipulating Job attributes, please read [The Celery Method](https://github.com/girder/girder_worker/blob/transition-document/HACKING.md#the-celery-method) section of the HACKING document.
 
 
 ### Transforms
 
-The previous steps are sufficient for converting legacy Girder Worker tasks into modern Celery based tasks. If however your task requires access to information inside Girder,  then it is recommended that you include "Transform" classes with your package.
+The previous steps are sufficient for converting legacy Girder Worker tasks into modern Celery based tasks. If however your task requires access to information inside Girder, then it is recommended that you include "Transform" classes with your package.
 
-Classes of type ```Transform``` inherit from the [girder\_worker\_utils.transform.Transform](https://github.com/girder/girder_worker_utils/blob/master/girder_worker_utils/transform.py#L6-L26) class. This class defines a simple API which includes the ```transform``` and ```cleanup``` methods:
-
-```python
-@six.add_metaclass(abc.ABCMeta)
-class Transform(object):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def cleanup(self):
-        pass
-
-    @abc.abstractmethod
-    def transform(self):
-        pass
-```
-
-Transforms are instantiated inside Girder and their state is serialized as apart of Celery task call. These are deserialized inside Girder Worker and the transform method is called right before execution of the task code.  _The result of the transform method is what is passed to the task function_. This allows the transform method to perform side-effect style code that downloads data or metadata and passes that data to the task function.
+Transforms are instantiated inside Girder and their state is serialized as apart of Celery task call. These are deserialized inside Girder Worker and the transform method is called right before execution of the task code. *The result of the transform method is what is passed to the task function*. This allows the transform method to perform side-effect style code that downloads data or metadata and passes that data to the task function.
 
 Consider the following task function:
 
@@ -228,7 +212,93 @@ my_task.delay('/file/path/that/must/exist/in/girder/worker.txt')
 
 _Note_ The file path passed must be available on the girder worker instance.
 
-Now consider following transform which we will say is defined in ```my_package.transforms```:
+However, Girder worker's utilities includes the `GirderFileId` transform, which makes a Girder file available in the context of an executing task. To use this Transform from within Girder you can do the following:
+
+```python
+from girder_worker_utils.transforms.girder_io import GirderFileId
+from my_package.tasks import my_task
+
+# Assume file_id is made available through a requestHandler
+
+my_task.delay(GirderFileId(file_id))
+```
+
+Launching this task follows the same pattern as before, but rather than passing in a file path, we pass in a `GirderFileId` object, which will return a file path to a temporary file on the Girder Worker instance after downloading the file with Girder client.
+
+Finally, after the task has completed and all return values have been processed, `GirderFileId` will also remove the downloaded temporary file.
+
+
+#### Handling function return values
+
+The transforms as described so far provide a mechanism for getting Girder data onto the Girder Worker system and ultimately into the task function. A similar mechanism is used to handle task function return values.
+
+_Note_ this represents a shift in expectations with regard to the legacy Girder Worker scripts. Previously scripts were responsible for assigning values to special variables which were plucked out of the executors namespace and processed. Modern Girder Worker tasks are designed to work with return values.
+
+Consider the following task, which returns a path to an image on disk:
+
+```python
+from girder_worker.app import app
+from matplotlib import pylab as plt
+
+@app.task
+def my_task(arg1, arg2):
+
+	# Some analysis resulting in a matplotlib figure which is to be
+	# saved to a temporary file stored in # output_path.
+
+	plt.savefig(output_path)
+
+    return output_path
+```
+
+The goal is to have the data stored at `output_path` uploaded to a Girder Item. For this purpose we will use `GirderUploadToItem` from Girder worker's utilities. To make sure the task calls this transform we must use a special keyword argument when launching the task. That argument is the `girder_result_hooks`:
+
+```python
+from girder_worker_utils.transforms.girder_io import GirderUploadToItem
+from my_package.tasks import my_task
+
+# Some code that determines then item_id to upload the result too.
+
+my_task.delay(arg1, arg2,
+    girder_result_hooks=[
+		GirderUploadToItem(item_id),
+	])
+```
+
+Note that `girder_result_hooks` takes a sequence. Should a task function return a tuple of arguments, each argument will be passed to the result transform object in the sequence. E.g.:
+
+```python
+my_task.delay(arg1, arg2,
+    girder_result_hooks=[
+		GirderUploadToItem(item_id), # results[0]
+		GirderUploadToItem(item_id), # results[1]
+		# ....                       # results[...]
+	])
+```
+
+This provides a generic mechanism to handle side effects on the results of a task function at the time the task is launched.
+
+#### Creating your own transforms
+
+While the Girder worker utilities provide some pre-defined transforms, it is expected that most applications will need to write their own more specialized transforms.
+
+Actual transform classes are derived from the [girder\_worker\_utils.transform.Transform](https://github.com/girder/girder_worker_utils/blob/master/girder_worker_utils/transform.py#L6-L26) abstract base class. This class defines a simple API which includes the `transform` and `cleanup` methods:
+
+```python
+@six.add_metaclass(abc.ABCMeta)
+class Transform(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def cleanup(self):
+        pass
+
+    @abc.abstractmethod
+    def transform(self):
+        pass
+```
+
+Now consider following implementation of the `GirderFileId` transform:
 
 ```python
 import shutil
@@ -250,52 +320,17 @@ class GirderFileId(GirderClientTransform):
     def cleanup(self):
         shutil.rmtree(os.path.dirname(self.file_path),
                       ignore_errors=True)
-					  
 ```
 
-_Note_ that this transform inherits from [girder\_worker\_utils.transforms.girder_io.GirderClientTransform](https://github.com/girder/girder_worker_utils/blob/master/girder_worker_utils/transforms/girder_io.py#L10-L22), which provides a ```gc``` attribute on the transform. ```self.gc``` will be a fully functional ```GirderClient``` available inside the ```transform(...)``` function.
+Note that the `transform` method will be called before the task execution begins, and here will download the file with the `GirderClient.downloadFile` method. The `cleanup` method will be called after the task execution ends. 
 
+_Note_ that this transform inherits from [girder\_worker\_utils.transforms.girder_io.GirderClientTransform](https://github.com/girder/girder_worker_utils/blob/master/girder_worker_utils/transforms/girder_io.py#L10-L22), which provides a `gc` attribute on the transform. `self.gc` will be a fully functional `GirderClient` available inside the `transform(...)` function.
 
-To use this Transform from within Girder you can do the following:
+##### Creating your own result transforms
 
-```python
-from my_package.tasks import my_task
-from my_package.transforms import GirderFileId
+Transforms of task function return values are derived from the `girder_worker_utils.transform.ResultTransform` abstract base class.
 
-# Assume file_id is made available through a requestHandler
-
-my_task.delay(GirderFileId(file_id))
-```
-
-Launching this task follows the same pattern as before,  but rather than passing in a file path,  we pass in a ```GirderFileId``` object,  which will return a file path to a temporary file on the Girder Worker instance after downloading the file with the ```GirderClient.downloadFile``` method. 
-
-Finally,  after the task has completed and all return values have been processed,  the ```cleanup``` function will be called, and in the case of GirderFileId,  will remove the downloaded temporary file.
-
-
-#### Handling function return values
-
-The transforms as described so far provide a mechanism for getting Girder data onto the Girder Worker system and ultimately into the task function. A similar mechanism is used to handle task function return values. 
-
-_Note_ this represents a shift in expectations with regard to the legacy Girder Worker scripts.  Previously scripts were responsible for assigning values to special variables which were plucked out of the executors namespace and processed.  Modern Girder Worker tasks are designed to work with return values. 
-
-Consider the following task,  which returns a path to an image on disk:
-
-```python
-from girder_worker.app import app
-from matplotlib import pylab as plt
-
-@app.task
-def my_task(arg1, arg2):
-
-	# Some analysis resulting in a matplotlib figure which is to be
-	# saved to a temporary file stored in # output_path.
-
-	plt.savefig(output_path)
-
-    return output_path
-```
-
-The goal is to have the data stored at ```output_path``` uploaded to a Girder Item.  For this purpose we will use a class derived from ```girder_worker_utils.transform.ResultTransform``` Like the following:
+Now, consider the following result transform:
 
 ```python
 from girder_worker_utils.transforms.girder_io import GirderClientResultTransform
@@ -307,40 +342,12 @@ class GirderUploadToItem(GirderClientResultTransform):
 
     def transform(self, data):
         self.gc.uploadFileToItem(self.item_id, data)
-        return self.item_id         
+        return self.item_id
 ```
 
+Unlike the `Transform` class, classes derived from `ResultTransform` expect a value to be passed to the `transform()` method. In the case of a task function that returns a single value, this value is the return value of the task function. In the case of a task function that returns a tuple of values, this will be one of the positional return values. In the `GirderUploadToItem` transform we take the data and pass it on to the `GirderClient.uploadFileToItem` function.
 
-Unlike the ```Transform``` class,  classes derived from ```ResultTransform``` expect a value to be passed to the ```transform()``` method.  In the case of a task function that returns a single value, this value is the return value of the task function.  In the case of a task function that returns a tuple of values,  this will be one of the positional return values (More on this later).  In the ```GirderUploadToItem``` transform we take the data and pass it on to the ```GirderClient.uploadFileToItem``` function.
-
-_Note_ It is best practice to return a meaningful value from a ResultTransform.transform() function. That value will be forwarded on to the Celery results back end,  and used in subsequent tasks in the case of Celery task chaining.
-
-To make sure the task calls this transform we must use a special keyword argument when launching the task.  That argument is the ```girder_result_hooks```:
-
-```python
-from my_package.tasks import my_task
-from my_package.transforms import GirderUploadToItem
-
-# Some code that determins then item_id to upload the result too.
-
-my_task.delay(arg1, arg2,
-    girder_result_hooks=[
-		GirderUploadToItem(item_id),
-	])
-```
-
-Note that ```girder_result_hooks``` takes a sequence.  Should a task function return a tuple of arguments,  each argument will be passed to the coorisponding ResultTransform derived object in the sequence. E.g.:
-
-```python
-my_task.delay(arg1, arg2,
-    girder_result_hooks=[
-		GirderUploadToItem(item_id), # results[0]
-		GirderUploadToItem(item_id), # results[1]
-		# ....                       # results[...]
-	])
-```
-
-This provides a generic mechanism to handle side effects on the results of a task function at the time the task is launched.
+_Note_ It is best practice to return a meaningful value from a `ResultTransform.transform()` function. That value will be forwarded on to the Celery results back end, and used in subsequent tasks in the case of Celery task chaining.
 
 
 ### FAQ
@@ -353,11 +360,7 @@ This provides a generic mechanism to handle side effects on the results of a tas
   Please use Transforms to manage this process. The base Transform class is implemented in girder\_worker\_utils.transform.Transform. Currently there are several example implementations of transforms in girder\_worker\_utils.transforms.girder_io. We are hoping that as more projects implement common useful Transforms that these will be upstreamed into girder\_worker\_utils.
 
 ## "Docker" Mode Legacy Tasks
-
-
-
-
-
+TODO
 
 ## "Other" Mode Tasks
 Girder Worker no longer explicitly supports tasks written in other modes (e.g. R, scala, etc). Custom tasks could be written to support these modes based on the legacy executor.py file that implements that mode. For more information please [contact the Girder Worker developers via our Gitter chat](https://gitter.im/girder/girder_worker).
