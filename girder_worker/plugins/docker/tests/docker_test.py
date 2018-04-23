@@ -21,13 +21,18 @@ _err = six.StringIO('12345678error message\n')
 
 stdout_socket_mock = mock.Mock()
 stdout_socket_mock.fileno.return_value = OUT_FD
+stdout_socket_mock.recv = lambda _: _out.read()
 
 stderr_socket_mock = mock.Mock()
 stderr_socket_mock.fileno.return_value = ERR_FD
+stderr_socket_mock.recv = lambda _: _err.read()
 
 docker_container_mock = mock.Mock()
 docker_container_mock.attach_socket.side_effect = [stdout_socket_mock, stderr_socket_mock]
 docker_container_mock.status = 'exited'
+docker_container_mock.attrs = {
+    'State': {'ExitCode': 0}
+}
 
 docker_client_mock = mock.Mock()
 docker_client_mock.containers.run = mock.Mock(return_value=docker_container_mock)
@@ -57,20 +62,9 @@ def _mockSelect(r, w, x, *args, **kwargs):
 girder_worker.core.utils.select.select = _mockSelect
 
 
-# Monkey patch os.read to simulate subprocess stdout and stderr
-def _mockOsRead(fd, *args, **kwargs):
-    global _out, _err
-    if fd == OUT_FD:
-        return _out.read()
-    elif fd == ERR_FD:
-        return _err.read()
-
-
 def _close(self):
     pass
 
-
-girder_worker.plugins.docker.executor.os.read = _mockOsRead
 
 celery_task = mock.MagicMock()
 celery_task.canceled = False

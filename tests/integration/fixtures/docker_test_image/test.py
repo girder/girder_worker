@@ -77,5 +77,10 @@ def print_path(p):
     print(p)
 
 
+@cli.command()
+def raise_exception():
+    raise Exception('girder docker exception')
+
+
 if __name__ == '__main__':
     cli(obj={})

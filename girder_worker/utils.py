@@ -1,10 +1,103 @@
-import sys
 import time
+from celery.task.control import inspect
+
+from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
+
 import requests
+from requests import HTTPError
+
 
 import six
 
-from requests import HTTPError
+
+BUILTIN_CELERY_TASKS = [
+    'celery.accumulate'
+    'celery.backend_cleanup',
+    'celery.chain',
+    'celery.chord',
+    'celery.chord_unlock',
+    'celery.chunks',
+    'celery.group',
+    'celery.map',
+    'celery.starmap']
+
+
+def is_builtin_celery_task(task):
+    return task in BUILTIN_CELERY_TASKS
+
+
+def _maybe_model_repr(obj):
+    if hasattr(obj, '_repr_model_') and six.callable(obj._repr_model_):
+        return obj._repr_model_()
+    return obj
+
+
+# Access to the correct "Inspect" instance for this worker
+_inspector = None
+
+
+def _worker_inspector(task):
+    global _inspector
+    if _inspector is None:
+        _inspector = inspect([task.request.hostname])
+
+    return _inspector
+
+
+# Get this list of currently revoked tasks for this worker
+def _revoked_tasks(task):
+    _revoked = _worker_inspector(task).revoked()
+
+    if _revoked is None:
+        return []
+
+    return _revoked.get(task.request.hostname, [])
+
+
+def deserialize_job_info_spec(**kwargs):
+    return JobManager(**kwargs)
+
+
+class JobSpecNotFound(Exception):
+    pass
+
+
+def _job_manager(request=None, headers=None, kwargs=None):
+    if hasattr(request, 'jobInfoSpec'):
+        jobSpec = request.jobInfoSpec
+
+    # We are being called from revoked signal
+    elif headers is not None and \
+            'jobInfoSpec' in headers:
+        jobSpec = headers['jobInfoSpec']
+
+    # Deprecated: This method of passing job information
+    # to girder_worker is deprecated. Newer versions of girder
+    # pass this information automatically as apart of the
+    # header metadata in the worker scheduler.
+    elif kwargs and 'jobInfo' in kwargs:
+        jobSpec = kwargs.pop('jobInfo', {})
+
+    else:
+        raise JobSpecNotFound
+
+    return deserialize_job_info_spec(**jobSpec)
+
+
+def _update_status(task, status):
+    task.job_manager.updateStatus(status)
+
+
+def is_revoked(task):
+    """
+    Utility function to check is a task has been revoked.
+
+    :param task: The task.
+    :type task: celery.app.task.Task
+    :return True, if this task is in the revoked list for this worker, False
+            otherwise.
+    """
+    return task.request.id in _revoked_tasks(task)
 
 
 def girder_job(title=None, type='celery', public=False,
@@ -56,6 +149,26 @@ class StateTransitionException(Exception):
     pass
 
 
+class TeeCustomWrite(Tee):
+    def __init__(self, func, *args, **kwargs):
+        super(TeeCustomWrite, self).__init__(*args, **kwargs)
+        self._write_func = func
+
+    def write(self, *args, **kwargs):
+        self._write_func(*args, **kwargs)
+        super(TeeCustomWrite, self).write(*args, **kwargs)
+
+
+@tee_stdout
+class TeeStdOutCustomWrite(TeeCustomWrite):
+    pass
+
+
+@tee_stderr
+class TeeStdErrCustomWrite(TeeCustomWrite):
+    pass
+
+
 class JobManager(object):
     """
     This class can be used to write log messages to Girder by capturing
@@ -94,15 +207,13 @@ class JobManager(object):
         self._progressMessage = None
 
         if logPrint:
-            self._pipes = sys.stdout, sys.stderr
-            sys.stdout, sys.stderr = self, self
+            self._stdout = TeeStdOutCustomWrite(self.write)
+            self._stderr = TeeStdErrCustomWrite(self.write)
 
-    def _redirectPipes(self, redirect):
+    def cleanup(self):
         if self.logPrint:
-            if redirect:
-                sys.stdout, sys.stderr = self, self
-            else:
-                sys.stdout, sys.stderr = self._pipes
+            self._stdout.reset()
+            self._stderr.reset()
 
     def _flush(self):
         """
@@ -114,7 +225,6 @@ class JobManager(object):
 
         if len(self._buf) or self._progressTotal or self._progressMessage or \
                 self._progressCurrent is not None:
-            self._redirectPipes(False)
 
             req = requests.request(
                 self.method.upper(), self.url, allow_redirects=True,
@@ -126,15 +236,6 @@ class JobManager(object):
                 })
             req.raise_for_status()
             self._buf = b''
-
-            self._redirectPipes(True)
-
-    def flush(self):
-        """
-        This API call is required to conform to file-like objects,
-        but in this case is a no-op to avoid circumventing rate-limiting.
-        """
-        pass
 
     def write(self, message, forceFlush=False):
         """
@@ -149,9 +250,6 @@ class JobManager(object):
             server. Useful if you don't expect another update for some time.
         :type forceFlush: bool
         """
-        if self.logPrint:
-            self._pipes[0].write(message)
-
         if isinstance(message, six.text_type):
             message = message.encode('utf8')
 
@@ -175,7 +273,6 @@ class JobManager(object):
         self._flush()
         self.status = status
         try:
-            self._redirectPipes(False)
             req = requests.request(self.method.upper(), self.url, headers=self.headers,
                                    data={'status': status}, allow_redirects=True)
             req.raise_for_status()
@@ -189,8 +286,6 @@ class JobManager(object):
                     raise
             else:
                 raise
-        finally:
-            self._redirectPipes(True)
 
     def updateProgress(self, total=None, current=None, message=None,
                        forceFlush=False):
@@ -222,11 +317,7 @@ class JobManager(object):
         """
         Refresh the status field from Girder
         """
-        try:
-            self._redirectPipes(False)
-            r = requests.get(self.url, headers=self.headers, allow_redirects=True)
-            self.status = r.json()['status']
+        r = requests.get(self.url, headers=self.headers, allow_redirects=True)
+        self.status = r.json()['status']
 
-            return self.status
-        finally:
-            self._redirectPipes(True)
+        return self.status

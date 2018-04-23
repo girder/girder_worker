@@ -1,34 +1,62 @@
 .DEFAULT_GOAL := initialize
 
-COMPOSE_FILE=docker-compose.yml
-ANSIBLE_INVENTORY=inventory
-ANSIBLE_EXTRA_VARS=-e girder_host=girder -e girder_port=8989 -e celery_broker="amqp://guest:guest@rabbit/"
 
 initialize:
+	pip install -U pip
 	pip install -U -r requirements.txt
 	ansible-galaxy install --force --roles-path ./scripts/roles girder.girder
 
-run:
-	docker-compose -f $(COMPOSE_FILE) -f docker-compose.docker.yml up -d; \
-	cd scripts/ && ansible-playbook -i $(ANSIBLE_INVENTORY) $(ANSIBLE_EXTRA_VARS) setup.yml
+run2: 
+	docker-compose -f docker-compose.yml up -d; \
+	cd scripts/ && ansible-playbook -i inventory setup.yml
 
 
-worker_restart:
-	docker-compose -f $(COMPOSE_FILE) restart girder_worker
+run3: 
+	docker-compose -f docker-compose.yml -f docker-compose.py3.yml up -d; \
+	cd scripts/ && ansible-playbook -i inventory -e ansible_python_interpreter=python3 setup.yml
+
+test: test2
+
+test2:
+	pytest -v -x -n4
+
+# Ignore girder_worker.run 'traditional' tests
+test3:
+	pytest -v -x -n4 -k "not traditional"
+
+# The following are convienence functions for local development of
+# integration tests.
+
+worker_restart2:
+	docker-compose -f docker-compose.yml restart girder_worker
+
+worker_restart3:
+	docker-compose -f docker-compose.yml -f docker-compose.py3.yml restart girder_worker
 
 
 clean:
-	docker-compose -f $(COMPOSE_FILE) stop
-	docker-compose -f $(COMPOSE_FILE) rm -vf
-	-docker rmi -f integration_girder_worker_data_volume
+	docker-compose -f docker-compose.yml stop
+	docker-compose -f docker-compose.yml rm -vf
+	docker-compose -f docker-compose.yml -f docker-compose.py3.yml stop
+	docker-compose -f docker-compose.yml -f docker-compose.py3.yml rm -vf
+
+
+# Note that this will force a re-pull of girder/girder:latest{-py3}
+# and girder/girder_worker:latest{-py3} be REMOVING these images from
+# your local system.
 
 nuke: clean
 	-docker rmi \
-	  girder/girder:gw_integration_test \
-	  girder/girder_worker:gw_integration_test
+	girder/girder:gw_integration_test \
+	girder/girder_worker:gw_integration_test \
+	girder/girder:gw_integration_test-py3 \
+	girder/girder_worker:gw_integration_test-py3 \
+	girder/girder:latest \
+	girder/girder:latest-py3 \
+	girder/girder_worker:latest \
+	girder/girder_worker:latest-py3
 
-test:
-	pytest -v -x -n4
 
 
-.PHONY: initialize dev clean nuke test init run
+
+.PHONY: initialize run2 run3 test test3 worker_restart2 worker_restart3 clean nuke

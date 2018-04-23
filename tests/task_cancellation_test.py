@@ -1,12 +1,12 @@
 import unittest
 import mock
 
-from girder_worker.app import is_revoked
+from girder_worker.utils import is_revoked
 
 
 class TestCancellation(unittest.TestCase):
 
-    @mock.patch('girder_worker.app.inspect')
+    @mock.patch('girder_worker.utils.inspect')
     def test_is_revoked(self, inspect):
         task = mock.MagicMock()
         task.request.parent_id = None

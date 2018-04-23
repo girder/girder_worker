@@ -14,9 +14,9 @@ from girder_worker import logger
 from girder_worker.docker import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 from girder_worker.docker.io import (
+    FileDescriptorReader,
     FDWriteStreamConnector,
     FDReadStreamConnector,
-    FileDescriptorReader,
     FDStreamConnector,
     StdStreamWriter
 )
@@ -67,6 +67,30 @@ def _run_container(image, container_args,  **kwargs):
         raise
 
 
+class _SocketReader(FileDescriptorReader):
+    """
+    Used to mediate the difference between the python 2/3 implementation of docker-py
+    with python 2 attach_socket(...) returns a socket like object, with python 3
+    it returns an instance of SocketIO.
+    """
+    def __init__(self, socket):
+        self._socket = socket
+
+    def read(self, n):
+        # socket
+        if hasattr(self._socket, 'recv'):
+            return self._socket.recv(n)
+
+        # SocketIO
+        return self._socket.read(n)
+
+    def fileno(self):
+        return self._socket.fileno()
+
+    def close(self):
+        self._socket.close()
+
+
 def _run_select_loop(task, container, read_stream_connectors, write_stream_connectors):
     stdout = None
     stderr = None
@@ -93,7 +117,7 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         stdout_connected = False
         for read_stream_connector in read_stream_connectors:
             if isinstance(read_stream_connector.input, ContainerStdOut):
-                stdout_reader = FileDescriptorReader(stdout.fileno())
+                stdout_reader = _SocketReader(stdout)
                 read_stream_connector.output = DockerStreamPushAdapter(read_stream_connector.output)
                 read_stream_connector.input = stdout_reader
                 stdout_connected = True
@@ -102,7 +126,7 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         stderr_connected = False
         for read_stream_connector in read_stream_connectors:
             if isinstance(read_stream_connector.input, ContainerStdErr):
-                stderr_reader = FileDescriptorReader(stderr.fileno())
+                stderr_reader = _SocketReader(stderr)
                 read_stream_connector.output = DockerStreamPushAdapter(read_stream_connector.output)
                 read_stream_connector.input = stderr_reader
                 stderr_connected = True
@@ -111,14 +135,14 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
         # If not stdout and stderr connection has been provided just use
         # sys.stdXXX
         if not stdout_connected:
-            stdout_reader = FileDescriptorReader(stdout.fileno())
+            stdout_reader = _SocketReader(stdout)
             connector = FDReadStreamConnector(
                 stdout_reader,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stdout)))
             read_stream_connectors.append(connector)
 
         if not stderr_connected:
-            stderr_reader = FileDescriptorReader(stderr.fileno())
+            stderr_reader = _SocketReader(stderr)
             connector = FDReadStreamConnector(
                 stderr_reader,
                 DockerStreamPushAdapter(StdStreamWriter(sys.stderr)))
@@ -149,6 +173,10 @@ def _run_select_loop(task, container, read_stream_connectors, write_stream_conne
                 logger.error(dex)
                 raise
 
+        container.reload()
+        exit_code = container.attrs['State']['ExitCode']
+        if not task.canceled and exit_code != 0:
+            raise DockerException('Non-zero exit code from docker container (%d).' % exit_code)
     finally:
         # Close our stdout and stderr sockets
         if stdout:
@@ -238,27 +266,32 @@ class DockerTask(Task):
 
         # Set the permission to allow cleanup of temp directories
         temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
-        if len(temp_volumes) > 0:
-            to_chmod = temp_volumes[:]
-            # If our default_temp_volume instance has been transformed then we
-            # know it has been used and we have to clean it up.
-            if default_temp_volume._transformed:
-                to_chmod.append(default_temp_volume)
+        to_chmod = temp_volumes[:]
+        # If our default_temp_volume instance has been transformed then we
+        # know it has been used and we have to clean it up.
+        if default_temp_volume._transformed:
+            to_chmod.append(default_temp_volume)
+            temp_volumes.append(default_temp_volume)
+
+        if len(to_chmod) > 0:
             utils.chmod_writable([v.host_path for v in to_chmod])
-            for v in temp_volumes + [default_temp_volume]:
-                shutil.rmtree(v.host_path)
+
+        for v in temp_volumes:
+            shutil.rmtree(v.host_path)
 
 
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-                volumes={}, remove_container=False, stream_connectors=[], **kwargs):
+                volumes=None, remove_container=True, stream_connectors=None, **kwargs):
+    volumes = volumes or {}
+    stream_connectors = stream_connectors or []
+    container_args = container_args or []
 
     if pull_image:
         logger.info('Pulling Docker image: %s', image)
         _pull_image(image)
 
-    if entrypoint is not None:
-        if not isinstance(entrypoint, (list, tuple)):
-            entrypoint = [entrypoint]
+    if entrypoint is not None and not isinstance(entrypoint, (list, tuple)):
+        entrypoint = [entrypoint]
 
     run_kwargs = {
         'tty': False,
@@ -267,15 +300,13 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     }
 
     # Allow run args to be overridden,filter out any we don't want to override
-    extra_run_kwargs = {k: v for k, v in kwargs.items() if k not
-                        in BLACKLISTED_DOCKER_RUN_ARGS}
+    extra_run_kwargs = {k: v for k, v in kwargs.items() if k not in BLACKLISTED_DOCKER_RUN_ARGS}
     run_kwargs.update(extra_run_kwargs)
 
     if entrypoint is not None:
         run_kwargs['entrypoint'] = entrypoint
 
-    (container_args, read_streams, write_streams) = \
-        _handle_streaming_args(container_args)
+    container_args, read_streams, write_streams = _handle_streaming_args(container_args)
 
     for connector in stream_connectors:
         if isinstance(connector, FDReadStreamConnector):
@@ -315,7 +346,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
 
 @app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-               volumes={}, remove_container=False, **kwargs):
+               volumes=None, remove_container=True, **kwargs):
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
         remove_container, **kwargs)

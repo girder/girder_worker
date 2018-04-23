@@ -70,9 +70,9 @@ class ContainerStdErr(Transform):
         pass
 
 
-class Volume(Transform):
+class BindMountVolume(Transform):
     """
-    A docker volume that will be attached to a docker container.
+    A volume that will be bind mounted to a docker container.
     """
     def __init__(self, host_path, container_path, mode='rw'):
         """
@@ -114,7 +114,7 @@ class _TemporaryVolumeMetaClass(abc.ABCMeta):
         return _DefaultTemporaryVolume()
 
 
-class _TemporaryVolumeBase(Volume):
+class _TemporaryVolumeBase(BindMountVolume):
     def __init__(self, *arg, **kwargs):
         super(_TemporaryVolumeBase, self).__init__(*arg, **kwargs)
         self._transformed = False
@@ -171,7 +171,7 @@ class _DefaultTemporaryVolume(TemporaryVolume):
     An instance of the class is returned each time `TemporaryVolume.default` is accessed.
     When the docker_run task is executed the transform(...) method is call with an instance
     containing information about the actual default temporary volume associated with the
-    task. The place holder then delgates all functionality to this instance.
+    task. The place holder then delegates all functionality to this instance.
     """
     def transform(self, _default_temp_volume=None, **kwargs):
         self._instance = _default_temp_volume
@@ -317,6 +317,9 @@ class VolumePath(Transform):
             return os.path.join(self._volume.host_path, self.filename)
         else:
             return os.path.join(self._volume.container_path, self.filename)
+
+    def _repr_model_(self):
+        return '<%s.%s: "%s">' % (self.__module__, self.__class__.__name__, self.filename)
 
 
 class Connect(Transform):

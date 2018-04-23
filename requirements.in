@@ -5,7 +5,8 @@ networkx<2
 pymongo>=3
 requests[security]
 six
+setuptools_scm
 stevedore
 jsonpickle
-girder_worker_utils>=0.7.1
+girder_worker_utils>=0.8.0
 docker>=2.6.0

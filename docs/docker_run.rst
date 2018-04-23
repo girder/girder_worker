@@ -12,10 +12,10 @@ The ``docker_run`` task exposes a ``container_args`` parameter which can be used
 to pass arguments to the container entrypoint.
 
 
-Volumes
--------
+BindMountVolumes
+----------------
 
-The volumes to be mounted into a container can be passed to the ``docker_run`` task
+The volumes to be bind mounted into a container can be passed to the ``docker_run`` task
 in one of two ways.
 
 Using docker-py syntax
@@ -36,23 +36,23 @@ which is passed directly to docker-py. For example
     }
     docker_run.delay('my/image', pull_image=True, volumes=volumes)
 
-Using the Volume class
-^^^^^^^^^^^^^^^^^^^^^^
+Using the BindMountVolume class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Girder Worker provides a utility class :py:class:`girder_worker.docker.transforms.Volume`
+Girder Worker provides a utility class :py:class:`girder_worker.docker.transforms.BindMountVolume`
 that can be used to define volumes that should be mounted into a container. These classes
 can also be used in conjunction with other parts of the girder_work docker infrastructure,
 for example providing a location where a file should be downloaded to.
-See `Downloading files from Girder`_. When using the :py:class:`girder_worker.docker.transforms.Volume`
+See `Downloading files from Girder`_. When using the :py:class:`girder_worker.docker.transforms.BindMountVolume`
 class a list of instances is provided as the value for the ``volumes`` parameter, Girder Worker
 will take care of ensuring that these volumes are mounted. In the example below we are creating
-a :py:class:`girder_worker.docker.transforms.Volume` instance and passing it as a container argument to provide
+a :py:class:`girder_worker.docker.transforms.BindMountVolume` instance and passing it as a container argument to provide
 the mounted location to the container. Girder Worker will take care of transforming
 the instance into the approriate path inside the container.
 
 .. code-block:: python
 
-    vol = Volume('/home/docker/data', '/mnt/docker/')
+    vol = BindMountVolume('/home/docker/data', '/mnt/docker/')
     docker_run.delay('my/image', pull_image=True, volumes=[vol], container_args=[vol])
 
 Temporary Volume
@@ -72,7 +72,7 @@ will simply received a path.
 
 .. code-block:: python
 
-    vol = Volume('/home/docker/data', '/mnt/docker/')
+    vol = BindMountVolume('/home/docker/data', '/mnt/docker/')
     docker_run.delay('my/image', pull_image=True, container_args=[TemporaryVolume.default])
 
 Note that because we are using the default path, we don't have to add the instance to
@@ -97,11 +97,11 @@ downloaded to into the docker container's entrypoint as an argument.
 
 If no ``volume`` parameter is specified then the file will be downloading to the
 task temporary volume. The file can also be downloaded to a specific
-:py:class:`girder_worker.docker.transforms.Volume` by specifying a volume parameter, as follows:
+:py:class:`girder_worker.docker.transforms.BindMountVolume` by specifying a volume parameter, as follows:
 
 .. code-block:: python
 
-    vol = Volume(host_path, container_path)
+    vol = BindMountVolume(host_path, container_path)
     docker_run.delay('my/image', pull_image=True,
         container_args=[GirderFileIdToVolume(file_id,volume=vol)])
 
@@ -194,4 +194,8 @@ and start reading. Below is an example python entry point:
     with open(sys.argv[1]) as fp:
         fp.read() # This will be reading the files contents
 
+MacOS Volume mounting issue workaround
+--------------------------------------
+
+Due to some odd symlinking behavior by Docker engine on MacOS, it may be necessary to add a workaround when running the girder_worker. If your ``TMPDIR`` environment variable is underneath the ``/var`` directory and you see errors from Docker about ``MountsDenied``, try running girder worker with the ``TMPDIR`` set underneath ``/private/var`` instead of ``/var``. The location should be equivalent since ``/var`` is a symlink to ``/private/var``.
 

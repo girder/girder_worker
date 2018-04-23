@@ -3,6 +3,7 @@ import re
 from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from girder_worker.app import app
+from girder_worker.entrypoint import discover_tasks
 
 from girder_worker_utils import decorators
 from girder_worker_utils import types
@@ -31,11 +32,13 @@ def test_get_extension_manager():
     assert names == ['core', 'plugin1', 'plugin2']
 
 
-@pytest.mark.skipif(six.PY3, reason='Python 2 only')
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
 def test_get_core_task_modules():
     modules = entrypoint.get_core_task_modules()
-    assert modules == ['os.path']
+    if six.PY2:
+        assert modules == ['os.path']
+    else:
+        assert modules == []
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
@@ -43,7 +46,7 @@ def test_import_all_includes():
     with mock.patch('girder_worker.entrypoint.import_module') as imp:
         entrypoint.import_all_includes()
         imp.assert_has_calls(
-            (mock.call('os.path'), mock.call('girder_worker._test_plugins.tasks')),
+            [mock.call('girder_worker._test_plugins.tasks')],
             any_order=True)
 
 
@@ -58,21 +61,24 @@ def test_invalid_plugins(capsys):
     for line in out:
         assert re.search('^Problem.*(exception[12]|invalid|import), skipping$', line)
 
-    assert entrypoint.get_core_task_modules() == ['os.path']
+    if six.PY2:
+        assert entrypoint.get_core_task_modules() == ['os.path']
+    else:
+        assert entrypoint.get_core_task_modules() == []
 
 
 @pytest.mark.skipif(six.PY3, reason='Python 2 only')
 def test_core_plugin():
-    with mock.patch('girder_worker.__main__.app') as app:
-        main()
+    with mock.patch('girder_worker.app.app') as app:
+        discover_tasks(app, True)
         app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                          ['girder_worker.tasks']})
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
 def test_external_plugins():
-    with mock.patch('girder_worker.__main__.app') as app:
-        main()
+    with mock.patch('girder_worker.app.app') as app:
+        discover_tasks(app, True)
         if six.PY2:
             app.conf.update.assert_any_call({'CELERY_IMPORTS':
                                              ['os.path']})
@@ -85,7 +91,10 @@ def test_get_extensions():
     with mock.patch('girder_worker.__main__.app'):
         main()
         extensions = sorted(entrypoint.get_extensions())
-        assert extensions == ['core', 'plugin1', 'plugin2']
+        if six.PY2:
+            assert extensions == ['core', 'plugin1', 'plugin2']
+        else:
+            assert extensions == ['plugin1', 'plugin2']
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')

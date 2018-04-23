@@ -1,2 +1,4 @@
 #!/bin/bash
-python -m girder "$@"
+BIN=${PYTHON_BIN:-python}
+
+$BIN -m girder "$@"

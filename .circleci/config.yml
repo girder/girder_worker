@@ -1,108 +1,201 @@
 version: 2
+
+integration_steps:
+  ssh-keys:  &ssh-keys
+    add_ssh_keys:
+      fingerprints:
+        - "50:b7:1d:44:fd:c4:f4:06:9a:4c:0f:16:0c:e1:3b:91"
+
+  install-docker-compose: &install-docker-compose
+    run:
+      name: Install Docker Compose
+      command: |
+        pip install docker-compose
+
+  run-env: &run-env
+    run:
+      name: Get the environment up and running with Docker Compose
+      command: |
+        cd tests/integration && make && make run${RUN_ENV}
+
+  run-tests: &run-tests
+    run:
+      name: Run integration tests
+      command: |
+        cd tests/integration && make test${RUN_ENV}
+
+  dump-girder-logs: &dump-girder-logs
+    run:
+      name: Dump girder docker logs
+      command: |
+        cd tests/integration && docker-compose logs girder
+      when: on_fail
+
+  dump-worker-logs: &dump-worker-logs
+    run:
+      name: Dump girder_worker docker logs
+      command: |
+        cd tests/integration && docker-compose logs girder_worker
+      when: on_fail
+
+
+unit_steps:
+  virtual-env: &virtual-env
+    run:
+      name: Setup virtual environment
+      command: |
+        if [ ! -d girder_env ]; then python -m virtualenv girder_env || python -m venv girder_env; fi
+        echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
+
+  ci-deps: &ci-deps
+    run:
+      name: Install CI dependencies
+      command: pip install codecov tox
+
+  upload-coverage: &upload-coverage
+    run:
+      name: Upload coverage to codecov
+      command: coverage combine && codecov
+
+
 jobs:
-  integration_tests:
+  py2_integration_tests:
     machine: true
     working_directory: /home/circleci/project
+    environment:
+      - RUN_ENV: 2
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "50:b7:1d:44:fd:c4:f4:06:9a:4c:0f:16:0c:e1:3b:91"
+      - *ssh-keys
       - checkout
-      - run:
-          name: Install Docker Compose
-          command: |
-            pip install docker-compose
-      - run:
-          name: Get the environment up and running with Docker Compose
-          command: |
-            cd tests/integration && make && make run
+      - *install-docker-compose
+      - *run-env
+      - *run-tests
+      - *dump-girder-logs
+      - *dump-worker-logs
 
+  py3_integration_tests:
+    machine: true
+    working_directory: /home/circleci/project
+    environment:
+      - RUN_ENV: 3
+    steps:
       - run:
-          name: Run integration tests
+          name: Set up Python 3.6
           command: |
-            cd tests/integration && make test
+             pyenv install 3.6.3 || true
+             pyenv global 3.6.3
 
-      - run:
-          name: Dump girder docker logs
-          command: |
-            cd tests/integration && docker-compose logs girder
-          when: on_fail
-
-      - run:
-          name: Dump girder_worker docker logs
-          command: |
-            cd tests/integration && docker-compose logs girder_worker
-          when: on_fail
-
-      - deploy:
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                ./scripts/galaxy_deploy.sh
-            fi
+      - *ssh-keys
+      - checkout
+      - *install-docker-compose
+      - *run-env
+      - *run-tests
+      - *dump-girder-logs
+      - *dump-worker-logs
 
   py2_unit_tests:
     docker:
       - image: circleci/python:2.7
     steps:
       - checkout
-      - run:
-          name: Setup virtual environment
-          command: |
-            if [ ! -d girder_env ]; then virtualenv girder_env; fi
-            echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install CI dependencies
-          command: pip install codecov tox
+      - *virtual-env
+      - *ci-deps
       - run:
           name: Run unit tests
           command: tox -e py27
-      - run:
-          name: Upload coverage to codecov
-          command: coverage combine && codecov
+      - *upload-coverage
 
   py3_unit_tests:
     docker:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run:
-          name: Setup virtual environment
-          command: |
-            if [ ! -d girder_env ]; then python3 -m venv girder_env; fi &&
-            echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install CI dependencies
-          command: pip install codecov tox
+      - *virtual-env
+      - *ci-deps
       - run:
           name: Run unit tests
           command: tox -e py36
-      - run:
-          name: Upload coverage to codecov
-          command: coverage combine && codecov
+      - *upload-coverage
 
   lint:
     docker:
       - image: circleci/python:2.7
     steps:
       - checkout
-      - run:
-          name: Create virtual environment (if necessary)
-          command: if [ ! -d girder_env ]; then virtualenv girder_env; fi
-      - run:
-          name: Activate virtual environment
-          command: echo ". $CIRCLE_WORKING_DIRECTORY/girder_env/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install tox
-          command: pip install tox
+      - *virtual-env
+      - *ci-deps
       - run:
           name: Run linting tests
           command: tox -e lint
+
+  deploy:
+    machine: true
+    working_directory: /home/circleci/project
+    steps:
+      - *ssh-keys
+      - checkout
+      - deploy:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                ./scripts/galaxy_deploy.sh
+            fi
+
+  release:
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - *virtual-env
+      - *ci-deps
+      - run:
+          name: Release to PyPI
+          command: tox -e release
+
 
 workflows:
   version: 2
   ci:
     jobs:
-      - py2_unit_tests
-      - py3_unit_tests
-      - integration_tests
-      - lint
+      - py2_unit_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - py3_unit_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - py2_integration_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - py3_integration_tests:
+          filters:
+            tags:
+              only: /^v.*/
+      - lint:
+          filters:
+            tags:
+              only: /^v.*/
+      - release:
+          requires:
+            - py2_unit_tests
+            - py3_unit_tests
+            - py2_integration_tests
+            - py3_integration_tests
+            - lint
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
+      - deploy:
+          requires:
+            - py2_unit_tests
+            - py3_unit_tests
+            - py2_integration_tests
+            - py3_integration_tests
+            - lint
+          filters:
+            branches:
+              only: master

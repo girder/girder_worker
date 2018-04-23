@@ -1,9 +1,11 @@
 from importlib import import_module
-
-from girder_worker_utils import decorators
-import six
-from stevedore import extension
 import celery
+from girder_worker_utils import decorators
+
+import six
+
+from stevedore import extension
+
 
 #: Defines the namespace used for plugin entrypoints
 NAMESPACE = 'girder_worker_plugins'
@@ -56,9 +58,13 @@ def get_task_imports(ext):
     return includes
 
 
+# Core tasks are only supported on python 2.  When running in python 3
+# this always returns an empty list to avoid loading `girder_worker.core`.
 def get_core_task_modules(app=None):
     """Return task modules defined by core."""
-    return get_task_imports(get_extension_manager(app=app)['core'])
+    if six.PY2:
+        return get_task_imports(get_extension_manager(app=app)['core'])
+    return []
 
 
 def get_plugin_task_modules(app=None):
@@ -81,8 +87,14 @@ def import_all_includes(core=True):
 
 
 def get_extensions(app=None):
-    """Get a list of install extensions."""
-    return [ext.name for ext in get_extension_manager(app)] + list(_extensions.keys())
+    """Get a list of installed extensions."""
+    extensions = [ext.name for ext in get_extension_manager(app)] + list(_extensions.keys())
+
+    # Because the "core" entrypoint is installed with girder_worker, we have
+    # to manually exclude it from the list of extensions when not on python 2.
+    if not six.PY2:
+        extensions = list(filter(lambda extension: extension != 'core', extensions))
+    return extensions
 
 
 def get_module_tasks(module_name):
@@ -153,3 +165,14 @@ def register_extension(name, tasks):
     """
     global _extensions
     _extensions[name] = tasks
+
+
+def discover_tasks(app, core=True):
+    if core:
+        app.conf.update({
+            'CELERY_IMPORTS': get_core_task_modules()
+        })
+
+    app.conf.update({
+        'CELERY_INCLUDE': get_plugin_task_modules()
+    })
