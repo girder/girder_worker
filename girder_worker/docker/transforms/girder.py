@@ -95,6 +95,47 @@ class GirderFileIdToVolume(GirderClientTransform):
             fname=self._filename)
 
 
+class GirderFolderIdToVolume(GirderClientTransform):
+    def __init__(self, _id, volume=TemporaryVolume.default, folder_name=None, **kwargs):
+        super(GirderFolderIdToVolume, self).__init__(**kwargs)
+        self._folder_id = str(_id)
+        self._volume = volume
+        self._folder_name = folder_name
+        self._folder_path = None
+
+    def _create_folder_path(self, root):
+        if self._folder_name is None:
+            # If no folder name is explicitly passed, we read the filename from Girder
+            # and put it in its own directory named by its UUID.
+            self._folder_name = self.gc.getFolder(self._folder_id)['name']
+        path = os.path.join(root, self._folder_id, self._folder_name)
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+
+        return os.path.join(self._folder_id, self._folder_name), path
+
+    def transform(self, **kwargs):
+        self._volume.transform(**kwargs)
+        dir = self._volume.host_path
+        rel_path, self._folder_path = self._create_folder_path(dir)
+
+        self.gc.downloadFolderRecursive(self._folder_id, self._folder_path)
+
+        # Return the path inside the container
+        return os.path.join(self._volume.container_path, rel_path)
+
+    def cleanup(self, **kwargs):
+        if self._folder_path is not None:
+            shutil.rmtree(self._folder_path, ignore_errors=True)
+
+    def _repr_model_(self):
+        return '<%s.%s: Folder ID=%s -> "%s">' % (
+            self.__module__, self.__class__.__name__, self._folder_id, self._folder_path)
+
+
 class GirderUploadVolumePathToItem(GirderUploadToItem):
     def __init__(self, volumepath, item_id,  delete_file=False, **kwargs):
         item_id = str(item_id)
