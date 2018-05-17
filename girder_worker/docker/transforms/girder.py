@@ -4,6 +4,7 @@ import shutil
 from girder_worker_utils.transform import Transform
 from girder_worker_utils.transforms.girder_io import (
     GirderClientTransform,
+    GirderUploadToFolder,
     GirderUploadToItem
 )
 
@@ -147,3 +148,15 @@ class GirderUploadVolumePathToItem(GirderUploadToItem):
         path = _maybe_transform(self._volumepath, *args, **kwargs)
 
         return super(GirderUploadVolumePathToItem, self).transform(path)
+
+
+class GirderUploadVolumePathToFolder(GirderUploadToFolder):
+    def __init__(self, volumepath, folder_id,  delete_file=False, **kwargs):
+        folder_id = str(folder_id)
+        super(GirderUploadVolumePathToFolder, self).__init__(folder_id, delete_file, **kwargs)
+        self._volumepath = volumepath
+
+    def transform(self, *args, **kwargs):
+        path = _maybe_transform(self._volumepath, *args, **kwargs)
+
+        return super(GirderUploadVolumePathToFolder, self).transform(path)
