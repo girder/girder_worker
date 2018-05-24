@@ -66,7 +66,7 @@ reads the file as part of the automatic data format conversion.
    lenna = {
        'type': 'image',
        'format': 'png',
-       'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
+       'url': 'https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png'
    }
 
 .. testcode::
