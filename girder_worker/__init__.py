@@ -1,7 +1,8 @@
 import abc
 import os
 from pkg_resources import DistributionNotFound, get_distribution
-from six.moves.configparser import SafeConfigParser, add_metaclass
+from six.moves.configparser import SafeConfigParser
+from six import add_metaclass
 
 from . import log_utils
 
