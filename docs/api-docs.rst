@@ -182,14 +182,14 @@ are equivalent:
 .. code-block:: none
 
     {
-        'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
+        'url': 'https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png'
     }
 
 .. code-block:: none
 
     {
         'mode': 'http',
-        'url': 'https://upload.wikimedia.org/wikipedia/en/2/24/Lenna.png'
+        'url': 'https://upload.wikimedia.org/wikipedia/en/7/7d/Lenna_%28test_image%29.png'
     }
 
 The following two specifications are also equivalent:
