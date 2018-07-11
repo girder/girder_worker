@@ -1,4 +1,4 @@
-celery>=4
+celery>=4,<4.2
 funcsigs ; python_version < '3.3'
 girder-client>=2
 networkx<2
