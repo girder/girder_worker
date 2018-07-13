@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial as base
 
 RUN apt-get update && \
   apt-get install -qy software-properties-common python-software-properties && \
@@ -11,29 +11,29 @@ RUN apt-get update && \
     libssl-dev \
     libjpeg-dev \
     zlib1g-dev \
-    r-base \
     libpython-dev && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py
 
 
-WORKDIR /girder_worker
-COPY setup.py /girder_worker/setup.py
-COPY requirements.txt /girder_worker/requirements.txt
-COPY requirements.in /girder_worker/requirements.in
-COPY README.rst /girder_worker/README.rst
-COPY examples /girder_worker/examples
-COPY scripts /girder_worker/scripts
-COPY girder_worker /girder_worker/girder_worker
-COPY docker-entrypoint.sh /girder_worker/docker-entrypoint.sh
+FROM base as build
 
-RUN pip install -e .
+RUN apt-get update && apt-get install -qy git
+
+COPY ./ /girder_worker/
+WORKDIR /girder_worker
+
+RUN rm -rf ./dist && python setup.py sdist
+
+FROM base
+COPY --from=build /girder_worker/dist/*.tar.gz /
+COPY --from=build /girder_worker/docker-entrypoint.sh /docker-entrypoint.sh
+RUN pip install /*.tar.gz
 
 RUN useradd -D --shell=/bin/bash && useradd -m worker
 
-# RUN /usr/local/bin/girder-worker-config set girder_worker tmp_root /tmp
-RUN chown -R worker:worker /girder_worker
+RUN chown -R worker:worker /usr/local/lib/python2.7/dist-packages/girder_worker/
 
 USER worker
 
@@ -43,4 +43,4 @@ RUN girder-worker-config set celery broker "amqp://%(RABBITMQ_USER)s:%(RABBITMQ_
 
 VOLUME /girder_worker
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
