@@ -3,7 +3,8 @@ MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
 
 USER root
 
-RUN girder-worker-config set celery broker "amqp://guest:guest@rabbit/"
+# Remove the sdist install from the base image
+RUN pip uninstall -y girder-worker
 
 RUN apt-get update && apt-get install -y sudo
 
