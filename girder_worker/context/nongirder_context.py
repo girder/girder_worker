@@ -61,6 +61,7 @@ def create_task_job(job_defaults, sender=None, body=None,
             response = gc.post('job', parameters=parameters, jsonResp=False)
             if response.ok:
                 headers['jobInfoSpec'] = response.json().get('jobInfoSpec')
+                return response.json()
         except requests.exceptions.RequestException as e:
             logger.warn('Failed to post job: {}'.format(e))
 
