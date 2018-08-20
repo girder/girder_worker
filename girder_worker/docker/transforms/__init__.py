@@ -306,6 +306,9 @@ class VolumePath(Transform):
             :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
         :type volume: :py:class:`girder_worker.docker.transforms.Connect`
         """
+        if os.path.isabs(filename):
+            raise Exception('VolumePath paths must be relative to a volume (%s).' % filename)
+
         self.filename = filename
         self._volume = volume
 
