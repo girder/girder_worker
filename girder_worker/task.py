@@ -155,6 +155,11 @@ class Task(celery.Task):
                     results = self._maybe_transform_result(0, results)
 
             return results
+        except Exception:
+            if hasattr(self.request, 'girder_result_hooks'):
+                for hook in self.request.girder_result_hooks:
+                    hook.exception()
+            raise
         finally:
             _walk_obj(args, self._maybe_cleanup)
             _walk_obj(kwargs, self._maybe_cleanup)
