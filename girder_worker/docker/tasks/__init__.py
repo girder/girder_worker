@@ -48,10 +48,14 @@ def _run_container(image, container_args,  **kwargs):
     # TODO we could allow configuration of non default socket
     client = docker.from_env(version='auto')
 
-    logger.info('Running container: image: %s args: %s kwargs: %s'
-                % (image, container_args, kwargs))
+    runtime = kwargs.pop('runtime', None)
+    if runtime is None and nvidia.is_nvidia_image(client.api, image):
+        runtime = 'nvidia'
+
+    logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
+                % (image, container_args, runtime, kwargs))
     try:
-        return client.containers.run(image, container_args, **kwargs)
+        return client.containers.run(image, container_args, runtime=runtime, **kwargs)
     except DockerException:
         logger.exception('Exception when running docker container')
         raise
