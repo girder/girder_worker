@@ -155,12 +155,17 @@ class GirderUploadVolumePathToFolder(GirderUploadToFolder):
 
 
 class GirderUploadVolumePathJobArtifact(GirderUploadJobArtifact):
-    def __init__(self, volumepath, job_id=None, name=None, **kwargs):
+    def __init__(self, volumepath, job_id=None, name=None, upload_on_exception=False, **kwargs):
         if job_id is not None:
             job_id = str(job_id)
         super(GirderUploadVolumePathJobArtifact, self).__init__(job_id, name, **kwargs)
         self._volumepath = volumepath
+        self._upload_on_exception = upload_on_exception
 
     def transform(self, *args, **kwargs):
         path = _maybe_transform(self._volumepath, *args, **kwargs)
         return super(GirderUploadVolumePathJobArtifact, self).transform(path)
+
+    def exception(self):
+        if self._upload_on_exception:
+            return self.transform()
