@@ -37,6 +37,7 @@ def create_task_job(job_defaults, sender=None, body=None,
                              job_defaults.get('girder_job_other_fields', '')))})
 
     headers['jobInfoSpec'] = utils.jobInfoSpec(job)
+    return job
 
 
 def attach_girder_api_url(sender=None, body=None, exchange=None,

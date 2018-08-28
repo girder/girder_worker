@@ -3,18 +3,12 @@ import os
 import shutil
 from girder_worker_utils.transform import Transform
 from girder_worker_utils.transforms.girder_io import (
+    GirderUploadJobArtifact,
     GirderClientTransform,
     GirderUploadToFolder,
     GirderUploadToItem
 )
-
-
-from . import (
-    TemporaryVolume,
-    Connect,
-    NamedOutputPipe,
-    _maybe_transform
-)
+from . import TemporaryVolume, Connect, NamedOutputPipe, _maybe_transform
 
 
 class ProgressPipe(Transform):
@@ -138,7 +132,7 @@ class GirderFolderIdToVolume(GirderClientTransform):
 
 
 class GirderUploadVolumePathToItem(GirderUploadToItem):
-    def __init__(self, volumepath, item_id,  delete_file=False, **kwargs):
+    def __init__(self, volumepath, item_id, delete_file=False, **kwargs):
         item_id = str(item_id)
         super(GirderUploadVolumePathToItem, self).__init__(item_id, delete_file, **kwargs)
         self._volumepath = volumepath
@@ -158,3 +152,15 @@ class GirderUploadVolumePathToFolder(GirderUploadToFolder):
     def transform(self, *args, **kwargs):
         path = _maybe_transform(self._volumepath, *args, **kwargs)
         return super(GirderUploadVolumePathToFolder, self).transform(path)
+
+
+class GirderUploadVolumePathJobArtifact(GirderUploadJobArtifact):
+    def __init__(self, volumepath, job_id=None, name=None, **kwargs):
+        if job_id is not None:
+            job_id = str(job_id)
+        super(GirderUploadVolumePathJobArtifact, self).__init__(job_id, name, **kwargs)
+        self._volumepath = volumepath
+
+    def transform(self, *args, **kwargs):
+        path = _maybe_transform(self._volumepath, *args, **kwargs)
+        return super(GirderUploadVolumePathJobArtifact, self).transform(path)

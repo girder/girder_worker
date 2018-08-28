@@ -31,8 +31,8 @@ from girder_worker.utils import (
     _update_status,
     is_builtin_celery_task,
     is_revoked
-
 )
+from girder_worker_utils.transform import ResultTransform
 
 import jsonpickle
 from kombu.serialization import register
@@ -49,18 +49,15 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
     if is_builtin_celery_task(sender):
         return
 
+    job = None
+
     try:
         context = get_context()
         if 'jobInfoSpec' not in headers:
-            context.create_task_job(Task.girder_job_defaults(),
-                                    sender=sender, body=body,
-                                    exchange=exchange,
-                                    routing_key=routing_key,
-                                    headers=headers,
-                                    properties=properties,
-                                    declare=declare,
-                                    retry_policy=retry_policy,
-                                    **kwargs)
+            job = context.create_task_job(
+                Task.girder_job_defaults(), sender=sender, body=body, exchange=exchange,
+                routing_key=routing_key, headers=headers, properties=properties, declare=declare,
+                retry_policy=retry_policy, **kwargs)
 
         if 'girder_api_url' not in headers:
             context.attach_girder_api_url(sender=sender, body=body,
@@ -83,6 +80,11 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
                                                retry_policy=retry_policy,
                                                **kwargs)
         if 'girder_result_hooks' in headers:
+            if job is not None:
+                for result_hook in headers['girder_result_hooks']:
+                    if isinstance(result_hook, ResultTransform):
+                        result_hook.job = job
+
             # Celery task headers are not automatically serialized by celery
             # before being passed off to ampq for byte packing. We will have
             # to do that here.

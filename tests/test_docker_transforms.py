@@ -46,7 +46,8 @@ from girder_worker.docker.transforms.girder import (
     GirderFileIdToStream,
     GirderFileIdToVolume,
     GirderFolderIdToVolume,
-    GirderUploadVolumePathToItem
+    GirderUploadVolumePathToItem,
+    GirderUploadVolumePathJobArtifact
 )
 
 BOGUS_HOST_PATH = '/bogus/volume/host_path'
@@ -83,6 +84,16 @@ def patch_makedirs():
 @pytest.fixture
 def bogus_volume():
     yield BindMountVolume(BOGUS_HOST_PATH, BOGUS_CONTAINER_PATH)
+
+
+@pytest.fixture
+def actual_file():
+    vp = os.path.dirname(__file__)
+    path = os.path.join(vp, 'foo.txt')
+    open(path, 'a').close()
+    volume = BindMountVolume(vp, vp)
+    yield path, VolumePath('foo.txt', volume=volume)
+    os.unlink(path)
 
 
 @pytest.mark.parametrize('obj', [
@@ -363,3 +374,17 @@ def test_GirderUploadVolumePathToItem_transform_accepts_ObjectId(mock_gc, bogus_
 ))
 def test_docker_repr_models(obj, expected_repr):
     assert obj._repr_model_() == expected_repr
+
+
+def test_GirderUploadJobArtifact_file_not_found(mock_gc, bogus_volume):
+    vp = VolumePath('test', bogus_volume)
+    GirderUploadVolumePathJobArtifact(vp, job_id='123', gc=mock_gc).transform()
+    mock_gc.post.assert_not_called()
+
+
+def test_GirderUploadJobArtifact(mock_gc, actual_file):
+    path, vp = actual_file
+    GirderUploadVolumePathJobArtifact(vp, job_id='123', gc=mock_gc).transform()
+    mock_gc.post.assert_called_once()
+    url = mock_gc.post.call_args[0][0]
+    assert 'job/123/artifact?' in url
