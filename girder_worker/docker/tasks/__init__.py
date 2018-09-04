@@ -61,6 +61,8 @@ def _run_container(image, container_args,  **kwargs):
         except APIError:
             if origRuntime is None and runtime is not None:
                 return client.containers.run(image, container_args, **kwargs)
+            else:
+                raise
     except DockerException:
         logger.exception('Exception when running docker container')
         raise
