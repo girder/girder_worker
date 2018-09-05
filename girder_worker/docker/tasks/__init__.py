@@ -3,7 +3,7 @@ import shutil
 import os
 try:
     import docker
-    from docker.errors import DockerException
+    from docker.errors import DockerException, APIError
     from girder_worker.docker import nvidia
     from requests.exceptions import ReadTimeout
 except ImportError:
@@ -49,13 +49,20 @@ def _run_container(image, container_args,  **kwargs):
     client = docker.from_env(version='auto')
 
     runtime = kwargs.pop('runtime', None)
+    origRuntime = runtime
     if runtime is None and nvidia.is_nvidia_image(client.api, image):
         runtime = 'nvidia'
 
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
     try:
-        return client.containers.run(image, container_args, runtime=runtime, **kwargs)
+        try:
+            return client.containers.run(image, container_args, runtime=runtime, **kwargs)
+        except APIError:
+            if origRuntime is None and runtime is not None:
+                return client.containers.run(image, container_args, **kwargs)
+            else:
+                raise
     except DockerException:
         logger.exception('Exception when running docker container')
         raise
