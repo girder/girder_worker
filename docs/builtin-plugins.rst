@@ -1,5 +1,9 @@
-docker_run
-==========
+Built-in Plugins
+****************
+
+
+The docker_run Task
+===================
 
 Girder Worker provides a built-in task that can be used to run docker containers.
 Girder Worker makes it easy to work on data held in girder from within a
@@ -56,7 +60,7 @@ the instance into the approriate path inside the container.
     docker_run.delay('my/image', pull_image=True, volumes=[vol], container_args=[vol])
 
 Temporary Volume
-^^^^^^^^^^^^^^^^
+----------------
 
 A :py:class:`girder_worker.docker.transforms.TemporaryVolume` class is provided
 representing a temporary directory on the host machine that is mounted into the
@@ -198,4 +202,3 @@ MacOS Volume mounting issue workaround
 --------------------------------------
 
 Due to some odd symlinking behavior by Docker engine on MacOS, it may be necessary to add a workaround when running the girder_worker. If your ``TMPDIR`` environment variable is underneath the ``/var`` directory and you see errors from Docker about ``MountsDenied``, try running girder worker with the ``TMPDIR`` set underneath ``/private/var`` instead of ``/var``. The location should be equivalent since ``/var`` is a symlink to ``/private/var``.
-
