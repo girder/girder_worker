@@ -39,6 +39,13 @@ class ProgressPipe(Transform):
 
 
 class GirderFileIdToStream(GirderClientTransform):
+    """
+    This can be used to stream a Girder file into a docker container. See
+    :ref:`docker-run-streaming-input` for example usage.
+
+    :param _id: The Girder file ID.
+    :type _id: str or ObjectId
+    """
     def __init__(self, _id, **kwargs):
         super(GirderFileIdToStream, self).__init__(**kwargs)
         self.file_id = _id
