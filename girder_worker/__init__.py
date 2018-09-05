@@ -2,6 +2,7 @@ import abc
 import os
 from pkg_resources import DistributionNotFound, get_distribution
 from six.moves.configparser import SafeConfigParser
+from six import add_metaclass
 
 from . import log_utils
 
@@ -32,9 +33,9 @@ config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 logger = log_utils.setupLogger(config)
 
 
+@add_metaclass(abc.ABCMeta)
 class GirderWorkerPluginABC(object):
     """ """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def __init__(self, app, *args, **kwargs):

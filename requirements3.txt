@@ -37,7 +37,7 @@ flake8-quotes==0.13.0
 flake8==3.5.0
 funcsigs==1.0.2 ; python_version < "3.3"
 girder-client==2.3.0
-girder-worker-utils==0.8.0
+girder-worker-utils==0.8.4
 girder==2.4.0
 httmock==1.2.6
 idna==2.6                 # via cryptography, requests

@@ -1,4 +1,4 @@
-celery>=4
+celery>=4,<4.2
 funcsigs ; python_version < '3.3'
 girder-client>=2
 networkx<2
@@ -8,5 +8,5 @@ six
 setuptools_scm
 stevedore
 jsonpickle
-girder_worker_utils>=0.8.0
+girder_worker_utils>=0.8.4
 docker>=2.6.0
