@@ -35,14 +35,18 @@ logger = log_utils.setupLogger(config)
 
 @add_metaclass(abc.ABCMeta)
 class GirderWorkerPluginABC(object):
-    """ """
+    """
+    Abstract base class for Girder Worker plugins. Plugins must descend from this
+    class; see the :ref:`plugins` section for information about how to do so.
+    """
 
     @abc.abstractmethod
     def __init__(self, app, *args, **kwargs):
         """ """
+
     @abc.abstractmethod
     def task_imports(self):
-        """ """
+        """Plugins must override this method."""
 
 
 class GirderWorkerPlugin(GirderWorkerPluginABC):

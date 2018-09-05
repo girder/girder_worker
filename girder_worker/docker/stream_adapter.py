@@ -22,14 +22,15 @@ class StreamPushAdapter(object):
 
 
 class JobProgressAdapter(StreamPushAdapter):
-    def __init__(self, job_manager):
-        """
-        This reads structured JSON documents one line at a time and sends
-        them as progress events via the JobManager.
+    """
+    This reads structured JSON documents one line at a time and sends
+    them as progress events via the JobManager.
 
-        :param job_manager: The job manager to use to send the progress events.
-        :type job_manager: girder_worker.utils.JobManager
-        """
+    :param job_manager: The job manager to use to send the progress events.
+    :type job_manager: girder_worker.utils.JobManager
+    """
+
+    def __init__(self, job_manager):
         super(JobProgressAdapter, self).__init__()
 
         self.job_manager = job_manager
@@ -59,14 +60,15 @@ class JobProgressAdapter(StreamPushAdapter):
 
 class DockerStreamPushAdapter(StreamPushAdapter):
     """
-    An adapter that reads a docker stream. The format is a Header and a Payload (frame).
+    An adapter that reads a docker stream. The format is a Header and a Payload (frame)
+    where the header has the following format:
 
-    Where header has the following format:
+    .. code-block:: none
+
         header := [8]byte{STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4}
 
     We want to read the header to get the size of the payload, read the payload
     and forward it on to another adapter.
-
     """
     def __init__(self, adapter):
         self._adapter = adapter
@@ -81,7 +83,7 @@ class DockerStreamPushAdapter(StreamPushAdapter):
     def _read_header(self):
         """
         Read the header or part of the header. When the head has been read, the
-        payload size is decodeded and returned, otherwise return None.
+        payload size is decoded and returned, otherwise return None.
         """
         bytes_to_read = min(8 - self._header_bytes_read, self._data_length-self._data_offset)
         self._header += self._data[self._data_offset:self._data_offset+bytes_to_read]

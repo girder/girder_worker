@@ -1,6 +1,7 @@
 Built-in Plugins
 ****************
 
+.. _docker-run:
 
 The docker_run Task
 ===================
@@ -64,7 +65,7 @@ Temporary Volume
 
 A :py:class:`girder_worker.docker.transforms.TemporaryVolume` class is provided
 representing a temporary directory on the host machine that is mounted into the
-container. :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
+container. :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
 holds a default instance that is used as the default location for many other parts
 of the Girder Worker docker infrastructure, for example when downloading a file.
 See `Downloading files from Girder`_. However, it can also be used explicitly, for
@@ -164,6 +165,14 @@ allowing data to be streamed into a container.
 
 These pipes can be connected together using the
 :py:class:`girder_worker.docker.transforms.Connect` utility class.
+
+
+.. _docker-progress:
+
+Streaming progress reporting from Docker task to Girder job
+-----------------------------------------------------------
+
+TODO(zachmullen)
 
 
 Streaming Girder files into a container

@@ -23,7 +23,11 @@ class GirderAsyncResult(AsyncResult):
 
 
 class Task(celery.Task):
-    """Girder Worker Task object"""
+    """
+    Girder Worker Task object. Tasks defined by plugins must be subclasses of this class,
+    however you will not need to reference it yourself typically, as it will be automatically
+    instantiated by the girder_worker celery app. See :ref:`creating-tasks` for instructions.
+    """
 
     _girder_job_title = '<unnamed job>'
     _girder_job_type = 'celery'
@@ -111,7 +115,8 @@ class Task(celery.Task):
         """
         A property to indicate if a task has been canceled.
 
-        :returns True is this task has been canceled, False otherwise.
+        :return: True is this task has been canceled, False otherwise.
+        :rtype: bool
         """
         return is_revoked(self)
 

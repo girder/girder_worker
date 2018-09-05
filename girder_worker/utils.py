@@ -90,12 +90,13 @@ def _update_status(task, status):
 
 def is_revoked(task):
     """
-    Utility function to check is a task has been revoked.
+    Utility function to check if a task has been revoked.
 
     :param task: The task.
     :type task: celery.app.task.Task
-    :return True, if this task is in the revoked list for this worker, False
+    :return: True, if this task is in the revoked list for this worker, False
             otherwise.
+    :rtype: bool
     """
     return task.request.id in _revoked_tasks(task)
 
