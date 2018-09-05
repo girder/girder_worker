@@ -41,7 +41,7 @@ sys.path.insert(0, os.path.abspath('..'))
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage',
     'sphinx.ext.mathjax', 'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',
-    'sphinx.ext.extlinks', 'sphinx.ext.doctest']
+    'sphinx.ext.extlinks', 'sphinx.ext.doctest', 'celery.contrib.sphinx']
 
 # turn off doctests of autodoc included files (these are tested elsewhere)
 doctest_test_doctest_blocks = None
