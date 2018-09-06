@@ -6,7 +6,9 @@ Plugins
 Task Plugin from Cookiecutter
 =============================
 
-.. note:: TODO - more detailed description of cookiecutter
+The simplest way to bootstrap your Girder Worker task plugin is to use our
+cookiecutter plugin to fill in the boilerplate. See :ref:`creating-task-plugin`
+for instructions.
 
 Task Plugin from Scratch
 ========================
