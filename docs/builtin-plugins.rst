@@ -1,6 +1,7 @@
 Built-in Plugins
 ****************
 
+.. _docker-run:
 
 The docker_run Task
 ===================
@@ -64,7 +65,7 @@ Temporary Volume
 
 A :py:class:`girder_worker.docker.transforms.TemporaryVolume` class is provided
 representing a temporary directory on the host machine that is mounted into the
-container. :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
+container. :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
 holds a default instance that is used as the default location for many other parts
 of the Girder Worker docker infrastructure, for example when downloading a file.
 See `Downloading files from Girder`_. However, it can also be used explicitly, for
@@ -166,6 +167,8 @@ These pipes can be connected together using the
 :py:class:`girder_worker.docker.transforms.Connect` utility class.
 
 
+.. _docker-run-streaming-input:
+
 Streaming Girder files into a container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -198,7 +201,99 @@ and start reading. Below is an example python entry point:
     with open(sys.argv[1]) as fp:
         fp.read() # This will be reading the files contents
 
+.. _docker-progress:
+
+Streaming progress reporting from Docker tasks to Girder jobs
+-------------------------------------------------------------
+
+The :py:class:`girder_worker.docker.transforms.girder.ProgressPipe` class can be used to facilitate
+streaming real-time progress reporting from a docker task to its associated Girder job. It uses
+a named pipe to provide a simple interface within the container that is usable from any
+runtime environment.
+
+The following example code shows the Girder side task invocation for using ``ProgressPipe``:
+
+.. code-block:: python
+
+    from girder_worker.docker.tasks import docker_run
+    from girder_worker.docker.transforms.girder import ProgressPipe
+
+    docker_run.delay('my_docker_image:latest', container_args=[ProgressPipe()])
+
+The corresponding example code running in the container entrypoint uploads progress events
+at regular intervals, which will automatically reflect in the job progress on the Girder server.
+This code is shown in python, but the idea is the same regardless of language.
+
+.. code-block:: python
+
+    import json
+    import sys
+    import time
+
+    with open(sys.argv[1], 'w') as pipe:
+        for i in range(10):
+            pipe.write(json.dumps({
+                'message': 'Step %d of 10' % i,
+                'total': 10,
+                'current': i + 1
+            }))
+            pipe.flush()
+            time.sleep(1)
+
+The messages written to the pipe must be one per line, and each message must be a JSON Object
+containing optional ``message``, ``current``, and ``total`` values. You **must** call ``flush()``
+on the file handle explicitly for your message to be flushed, since it is a named pipe.
+
+Attaching intermediate / optional artifacts to Girder jobs
+----------------------------------------------------------
+
+It's often useful for debugging/tracing or algorithm analysis to be able to inspect intermediate
+outputs or other artifacts produced during execution of a task, even (perhaps especially) if the
+task fails. These artifacts differ from normal output transforms that upload files to Girder in
+two ways. Firstly, they are optional; if the specified file or directory does not exist, it does
+not cause any errors. This allows docker image authors to choose either at build time or runtime
+whether or not to create and upload artifacts. Secondly, the artifact files are attached to the
+job document itself, rather than placed within the Girder data hierarchy. This facilitates
+inspection of job artifacts inline with things like the log and status fields.
+
+The following example code shows an example Girder-side usage of the
+:py:class:`girder_worker.docker.transforms.girder.GirderUploadVolumePathJobArtifact` transform
+to upload job artifacts from your docker task.
+
+.. code-block:: python
+
+    from girder_worker.docker.tasks import docker_run
+    from girder_worker.docker.transforms import VolumePath
+    from girder_worker.docker.transforms.girder import GirderUploadVolumePathJobArtifact
+
+    artifacts = VolumePath('job_artifacts')
+    docker_run.delay(
+        'my_docker_image:latest', container_args=[
+            artifacts
+        ],
+        girder_result_hooks=[
+            GirderUploadVolumePathJobArtifact(artifacts)
+        ])
+
+Note that you can write to this path inside your container and make it either a directory or
+a single file. If it's a directory, all files within the directory will be uploaded and attached
+to the job as artifacts. This operation is not recursive, i.e. it will not upload anything under
+subdirectories of the top level directory.
+
+It's often useful to upload any artifact files even if the ``docker_run`` task failed.
+For that behavior, simply pass an additional argument to the transform:
+
+.. code-block:: python
+
+    GirderUploadVolumePathJobArtifact(artifacts, upload_on_exception=True)
+
+
+
 MacOS Volume mounting issue workaround
 --------------------------------------
 
-Due to some odd symlinking behavior by Docker engine on MacOS, it may be necessary to add a workaround when running the girder_worker. If your ``TMPDIR`` environment variable is underneath the ``/var`` directory and you see errors from Docker about ``MountsDenied``, try running girder worker with the ``TMPDIR`` set underneath ``/private/var`` instead of ``/var``. The location should be equivalent since ``/var`` is a symlink to ``/private/var``.
+Due to some odd symlinking behavior by Docker engine on MacOS, it may be necessary to add a
+workaround when running the girder_worker. If your ``TMPDIR`` environment variable is underneath
+the ``/var`` directory and you see errors from Docker about ``MountsDenied``, try running girder
+worker with the ``TMPDIR`` set underneath ``/private/var`` instead of ``/var``. The location should
+be equivalent since ``/var`` is a symlink to ``/private/var``.

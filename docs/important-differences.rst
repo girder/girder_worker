@@ -1,4 +1,4 @@
-Importaint Differences between Celery and Girder Worker
-*******************************************************
+Important Differences between Celery and Girder Worker
+******************************************************
 
-.. note:: TODO - Work through celery documentation and note importaint differences between Girder Worker and Celery docs
+.. note:: TODO - Work through celery documentation and note important differences between Girder Worker and Celery docs

@@ -20,9 +20,7 @@ implementation, adding two critical features:
    plugins
    builtin-plugins
    using-from-girder
-   developer-docs
    api-docs
-   important-differences
 ..   installation
 ..   types-and-formats
 

@@ -72,18 +72,17 @@ class ContainerStdErr(Transform):
 
 class BindMountVolume(Transform):
     """
-    A volume that will be bind mounted to a docker container.
+    A volume that will be bind mounted into a docker container.
+
+    :param host_path: The path on the host machine.
+    :type host_path: str
+    :param container_path: The path in the container this volume will be mounted
+        at.
+    :type container_path: str
+    :param mode: The mounting mode
+    :type mode: str
     """
     def __init__(self, host_path, container_path, mode='rw'):
-        """
-        :param host_path: The path on the host machine.
-        :type host_path: str
-        :param container_path: The path in the container this volume will be mounted
-            at.
-        :type container_path: str
-        :param mode: The mode, for example rw
-        :type mode: str
-        """
         self._host_path = host_path
         self._container_path = container_path
         self.mode = mode
@@ -111,6 +110,9 @@ class BindMountVolume(Transform):
 class _TemporaryVolumeMetaClass(abc.ABCMeta):
     @property
     def default(cls):
+        """
+        This returns the default temporary volume that is always mounted into the container.
+        """
         return _DefaultTemporaryVolume()
 
 
@@ -140,17 +142,17 @@ class TemporaryVolume(_TemporaryVolumeBase):
     temporary volume. This can be reference using `TemporaryVolume.default` class attribute.
     A temporary volume can also be create in a particular host directory by providing the
     `host_dir` param.
+
+    :param host_dir: The root directory on the host to use when creating the
+        the temporary host path.
+    :type host_dir: str
+    :param mode: The default mode applied to the temporary volume if it does
+        not already exist.
+    :type mode: int
     """
     # Note that this mode is explicitly set with os.chmod. What you
     # set, is what you get - no os.makedirs umask shenanigans.
     def __init__(self, host_dir=None, mode=0o755):
-        """
-        :param host_dir: The root directory on the host to use when creating the
-            the temporary host path.
-        :param mode: The default mode applied to the temporary volume if it does
-            not already exist.
-        :type host_dir: str
-        """
         super(TemporaryVolume, self).__init__(None, None)
         self.host_dir = host_dir
         self._mode = mode
@@ -235,20 +237,19 @@ class NamedInputPipe(NamedPipeBase):
     """
     A named pipe that can be open for read within a docker container.
     i.e. To stream data into a container.
+
+    :param name: The name of the pipe.
+    :type name: str
+    :param container_path: The path in the container.
+    :type container_path: str
+    :param host_path: The path on the host machine.
+    :type host_path: str
+    :param volume: Alternatively a :py:class:`girder_worker.docker.transforms.BindMountVolume`
+        instance can be provided. In which case the container_path and host_paths from
+        the volume will be used when creating the pipe. The default location is
+        :py:obj:`girder_worker.docker.transforms.TemporaryVolume.default`
     """
     def __init__(self, name,  container_path=None, host_path=None, volume=TemporaryVolume.default):
-        """
-        :param name: The name of the pipe.
-        :type name: str
-        :param container_path: The path in the container.
-        :type container_path: str
-        :param host_path: The path on the host machine.
-        :type host_path: str
-        :param volume: Alternatively a :py:class:`girder_worker.docker.transforms.Volume`
-            instance can be provided. In which can the container_path and host_paths from
-            the volume will be use when creating the pipe. The default location is
-            :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
-        """
         super(NamedInputPipe, self).__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
@@ -266,20 +267,19 @@ class NamedOutputPipe(NamedPipeBase):
     """
     A named pipe that can be opened for write within a docker container.
     i.e. To stream data out of a container.
+
+    :param name: The name of the pipe.
+    :type name: str
+    :param container_path: The path in the container.
+    :type container_path: str
+    :param host_path: The path on the host machine.
+    :type host_path: str
+    :param volume: Alternatively a :py:class:`girder_worker.docker.transforms.BindMountVolume`
+        instance can be provided. In which can the container_path and host_paths from
+        the volume will be use when creating the pipe. The default location is
+        :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
     """
     def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume.default):
-        """
-        :param name: The name of the pipe.
-        :type name: str
-        :param container_path: The path in the container.
-        :type container_path: str
-        :param host_path: The path on the host machine.
-        :type host_path: str
-        :param volume: Alternatively a :py:class:`girder_worker.docker.transforms.Volume`
-            instance can be provided. In which can the container_path and host_paths from
-            the volume will be use when creating the pipe. The default location is
-            :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
-        """
         super(NamedOutputPipe, self).__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
@@ -295,17 +295,16 @@ class NamedOutputPipe(NamedPipeBase):
 
 class VolumePath(Transform):
     """
-    A path on a docker volume.
+    A path on a docker volume. Must be a path relative to the root of the volume.
+
+    :param filename: The file name.
+    :type name: str
+    :param volume: The volume this file lived on. If no volume is provided then
+        the file will be on
+        :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
+    :type volume: :py:class:`girder_worker.docker.transforms.BindMountVolume`
     """
     def __init__(self, filename, volume=TemporaryVolume.default):
-        """
-        :param filename: The file name.
-        :type name: str
-        :param volume: The volume this file lived on. If no volume is provided then
-            the file will be on
-            :py:attribute:`girder_worker.docker.transforms.TemporaryVolume.default`
-        :type volume: :py:class:`girder_worker.docker.transforms.Connect`
-        """
         if os.path.isabs(filename):
             raise Exception('VolumePath paths must be relative to a volume (%s).' % filename)
 
@@ -327,23 +326,21 @@ class VolumePath(Transform):
 
 class Connect(Transform):
     """
-    This utility class represents the connection between a NamedOuputPipe or
-    NamedInputPipe and one of the other streaming transforms. Girder Worker will
-    stream the data to or from the named pipe.
+    This utility class represents the connection between a
+    :py:class:`girder_worker.docker.transforms.NamedOutputPipe` or
+    :py:class:`girder_worker.docker.transforms.NamedInputPipe` and one of the other streaming
+    transforms. Girder Worker will stream the data to or from the named pipe.
+
+    :param input: The input side of the connection
+    :type input: :py:class:`girder_worker.docker.transforms.NamedOutputPipe` or
+        :py:class:`girder_worker.docker.transforms.girder.GirderFileIdToStream`
+    :param output: The output side of the connection
+    :type output: :py:class:`girder_worker.docker.transforms.NamedInputPipe` or
+        :py:class:`girder_worker.docker.transforms.ChunkedTransferEncodingStream` or
+        :py:class:`girder_worker.docker.transforms.HostStdOut` or
+        :py:class:`girder_worker.docker.transforms.HostStdErr`
     """
     def __init__(self, input, output):
-        """
-        A named pipe must be provided as either the input or output parameter.
-
-        :param input: The input side of the connection
-        :type input: :py:class:`girder_worker.docker.transforms.NamedOutputPipe` or
-            :py:class:`girder_worker.docker.transforms.girder.GirderFileIdToStream`
-        :param output: The output side of the connection
-        :type output: :py:class:`girder_worker.docker.transforms.NamedInputPipe` or
-            :py:class:`girder_worker.docker.transforms.girder.ChunkedTransferEncodingStream` or
-            :py:class:`girder_worker.docker.transforms.HostStdOut` or
-            :py:class:`girder_worker.docker.transforms.HostStdErr`
-        """
         super(Connect, self).__init__()
         self._input = input
         self._output = output
@@ -371,7 +368,13 @@ class Connect(Transform):
 
 class ChunkedTransferEncodingStream(Transform):
     """
-    A stream transform that allows data to be streamed using "Chuncked Transfer Encoding"
+    A stream transform that allows data to be streamed using HTTP Chunked Transfer Encoding
+    to a server.
+
+    :param url: Destination URL for the stream.
+    :type url: str
+    :param headers: HTTP headers to send.
+    :type header: dict
     """
     def __init__(self, url, headers={}, **kwargs):
         self.url = url

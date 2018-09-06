@@ -12,7 +12,7 @@ Task Plugin from Scratch
 ========================
 
 This is an example plugin that demonstrates how to extend girder\_worker
-by allowing it to run additional tasks. Plugin's are implemented as
+by allowing it to run additional tasks. Plugins are implemented as
 separate pip installable packages. To install this example plugin you
 can checkout this code base, change directories to
 ``examples/plugin_example/`` and run ``pip install .`` This will add the
@@ -62,6 +62,8 @@ Adding additional tasks to the girder\_worker infrastructure is easy and
 takes three steps. (1) Creating tasks, (2) creating a plugin class and
 (3) adding a ``girder_worker_plugins`` entry point to your setup.py.
 
+.. _creating-tasks:
+
 Creating tasks
 ^^^^^^^^^^^^^^
 
@@ -84,7 +86,7 @@ Plugin Class
 ^^^^^^^^^^^^
 
 Each plugin must define a plugin class the inherits from
-``girder_worker.GirderWorkerPluginABC``. GirderWorkerPluginABC's
+:py:class:`girder_worker.GirderWorkerPluginABC`. GirderWorkerPluginABC's
 interface is simple. The class must define an ``__init__`` function and
 a ``task_imports`` function. ``__init__`` takes the girder\_worker's
 celery application as its first argument. This allows the plugin to
@@ -166,7 +168,7 @@ girder_worker provides support for signaling that a task should be canceled usin
 Celery's `revoke <http://docs.celeryproject.org/en/latest/userguide/workers.html#revoke-revoking-tasks>`_
 mechanism. In order for a task to be able to be canceled cleanly it must periodically
 check if it has been canceled, if it has then is can do any necessary cleanup and
-return. girder_worker provides a task base class (``girder_worker.utils.Task`` )
+return. girder_worker provides a task base class (:py:class:`girder_worker.utils.Task`)
 that provides a property that can be used to check if the task has been canceled.
 An example of its use is shown below:
 
@@ -174,11 +176,10 @@ An example of its use is shown below:
 .. code:: python
 
     from girder_worker.app import app
-    from girder_work.utils import Task
 
     @app.task(bind=True)
     def my_cancellable_task(task):
-      while not self.cancelled:
+      while not task.cancelled:
          # Do work
 
 The Girder job model associated with the canceled task will be moved into the
