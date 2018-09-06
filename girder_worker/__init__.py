@@ -37,7 +37,7 @@ logger = log_utils.setupLogger(config)
 class GirderWorkerPluginABC(object):
     """
     Abstract base class for Girder Worker plugins. Plugins must descend from this
-    class; see the :ref:`plugins` section for information about how to do so.
+    class; see the :ref:`plugins` section for more information.
     """
 
     @abc.abstractmethod

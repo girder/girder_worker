@@ -208,7 +208,7 @@ Streaming progress reporting from Docker tasks to Girder jobs
 
 The :py:class:`girder_worker.docker.transforms.girder.ProgressPipe` class can be used to facilitate
 streaming real-time progress reporting from a docker task to its associated Girder job. It uses
-a named pipe to provide a simplistic interface within the container that is usable from any
+a named pipe to provide a simple interface within the container that is usable from any
 runtime environment.
 
 The following example code shows the Girder side task invocation for using ``ProgressPipe``:
@@ -252,9 +252,9 @@ outputs or other artifacts produced during execution of a task, even (perhaps es
 task fails. These artifacts differ from normal output transforms that upload files to Girder in
 two ways. Firstly, they are optional; if the specified file or directory does not exist, it does
 not cause any errors. This allows docker image authors to choose either at build time or runtime
-whether or not to emit artifacts. Secondly, the emitted files are attached to the job document
-itself, rather than placed within the Girder data hierarchy. This facilitates inspection of job
-artifacts inline with things like the log and status fields.
+whether or not to create and upload artifacts. Secondly, the artifact files are attached to the
+job document itself, rather than placed within the Girder data hierarchy. This facilitates
+inspection of job artifacts inline with things like the log and status fields.
 
 The following example code shows an example Girder-side usage of the
 :py:class:`girder_worker.docker.transforms.girder.GirderUploadVolumePathJobArtifact` transform
@@ -280,7 +280,7 @@ a single file. If it's a directory, all files within the directory will be uploa
 to the job as artifacts. This operation is not recursive, i.e. it will not upload anything under
 subdirectories of the top level directory.
 
-It's often useful to upload any emitted artifact files even if the ``docker_run`` task failed.
+It's often useful to upload any artifact files even if the ``docker_run`` task failed.
 For that behavior, simply pass an additional argument to the transform:
 
 .. code-block:: python

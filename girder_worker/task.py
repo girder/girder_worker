@@ -25,7 +25,7 @@ class GirderAsyncResult(AsyncResult):
 class Task(celery.Task):
     """
     Girder Worker Task object. Tasks defined by plugins must be subclasses of this class,
-    however you will not need to reference it yourself typically, as it will be automatically
+    however you will typically not need to reference it yourself, as it will be automatically
     instantiated by the girder_worker celery app. See :ref:`creating-tasks` for instructions.
     """
 
