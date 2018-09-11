@@ -1,8 +1,6 @@
 Getting Started
 ***************
 
-.. note:: TODO add intro with basic image of producer, broker, consumer
-
 Choosing a Broker
 =================
 
@@ -23,6 +21,8 @@ Girder Worker is a python package and may be installed with pip ::
 
 We recommend installing in a virtual environment to prevent package
 collision with your system Python.
+
+.. _creating-task-plugin:
 
 Creating a Task Plugin
 ======================

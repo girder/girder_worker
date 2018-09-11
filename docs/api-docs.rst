@@ -10,6 +10,12 @@ Core
 .. automodule:: girder_worker.task
    :members:
 
+Transforms
+----------
+
+.. automodule:: girder_worker_utils.transforms.girder_io
+   :members:
+
 Docker
 ======
 
