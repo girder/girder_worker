@@ -14,7 +14,7 @@
 #  limitations under the License.
 ###############################################################################
 
-from girder_plugin_jobs.constants import JobStatus
+from girder_jobs.constants import JobStatus
 
 
 class CustomJobStatus(object):

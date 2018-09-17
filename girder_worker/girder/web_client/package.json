@@ -1,5 +1,5 @@
 {
-    "name": "@girder/worker",
+    "name": "@girder/remote_worker",
     "version": "0.2.0",
     "description": "Distributed offline processing engine built on celery.",
     "homepage": "http://girder.readthedocs.io/en/latest/plugins.html#remote-worker",
@@ -14,11 +14,10 @@
     "dependencies": {
     },
     "peerDependencies": {
-        "girder": "*",
         "@girder/jobs": "*"
     },
-    "girder-plugin": {
-        "name": "worker",
+    "girderPlugin": {
+        "name": "remote_worker",
         "main": "./main.js",
         "dependencies": ["jobs"]
     }

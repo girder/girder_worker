@@ -28,7 +28,7 @@ var ConfigView = View.extend({
         },
 
         'click .q-worker-task-info': function (event) {
-            router.navigate('#plugins/worker/task/status', {trigger: true});
+            router.navigate('#plugins/remote_worker/task/status', {trigger: true});
         }
     },
 

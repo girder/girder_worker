@@ -21,8 +21,8 @@ from celery.result import AsyncResult
 from girder import logger
 from girder.exceptions import ValidationException
 from girder.utility import setting_utilities
-from girder_plugin_jobs.constants import JobStatus
-from girder_plugin_jobs.models.job import Job
+from girder_jobs.constants import JobStatus
+from girder_jobs.models.job import Job
 
 from .celery import getCeleryApp
 from .constants import PluginSettings

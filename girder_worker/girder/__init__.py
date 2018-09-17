@@ -20,7 +20,7 @@
 from girder import events
 from girder.constants import AccessType
 from girder.plugin import getPlugin, GirderPlugin
-from girder_plugin_jobs.models.job import Job
+from girder_jobs.models.job import Job
 
 from .api.worker import Worker
 from . import event_handlers
@@ -28,7 +28,7 @@ from . import event_handlers
 
 class WorkerPlugin(GirderPlugin):
     DISPLAY_NAME = 'Remote worker'
-    NPM_PACKAGE_NAME = '@girder/worker'
+    CLIENT_SOURCE_PATH = 'web_client'
 
     def load(self, info):
         getPlugin('jobs').load(info)

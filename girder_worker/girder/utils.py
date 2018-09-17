@@ -22,7 +22,7 @@ from girder.api.rest import getApiUrl
 from girder.models.file import File
 from girder.models.setting import Setting
 from girder.utility import setting_utilities
-from girder_plugin_jobs.models.job import Job
+from girder_jobs.models.job import Job
 
 
 @setting_utilities.validator({
