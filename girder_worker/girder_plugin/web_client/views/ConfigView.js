@@ -28,7 +28,7 @@ var ConfigView = View.extend({
         },
 
         'click .q-worker-task-info': function (event) {
-            router.navigate('#plugins/remote_worker/task/status', {trigger: true});
+            router.navigate('#plugins/worker/task/status', {trigger: true});
         }
     },
 
@@ -58,7 +58,7 @@ var ConfigView = View.extend({
 
         if (!this.breadcrumb) {
             this.breadcrumb = new PluginConfigBreadcrumbWidget({
-                pluginName: 'Remote worker',
+                pluginName: 'Worker',
                 el: this.$('.g-config-breadcrumb-container'),
                 parentView: this
             });

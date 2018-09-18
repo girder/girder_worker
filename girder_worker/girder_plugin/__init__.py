@@ -27,7 +27,7 @@ from . import event_handlers
 
 
 class WorkerPlugin(GirderPlugin):
-    DISPLAY_NAME = 'Remote worker'
+    DISPLAY_NAME = 'Worker'
     CLIENT_SOURCE_PATH = 'web_client'
 
     def load(self, info):
