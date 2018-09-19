@@ -77,7 +77,7 @@ for name in os.listdir(plugins_dir):
         with open(reqs_file) as f:
             extras_require[name] = f.readlines()
 
-extras_require['girder'] = ['girder>=3', 'girder-jobs']
+extras_require['girder'] = ['girder>=3.0.0a1', 'girder-jobs>=3.0.0a1']
 
 # perform the install
 setuptools.setup(
