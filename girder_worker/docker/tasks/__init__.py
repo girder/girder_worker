@@ -46,7 +46,11 @@ def _pull_image(image):
 
 def _run_container(image, container_args,  **kwargs):
     # TODO we could allow configuration of non default socket
-    client = docker.from_env(version='auto')
+    if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
+        timeout = int(os.environ['DOCKER_CLIENT_TIMEOUT'])
+        client = docker.from_env(version='auto', timeout=timeout)
+    else:
+        client = docker.from_env(version='auto')
 
     runtime = kwargs.pop('runtime', None)
     origRuntime = runtime
