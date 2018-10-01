@@ -123,11 +123,16 @@ setuptools.setup(
         'console_scripts': [
             'girder-worker = girder_worker.__main__:main',
             'girder-worker-cleanup = girder_worker.core.cleanup:main',
-            'girder-worker-config = girder_worker.configure:main'
+            'girder-worker-config = girder_worker.configure:main',
+            'gwrun = girder_worker.cli.__main__:main'
         ],
         'girder_worker_plugins': [
             'core = girder_worker:GirderWorkerPlugin',
             'docker = girder_worker.docker:DockerPlugin [docker]'
+        ],
+        'gwrun_output_handlers': [
+            'stdout = girder_worker.cli.handlers:stdout_output_handler',
+            'json = girder_worker.cli.handlers:json_output_handler',
         ],
         'girder_worker._test_plugins.valid_plugins': [
             'core = girder_worker._test_plugins.plugins:TestCore',
