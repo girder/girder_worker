@@ -1,10 +1,12 @@
+-e git+https://github.com/girder/girder.git@master#egg=girder
+-e git+https://github.com/girder/girder.git@master#egg=girder-jobs&subdirectory=plugins/jobs
+-e git+https://github.com/girder/girder.git@master#egg=pytest-girder&subdirectory=pytest_girder
 coverage
 coveralls
 flake8
 flake8-blind-except
 flake8-docstrings
 flake8-quotes
-girder>=2
 httmock
 lxml
 mock

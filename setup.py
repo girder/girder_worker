@@ -65,14 +65,6 @@ init = os.path.join(os.path.dirname(__file__), 'girder_worker', '__init__.py')
 with open('README.rst') as f:
     readme = f.read()
 
-plugin_data = []
-# We must manually glob for plugin data since setuptools package_data
-# errors out when trying to include directories recursively
-os.chdir('girder_worker')
-for root, dirnames, filenames in os.walk('plugins'):
-    plugin_data.extend([os.path.join(root, fn) for fn in filenames])
-os.chdir('..')
-
 with open('requirements.in') as f:
     install_reqs = f.readlines()
 
@@ -84,6 +76,8 @@ for name in os.listdir(plugins_dir):
     if os.path.isfile(reqs_file):
         with open(reqs_file) as f:
             extras_require[name] = f.readlines()
+
+extras_require['girder'] = ['girder>=3.0.0a1', 'girder-jobs>=3.0.0a1']
 
 # perform the install
 setuptools.setup(
@@ -107,13 +101,7 @@ setuptools.setup(
     packages=setuptools.find_packages(
         exclude=('tests.*', 'tests')
     ),
-    package_data={
-        'girder_worker': [
-            'worker.dist.cfg',
-            'worker.local.cfg',
-            'core/format/**/*'
-        ] + plugin_data
-    },
+    include_package_data=True,
     cmdclass={
         'install': CustomInstall
     },
@@ -140,6 +128,9 @@ setuptools.setup(
             'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
             'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
             'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
+        ],
+        'girder.plugin': [
+            'worker = girder_worker.girder_plugin:WorkerPlugin'
         ]
     }
 )
