@@ -17,28 +17,53 @@
 #  limitations under the License.
 ###############################################################################
 
-from girder import events
-from girder.constants import AccessType
-from girder.plugin import getPlugin, GirderPlugin
-from girder_jobs.models.job import Job
+# Pre-girder 3.0 plugins supported the same entrypoint (girder.plugin) to register
+# themselves.  If a Girder 2.x instance is installed with this package, it will
+# attempt to load this entrypoint and fail with an error message.  Due to how
+# pre-3.0 plugins worked, it still falls back to the built-in version of worker
+# and functions correctly.  The logic below eliminates that error message.
 
-from .api.worker import Worker
-from . import event_handlers
+# First ensure girder is installed, otherwise it doesn't make sense to import
+# this module at all.
+import girder  # noqa
+
+from girder_worker import logger
+
+# Detect if girder>=3 is installed by checking an import that was added in 3.0.
+_isGirder3 = False
+try:
+    from girder.plugin import getPlugin, GirderPlugin
+    _isGirder3 = True
+except ImportError:
+    logger.info('Girder 2.x is detected skipping incompatible entrypoint definition.')
 
 
-class WorkerPlugin(GirderPlugin):
-    DISPLAY_NAME = 'Worker'
-    CLIENT_SOURCE_PATH = 'web_client'
+# If girder>=3 is installed, it is safe to continue defining the plugin class, otherwise
+# just define a dummy class to prevent error messages from propagating.
+if _isGirder3:
+    from girder import events
+    from girder.constants import AccessType
+    from girder_jobs.models.job import Job
 
-    def load(self, info):
-        getPlugin('jobs').load(info)
+    from .api.worker import Worker
+    from . import event_handlers
 
-        info['apiRoot'].worker = Worker()
+    class WorkerPlugin(GirderPlugin):
+        DISPLAY_NAME = 'Worker'
+        CLIENT_SOURCE_PATH = 'web_client'
 
-        events.bind('jobs.schedule', 'worker', event_handlers.schedule)
-        events.bind('jobs.status.validate', 'worker', event_handlers.validateJobStatus)
-        events.bind('jobs.status.validTransitions', 'worker', event_handlers.validTransitions)
-        events.bind('jobs.cancel', 'worker', event_handlers.cancel)
-        events.bind('model.job.save.after', 'worker', event_handlers.attachJobInfoSpec)
-        events.bind('model.job.save', 'worker', event_handlers.attachParentJob)
-        Job().exposeFields(AccessType.SITE_ADMIN, {'celeryTaskId', 'celeryQueue'})
+        def load(self, info):
+            getPlugin('jobs').load(info)
+
+            info['apiRoot'].worker = Worker()
+
+            events.bind('jobs.schedule', 'worker', event_handlers.schedule)
+            events.bind('jobs.status.validate', 'worker', event_handlers.validateJobStatus)
+            events.bind('jobs.status.validTransitions', 'worker', event_handlers.validTransitions)
+            events.bind('jobs.cancel', 'worker', event_handlers.cancel)
+            events.bind('model.job.save.after', 'worker', event_handlers.attachJobInfoSpec)
+            events.bind('model.job.save', 'worker', event_handlers.attachParentJob)
+            Job().exposeFields(AccessType.SITE_ADMIN, {'celeryTaskId', 'celeryQueue'})
+else:
+    class WorkerPlugin(object):
+        pass
