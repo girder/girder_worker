@@ -1,4 +1,4 @@
-FROM girder/girder:latest-py3
+FROM girder/girder:2.x-maintenance-py3
 MAINTAINER Christopher Kotfila <chris.kotfila@kitware.com>
 
 RUN pip3 install ansible girder-client
