@@ -8,8 +8,8 @@ def create_task_job(job_defaults, sender=None, body=None,
                     **kwargs):
 
     from girder.utility.model_importer import ModelImporter
-    from girder.plugins.worker import utils
     from girder.api.rest import getCurrentUser
+    from girder_worker.girder_plugin import utils
 
     job_model = ModelImporter.model('job', 'jobs')
 
@@ -43,7 +43,7 @@ def create_task_job(job_defaults, sender=None, body=None,
 def attach_girder_api_url(sender=None, body=None, exchange=None,
                           routing_key=None, headers=None, properties=None,
                           declare=None, retry_policy=None, **kwargs):
-    from girder.plugins.worker import utils
+    from girder_worker.girder_plugin import utils
     headers['girder_api_url'] = utils.getWorkerApiUrl()
 
 
