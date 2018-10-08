@@ -74,7 +74,12 @@ def chmod_writable(host_paths):
     if not isinstance(host_paths, (list, tuple)):
         host_paths = (host_paths,)
 
-    client = docker.from_env(version='auto')
+    if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
+        timeout = int(os.environ['DOCKER_CLIENT_TIMEOUT'])
+        client = docker.from_env(version='auto', timeout=timeout)
+    else:
+        client = docker.from_env(version='auto')
+
     config = {
         'tty': True,
         'volumes': {},
