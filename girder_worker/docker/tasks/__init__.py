@@ -50,7 +50,7 @@ def _run_container(image, container_args,  **kwargs):
         timeout = int(os.environ['DOCKER_CLIENT_TIMEOUT'])
         client = docker.from_env(version='auto', timeout=timeout)
     else:
-        client = docker.from_env(version='auto')
+        client = docker.from_env(version='auto', timeout=600)
 
     runtime = kwargs.pop('runtime', None)
     origRuntime = runtime
