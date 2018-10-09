@@ -23,13 +23,8 @@ def mock_worker_plugin_utils():
     context manager allows us to mock girder.plugins.worker.utils
     without seting up a whole server.
     """
-
-    girder_plugins = mock.MagicMock()
-    with mock.patch.dict('sys.modules',
-                         **{'girder.plugins': mock.MagicMock(),
-                            'girder.plugins.worker': girder_plugins}):
-        with mock.patch.object(girder_plugins, 'utils') as utils:
-            yield utils
+    with mock.patch('girder_worker.girder_plugin.utils') as utils:
+        yield utils
 
 
 @contextmanager
