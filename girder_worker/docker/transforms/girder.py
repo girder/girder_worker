@@ -1,6 +1,7 @@
 import errno
 import os
 import shutil
+import time
 from girder_worker_utils.transform import Transform
 from girder_worker_utils.transforms.girder_io import (
     GirderUploadJobArtifact,
@@ -8,6 +9,7 @@ from girder_worker_utils.transforms.girder_io import (
     GirderUploadToFolder,
     GirderUploadToItem
 )
+from requests.exceptions import RequestException
 from . import TemporaryVolume, Connect, NamedOutputPipe, _maybe_transform
 
 
@@ -68,13 +70,16 @@ class GirderFileIdToVolume(GirderClientTransform):
     :type volume: :py:class:`girder_worker.docker.transforms.BindMountVolume`
     :param filename: Alternate name for the file. Default is to use the name from Girder.
     :type filename: str
+    :param max_retries: Max number of times to retry the download if it fails either due
+        to a network issue or 5xx HTTP error.
     """
-    def __init__(self, _id, volume=TemporaryVolume.default, filename=None, **kwargs):
+    def __init__(self, _id, volume=TemporaryVolume.default, filename=None, max_retries=3, **kwargs):
         super(GirderFileIdToVolume, self).__init__(**kwargs)
         self._file_id = str(_id)
         self._volume = volume
         self._filename = filename
         self._file_path = None
+        self._max_tries = max_retries + 1
 
     def _create_file_path(self, root):
         if self._filename is None:
@@ -97,7 +102,17 @@ class GirderFileIdToVolume(GirderClientTransform):
         dir = self._volume.host_path
         rel_path, self._file_path = self._create_file_path(dir)
 
-        self.gc.downloadFile(self._file_id, self._file_path)
+        for i in range(self._max_tries):
+            try:
+                self.gc.downloadFile(self._file_id, self._file_path)
+                break
+            except RequestException as e:
+                if getattr(e, 'response', None) and not 500 <= e.response.status < 600:
+                    raise e  # If we got some HTTP error besides 5xx, we just die
+                time.sleep(i)  # Wait i seconds (linear backoff for now)
+        else:
+            raise Exception('Max attempts to download file %s failed (%d).' % (
+                self._file_id, self._max_tries))
 
         # Return the path inside the container
         return os.path.join(self._volume.container_path, rel_path)
