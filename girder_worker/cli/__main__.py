@@ -17,6 +17,8 @@ def _cast_to_command(f):
     description = GWFuncDesc.get_description(f)
     if description is not None:
         for arg in reversed(description.arguments):
+            # TODO - move mapping between Argument properties and
+            # cli_args/cli_opts into seperate function
             if isinstance(arg, KWArg):
                 if not hasattr(arg, 'cli_args'):
                     cli_args = ('-{}'.format(arg.name), )
@@ -44,7 +46,25 @@ def _cast_to_command(f):
 
             else:
                 pass
-    return click.decorators.command()(f)
+    # TODO - hide help_ implementation detail in its own function
+
+    help_ = None
+    # If it quacks like a celery task, and the wrapped function inside
+    # the celery task has no documentation then set the help_ variable
+    # to an empty string, otherwise this will pick up the
+    # documentation from the celery.local.Proxy class which (at this
+    # stage in the execution) is what "f" actually is.
+    if hasattr(f, "__wrapped__") and \
+       hasattr(f.__wrapped__, "__doc__") and \
+       f.__wrapped__.__doc__ is None:
+        help_ = ""
+
+
+    # Make sure to set the name equal to the function name, Click does
+    # some weird name mangling around underscores that converts them
+    # to dashes.
+
+    return click.decorators.command(name=f.__name__, help=help_)(f)
 
 
 def _iterate_tasks():
@@ -62,7 +82,8 @@ class GWCommand(click.MultiCommand):
 
     def get_command(self, ctx, name):
         for task in _iterate_tasks():
-            if task.description().func_name == name:
+            spec = GWFuncDesc.get_description(task)
+            if spec is not None and spec.func_name == name:
                 return _cast_to_command(task)
 
     def __call__(self, *args, **kwargs):
