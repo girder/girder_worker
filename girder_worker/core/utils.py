@@ -88,13 +88,7 @@ def toposort(data):
 @contextlib.contextmanager
 def tmpdir(cleanup=True):
     # Make the temp dir underneath tmp_root config setting
-    root = os.path.abspath(girder_worker.config.get(
-        'girder_worker', 'tmp_root'))
-    try:
-        os.makedirs(root)
-    except OSError:
-        if not os.path.isdir(root):
-            raise
+    root = girder_worker.utils.get_tmp_root()
     path = tempfile.mkdtemp(dir=root)
 
     try:

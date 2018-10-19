@@ -1,3 +1,4 @@
+import os
 import time
 from celery.task.control import inspect
 
@@ -6,6 +7,7 @@ from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
 import requests
 from requests import HTTPError
 
+from girder_worker import config
 
 import six
 
@@ -322,3 +324,30 @@ class JobManager(object):
         self.status = r.json()['status']
 
         return self.status
+
+
+def get_tmp_root():
+    """
+    Get the directory where temp directories should be created.  The results
+    can be used like `tempfile.mkdtemp(dir=get_tmp_root())`.
+
+    :returns: a directory where temp directories should be created.  This could
+        be None to use the system default.  Otherwise it is a directory that
+        exists.
+    """
+    root = os.path.abspath(config.get('girder_worker', 'tmp_root'))
+    try:
+        os.makedirs(root)
+    except OSError:
+        if not os.path.isdir(root):
+            raise
+    return root
+
+
+def allow_direct_path():
+    """
+    Check if direct paths are allowed.
+
+    :returns: True if direct paths are allowed.
+    """
+    return config.getboolean('girder_io', 'allow_direct_path')

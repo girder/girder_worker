@@ -1,8 +1,10 @@
 import girder_client
 import json
 import os
-from girder_worker import config
 from six import StringIO
+
+import girder_worker
+from girder_worker import config
 
 # Make a sensible limit for metadata outputs
 MAX_METADATA_LENGTH = 4 * 1024 * 1024  # 4MB
@@ -96,7 +98,7 @@ def fetch_handler(spec, **kwargs):
             # If we fetch the parent, we can't use direct paths as the
             # task may needs all of the siblings next to each other
             dest = _fetch_parent_item(spec['id'], client, kwargs['_tempdir'])
-        elif (direct_path and config.getboolean('girder_io', 'allow_direct_path') and
+        elif (direct_path and girder_worker.utils.allow_direct_path() and
                 os.path.isfile(direct_path)):
             # If the specification includes a direct path AND it is allowed by
             # the worker configuration AND it is a reachable file, use it.
