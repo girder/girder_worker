@@ -174,7 +174,7 @@ While the Celery approach is much more terse than the traditional approach, the 
 + **girder_job_type** This changes the job type, by default it is `"celery"` (Note that `girder_job_type` is a arbitrary string used to categorize jobs, it has no behavior).
 + **girder_job_public** This changes the public status of the job, by default it is `False`.
 + **girder_job_handler** This changes the job handler, by default it is `"celery_handler"` (Note: do not change this unless you are sure you know what you are doing).
-+ **girder_job_other_fields** This field allows you to set additional handler specific fields on the Job. Currently the "celery_handler" has no additional standard fields. This could however be used to extend the job model data to suit application specific needs.
++ **girder_job_other_fields** This field allows you to set additional handler specific fields on the Job. Currently the "celery_handler" has no additional standard fields. This could however be used to extend the job model data to suit application specific needs.  The `"meta"` field is displayed by the Girder Jobs plugin as part of the job details.
 + **girder_user** This field sets the girder user which belongs to the job. It should be a full user model. By default it is the return value of `girder.api.rest.getCurrentUser()`
 
 Here is an example of using these fields:
