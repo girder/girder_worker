@@ -99,6 +99,13 @@ def test_item(girder_client, private_folder):
 
 
 @pytest.fixture(scope='function')
+def test_multi_file_item(girder_client, test_item):
+    for i in range(3):
+        girder_client.uploadFile(test_item['_id'], six.BytesIO(), 'test%d.txt' % i, 0)
+    yield test_item
+
+
+@pytest.fixture(scope='function')
 def all_writable_tmpdir(tmpdir):
     """
     A temp directory that can be written to by anyone.

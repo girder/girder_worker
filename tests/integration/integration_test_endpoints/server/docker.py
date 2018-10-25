@@ -32,6 +32,7 @@ from girder_worker.docker.transforms.girder import (
     GirderUploadVolumePathToItem,
     ProgressPipe,
     GirderFileIdToVolume,
+    GirderItemIdToVolume
 )
 from girder_worker.utils import JobStatus
 from .utilities import wait_for_status
@@ -69,6 +70,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_raises_exception)
         self.route('POST', ('test_docker_run_cancel', ),
                    self.test_docker_run_cancel)
+        self.route('POST', ('test_docker_run_multi_file_item', ),
+                   self.test_docker_run_multi_file_item)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -80,6 +83,18 @@ class DockerTestEndpoints(Resource):
             remove_container=True)
 
         return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @autoDescribeRoute(
+        Description('Test GirderItemIdToVolume with multi-file item')
+        .modelParam('itemId', 'The item id', model=Item, destName='item',
+                    level=AccessType.READ, paramType='query'))
+    def test_docker_run_multi_file_item(self, item):
+        transform = GirderItemIdToVolume(item['_id'])
+        return docker_run.delay(
+            TEST_IMAGE, pull_image=True, container_args=['listdir', '-d', transform]
+        ).job
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
