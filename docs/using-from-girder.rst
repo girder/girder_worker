@@ -39,6 +39,11 @@ and ``girder_job_other_fields``. For instance, to set the title and type of the 
     assert job['title'] == 'This is my job'
     assert job['type'] == 'my_task'
 
+The Girder Job details page can show a dictionary of metadata passed in the ``meta`` field of the ``girder_job_other_fields``:
+
+.. code-block:: python
+
+    job = my_task.delay(girder_job_title='This is my job', girder_job_type='my_task', girder_job_other_fields={'meta': {'special_key': 'Special Value'}})
 
 Downloading files from Girder for use in tasks
 ----------------------------------------------
