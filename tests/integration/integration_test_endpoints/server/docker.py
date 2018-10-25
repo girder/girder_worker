@@ -102,7 +102,7 @@ class DockerTestEndpoints(Resource):
         Description('Test docker run that raises an exception.'))
     def test_docker_run_raises_exception(self, params):
         result = docker_run.delay(
-            TEST_IMAGE, pull_image=True, container_args=['raise_exception'], remove_container=True)
+            TEST_IMAGE, pull_image=True, container_args=['raise-exception'], remove_container=True)
         return result.job
 
     @access.token
@@ -259,7 +259,7 @@ class DockerTestEndpoints(Resource):
 
         result = docker_run.delay(
             TEST_IMAGE, pull_image=True,
-            container_args=['read_write', '-i', GirderFileIdToVolume(file_id),
+            container_args=['read-write', '-i', GirderFileIdToVolume(file_id),
                             '-o', Connect(NamedOutputPipe('out'), HostStdOut())],
             remove_container=True)
 
@@ -302,7 +302,7 @@ class DockerTestEndpoints(Resource):
             getApiUrl(), 'integration_tests/docker/input_stream', item_id, delimiter)
 
         container_args = [
-            'read_write',
+            'read-write',
             '-i', GirderFileIdToVolume(file_id),
             '-o', Connect(NamedOutputPipe('out'),
                           ChunkedTransferEncodingStream(url, headers))
@@ -326,7 +326,7 @@ class DockerTestEndpoints(Resource):
         volume = TemporaryVolume(host_dir=root, mode=0o777)
 
         result = docker_run.delay(
-            TEST_IMAGE, pull_image=True, container_args=['print_path', '-p', volume],
+            TEST_IMAGE, pull_image=True, container_args=['print-path', '-p', volume],
             remove_container=True, volumes=[volume])
 
         return result.job
