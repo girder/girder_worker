@@ -89,12 +89,12 @@ def test_file_in_girder(girder_client, private_folder,  test_file):
 
 @pytest.fixture(scope='function')
 def test_item(girder_client, private_folder):
-    file = None
+    item = None
     try:
         item = girder_client.createItem(private_folder['_id'], 'test')
         yield item
     finally:
-        if file is not None:
+        if item is not None:
             girder_client.delete('item/%s' % item['_id'])
 
 
