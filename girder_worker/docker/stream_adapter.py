@@ -12,7 +12,7 @@ class StreamPushAdapter(object):
         """
         Write a chunk of data to the output stream.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def close(self):
         """

@@ -113,6 +113,16 @@ def test_docker_run_girder_file(url, strip_lf, session, test_file, test_file_in_
     _assert_job_contents(r, session, test_file, remove_newline=strip_lf)
 
 
+def test_docker_run_download_multi_file_item(session, test_multi_file_item):
+    r = session.post('integration_tests/docker/test_docker_run_multi_file_item', params={
+        'itemId': test_multi_file_item['_id']
+    })
+    with session.wait_for_success(r.json()['_id']) as job:
+        _assert_job_statuses(job)
+        log = ''.join(str(l) for l in job['log']).strip()
+        assert set(log.split()) == {'test0.txt', 'test1.txt', 'test2.txt'}
+
+
 @pytest.mark.docker
 def test_docker_run_progress_pipe(session):
     progressions = [

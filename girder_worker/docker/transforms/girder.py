@@ -168,6 +168,56 @@ class GirderFolderIdToVolume(GirderClientTransform):
             self.__module__, self.__class__.__name__, self._folder_id, self._folder_path)
 
 
+class GirderItemIdToVolume(GirderClientTransform):
+    """
+    This can be used to pass a Girder item into a docker container. It downloads
+    the item to a bind mounted volume, and returns the container path of the directory.
+
+    :param _id: The Girder item ID.
+    :type _id: str or ObjectId
+    :param volume: The bind mount volume where the item will reside.
+    :type volume: :py:class:`girder_worker.docker.transforms.BindMountVolume`
+    :param item_name: Alternate name for the file. Default is to use the name from Girder.
+    :type item_name: str
+    """
+    def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
+        super(GirderItemIdToVolume, self).__init__(**kwargs)
+        self._item_id = str(_id)
+        self._volume = volume
+        self._item_path = None
+
+    def _create_item_path(self, root):
+        path = os.path.join(root, self._item_id)
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+
+        return self._item_id, path
+
+    def transform(self, **kwargs):
+        self._volume.transform(**kwargs)
+        rel_path, self._item_path = self._create_item_path(self._volume.host_path)
+
+        self.gc.downloadItem(self._item_id, self._item_path)
+
+        # downloadItem always puts the item underneath the dest at its transformed name,
+        # so we find where it placed it with listdir
+        rel_path = os.path.join(rel_path, os.listdir(self._item_path)[0])
+
+        # Return the path inside the container
+        return os.path.join(self._volume.container_path, rel_path)
+
+    def cleanup(self, **kwargs):
+        if self._item_path is not None:
+            shutil.rmtree(self._item_path, ignore_errors=True)
+
+    def _repr_model_(self):
+        return '<%s.%s: Item ID=%s -> "%s">' % (
+            self.__module__, self.__class__.__name__, self._item_id, self._item_path)
+
+
 class GirderUploadVolumePathToItem(GirderUploadToItem):
     """
     This transform uploads data in a bind mount volume to a Girder item. This should be used

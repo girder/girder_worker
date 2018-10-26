@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import signal
@@ -80,6 +81,13 @@ def print_path(p):
 @cli.command()
 def raise_exception():
     raise Exception('girder docker exception')
+
+
+@cli.command()
+@click.option('-d', type=click.Path(dir_okay=True, file_okay=False))
+def listdir(d):
+    for path in os.listdir(d):
+        print(path)
 
 
 if __name__ == '__main__':
