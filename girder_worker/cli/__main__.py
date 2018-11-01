@@ -3,51 +3,24 @@ import pkg_resources as pr
 from click.core import Command, Argument, Option
 from girder_worker.entrypoint import get_extensions, get_extension_tasks, import_all_includes
 from stevedore import driver
-from girder_worker_utils.decorators import (
-    GWFuncDesc,
-    Arg,
-    KWArg)
+from girder_worker_utils.decorators import GWFuncDesc
 
 GWRUN_ENTRYPOINT_GROUP = 'gwrun_output_handlers'
+
 
 def _cast_to_command(f):
     if isinstance(f, Command):
         return f
 
     description = GWFuncDesc.get_description(f)
+
     if description is not None:
         for arg in reversed(description.arguments):
-            # TODO - move mapping between Argument properties and
-            # cli_args/cli_opts into seperate function
-            if isinstance(arg, KWArg):
-                if not hasattr(arg, 'cli_args'):
-                    cli_args = ('-{}'.format(arg.name), )
-                else:
-                    cli_args = arg.cli_args
+            # Decorator here will be of type click.option or click.argument
+            arg.decorate(f)
 
-                if not hasattr(arg, 'cli_opts'):
-                    cli_opts = {}
-                else:
-                    cli_opts = arg.cli_opts
 
-                click.option(*cli_args, **cli_opts)(f)
-            elif isinstance(arg, Arg):
-                if not hasattr(arg, 'cli_args'):
-                    cli_args = (arg.name, )
-                else:
-                    cli_args = arg.cli_args
-
-                if not hasattr(arg, 'cli_opts'):
-                    cli_opts = {}
-                else:
-                    cli_opts = arg.cli_opts
-
-                click.argument(*cli_args, **cli_opts)(f)
-
-            else:
-                pass
     # TODO - hide help_ implementation detail in its own function
-
     help_ = None
     # If it quacks like a celery task, and the wrapped function inside
     # the celery task has no documentation then set the help_ variable
@@ -98,7 +71,6 @@ class GWCommand(click.MultiCommand):
 @click.pass_context
 def main(ctx, output):
     pass
-
 
 @main.resultcallback()
 def process_output(processors, output):
