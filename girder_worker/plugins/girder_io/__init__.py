@@ -3,6 +3,8 @@ import json
 import os
 from girder_worker import config
 from six import StringIO
+from celery.app import backends
+
 
 # Make a sensible limit for metadata outputs
 MAX_METADATA_LENGTH = 4 * 1024 * 1024  # 4MB
@@ -208,3 +210,4 @@ def load(params):
     from girder_worker.core import io
     io.register_fetch_handler('girder', fetch_handler)
     io.register_push_handler('girder', push_handler)
+    backends.BACKEND_ALIASES['girder'] = 'girder_worker.plugins.girder_io.backend:GirderBackend'
