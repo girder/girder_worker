@@ -21,6 +21,7 @@ from girder_worker.docker.io import (
     StdStreamWriter
 )
 from girder_worker.docker.transforms import (
+    ChainedResultTransform,
     ContainerStdErr,
     ContainerStdOut,
     _TemporaryVolumeBase,
@@ -376,3 +377,17 @@ def docker_run(task, image, pull_image=True, entrypoint=None, container_args=Non
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
         remove_container, **kwargs)
+
+
+@app.task(base=DockerTask, bind=True)
+def docker_run_chained(task, results, container_args=None, *args, **kwargs):
+    container_args = container_args or []
+    kwargs['container_args'] = [_maybe_transform_chain_result(a, results) for a in container_args]
+
+    return _docker_run(task, *args, **kwargs)
+
+
+def _maybe_transform_chain_result(arg, results):
+    if isinstance(arg, ChainedResultTransform):
+        return arg.transform(results)
+    return arg

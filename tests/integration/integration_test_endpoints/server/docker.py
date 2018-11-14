@@ -17,7 +17,7 @@ from girder.models.item import Item
 from girder.models.token import Token
 from girder.constants import AccessType
 
-from girder_worker.docker.tasks import docker_run
+from girder_worker.docker.tasks import docker_run, docker_run_chained
 from girder_worker.docker.transforms import (
     HostStdOut,
     NamedOutputPipe,
@@ -29,6 +29,7 @@ from girder_worker.docker.transforms import (
     TemporaryVolume
 )
 from girder_worker.docker.transforms.girder import (
+    ChainedResultItem,
     GirderFileIdToStream,
     GirderUploadVolumePathToItem,
     ProgressPipe,
@@ -113,11 +114,10 @@ class DockerTestEndpoints(Resource):
                 GirderUploadVolumePathToItem(outpath, outItem['_id'])
             ]
         )
-        # Create some partial and chain into it?
-        step2 = docker_run.s(
+        step2 = docker_run_chained.s(
             TEST_IMAGE, pull_image=True, container_args=[
                 'reverse',
-                step1.results[0],  # TODO this doesn't work
+                ChainedResultItem(0),
                 finaloutpath
             ], girder_result_hooks=[
                 GirderUploadVolumePathToItem(finaloutpath, finalOutItem['_id'])
