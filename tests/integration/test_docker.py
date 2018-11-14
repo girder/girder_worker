@@ -140,12 +140,14 @@ def test_docker_run_download_multi_file_item(session, test_multi_file_item):
 
 def test_docker_multistep_workflow(session, workflow_data):
     f1, f2, outItem, finalItem = workflow_data
-    r = session.post('integration_tests/docker/test_docker_multistep_workflow', params={
+    r = session.post('integration_tests/docker/test_docker_run_multistep_workflow', params={
         'file1Id': f1['_id'],
         'file2Id': f2['_id'],
         'outItemId': outItem['_id'],
         'finalOutItemId': finalItem['_id']
     })
+    print('Got response')
+    print(r.json())
     with session.wait_for_success(r.json()['_id']) as job:
         _assert_job_statuses(job)
     resp = session.get('item/%s/download' % outItem['_id'])
