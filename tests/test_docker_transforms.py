@@ -8,7 +8,6 @@ from girder_worker_utils.transform import Transform
 
 from girder_worker.app import Task
 from girder_worker.utils import JobManager
-from girder_client import GirderClient
 
 from girder_worker.docker.io import (
     ChunkedTransferEncodingStreamWriter,
@@ -50,6 +49,8 @@ from girder_worker.docker.transforms.girder import (
     GirderUploadVolumePathJobArtifact
 )
 
+from .conftest import mock_gc
+
 BOGUS_HOST_PATH = '/bogus/volume/host_path'
 BOGUS_CONTAINER_PATH = '/bogus/volume/container_path'
 
@@ -60,25 +61,6 @@ def test_maybe_transform_transforms():
             return 'FOOBAR'
 
     assert _maybe_transform(T()) == 'FOOBAR'
-
-
-@pytest.fixture
-def mock_gc():
-    mgc = mock.MagicMock(spec=GirderClient)
-    mgc.getFile.return_value = {'_id': 'BOGUS_ID', 'name': 'bogus.txt'}
-    return mgc
-
-
-@pytest.fixture
-def patch_mkdir():
-    with mock.patch('os.mkdir') as mkdir_mock:
-        yield mkdir_mock
-
-
-@pytest.fixture
-def patch_makedirs():
-    with mock.patch('os.makedirs') as m:
-        yield m
 
 
 @pytest.fixture
