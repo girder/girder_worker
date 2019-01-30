@@ -1,8 +1,8 @@
-import PluginConfigBreadcrumbWidget from 'girder/views/widgets/PluginConfigBreadcrumbWidget';
-import View from 'girder/views/View';
-import events from 'girder/events';
-import { restRequest } from 'girder/rest';
-import router from 'girder/router';
+import PluginConfigBreadcrumbWidget from '@girder/core/views/widgets/PluginConfigBreadcrumbWidget';
+import View from '@girder/core/views/View';
+import events from '@girder/core/events';
+import { restRequest } from '@girder/core/rest';
+import router from '@girder/core/router';
 
 import ConfigViewTemplate from '../templates/configView.pug';
 
