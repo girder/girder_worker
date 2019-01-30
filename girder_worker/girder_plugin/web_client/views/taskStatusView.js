@@ -1,7 +1,7 @@
 import _ from 'underscore';
 
-import View from 'girder/views/View';
-import { restRequest } from 'girder/rest';
+import View from '@girder/core/views/View';
+import { restRequest } from '@girder/core/rest';
 
 import taskStatusViewTemplate from '../templates/taskStatusView.pug';
 

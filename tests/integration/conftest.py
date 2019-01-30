@@ -132,7 +132,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_runtest_setup(item):
-        session = item.parent.parent
-        sanitycheckfailed = getattr(session, '_sanitycheckfailed', None)
-        if sanitycheckfailed is not None:
-            pytest.xfail('previous test failed (%s)' % sanitycheckfailed.name)
+    session = item.parent.parent
+    sanitycheckfailed = getattr(session, '_sanitycheckfailed', None)
+    if sanitycheckfailed is not None:
+        pytest.xfail('previous test failed (%s)' % sanitycheckfailed.name)
