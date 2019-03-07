@@ -1,7 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "r", "format": "serialized"}],
-    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
-    "script": "output = isinstance(input, str)",
-    "extensions": ["rds"],
-    "mode": "python"
-}

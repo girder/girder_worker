@@ -1,7 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "graph", "format": "networkx.json"}],
-    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
-    "script": "output = isinstance(input, (str, unicode))",
-    "extensions": ["networkx-json"],
-    "mode": "python"
-}

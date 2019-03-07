@@ -6,7 +6,6 @@ from girder_worker.app import app
 from celery.exceptions import TimeoutError
 
 from .raw import CeleryTestEndpoints
-from .traditional import TraditionalTestEndpoints
 from .docker import DockerTestEndpoints
 
 
@@ -42,5 +41,4 @@ def load(info):
     info['apiRoot'].integration_tests = Prefix()
     info['apiRoot'].integration_tests.common = CommonTestEndpoints()
     info['apiRoot'].integration_tests.celery = CeleryTestEndpoints()
-    info['apiRoot'].integration_tests.traditional = TraditionalTestEndpoints()
     info['apiRoot'].integration_tests.docker = DockerTestEndpoints()

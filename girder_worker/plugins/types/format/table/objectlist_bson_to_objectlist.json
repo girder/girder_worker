@@ -1,6 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "table", "format": "objectlist.bson"}],
-    "outputs": [{"name": "output", "type": "table", "format": "objectlist"}],
-    "script_uri": "file://objectlist_bson_to_objectlist.py",
-    "mode": "python"
-}

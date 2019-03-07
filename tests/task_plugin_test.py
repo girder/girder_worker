@@ -10,7 +10,6 @@ from girder_worker_utils import types
 
 import mock
 import pytest
-import six
 
 
 def setup_function(func):
@@ -29,16 +28,7 @@ def teardown_function(func):
 def test_get_extension_manager():
     mgr = entrypoint.get_extension_manager()
     names = sorted(mgr.names())
-    assert names == ['core', 'plugin1', 'plugin2']
-
-
-@pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
-def test_get_core_task_modules():
-    modules = entrypoint.get_core_task_modules()
-    if six.PY2:
-        assert modules == ['os.path']
-    else:
-        assert modules == []
+    assert names == ['plugin1', 'plugin2']
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
@@ -61,27 +51,11 @@ def test_invalid_plugins(capsys):
     for line in out:
         assert re.search('^Problem.*(exception[12]|invalid|import), skipping$', line)
 
-    if six.PY2:
-        assert entrypoint.get_core_task_modules() == ['os.path']
-    else:
-        assert entrypoint.get_core_task_modules() == []
-
-
-@pytest.mark.skipif(six.PY3, reason='Python 2 only')
-def test_core_plugin():
-    with mock.patch('girder_worker.app.app') as app:
-        discover_tasks(app, True)
-        app.conf.update.assert_any_call({'CELERY_IMPORTS':
-                                         ['girder_worker.tasks']})
-
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
 def test_external_plugins():
     with mock.patch('girder_worker.app.app') as app:
-        discover_tasks(app, True)
-        if six.PY2:
-            app.conf.update.assert_any_call({'CELERY_IMPORTS':
-                                             ['os.path']})
+        discover_tasks(app)
         app.conf.update.assert_any_call({'CELERY_INCLUDE':
                                          ['girder_worker._test_plugins.tasks']})
 
@@ -91,10 +65,7 @@ def test_get_extensions():
     with mock.patch('girder_worker.__main__.app'):
         main()
         extensions = sorted(entrypoint.get_extensions())
-        if six.PY2:
-            assert extensions == ['core', 'plugin1', 'plugin2']
-        else:
-            assert extensions == ['plugin1', 'plugin2']
+        assert extensions == ['plugin1', 'plugin2']
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')

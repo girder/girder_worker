@@ -22,7 +22,7 @@ integration_steps:
     run:
       name: Run integration tests
       command: |
-        cd tests/integration && make test${RUN_ENV}
+        cd tests/integration && make test
 
   dump-girder-logs: &dump-girder-logs
     run:

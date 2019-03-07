@@ -9,11 +9,6 @@ class BaseTestPlugin(GirderWorkerPluginABC):
         return []
 
 
-class TestCore(BaseTestPlugin):
-    def task_imports(self):
-        return ['os.path']
-
-
 class TestPlugin1(BaseTestPlugin):
     pass
 

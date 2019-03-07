@@ -1,5 +1,0 @@
-library("ape")
-f <- tempfile()
-write(input, f)
-output <- read.nexus(f)
-file.remove(f)

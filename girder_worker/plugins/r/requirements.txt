@@ -1,1 +1,0 @@
-rpy2<2.9  # newer versions are python 3 only

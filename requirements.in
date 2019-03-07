@@ -1,7 +1,6 @@
-celery>=4,<4.2
+celery
 funcsigs ; python_version < '3.3'
 girder-client>=2
-networkx<2
 pymongo>=3
 requests[security]
 six
