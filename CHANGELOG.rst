@@ -29,6 +29,32 @@ Removals
 Security Fixes
 --------------
 
+Girder Worker 0.6.0
+==========
+
+Added Features
+--------------
+
+Bug fixes
+---------
+
+Changes
+-------
+
+* Remove legacy girder_worker code (`#332 <https://github.com/girder/girder_worker/pull/332>`_)
+
+Deprecations
+------------
+
+DevOps
+------
+
+Removals
+--------
+
+Security Fixes
+--------------
+
 
 Girder Worker 0.5.1
 ===================
