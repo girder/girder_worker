@@ -30,8 +30,42 @@ Security Fixes
 --------------
 
 
+Girder Worker 0.5.1
+===================
+
+Added Features
+--------------
+* Move the remote worker plugin from Girder to Girder Worker (`#311 <https://github.com/girder/girder_worker/pull/311>`_)
+* Support nvidia-docker version 2.0 (`#303 <https://github.com/girder/girder_worker/pull/303>`_)
+* Add ability to upload job artifacts from docker (`#300 <https://github.com/girder/girder_worker/pull/300>`_)
+
+Bug fixes
+---------
+
+* Explicitly load configuration after app instantiation(`#284 <https://github.com/girder/girder_worker/pull/284>`_)
+* Resolve issues with integration tests from upstream change  (`#335 <https://github.com/girder/girder_worker/pull/335>`_)
+
+Changes
+-------
+* Various updates to transforms (`#289 <https://github.com/girder/girder_worker/pull/289>`_, `#292 <https://github.com/girder/girder_worker/pull/292>`_, `#305 <https://github.com/girder/girder_worker/pull/305>`_, `#323 <https://github.com/girder/girder_worker/pull/323>`_)
+* Documentation improvements (`#288 <https://github.com/girder/girder_worker/pull/288>`_, `#308 <https://github.com/girder/girder_worker/pull/308>`_, `#309 <https://github.com/girder/girder_worker/pull/309>`_)
+
+Deprecations
+------------
+
+DevOps
+------
+
+Removals
+--------
+
+Security Fixes
+--------------
+
+
 Girder Worker 0.5.0
 ===================
+
 
 
 Bug fixes
