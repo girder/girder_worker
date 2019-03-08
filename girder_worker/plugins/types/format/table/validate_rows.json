@@ -1,6 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "table", "format": "rows"}],
-    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
-    "script": "output = isinstance(input, dict) and 'fields' in input and 'rows' in input",
-    "mode": "python"
-}

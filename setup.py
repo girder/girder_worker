@@ -68,15 +68,7 @@ with open('README.rst') as f:
 with open('requirements.in') as f:
     install_reqs = f.readlines()
 
-# Build up extras_require for plugin requirements
 extras_require = {}
-plugins_dir = os.path.join('girder_worker', 'plugins')
-for name in os.listdir(plugins_dir):
-    reqs_file = os.path.join(plugins_dir, name, 'requirements.txt')
-    if os.path.isfile(reqs_file):
-        with open(reqs_file) as f:
-            extras_require[name] = f.readlines()
-
 extras_require['girder'] = ['girder>=3.0.0a1', 'girder-jobs>=3.0.0a1']
 
 # perform the install
@@ -110,20 +102,16 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'girder-worker = girder_worker.__main__:main',
-            'girder-worker-cleanup = girder_worker.core.cleanup:main',
             'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [
-            'core = girder_worker:GirderWorkerPlugin',
             'docker = girder_worker.docker:DockerPlugin [docker]'
         ],
         'girder_worker._test_plugins.valid_plugins': [
-            'core = girder_worker._test_plugins.plugins:TestCore',
             'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
             'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
         ],
         'girder_worker._test_plugins.invalid_plugins': [
-            'core = girder_worker._test_plugins.plugins:TestCore',
             'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
             'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
             'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa

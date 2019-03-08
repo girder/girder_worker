@@ -121,7 +121,7 @@ def all_writable_tmpdir(tmpdir):
 # pytest_runtest_makereport and pytest_runtest_setup are used to xfail
 # all tests if any of the sanitychecks fail.
 def pytest_collection_modifyitems(items):
-    items.sort(key=lambda i: -1 if i.get_marker('sanitycheck') else 1)
+    items.sort(key=lambda i: -1 if i.get_closest_marker('sanitycheck') else 1)
 
 
 def pytest_runtest_makereport(item, call):

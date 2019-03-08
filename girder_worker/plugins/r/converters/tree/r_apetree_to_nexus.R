@@ -1,5 +1,0 @@
-library("ape")
-f = tempfile()
-write.nexus(input, file=f)
-output <- readChar(f, file.info(f)$size)
-file.remove(f)

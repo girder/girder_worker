@@ -1,6 +1,0 @@
-{
-    "inputs": [{"name": "input", "type": "tree", "format": "treestore"}],
-    "outputs": [{"name": "output", "type": "boolean", "format": "boolean"}],
-    "script": "output = isinstance(input, str)",
-    "mode": "python"
-}
