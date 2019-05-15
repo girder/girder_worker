@@ -12,11 +12,12 @@ from girder.api.rest import (
     getApiUrl
 )
 from girder.models.upload import Upload
+from girder.models.file import File
 from girder.models.item import Item
 from girder.models.token import Token
 from girder.constants import AccessType
 
-from girder_worker.docker.tasks import docker_run
+from girder_worker.docker.tasks import docker_run, docker_run_chained
 from girder_worker.docker.transforms import (
     HostStdOut,
     NamedOutputPipe,
@@ -28,6 +29,7 @@ from girder_worker.docker.transforms import (
     TemporaryVolume
 )
 from girder_worker.docker.transforms.girder import (
+    ChainedResultItem,
     GirderFileIdToStream,
     GirderUploadVolumePathToItem,
     ProgressPipe,
@@ -72,6 +74,8 @@ class DockerTestEndpoints(Resource):
                    self.test_docker_run_cancel)
         self.route('POST', ('test_docker_run_multi_file_item', ),
                    self.test_docker_run_multi_file_item)
+        self.route('POST', ('test_docker_run_multistep_workflow', ),
+                   self.test_docker_run_multistep_workflow)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -83,6 +87,44 @@ class DockerTestEndpoints(Resource):
             remove_container=True)
 
         return result.job
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @autoDescribeRoute(
+        Description('Two docker tasks in a chain: concat two files and then reverse the result.')
+        .modelParam('file1Id', 'First file', model=File, destName='file1', paramType='formData',
+                    level=AccessType.READ)
+        .modelParam('file2Id', 'Second file', model=File, destName='file2', paramType='formData',
+                    level=AccessType.READ)
+        .modelParam('outItemId', 'Output item', model=Item, destName='outItem',
+                    paramType='formData', level=AccessType.WRITE)
+        .modelParam('finalOutItemId', 'Final output item', model=Item, destName='finalOutItem',
+                    paramType='formData', level=AccessType.WRITE))
+    def test_docker_run_multistep_workflow(self, file1, file2, outItem, finalOutItem):
+        outpath = VolumePath(outItem['name'])
+        finaloutpath = VolumePath(finalOutItem['name'])
+
+        step1 = docker_run.s(
+            TEST_IMAGE, pull_image=True, container_args=[
+                'concat',
+                GirderFileIdToVolume(file1['_id']),
+                GirderFileIdToVolume(file2['_id']),
+                outpath
+            ], girder_result_hooks=[
+                GirderUploadVolumePathToItem(outpath, outItem['_id'])
+            ]
+        )
+        step2 = docker_run_chained.s(
+            TEST_IMAGE, pull_image=True, container_args=[
+                'reverse',
+                ChainedResultItem(0),
+                finaloutpath
+            ], girder_result_hooks=[
+                GirderUploadVolumePathToItem(finaloutpath, finalOutItem['_id'])
+            ]
+        )
+
+        return (step1 | step2).delay().job
 
     @access.token
     @filtermodel(model='job', plugin='jobs')

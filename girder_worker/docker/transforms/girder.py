@@ -8,7 +8,7 @@ from girder_worker_utils.transforms.girder_io import (
     GirderUploadToFolder,
     GirderUploadToItem
 )
-from . import TemporaryVolume, Connect, NamedOutputPipe, _maybe_transform
+from . import TemporaryVolume, Connect, NamedOutputPipe, _maybe_transform, ChainedResultTransform
 
 
 class ProgressPipe(Transform):
@@ -298,3 +298,9 @@ class GirderUploadVolumePathJobArtifact(GirderUploadJobArtifact):
     def exception(self):
         if self._upload_on_exception:
             return self.transform()
+
+
+class ChainedResultItem(ChainedResultTransform):
+    def transform(self, results):
+        item_id = super(ChainedResultItem, self).transform(results)
+        return GirderItemIdToVolume(item_id)

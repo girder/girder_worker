@@ -90,5 +90,20 @@ def listdir(d):
         print(path)
 
 
+@cli.command()
+@click.argument('f1', type=click.File('r'))
+@click.argument('f2', type=click.File('r'))
+@click.argument('out', type=click.File('w'))
+def concat(f1, f2, out):
+    out.write(f1.read() + f2.read())
+
+
+@cli.command()
+@click.argument('f', type=click.File('r'))
+@click.argument('out', type=click.File('w'))
+def reverse(f, out):
+    out.write(f.read()[::-1])
+
+
 if __name__ == '__main__':
     cli(obj={})

@@ -28,6 +28,21 @@ def _assert_job_contents(r, session, test_file, remove_newline=True):
             assert log == fp.read()
 
 
+@pytest.fixture
+def workflow_data(girder_client, test_item):
+    f1 = girder_client.uploadFile(test_item['_id'], six.BytesIO(b'hello'), 'test1.txt', 5)
+    f2 = girder_client.uploadFile(test_item['_id'], six.BytesIO(b'world'), 'test2.txt', 5)
+    outItem = girder_client.createItem(test_item['folderId'], 'out.txt')
+    finalItem = girder_client.createItem(test_item['folderId'], 'final.txt')
+
+    yield f1, f2, outItem, finalItem
+
+    girder_client.delete('file/%s' % f1['_id'])
+    girder_client.delete('file/%s' % f2['_id'])
+    girder_client.delete('item/%s' % outItem['_id'])
+    girder_client.delete('item/%s' % finalItem['_id'])
+
+
 @pytest.mark.docker
 def test_docker_run(session):
     r = session.post('integration_tests/docker/test_docker_run')
@@ -121,6 +136,24 @@ def test_docker_run_download_multi_file_item(session, test_multi_file_item):
         _assert_job_statuses(job)
         log = ''.join(str(l) for l in job['log']).strip()
         assert set(log.split()) == {'test0.txt', 'test1.txt', 'test2.txt'}
+
+
+def test_docker_multistep_workflow(session, workflow_data):
+    f1, f2, outItem, finalItem = workflow_data
+    r = session.post('integration_tests/docker/test_docker_run_multistep_workflow', params={
+        'file1Id': f1['_id'],
+        'file2Id': f2['_id'],
+        'outItemId': outItem['_id'],
+        'finalOutItemId': finalItem['_id']
+    })
+    print('Got response')
+    print(r.json())
+    with session.wait_for_success(r.json()['_id']) as job:
+        _assert_job_statuses(job)
+    resp = session.get('item/%s/download' % outItem['_id'])
+    assert resp.text == 'helloworld'
+    resp = session.get('item/%s/download' % finalItem['_id'])
+    assert resp.text == 'dlrowolleh'
 
 
 @pytest.mark.docker

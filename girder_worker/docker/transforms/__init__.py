@@ -386,3 +386,18 @@ class ChunkedTransferEncodingStream(Transform):
         )
 
         return ChunkedTransferEncodingStreamWriter(self.url, self.headers)
+
+
+class ChainedResultTransform(Transform):
+    """
+    This is the base class for a set of transforms that chain one of the result
+    hook values from one docker task into the next docker task. This version of the
+    class passes the result hook value as-is rather than transforming it.
+
+    :param index: The index into the previous task's results list.
+    """
+    def __init__(self, index):
+        self._index = index
+
+    def transform(self, results):
+        return results[self._index]
