@@ -128,6 +128,17 @@ def test_celery_chained_tasks(session):
     assert jobs[0]['parentId'] == jobs[1]['_id']
 
 
+def test_celery_chained_tasks_with_kwargs(session):
+    url = 'integration_tests/celery/test_task_chained_with_kwargs'
+    r = session.post(url)
+    assert r.status_code == 200, r.content
+    jobs = r.json()
+    # Check if kwargs are correctly set
+    assert jobs[2]['kwargs'] == dict(foo=1, bar=2)
+    assert jobs[1]['kwargs'] == dict(baz=3)
+    assert jobs[0]['kwargs'] == dict(last_but_not_least=4)
+
+
 def test_celery_chained_task_bad_token_fails(session):
     r = session.post('integration_tests/celery/test_task_chained_bad_token_fails')
     assert r.status_code == 200, r.content

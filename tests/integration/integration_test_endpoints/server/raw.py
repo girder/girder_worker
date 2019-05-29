@@ -40,6 +40,8 @@ class CeleryTestEndpoints(Resource):
                    self.test_celery_task_revoke_in_queue)
         self.route('POST', ('test_task_chained', ),
                    self.test_celery_task_chained)
+        self.route('POST', ('test_task_chained_with_kwargs', ),
+                   self.test_celery_task_chained_with_kwargs)
         self.route('POST', ('test_task_chained_bad_token_fails', ),
                    self.test_celery_task_chained_bad_token_fails)
 
@@ -205,6 +207,27 @@ class CeleryTestEndpoints(Resource):
         user = self.getCurrentUser()
         # F(F(F(6))) --> F(F(8)) --> F(21) --> 10946
         result = (fibonacci.s(6) | fibonacci.s() | fibonacci.s()).delay()
+        result.wait(timeout=10)
+        job_1 = result.job
+        job_2 = jobModel.load(job_1['parentId'], user=user)
+        job_3 = jobModel.load(job_2['parentId'], user=user)
+
+        return [job_1, job_2, job_3]
+
+    @access.token
+    @filtermodel(model='job', plugin='jobs')
+    @describeRoute(
+        Description('Test chained celery tasks with kwargs')
+    )
+    def test_celery_task_chained_with_kwargs(self, params):
+        jobModel = ModelImporter.model('job', 'jobs')
+        user = self.getCurrentUser()
+        # F(F(F(6))) --> F(F(8)) --> F(21) --> 10946
+        result = (
+            fibonacci.s(6, foo=1, bar=2) |
+            fibonacci.s(baz=3) |
+            fibonacci.s(last_but_not_least=4)
+        ).delay()
         result.wait(timeout=10)
         job_1 = result.job
         job_2 = jobModel.load(job_1['parentId'], user=user)
