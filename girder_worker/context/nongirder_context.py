@@ -49,7 +49,7 @@ def create_task_job(job_defaults, sender=None, body=None,
             'public': headers.pop('girder_job_public',
                                   job_defaults.get('girder_job_public', '')),
             'args': json.dumps(task_args),
-            'kwargs': task_kwargs,
+            'kwargs': json.dumps(task_kwargs),
             'otherFields': json.dumps(
                 dict(celeryTaskId=headers['id'],
                      celeryParentTaskId=parent_task.request.id,
