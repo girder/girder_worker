@@ -6,6 +6,13 @@ integration_steps:
       fingerprints:
         - "50:b7:1d:44:fd:c4:f4:06:9a:4c:0f:16:0c:e1:3b:91"
 
+  update-pip: &update-pip
+    run:
+      name: Update Pip
+      command: |
+        pip install -U pip
+
+
   install-docker-compose: &install-docker-compose
     run:
       name: Install Docker Compose
@@ -67,6 +74,7 @@ jobs:
     steps:
       - *ssh-keys
       - checkout
+      - *update-pip
       - *install-docker-compose
       - *run-env
       - *run-tests
@@ -87,6 +95,7 @@ jobs:
 
       - *ssh-keys
       - checkout
+      - *update-pip
       - *install-docker-compose
       - *run-env
       - *run-tests
@@ -99,6 +108,7 @@ jobs:
     steps:
       - checkout
       - *virtual-env
+      - *update-pip
       - *ci-deps
       - run:
           name: Run unit tests
@@ -111,6 +121,7 @@ jobs:
     steps:
       - checkout
       - *virtual-env
+      - *update-pip
       - *ci-deps
       - run:
           name: Run unit tests
@@ -123,6 +134,7 @@ jobs:
     steps:
       - checkout
       - *virtual-env
+      - *update-pip
       - *ci-deps
       - run:
           name: Run linting tests
@@ -146,6 +158,7 @@ jobs:
     steps:
       - checkout
       - *virtual-env
+      - *update-pip
       - *ci-deps
       - run:
           name: Release to PyPI
