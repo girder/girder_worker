@@ -29,7 +29,6 @@ click==6.7                # via click-plugins, girder-client
 coverage==4.5.1
 coveralls==1.5.0
 cryptography==2.3.1       # via passlib, pyopenssl, requests
-decorator==4.3.0          # via networkx
 diskcache==3.0.6          # via girder-client
 docker-pycreds==0.3.0     # via docker
 docker==3.5.0
@@ -60,7 +59,6 @@ mccabe==0.6.1             # via flake8
 mock==2.0.0
 mongomock==3.12.0
 more-itertools==4.3.0     # via cheroot, jaraco.functools, pytest
-networkx==1.11
 packaging==17.1           # via sphinx
 passlib[bcrypt,totp]==1.7.1
 pbr==4.2.0                # via mock, stevedore
@@ -82,7 +80,7 @@ python-dateutil==2.6.1    # via botocore
 pytz==2018.5              # via babel, celery, tempora
 pyyaml==3.13
 requests-toolbelt==0.8.0  # via girder-client
-requests[security]==2.19.1
+requests[security]==2.22.0
 s3transfer==0.1.13        # via boto3
 sentinels==1.0.0          # via mongomock
 setuptools-scm==3.1.0
@@ -95,7 +93,7 @@ stevedore==1.29.0
 tempora==1.13             # via portend
 toml==0.9.6               # via tox
 tox==3.3.0
-urllib3==1.23             # via requests
+urllib3==1.25.6
 vine==1.1.4               # via amqp
 virtualenv==16.0.0        # via tox
 websocket-client==0.53.0  # via docker
