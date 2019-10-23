@@ -167,6 +167,18 @@ jobs:
 
 workflows:
   version: 2
+  nightly:
+    triggers:
+      - schedule:
+          cron: "17 2 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - py2_integration_tests
+      - py3_integration_tests
+ 
   ci:
     jobs:
       - py2_unit_tests:
@@ -174,14 +186,6 @@ workflows:
             tags:
               only: /^v.*/
       - py3_unit_tests:
-          filters:
-            tags:
-              only: /^v.*/
-      - py2_integration_tests:
-          filters:
-            tags:
-              only: /^v.*/
-      - py3_integration_tests:
           filters:
             tags:
               only: /^v.*/
@@ -193,8 +197,6 @@ workflows:
           requires:
             - py2_unit_tests
             - py3_unit_tests
-            - py2_integration_tests
-            - py3_integration_tests
             - lint
           filters:
             tags:
@@ -206,8 +208,6 @@ workflows:
           requires:
             - py2_unit_tests
             - py3_unit_tests
-            - py2_integration_tests
-            - py3_integration_tests
             - lint
           filters:
             branches:
