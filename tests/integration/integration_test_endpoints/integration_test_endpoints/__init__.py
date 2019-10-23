@@ -1,3 +1,5 @@
+from girder.plugin import GirderPlugin
+
 from girder.api import access
 from girder.api.describe import Description, describeRoute
 from girder.api.rest import Resource, Prefix
@@ -37,8 +39,11 @@ class CommonTestEndpoints(Resource):
             return None
 
 
-def load(info):
-    info['apiRoot'].integration_tests = Prefix()
-    info['apiRoot'].integration_tests.common = CommonTestEndpoints()
-    info['apiRoot'].integration_tests.celery = CeleryTestEndpoints()
-    info['apiRoot'].integration_tests.docker = DockerTestEndpoints()
+class IntegrationTestPlugin(GirderPlugin):
+    DISPLAY_NAME = 'Integration Test Endpoints'
+
+    def load(self, info):
+        info['apiRoot'].integration_tests = Prefix()
+        info['apiRoot'].integration_tests.common = CommonTestEndpoints()
+        info['apiRoot'].integration_tests.celery = CeleryTestEndpoints()
+        info['apiRoot'].integration_tests.docker = DockerTestEndpoints()

@@ -6,9 +6,9 @@ initialize:
 	pip install -U -r requirements.txt
 	ansible-galaxy install --force --roles-path ./scripts/roles girder.girder
 
-        # Build the girder worker images locally so run relies on
-        # these images rather than the (potentially old) images on
-        # dockerhub.
+# Build the girder worker images locally so run relies on
+# these images rather than the (potentially old) images on
+# dockerhub.
 	cd ../../ && docker build -t girder/girder_worker:latest .
 	cd ../../ && docker build -f Dockerfile.py3 -t girder/girder_worker:latest-py3 .
 
