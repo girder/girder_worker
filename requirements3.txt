@@ -78,7 +78,7 @@ pytest-cov==2.5.1
 pytest==3.8.0
 python-dateutil==2.6.1    # via botocore
 pytz==2018.5              # via babel, celery, tempora
-pyyaml==3.13
+pyyaml==5.1.2
 requests-toolbelt==0.8.0  # via girder-client
 requests[security]==2.22.0
 s3transfer==0.1.13        # via boto3
