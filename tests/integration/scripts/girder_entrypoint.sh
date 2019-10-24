@@ -27,5 +27,4 @@ if [ -e /girder_worker/tests/integration/common_tasks/setup.py ]; then
     $PIP install -e /girder_worker/tests/integration/integration_test_endpoints/
 fi
 
-# TODO: convert this to `girder serve` once complete
 girder serve "$@"
