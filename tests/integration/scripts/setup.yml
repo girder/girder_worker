@@ -8,24 +8,10 @@
     celery_broker: amqp://guest:guest@rabbit/
   tasks:
 
-    - name: Install Girder Worker
-      pip:
-        name: /girder_worker
-        editable: true
-
-    - name: Install Common Tasks plugin
-      pip:
-        name: /girder_worker/tests/integration/common_tasks/
-        editable: true
-
     - name: Wait Girder to come up
       wait_for:
         port: "{{ girder_port }}"
         delay: 5
-
-    - name: Install integration_test_endpoints
-      command:
-        girder-install plugin -s /girder_worker/tests/integration/integration_test_endpoints/
 
     - name: Create 'admin' User with password 'letmein'
       girder:
@@ -51,16 +37,6 @@
           current: true
         state: present
 
-    - name: Enable integration test endpoints plugin
-      girder:
-        username: "{{ girder_user }}"
-        password: "{{ girder_pass }}"
-        port: "{{ girder_port }}"
-        plugins:
-          - integration_test_endpoints
-        state: present
-      register: plugins
-
     - name: Set the server root setting
       girder:
         username: "{{ girder_user }}"
@@ -69,21 +45,6 @@
         setting:
           key: "core.server_root"
           value: "http://{{ girder_host }}:{{ girder_port }}/"
-
-    - name: Restart the server
-      girder:
-        username: "{{ girder_user }}"
-        password: "{{ girder_pass }}"
-        port: "{{ girder_port }}"
-        put:
-          path: "system/restart"
-      when: plugins.changed
-
-    - name: Wait until server restarts
-      wait_for:
-        port: "{{ girder_port }}"
-        delay: 5
-      when: plugins.changed
 
     - name: Configure Celery
       girder:

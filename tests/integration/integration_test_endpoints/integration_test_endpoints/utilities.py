@@ -1,4 +1,4 @@
-from girder.plugins.jobs.models.job import Job
+from girder_jobs.models.job import Job
 
 
 def wait_for_status(user, job, status):

@@ -86,6 +86,7 @@ def test_celery_girder_client_bad_token_fails(session):
             [JobStatus.RUNNING, JobStatus.ERROR]
 
 
+@pytest.mark.skip('See: https://github.com/girder/girder_worker/issues/346')
 def test_celery_task_revoke(session):
     url = 'integration_tests/celery/test_task_revoke'
     r = session.post(url)
@@ -96,6 +97,7 @@ def test_celery_task_revoke(session):
             [JobStatus.RUNNING, JobStatus.CANCELED]
 
 
+@pytest.mark.skip('See: https://github.com/girder/girder_worker/issues/346')
 def test_celery_task_revoke_in_queue(session):
     url = 'integration_tests/celery/test_task_revoke_in_queue'
     r = session.post(url)
