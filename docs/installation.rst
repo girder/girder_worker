@@ -62,3 +62,10 @@ The core configuration parameters are outlined below.
 
 .. note :: After making changes to values in the config file, you will need to
    restart the worker before the changes will be reflected.
+
+.. note :: Some projects have reported issues with connection pool dropping 
+   when using Celery 4.2 and 4.3.  If you see an error 
+   ``ConnectionResetError(104, 'Connection reset by peer')``, try using 
+   Celery < 4.2 or >= 4.4.0rc3.  See `Celery issue 4867 
+   <https://github.com/celery/celery/issues/4867>`_.
+   
