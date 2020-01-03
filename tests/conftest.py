@@ -1,6 +1,28 @@
 import io
+import mock
 import pytest
 import random
+
+from girder_client import GirderClient
+
+
+@pytest.fixture
+def mock_gc():
+    mgc = mock.MagicMock(spec=GirderClient)
+    mgc.getFile.return_value = {'_id': 'BOGUS_ID', 'name': 'bogus.txt'}
+    return mgc
+
+
+@pytest.fixture
+def patch_mkdir():
+    with mock.patch('os.mkdir') as mkdir_mock:
+        yield mkdir_mock
+
+
+@pytest.fixture
+def patch_makedirs():
+    with mock.patch('os.makedirs') as m:
+        yield m
 
 
 @pytest.fixture
