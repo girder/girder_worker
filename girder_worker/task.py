@@ -168,3 +168,6 @@ class Task(celery.Task):
         finally:
             _walk_obj(args, self._maybe_cleanup)
             _walk_obj(kwargs, self._maybe_cleanup)
+            if hasattr(self.request, 'girder_result_hooks'):
+                for hook in self.request.girder_result_hooks:
+                    self._maybe_cleanup(hook)
