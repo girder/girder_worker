@@ -13,10 +13,12 @@ import pytest
 
 
 def setup_function(func):
-    if hasattr(func, 'namespace'):
-        namespace = func.namespace.args[0]
-        func.original = entrypoint.NAMESPACE
-        entrypoint.NAMESPACE = namespace
+    if hasattr(func, 'pytestmark'):
+        for m in func.pytestmark:
+            if m.name == 'namespace':
+                namespace = m.args[0]
+                func.original = entrypoint.NAMESPACE
+                entrypoint.NAMESPACE = namespace
 
 
 def teardown_function(func):
