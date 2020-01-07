@@ -7,96 +7,104 @@
 -e git+https://github.com/girder/girder.git@master#egg=girder
 -e git+https://github.com/girder/girder.git@master#egg=girder-jobs&subdirectory=plugins/jobs
 -e git+https://github.com/girder/girder.git@master#egg=pytest-girder&subdirectory=pytest_girder
-alabaster==0.7.11         # via sphinx
-amqp==2.3.2               # via kombu
-asn1crypto==0.24.0        # via cryptography
-atomicwrites==1.2.1       # via pytest
-attrs==18.2.0             # via pytest
-babel==2.6.0              # via sphinx
-backports.functools-lru-cache==1.5  # via cheroot
-bcrypt==3.1.4             # via passlib
-billiard==3.5.0.4         # via celery
-boto3==1.7.84
-botocore==1.10.84         # via boto3, s3transfer
-celery==4.1.1
-certifi==2018.8.24        # via requests
-cffi==1.11.5              # via bcrypt, cryptography
+alabaster==0.7.12         # via sphinx
+amqp==2.5.2               # via kombu
+attrs==19.3.0             # via jsonschema, pytest
+babel==2.8.0              # via sphinx
+bcrypt==3.1.7             # via passlib
+billiard==3.6.1.0         # via celery
+boto3==1.10.47
+botocore==1.13.47         # via boto3, s3transfer
+celery==4.4.0
+certifi==2019.11.28       # via requests
+cffi==1.13.2              # via bcrypt, cryptography
 chardet==3.0.4            # via requests
-cheroot==6.5.2            # via cherrypy
-cherrypy==11.0.0
-click-plugins==1.0.4
-click==6.7                # via click-plugins, girder-client
-coverage==4.5.1
-coveralls==1.5.0
-cryptography==2.3.1       # via passlib, pyopenssl, requests
-diskcache==3.0.6          # via girder-client
-docker-pycreds==0.3.0     # via docker
-docker==3.5.0
+cheroot==8.2.1            # via cherrypy
+cherrypy==18.5.0
+click-plugins==1.1.1
+click==7.0                # via click-plugins, girder-client
+coverage==5.0.2
+coveralls==1.10.0
+cryptography==2.8         # via passlib, pyopenssl, requests
+decorator==4.4.1          # via dogpile.cache
+diskcache==4.1.0          # via girder-client
+docker==4.1.0
 docopt==0.6.2             # via coveralls
-docutils==0.14            # via botocore, sphinx
-dogpile.cache==0.6.7
-filelock==3.0.8
+docutils==0.15.2          # via botocore, sphinx
+dogpile.cache==0.9.0
+entrypoints==0.3          # via flake8
+filelock==3.0.12          # via tox
 flake8-blind-except==0.1.1
-flake8-docstrings==1.3.0
-flake8-polyfill==1.0.2    # via flake8-docstrings
-flake8-quotes==1.0.0
-flake8==3.5.0
-girder-client==2.4.0
-girder-worker-utils==0.8.4
-httmock==1.2.6
-idna==2.7                 # via cryptography, requests
-imagesize==1.1.0          # via sphinx
-jaraco.functools==1.20    # via tempora
+flake8-docstrings==1.5.0
+flake8-quotes==2.1.1
+flake8==3.7.9
+girder-client==3.0.5
+girder-worker-utils==0.8.5
+httmock==1.3.0
+idna==2.8                 # via requests
+imagesize==1.2.0          # via sphinx
+jaraco.classes==3.1.0     # via jaraco.collections
+jaraco.collections==3.0.0  # via cherrypy
+jaraco.functools==3.0.0   # via cheroot, jaraco.text, tempora
+jaraco.text==3.2.0        # via jaraco.collections
 jinja2==2.10.3
-jmespath==0.9.3           # via boto3, botocore
-jsonpickle==0.9.6
-jsonschema==2.6.0
-kombu==4.2.1              # via celery
-lxml==4.2.5
-mako==1.0.7
-markupsafe==1.0           # via jinja2, mako
+jmespath==0.9.4           # via boto3, botocore
+jsonpickle==1.2
+jsonschema==3.2.0
+kombu==4.6.7              # via celery
+lxml==4.4.2
+mako==1.1.0
+markupsafe==1.1.1         # via jinja2, mako
 mccabe==0.6.1             # via flake8
-mock==2.0.0
-mongomock==3.12.0
-more-itertools==4.3.0     # via cheroot, jaraco.functools, pytest
-packaging==17.1           # via sphinx
-passlib[bcrypt,totp]==1.7.1
-pbr==4.2.0                # via mock, stevedore
-pluggy==0.7.1             # via pytest, tox
-portend==2.3              # via cherrypy
-psutil==5.4.7
-py==1.6.0                 # via pytest, tox
-pycodestyle==2.3.1        # via flake8
-pycparser==2.18           # via cffi
-pydocstyle==2.1.1
-pyflakes==1.6.0           # via flake8
-pygments==2.2.0           # via sphinx
-pymongo==3.7.1
-pyopenssl==18.0.0         # via requests
-pyparsing==2.2.1          # via packaging
-pytest-cov==2.5.1
-pytest==3.8.0
-python-dateutil==2.6.1    # via botocore
-pytz==2018.5              # via babel, celery, tempora
-pyyaml==5.1.2
-requests-toolbelt==0.8.0  # via girder-client
+mock==3.0.5
+mongomock==3.18.0
+more-itertools==8.0.2     # via cheroot, cherrypy, jaraco.classes, jaraco.functools, pytest
+packaging==20.0           # via pytest, sphinx, tox
+passlib[bcrypt,totp]==1.7.2
+pbr==5.4.4                # via stevedore
+pluggy==0.13.1            # via pytest, tox
+portend==2.6              # via cherrypy
+psutil==5.6.7
+py==1.8.1                 # via pytest, tox
+pycodestyle==2.5.0        # via flake8
+pycparser==2.19           # via cffi
+pydocstyle==5.0.1
+pyflakes==2.1.1           # via flake8
+pygments==2.5.2           # via sphinx
+pymongo==3.10.0
+pyopenssl==19.1.0         # via requests
+pyparsing==2.4.6          # via packaging
+pyrsistent==0.15.6        # via jsonschema
+pytest-cov==2.8.1
+pytest==5.3.2
+python-dateutil==2.8.0    # via botocore
+pytz==2019.3              # via babel, celery, tempora
+pyyaml==5.3
+requests-toolbelt==0.9.1  # via girder-client
 requests[security]==2.22.0
-s3transfer==0.1.13        # via boto3
+s3transfer==0.2.1         # via boto3
 sentinels==1.0.0          # via mongomock
-setuptools-scm==3.1.0
-six==1.11.0
-snowballstemmer==1.2.1    # via pydocstyle, sphinx
-sphinx-rtd-theme==0.4.1
-sphinx==1.8.0
-sphinxcontrib-websupport==1.1.0  # via sphinx
-stevedore==1.29.0
-tempora==1.13             # via portend
-toml==0.9.6               # via tox
-tox==3.3.0
-urllib3==1.25.6
-vine==1.1.4               # via amqp
-virtualenv==16.0.0        # via tox
-websocket-client==0.53.0  # via docker
+setuptools-scm==3.3.3
+six==1.13.0
+snowballstemmer==2.0.0    # via pydocstyle, sphinx
+sphinx-rtd-theme==0.4.3
+sphinx==2.3.1
+sphinxcontrib-applehelp==1.0.1  # via sphinx
+sphinxcontrib-devhelp==1.0.1  # via sphinx
+sphinxcontrib-htmlhelp==1.0.2  # via sphinx
+sphinxcontrib-jsmath==1.0.1  # via sphinx
+sphinxcontrib-qthelp==1.0.2  # via sphinx
+sphinxcontrib-serializinghtml==1.1.3  # via sphinx
+stevedore==1.31.0
+tempora==2.0.0            # via portend
+toml==0.10.0              # via tox
+tox==3.14.3
+urllib3==1.25.7
+vine==1.3.0               # via amqp, celery
+virtualenv==16.7.9        # via tox
+wcwidth==0.1.8            # via pytest
+websocket-client==0.57.0  # via docker
+zc.lockfile==2.0          # via cherrypy
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.4.0        # via flake8-blind-except, pytest, sphinx, tox
+# setuptools
