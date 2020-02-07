@@ -66,21 +66,6 @@ unit_steps:
 
 
 jobs:
-  py2_integration_tests:
-    machine: true
-    working_directory: /home/circleci/project
-    environment:
-      - RUN_ENV: 2
-    steps:
-      - *ssh-keys
-      - checkout
-      - *update-pip
-      - *install-docker-compose
-      - *run-env
-      - *run-tests
-      - *dump-girder-logs
-      - *dump-worker-logs
-
   py3_integration_tests:
     machine: true
     working_directory: /home/circleci/project
@@ -176,9 +161,8 @@ workflows:
               only:
                 - master
     jobs:
-      - py2_integration_tests
       - py3_integration_tests
- 
+
   ci:
     jobs:
       - py2_unit_tests:
