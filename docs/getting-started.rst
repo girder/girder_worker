@@ -17,7 +17,7 @@ Installing Girder Worker
 
 Girder Worker is a python package and may be installed with pip ::
 
-  $ pip install girder-worker
+  $ pip install girder-worker[girder]
 
 We recommend installing in a virtual environment to prevent package
 collision with your system Python.
