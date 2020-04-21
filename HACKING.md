@@ -278,7 +278,7 @@ def some_rest_endpoint(file_id, **params):
 		user=self.getCurrentUser())
 
 	# Launch the asynchronous task
-	async_result = some_task.delay(file_id, girder_client_token=str(token['_id']))
+	async_result = some_task.delay(file_id, girder_client_token=token['_id'])
 
 	return async_result.job
 ```
