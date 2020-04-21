@@ -2,7 +2,12 @@ Installation
 ************
 
 To install the Girder Worker on your system, we recommend using ``pip`` to
-install the package. ::
+install the package.  Girder worker needs to be installed as a plugin to Girder
+and on each remote machine.  For the system with Girder ::
+
+    pip install girder-worker[girder]
+
+For other machines ::
 
     pip install girder-worker
 
