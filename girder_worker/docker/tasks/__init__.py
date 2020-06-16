@@ -57,6 +57,8 @@ def _run_container(image, container_args,  **kwargs):
     if runtime is None and nvidia.is_nvidia_image(client.api, image):
         runtime = 'nvidia'
 
+    container_args = [str(arg) for arg in container_args]
+
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
     try:
