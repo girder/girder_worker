@@ -87,20 +87,7 @@ jobs:
       - *dump-girder-logs
       - *dump-worker-logs
 
-  py2_unit_tests:
-    docker:
-      - image: circleci/python:2.7
-    steps:
-      - checkout
-      - *virtual-env
-      - *update-pip
-      - *ci-deps
-      - run:
-          name: Run unit tests
-          command: tox -e py27
-      - *upload-coverage
-
-  py3_unit_tests:
+  unit_tests:
     docker:
       - image: circleci/python:3.6
     steps:
@@ -115,7 +102,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.6
     steps:
       - checkout
       - *virtual-env
@@ -139,7 +126,7 @@ jobs:
 
   release:
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/python:3.6
     steps:
       - checkout
       - *virtual-env
@@ -165,11 +152,7 @@ workflows:
 
   ci:
     jobs:
-      - py2_unit_tests:
-          filters:
-            tags:
-              only: /^v.*/
-      - py3_unit_tests:
+      - unit_tests:
           filters:
             tags:
               only: /^v.*/
@@ -179,8 +162,7 @@ workflows:
               only: /^v.*/
       - release:
           requires:
-            - py2_unit_tests
-            - py3_unit_tests
+            - unit_tests
             - lint
           filters:
             tags:
@@ -190,8 +172,7 @@ workflows:
                 - master
       - deploy:
           requires:
-            - py2_unit_tests
-            - py3_unit_tests
+            - unit_tests
             - lint
           filters:
             branches:
