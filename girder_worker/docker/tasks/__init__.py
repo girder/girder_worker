@@ -96,7 +96,8 @@ class _SocketReader(FileDescriptorReader):
         self._socket.close()
 
 
-def _run_select_loop(task, container, read_stream_connectors, write_stream_connectors):
+def _run_select_loop(  # noqa: C901
+        task, container, read_stream_connectors, write_stream_connectors):
     stdout = None
     stderr = None
     try:
