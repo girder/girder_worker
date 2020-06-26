@@ -1,8 +1,6 @@
-import abc
 import os
 from pkg_resources import DistributionNotFound, get_distribution
 from six.moves.configparser import SafeConfigParser
-from six import add_metaclass
 
 from . import log_utils
 
@@ -33,20 +31,17 @@ config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 logger = log_utils.setupLogger(config)
 
 
-@add_metaclass(abc.ABCMeta)
 class GirderWorkerPluginABC(object):
     """
     Abstract base class for Girder Worker plugins. Plugins must descend from this
     class; see the :ref:`plugins` section for more information.
     """
+    def __init__(*args, **kwargs):
+        pass
 
-    @abc.abstractmethod
-    def __init__(self, app, *args, **kwargs):
-        """ """
-
-    @abc.abstractmethod
     def task_imports(self):
-        """Plugins must override this method."""
+        """Plugins should override this method if they have tasks."""
+        return []
 
 
 class GirderWorkerPlugin(GirderWorkerPluginABC):
