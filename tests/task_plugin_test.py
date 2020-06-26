@@ -1,12 +1,6 @@
-import re
-
 from girder_worker import entrypoint
 from girder_worker.__main__ import main
-from girder_worker.app import app
 from girder_worker.entrypoint import discover_tasks
-
-from girder_worker_utils import decorators
-from girder_worker_utils import types
 
 import mock
 import pytest
@@ -43,15 +37,9 @@ def test_import_all_includes():
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.invalid_plugins')
-def test_invalid_plugins(capsys):
-    entrypoint.get_plugin_task_modules()
-    out, err = capsys.readouterr()
-    # Note:  last element of split('\n') will be an empty line
-    out = out.split('\n')[:-1]
-
-    assert len(out) == 4
-    for line in out:
-        assert re.search('^Problem.*(exception[12]|invalid|import), skipping$', line)
+def test_invalid_plugins():
+    with pytest.raises(Exception):
+        entrypoint.get_plugin_task_modules()
 
 
 @pytest.mark.namespace('girder_worker._test_plugins.valid_plugins')
@@ -100,28 +88,3 @@ def test_get_extension_tasks_celery():
         assert extensions == [
             'girder_worker._test_plugins.tasks.celery_task'
         ]
-
-
-def test_register_extension():
-
-    @decorators.argument('n', types.Integer)
-    def echo(n):
-        return n
-
-    @app.task
-    @decorators.argument('n', types.Integer)
-    def echo_celery(n):
-        return n
-
-    tasks = {
-        '%s.echo' % __name__: echo,
-        '%s.echo_celery' % __name__: echo_celery
-    }
-    entrypoint.register_extension('echo_tasks', tasks)
-
-    exts = entrypoint.get_extensions()
-    assert 'echo_tasks' in exts
-    assert entrypoint.get_extension_tasks('echo_tasks') == tasks
-
-    celery_tasks = entrypoint.get_extension_tasks('echo_tasks', celery_only=True)
-    assert list(celery_tasks.keys()) == ['%s.echo_celery' % __name__]
