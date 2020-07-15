@@ -1,6 +1,6 @@
 import os
 from pkg_resources import DistributionNotFound, get_distribution
-from six.moves.configparser import SafeConfigParser
+from configparser import ConfigParser
 
 from . import log_utils
 
@@ -19,7 +19,7 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
 
 
-config = SafeConfigParser({
+config = ConfigParser({
     'RABBITMQ_USER': os.environ.get('RABBITMQ_USER', 'guest'),
     'RABBITMQ_PASS': os.environ.get('RABBITMQ_PASS', 'guest'),
     'RABBITMQ_HOST': os.environ.get('RABBITMQ_HOST', 'localhost')
