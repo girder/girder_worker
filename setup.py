@@ -102,6 +102,7 @@ setuptools.setup(
         'install': CustomInstall
     },
     install_requires=install_reqs,
+    python_requires='>=3.6',
     zip_safe=False,
     entry_points={
         'console_scripts': [
