@@ -23,7 +23,7 @@ integration_steps:
     run:
       name: Get the environment up and running with Docker Compose
       command: |
-        cd tests/integration && make && make run${RUN_ENV}
+        cd tests/integration && make && make run
 
   run-tests: &run-tests
     run:
@@ -69,8 +69,6 @@ jobs:
   py3_integration_tests:
     machine: true
     working_directory: /home/circleci/project
-    environment:
-      - RUN_ENV: 3
     steps:
       - run:
           name: Set up Python 3.6
