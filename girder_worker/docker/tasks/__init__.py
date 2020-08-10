@@ -3,7 +3,7 @@ import shutil
 import os
 try:
     import docker
-    from docker.errors import DockerException, APIError
+    from docker.errors import DockerException, APIError, InvalidVersion
     from girder_worker.docker import nvidia
     from requests.exceptions import ReadTimeout
 except ImportError:
@@ -63,6 +63,19 @@ def _run_container(image, container_args,  **kwargs):
                 % (image, container_args, runtime, kwargs))
     try:
         try:
+            if runtime == 'nvidia' and kwargs.get('device_requests') is None:
+                # Docker < 19.03 required the runtime='nvidia' argument.
+                # Newer versions require a device request for some number of
+                # GPUs.  This should handle either version of the docker
+                # daemon.
+                try:
+                    device_requests_kwargs = kwargs.copy()
+                    device_requests_kwargs['device_requests'] = [
+                        docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])]
+                    return client.containers.run(
+                        image, container_args, **device_requests_kwargs)
+                except (APIError, InvalidVersion):
+                    pass
             return client.containers.run(image, container_args, runtime=runtime, **kwargs)
         except APIError:
             if origRuntime is None and runtime is not None:
