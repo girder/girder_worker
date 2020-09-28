@@ -1,7 +1,6 @@
 prune analysis
 prune examples
 prune tests
-prune devops
 prune docs
 include LICENSE
 include setup.py

@@ -1,7 +1,0 @@
-- name: Set enabled plugins in config file
-  command: "{{ girder_worker_config_executable }} set girder_worker plugins_enabled {{ girder_worker_plugins|join(',') }}"
-  when: girder_worker_plugins|length > 0
-
-- name: Remove enabled plugins in config file
-  command: "{{ girder_worker_config_executable }} rm girder_worker plugins_enabled"
-  when: girder_worker_plugins|length == 0
