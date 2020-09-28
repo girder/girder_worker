@@ -7,7 +7,6 @@ __pycache__/
 /girder_worker.egg-info/
 /girder-worker-*.tar.gz
 *.retry
-/devops/ansible/examples/*/playbooks/*/roles
 .vagrant
 .tox/
 .cache/

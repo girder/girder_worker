@@ -110,18 +110,6 @@ jobs:
           name: Run linting tests
           command: tox -e lint
 
-  deploy:
-    machine: true
-    working_directory: /home/circleci/project
-    steps:
-      - *ssh-keys
-      - checkout
-      - deploy:
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                ./scripts/galaxy_deploy.sh
-            fi
-
   release:
     docker:
       - image: circleci/python:3.6
@@ -168,10 +156,3 @@ workflows:
             branches:
               only:
                 - master
-      - deploy:
-          requires:
-            - unit_tests
-            - lint
-          filters:
-            branches:
-              only: master
