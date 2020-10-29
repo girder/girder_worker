@@ -274,11 +274,11 @@ from girder.models.token import Token
 	.param('file_id', 'File Id to run "some_task" on', dataType='string'))
 def some_rest_endpoint(file_id, **params):
 	# Create a token with permissions of the current user.
-	token = Token.createToken(
+	token = Token().createToken(
 		user=self.getCurrentUser())
 
 	# Launch the asynchronous task
-	async_result = some_task.delay(file_id, girder_client_token=token)
+	async_result = some_task.delay(file_id, girder_client_token=token['_id'])
 
 	return async_result.job
 ```
