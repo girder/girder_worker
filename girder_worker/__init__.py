@@ -1,8 +1,6 @@
-import abc
 import os
 from pkg_resources import DistributionNotFound, get_distribution
-from six.moves.configparser import SafeConfigParser
-from six import add_metaclass
+from configparser import ConfigParser
 
 from . import log_utils
 
@@ -21,7 +19,7 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 _cfgs = ('worker.dist.cfg', 'worker.local.cfg')
 
 
-config = SafeConfigParser({
+config = ConfigParser({
     'RABBITMQ_USER': os.environ.get('RABBITMQ_USER', 'guest'),
     'RABBITMQ_PASS': os.environ.get('RABBITMQ_PASS', 'guest'),
     'RABBITMQ_HOST': os.environ.get('RABBITMQ_HOST', 'localhost')
@@ -33,20 +31,17 @@ config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 logger = log_utils.setupLogger(config)
 
 
-@add_metaclass(abc.ABCMeta)
 class GirderWorkerPluginABC(object):
     """
     Abstract base class for Girder Worker plugins. Plugins must descend from this
     class; see the :ref:`plugins` section for more information.
     """
+    def __init__(*args, **kwargs):
+        pass
 
-    @abc.abstractmethod
-    def __init__(self, app, *args, **kwargs):
-        """ """
-
-    @abc.abstractmethod
     def task_imports(self):
-        """Plugins must override this method."""
+        """Plugins should override this method if they have tasks."""
+        return []
 
 
 class GirderWorkerPlugin(GirderWorkerPluginABC):

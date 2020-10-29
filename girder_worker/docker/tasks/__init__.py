@@ -57,6 +57,8 @@ def _run_container(image, container_args,  **kwargs):
     if runtime is None and nvidia.is_nvidia_image(client.api, image):
         runtime = 'nvidia'
 
+    container_args = [str(arg) for arg in container_args]
+
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
     try:
@@ -96,7 +98,8 @@ class _SocketReader(FileDescriptorReader):
         self._socket.close()
 
 
-def _run_select_loop(task, container, read_stream_connectors, write_stream_connectors):
+def _run_select_loop(  # noqa: C901
+        task, container, read_stream_connectors, write_stream_connectors):
     stdout = None
     stderr = None
     try:

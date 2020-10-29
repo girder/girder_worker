@@ -87,7 +87,11 @@ setuptools.setup(
         'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2'
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8'
+
     ],
     extras_require=extras_require,
     packages=setuptools.find_packages(
@@ -98,6 +102,7 @@ setuptools.setup(
         'install': CustomInstall
     },
     install_requires=install_reqs,
+    python_requires='>=3.6',
     zip_safe=False,
     entry_points={
         'console_scripts': [

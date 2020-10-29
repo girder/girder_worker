@@ -17,7 +17,7 @@ VOLUME /girder_worker
 # Make sure remote debugging is available
 RUN pip3 install rpdb
 # Make sure we have the newest girder_client
-RUN pip install --pre -U girder-client 
+RUN pip install --pre -U girder-client
 
 COPY ./scripts /scripts
 ENV PYTHON_BIN=python3

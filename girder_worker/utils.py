@@ -226,15 +226,17 @@ class JobManager(object):
 
         if len(self._buf) or self._progressTotal or self._progressMessage or \
                 self._progressCurrent is not None:
+            data = {
+                'progressTotal': self._progressTotal,
+                'progressCurrent': self._progressCurrent,
+                'progressMessage': self._progressMessage
+            }
+            if self._buf:
+                data['log'] = self._buf
 
             req = requests.request(
                 self.method.upper(), self.url, allow_redirects=True,
-                headers=self.headers, data={
-                    'log': self._buf,
-                    'progressTotal': self._progressTotal,
-                    'progressCurrent': self._progressCurrent,
-                    'progressMessage': self._progressMessage
-                })
+                headers=self.headers, data=data)
             req.raise_for_status()
             self._buf = b''
 

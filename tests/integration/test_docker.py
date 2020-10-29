@@ -19,7 +19,7 @@ def _assert_job_contents(r, session, test_file, remove_newline=True):
         _assert_job_statuses(job)
 
         # Remove escaped chars
-        log = ''.join(str(l) for l in job['log'])
+        log = ''.join(str(entry) for entry in job['log'])
         # Remove trailing \n added by test script
         if remove_newline:
             log = log[:-1]
@@ -119,7 +119,7 @@ def test_docker_run_download_multi_file_item(session, test_multi_file_item):
     })
     with session.wait_for_success(r.json()['_id']) as job:
         _assert_job_statuses(job)
-        log = ''.join(str(l) for l in job['log']).strip()
+        log = ''.join(str(entry) for entry in job['log']).strip()
         assert set(log.split()) == {'test0.txt', 'test1.txt', 'test2.txt'}
 
 

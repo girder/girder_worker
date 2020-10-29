@@ -292,8 +292,7 @@ def test_Task___call___transforms_or_passes_through_arguments(arguments, transfo
       'k3': {'k ': 'TEST',
              'k2': MockNonTransObj},
       'k4': ('TEST1', MockNonTransObj, 'TEST2')}),
-],
-ids=[
+], ids=[
     'Dict w/Int',
     'Dict w/Float',
     'Dict w/String',
@@ -333,8 +332,7 @@ class MockResultTrans(object):
     ((1, 2),  (MockResultTrans(lambda x: x + 1), None),  (2, 2)), # noqa E202
     ((1, 2),  (None, MockResultTrans(lambda x: x + 1)),  (1, 3)), # noqa E202
     ((1, 2),  (MockResultTrans(lambda x: x + 1), ),      (2, 2)), # noqa E202
-],
-ids=[
+], ids=[
     'Single Return Value',
     'Tuple Return Value',
     'Tuple, Second Trans None',
