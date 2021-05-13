@@ -16,13 +16,13 @@
 
 from __future__ import absolute_import
 
-from celery.result import AsyncResult
-
 from girder import logger
 from girder.exceptions import ValidationException
 from girder.utility import setting_utilities
 from girder_jobs.constants import JobStatus
 from girder_jobs.models.job import Job
+
+from celery.result import AsyncResult
 
 from .celery import getCeleryApp
 from .constants import PluginSettings
@@ -124,11 +124,18 @@ def cancel(event):
             logger.warn(msg)
             return
 
-        if job['status'] not in [CustomJobStatus.CANCELING, JobStatus.CANCELED,
-                                 JobStatus.SUCCESS, JobStatus.ERROR]:
-            # Set the job status to canceling
-            Job().updateJob(job, status=CustomJobStatus.CANCELING)
+        should_revoke = False
+        if job['status'] == JobStatus.INACTIVE:
+            # Move inactive jobs directly to canceled state
+            Job().updateJob(job, status=JobStatus.CANCELED)
+            should_revoke = True
 
+        elif job['status'] not in [JobStatus.CANCELED, JobStatus.SUCCESS, JobStatus.ERROR]:
+            # Give active jobs a chance to be canceled by their runner
+            Job().updateJob(job, status=CustomJobStatus.CANCELING)
+            should_revoke = True
+
+        if should_revoke:
             # Send the revoke request.
             asyncResult = AsyncResult(celeryTaskId, app=getCeleryApp())
             asyncResult.revoke()
