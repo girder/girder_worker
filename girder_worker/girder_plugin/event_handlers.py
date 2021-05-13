@@ -130,7 +130,8 @@ def cancel(event):
             Job().updateJob(job, status=JobStatus.CANCELED)
             should_revoke = True
 
-        elif job['status'] not in [JobStatus.CANCELED, JobStatus.SUCCESS, JobStatus.ERROR]:
+        elif job['status'] not in [CustomJobStatus.CANCELING, JobStatus.CANCELED,
+                                   JobStatus.SUCCESS, JobStatus.ERROR]:
             # Give active jobs a chance to be canceled by their runner
             Job().updateJob(job, status=CustomJobStatus.CANCELING)
             should_revoke = True
