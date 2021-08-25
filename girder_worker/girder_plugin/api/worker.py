@@ -50,6 +50,6 @@ class Worker(Resource):
         result['report'] = status.report()
         result['stats'] = status.stats()
         result['ping'] = status.ping()
-        result['active'] = status.active()
-        result['reserved'] = status.reserved()
+        result['active'] = status.active() or {}
+        result['reserved'] = status.reserved() or {}
         return result
