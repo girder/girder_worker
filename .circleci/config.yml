@@ -125,16 +125,6 @@ jobs:
 
 workflows:
   version: 2
-  nightly:
-    triggers:
-      - schedule:
-          cron: "17 2 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - py3_integration_tests
 
   ci:
     jobs:
