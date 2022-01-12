@@ -1,6 +1,7 @@
-import sys
-import shutil
 import os
+import shutil
+import socket
+import sys
 try:
     import docker
     from docker.errors import DockerException, APIError, InvalidVersion
@@ -44,6 +45,22 @@ def _pull_image(image):
         raise
 
 
+def _get_docker_network():
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+        if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
+            timeout = int(os.environ['DOCKER_CLIENT_TIMEOUT'])
+            client = docker.from_env(version='auto', timeout=timeout)
+        else:
+            client = docker.from_env(version='auto')
+        for container in client.containers.list(all=True, filters={'status': 'running'}):
+            for nw in container.attrs['NetworkSettings']['Networks'].values():
+                if nw['IPAddress'] == ip:
+                    return 'container:%s' % container.id
+    except Exception:
+        logger.exception('Failed to get docker network')
+
+
 def _run_container(image, container_args,  **kwargs):
     # TODO we could allow configuration of non default socket
     if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
@@ -58,6 +75,11 @@ def _run_container(image, container_args,  **kwargs):
         runtime = 'nvidia'
 
     container_args = [str(arg) for arg in container_args]
+
+    docker_network = _get_docker_network()
+    if docker_network and 'network' not in kwargs:
+        kwargs = kwargs.copy()
+        kwargs['network'] = docker_network
 
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
