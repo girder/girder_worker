@@ -1,9 +1,10 @@
-import sys
-import shutil
 import os
+import shutil
+import socket
+import sys
 try:
     import docker
-    from docker.errors import DockerException, APIError
+    from docker.errors import DockerException, APIError, InvalidVersion
     from girder_worker.docker import nvidia
     from requests.exceptions import ReadTimeout
 except ImportError:
@@ -44,6 +45,22 @@ def _pull_image(image):
         raise
 
 
+def _get_docker_network():
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+        if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
+            timeout = int(os.environ['DOCKER_CLIENT_TIMEOUT'])
+            client = docker.from_env(version='auto', timeout=timeout)
+        else:
+            client = docker.from_env(version='auto')
+        for container in client.containers.list(all=True, filters={'status': 'running'}):
+            for nw in container.attrs['NetworkSettings']['Networks'].values():
+                if nw['IPAddress'] == ip:
+                    return 'container:%s' % container.id
+    except Exception:
+        logger.exception('Failed to get docker network')
+
+
 def _run_container(image, container_args,  **kwargs):
     # TODO we could allow configuration of non default socket
     if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
@@ -59,10 +76,28 @@ def _run_container(image, container_args,  **kwargs):
 
     container_args = [str(arg) for arg in container_args]
 
+    docker_network = _get_docker_network()
+    if docker_network and 'network' not in kwargs:
+        kwargs = kwargs.copy()
+        kwargs['network'] = docker_network
+
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
     try:
         try:
+            if runtime == 'nvidia' and kwargs.get('device_requests') is None:
+                # Docker < 19.03 required the runtime='nvidia' argument.
+                # Newer versions require a device request for some number of
+                # GPUs.  This should handle either version of the docker
+                # daemon.
+                try:
+                    device_requests_kwargs = kwargs.copy()
+                    device_requests_kwargs['device_requests'] = [
+                        docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])]
+                    return client.containers.run(
+                        image, container_args, **device_requests_kwargs)
+                except (APIError, InvalidVersion):
+                    pass
             return client.containers.run(image, container_args, runtime=runtime, **kwargs)
         except APIError:
             if origRuntime is None and runtime is not None:

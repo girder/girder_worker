@@ -94,7 +94,7 @@ var taskStatusView = View.extend({
                 'stats': statsTmp | 0,
                 'concurrency': concurrencyTmp | 0,
                 'ping': pingTmp,
-                'active': active[worker],
+                'active': active[worker] || [],
                 'reserved': reserved[worker]
             });
         });
