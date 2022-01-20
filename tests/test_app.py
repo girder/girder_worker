@@ -15,7 +15,8 @@ import pytest
 RESERVED_HEADERS = [
     ('girder_client_token', 'GIRDER_CLIENT_TOKEN'),
     ('girder_api_url', 'GIRDER_API_URL'),
-    ('girder_result_hooks', 'GIRDER_RESULT_HOOKS')
+    ('girder_result_hooks', 'GIRDER_RESULT_HOOKS'),
+    ('girder_client_session_kwargs', 'GIRDER_CLIENT_SESSION_KWARGS')
 ]
 
 RESERVED_OPTIONS = [

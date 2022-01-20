@@ -6,8 +6,12 @@ from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
 import requests
 from requests import HTTPError
 
-
 import six
+
+# Disable urllib3 warnings about certificate validation. As they are printed in the console, the
+# messages are sent to Girder, creating an infinite loop.
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 BUILTIN_CELERY_TASKS = [
@@ -63,6 +67,11 @@ class JobSpecNotFound(Exception):
 
 
 def _job_manager(request=None, headers=None, kwargs=None):
+
+    girder_client_session_kwargs = {}
+    if hasattr(request, 'girder_client_session_kwargs'):
+        girder_client_session_kwargs = request.girder_client_session_kwargs
+
     if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
 
@@ -81,7 +90,8 @@ def _job_manager(request=None, headers=None, kwargs=None):
     else:
         raise JobSpecNotFound
 
-    return deserialize_job_info_spec(**jobSpec)
+    return deserialize_job_info_spec(
+        **jobSpec, girder_client_session_kwargs=girder_client_session_kwargs)
 
 
 def _update_status(task, status):
@@ -180,8 +190,9 @@ class JobManager(object):
     It also exposes utilities for updating other job fields such as progress
     and status.
     """
+
     def __init__(self, logPrint, url, method=None, headers=None, interval=0.5,
-                 reference=None):
+                 reference=None, girder_client_session_kwargs=None):
         """
         :param on: Whether print messages should be logged to the job log.
         :type on: bool
@@ -207,11 +218,18 @@ class JobManager(object):
         self._progressCurrent = None
         self._progressMessage = None
 
+        self._session = requests.Session()
+
+        if girder_client_session_kwargs:
+            for attr, value in girder_client_session_kwargs.items():
+                setattr(self._session, attr, value)
+
         if logPrint:
             self._stdout = TeeStdOutCustomWrite(self.write)
             self._stderr = TeeStdErrCustomWrite(self.write)
 
     def cleanup(self):
+        self._session.close()
         if self.logPrint:
             self._stdout.reset()
             self._stderr.reset()
@@ -234,7 +252,7 @@ class JobManager(object):
             if self._buf:
                 data['log'] = self._buf
 
-            req = requests.request(
+            req = self._session.request(
                 self.method.upper(), self.url, allow_redirects=True,
                 headers=self.headers, data=data)
             req.raise_for_status()
@@ -276,8 +294,8 @@ class JobManager(object):
         self._flush()
         self.status = status
         try:
-            req = requests.request(self.method.upper(), self.url, headers=self.headers,
-                                   data={'status': status}, allow_redirects=True)
+            req = self._session.request(self.method.upper(), self.url, headers=self.headers,
+                                        data={'status': status}, allow_redirects=True)
             req.raise_for_status()
         except HTTPError as hex:
             if hex.response.status_code == 400:
@@ -320,7 +338,7 @@ class JobManager(object):
         """
         Refresh the status field from Girder
         """
-        r = requests.get(self.url, headers=self.headers, allow_redirects=True)
+        r = self._session.get(self.url, headers=self.headers, allow_redirects=True)
         self.status = r.json()['status']
 
         return self.status

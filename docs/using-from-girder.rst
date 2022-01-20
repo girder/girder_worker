@@ -64,3 +64,32 @@ be passed into the function in place of the transform object. For example:
 
     def process_file(file):
         return my_task.delay(input_file=GirderFileId(file['_id'])).job
+
+
+Customizing communication back to Girder server
+-----------------------------------------------
+
+Girder Worker is bound to communicate with a Girder instance to update the information about running jobs or download files from the assetstore.  
+In some scenarios, you might want to customize the HTTP communication back to the Girder server.
+  
+Girder Worker uses the Python library ``requests`` to communicate over HTTP and creates a `requests.Session() <https://docs.python-requests.org/en/master/user/advanced/#session-objects>`_ instance that can be adjusted by providing a ``girder_client_session_kwargs`` kwarg in the task parameters.
+
+Here are examples of using ``girder_client_session_kwargs``:
+
+.. code-block:: python
+
+    kwargs = {
+        'girder_client_session_kwargs': {'verify': False}
+    }
+    task.apply_async((), kwargs)
+
+This will disable TLS certificate validation when communicating with Girder.
+
+.. code-block:: python
+
+    kwargs = {
+        'girder_client_session_kwargs': {'headers': {'x-test': 'true'}}
+    }
+    task.apply_async((), kwargs)
+
+This will set the headers of any subsequent request to `{'x-test': 'true'}`
