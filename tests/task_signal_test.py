@@ -205,9 +205,8 @@ class TestSignals(unittest.TestCase):
 
         task.job_manager._flush.assert_called_once()
 
-    @mock.patch('girder_worker.utils.requests.request')
     @mock.patch('girder_worker.utils.JobManager.refreshStatus')
-    def test_task_prerun_canceling(self, refreshStatus, request):
+    def test_task_prerun_canceling(self, refreshStatus):
         task = mock.MagicMock()
         task.name = 'example.task'
         task.request.jobInfoSpec = self.headers['jobInfoSpec']
@@ -217,31 +216,44 @@ class TestSignals(unittest.TestCase):
             'field': 'status',
             'message': 'invalid state'
         }
-        r = request.return_value
-        r.raise_for_status.side_effect = [MockHTTPError(400, validation_error)]
 
-        refreshStatus.return_value = JobStatus.CANCELING
+        class SessionMock(requests.Session):
 
-        gw_task_prerun(task=task, sender=task)
+            def __init__(self, *args, **kwargs):
+                self.request = mock.MagicMock()
+                self.response = self.request.return_value
+                self.response.raise_for_status.side_effect = [
+                    MockHTTPError(400, validation_error), None]
 
-        refreshStatus.assert_called_once()
-        self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
+        with unittest.mock.patch(
+            'girder_worker.utils.requests.Session'
+        ) as session:
+            sessionMock = SessionMock()
+            session.return_value = sessionMock
 
-        # Now try with QUEUED
-        request.reset_mock()
-        refreshStatus.reset_mock()
-        r.raise_for_status.side_effect = [None]
-        refreshStatus.return_value = JobStatus.QUEUED
+            refreshStatus.return_value = JobStatus.CANCELING
 
-        gw_task_prerun(task=task, sender=task)
+            gw_task_prerun(task=task, sender=task)
 
-        refreshStatus.assert_not_called()
-        self.assertEqual(request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
+            refreshStatus.assert_called_once()
+            self.assertEqual(
+                sessionMock.request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
+
+            # Now try with QUEUED
+            sessionMock.request.reset_mock()
+            refreshStatus.reset_mock()
+            sessionMock.response.raise_for_status.side_effect = [None]
+            refreshStatus.return_value = JobStatus.QUEUED
+
+            gw_task_prerun(task=task, sender=task)
+
+            refreshStatus.assert_not_called()
+            self.assertEqual(
+                sessionMock.request.call_args_list[0][1]['data']['status'], JobStatus.RUNNING)
 
     @mock.patch('girder_worker.app.is_revoked')
-    @mock.patch('girder_worker.utils.requests.request')
     @mock.patch('girder_worker.utils.JobManager.refreshStatus')
-    def test_task_success_canceling(self, refreshStatus, request, is_revoked):
+    def test_task_success_canceling(self, refreshStatus, is_revoked):
         task = mock.MagicMock()
         task.name = 'example.task'
         task.request.jobInfoSpec = self.headers['jobInfoSpec']
@@ -251,30 +263,45 @@ class TestSignals(unittest.TestCase):
             'field': 'status',
             'message': 'invalid'
         }
-        r = request.return_value
-        r.raise_for_status.side_effect = [None, MockHTTPError(400, validation_error)]
-        refreshStatus.return_value = JobStatus.CANCELING
-        is_revoked.return_value = True
 
-        gw_task_prerun(task=task, sender=task)
-        gw_task_success(sender=task)
+        class SessionMock(requests.Session):
 
-        # We where in the canceling state so we should move into CANCELED
-        refreshStatus.assert_called_once()
-        self.assertEqual(request.call_args_list[1][1]['data']['status'], JobStatus.CANCELED)
+            def __init__(self, *args, **kwargs):
+                self.request = mock.MagicMock()
+                self.response = self.request.return_value
+                self.response.raise_for_status.side_effect = [
+                    None, MockHTTPError(400, validation_error)]
 
-        # Now try with RUNNING
-        request.reset_mock()
-        is_revoked.return_value = False
-        refreshStatus.reset_mock()
-        r.raise_for_status.side_effect = [None, None]
+        with unittest.mock.patch(
+            'girder_worker.utils.requests.Session'
+        ) as session:
+            sessionMock = SessionMock()
+            session.return_value = sessionMock
 
-        gw_task_prerun(task=task, sender=task)
-        gw_task_success(sender=task)
+            refreshStatus.return_value = JobStatus.CANCELING
+            is_revoked.return_value = True
 
-        # We should move into SUCCESS
-        refreshStatus.assert_not_called()
-        self.assertEqual(request.call_args_list[1][1]['data']['status'], JobStatus.SUCCESS)
+            gw_task_prerun(task=task, sender=task)
+            gw_task_success(sender=task)
+
+            # We where in the canceling state so we should move into CANCELED
+            refreshStatus.assert_called_once()
+            self.assertEqual(
+                sessionMock.request.call_args_list[1][1]['data']['status'], JobStatus.CANCELED)
+
+            # Now try with RUNNING
+            sessionMock.request.reset_mock()
+            is_revoked.return_value = False
+            refreshStatus.reset_mock()
+            sessionMock.response.raise_for_status.side_effect = [None, None]
+
+            gw_task_prerun(task=task, sender=task)
+            gw_task_success(sender=task)
+
+            # We should move into SUCCESS
+            refreshStatus.assert_not_called()
+            self.assertEqual(
+                sessionMock.request.call_args_list[1][1]['data']['status'], JobStatus.SUCCESS)
 
     @mock.patch('girder_worker.utils.JobManager')
     def test_task_revoke(self, jm):

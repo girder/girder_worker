@@ -50,7 +50,8 @@ class Task(celery.Task):
     reserved_headers = [
         'girder_client_token',
         'girder_api_url',
-        'girder_result_hooks']
+        'girder_result_hooks',
+        'girder_client_session_kwargs']
 
     # These keys will be available in the 'properties' dictionary inside
     # girder_before_task_publish() but will not be passed along in the message
