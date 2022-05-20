@@ -219,6 +219,9 @@ class JobManager(object):
         self._progressMessage = None
 
         self._session = requests.Session()
+        retryAdapter = requests.adapters.HTTPAdapter(max_retries=10)
+        self._session.mount('http://', retryAdapter)
+        self._session.mount('https://', retryAdapter)
 
         if girder_client_session_kwargs:
             for attr, value in girder_client_session_kwargs.items():
