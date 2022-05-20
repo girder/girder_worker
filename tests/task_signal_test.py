@@ -224,6 +224,7 @@ class TestSignals(unittest.TestCase):
                 self.response = self.request.return_value
                 self.response.raise_for_status.side_effect = [
                     MockHTTPError(400, validation_error), None]
+                self.adapters = {}
 
         with unittest.mock.patch(
             'girder_worker.utils.requests.Session'
@@ -271,6 +272,7 @@ class TestSignals(unittest.TestCase):
                 self.response = self.request.return_value
                 self.response.raise_for_status.side_effect = [
                     None, MockHTTPError(400, validation_error)]
+                self.adapters = {}
 
         with unittest.mock.patch(
             'girder_worker.utils.requests.Session'
