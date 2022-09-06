@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 import socket
@@ -61,6 +62,17 @@ def _get_docker_network():
         logger.exception('Failed to get docker network')
 
 
+def _remove_stopped_container(client, name):
+    if name is None:
+        return
+    for container in client.containers.list(all=True, filters={'name': name}):
+        try:
+            logger.info('Removing container %s ' % (name))
+            container.remove()
+        except Exception:
+            pass
+
+
 def _run_container(image, container_args,  **kwargs):
     # TODO we could allow configuration of non default socket
     if 'DOCKER_CLIENT_TIMEOUT' in os.environ:
@@ -84,6 +96,7 @@ def _run_container(image, container_args,  **kwargs):
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
     try:
+        name = None
         try:
             if runtime == 'nvidia' and kwargs.get('device_requests') is None:
                 # Docker < 19.03 required the runtime='nvidia' argument.
@@ -94,13 +107,27 @@ def _run_container(image, container_args,  **kwargs):
                     device_requests_kwargs = kwargs.copy()
                     device_requests_kwargs['device_requests'] = [
                         docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])]
+                    name = device_requests_kwargs.setdefault(
+                        'name',
+                        'girder_worker_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
                     return client.containers.run(
                         image, container_args, **device_requests_kwargs)
                 except (APIError, InvalidVersion):
+                    _remove_stopped_container(client, name)
                     pass
-            return client.containers.run(image, container_args, runtime=runtime, **kwargs)
+            kwargs = kwargs.copy()
+            name = kwargs.setdefault(
+                'name',
+                'girder_worker_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+            return client.containers.run(
+                image, container_args, runtime=runtime, **kwargs)
         except APIError:
+            _remove_stopped_container(client, name)
             if origRuntime is None and runtime is not None:
+                kwargs = kwargs.copy()
+                name = kwargs.setdefault(
+                    'name',
+                    'girder_worker_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
                 return client.containers.run(image, container_args, **kwargs)
             else:
                 raise
