@@ -122,6 +122,24 @@ jobs:
           name: Release to PyPI
           command: tox -e release
 
+  publish_docker:
+    working_directory: ~/project
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - run:
+          name: Build girder_worker docker
+          command: docker build --force-rm -t girder/girder_worker .
+      - run:
+          name: Publish images to Docker Hub
+          command: |
+              echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+              docker push girder/girder_worker:latest
+              if [[ $CIRCLE_TAG =~ ^v.*$ ]]; then
+              docker tag girder/girder_worker:latest "girder/girder_worker:$CIRCLE_TAG"
+              docker push "girder/girder_worker:$CIRCLE_TAG"
+              fi
 
 workflows:
   version: 2
@@ -140,6 +158,15 @@ workflows:
           requires:
             - unit_tests
             - lint
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
+      - publish_docker:
+          requires:
+            - release
           filters:
             tags:
               only: /^v.*/
