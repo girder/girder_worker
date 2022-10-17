@@ -89,7 +89,7 @@ def _run_container(image, container_args,  **kwargs):
     container_args = [str(arg) for arg in container_args]
 
     docker_network = _get_docker_network()
-    if docker_network and 'network' not in kwargs:
+    if docker_network and 'network' not in kwargs and 'network_mode' not in kwargs:
         kwargs = kwargs.copy()
         kwargs['network'] = docker_network
 
