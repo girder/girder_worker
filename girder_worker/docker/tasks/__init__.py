@@ -3,6 +3,7 @@ import os
 import shutil
 import socket
 import sys
+import threading
 try:
     import docker
     from docker.errors import DockerException, APIError, InvalidVersion
@@ -88,10 +89,11 @@ def _run_container(image, container_args,  **kwargs):
 
     container_args = [str(arg) for arg in container_args]
 
-    docker_network = _get_docker_network()
-    if docker_network and 'network' not in kwargs and 'network_mode' not in kwargs:
-        kwargs = kwargs.copy()
-        kwargs['network'] = docker_network
+    if 'network' not in kwargs and 'network_mode' not in kwargs:
+        docker_network = _get_docker_network()
+        if docker_network:
+            kwargs = kwargs.copy()
+            kwargs['network'] = docker_network
 
     logger.info('Running container: image: %s args: %s runtime: %s kwargs: %s'
                 % (image, container_args, runtime, kwargs))
@@ -333,7 +335,12 @@ class DockerTask(Task):
         volumes.update(default_temp_volume._repr_json_())
 
         super(DockerTask, self).__call__(*args, **kwargs)
+        threading.Thread(
+            target=self._cleanup_temp_volumes,
+            args=(temp_volumes, default_temp_volume),
+            daemon=True).start()
 
+    def _cleanup_temp_volumes(self, temp_volumes, default_temp_volume):
         # Set the permission to allow cleanup of temp directories
         temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
         to_chmod = temp_volumes[:]
