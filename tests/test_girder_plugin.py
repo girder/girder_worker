@@ -78,7 +78,7 @@ def testWorker(server, models):
             'value': 'amqp://guest@broker.com'
         }, {
             'key': PluginSettings.BACKEND,
-            'value': 'amqp://guest@backend.com'
+            'value': 'rpc://guest@backend.com'
         }])
     }, user=models['admin'])
     assertStatusOk(resp)
@@ -113,7 +113,7 @@ def testWorker(server, models):
         assert celeryMock.mock_calls[0][1] == ('girder_worker',)
         assert celeryMock.mock_calls[0][2] == {
             'broker': 'amqp://guest@broker.com',
-            'backend': 'amqp://guest@backend.com'
+            'backend': 'rpc://guest@backend.com'
         }
 
         sendTaskCalls = celeryMock.return_value.send_task.mock_calls
@@ -147,7 +147,7 @@ def testWorkerDifferentTask(server, models):
             'value': 'amqp://guest@broker.com'
         }, {
             'key': PluginSettings.BACKEND,
-            'value': 'amqp://guest@backend.com'
+            'value': 'rpc://guest@backend.com'
         }])
     }, user=models['admin'])
     assertStatusOk(resp)

@@ -1,5 +1,4 @@
 import time
-from celery.task.control import inspect
 
 from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
 
@@ -42,7 +41,15 @@ _inspector = None
 
 def _worker_inspector(task):
     global _inspector
+
     if _inspector is None:
+        try:
+            # Celery >= 5
+            from .app import app
+            inspect = app.control.inspect
+        except Exception:
+            # Celecy < 5
+            from celery.app.control import Inspect as inspect
         _inspector = inspect([task.request.hostname])
 
     return _inspector
