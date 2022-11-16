@@ -32,7 +32,7 @@ def getCeleryApp():
     global _celeryapp
 
     if _celeryapp is None:
-        backend = Setting().get(PluginSettings.BACKEND) or 'amqp://guest:guest@localhost/'
+        backend = Setting().get(PluginSettings.BACKEND) or 'rpc://guest:guest@localhost/'
         broker = Setting().get(PluginSettings.BROKER) or 'amqp://guest:guest@localhost/'
         _celeryapp = celery.Celery('girder_worker', backend=backend, broker=broker)
     return _celeryapp

@@ -17,7 +17,7 @@ services:
       - 'mongo'
     environment:
       - GIRDER_WORKER_BROKER=amqp://guest:guest@rabbit/
-      - GIRDER_WORKER_BACKEND=amqp://guest:guest@rabbit/
+      - GIRDER_WORKER_BACKEND=rpc://guest:guest@rabbit/
 
   girder_worker:
     build:
@@ -35,7 +35,7 @@ services:
 
     environment:
       - GIRDER_WORKER_BROKER=amqp://guest:guest@rabbit/
-      - GIRDER_WORKER_BACKEND=amqp://guest:guest@rabbit/
+      - GIRDER_WORKER_BACKEND=rpc://guest:guest@rabbit/
     depends_on:
       - 'rabbit'
 
