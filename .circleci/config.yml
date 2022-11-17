@@ -100,9 +100,7 @@ jobs:
 
   unit_tests_310:
     docker:
-      # If we use cimg/python:3.10, we seem to get a python compiled with
-      # openssl 3.x which doesn't work with Girder's hash state code.
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
     steps:
       - checkout
       - *virtual-env
