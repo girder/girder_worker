@@ -2,8 +2,6 @@ from importlib import import_module
 import celery
 from girder_worker_utils import decorators
 
-import six
-
 from stevedore import extension
 
 
@@ -58,7 +56,7 @@ def get_module_tasks(module_name):
     if module is None:
         return tasks
 
-    for name, func in six.iteritems(vars(module)):
+    for name, func in vars(module).items():
         full_name = '%s.%s' % (module_name, name)
         if not hasattr(func, '__call__'):
             # filter out objects that are not callable

@@ -14,7 +14,6 @@
 #  limitations under the License.
 ###############################################################################
 
-from __future__ import absolute_import
 
 from girder import logger
 from girder.exceptions import ValidationException

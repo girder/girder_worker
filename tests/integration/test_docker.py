@@ -1,5 +1,5 @@
+import io
 import os
-import six
 import json
 
 from girder_worker.utils import JobStatus
@@ -94,7 +94,7 @@ def test_docker_run_file_upload_to_item(session, girder_client, test_item):
 
     assert len(files) == 1
 
-    file_contents = six.BytesIO()
+    file_contents = io.BytesIO()
     girder_client.downloadFile(files[0]['_id'], file_contents)
     file_contents.seek(0)
 
@@ -165,7 +165,7 @@ def test_docker_run_transfer_encoding_stream(session, girder_client, test_file,
 
     assert len(files) == 1
 
-    file_contents = six.BytesIO()
+    file_contents = io.BytesIO()
     girder_client.downloadFile(files[0]['_id'], file_contents)
     file_contents.seek(0)
     chunks = file_contents.read().split(delimiter)

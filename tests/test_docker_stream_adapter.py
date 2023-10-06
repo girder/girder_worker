@@ -2,7 +2,7 @@ import unittest
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 
 
-class CaptureAdapter(object):
+class CaptureAdapter:
     def __init__(self):
         self._captured = b''
 

@@ -1,10 +1,10 @@
-import mock
+from unittest import mock
 import os
 import girder_worker
 import girder_worker.configure
 import unittest
 import sys
-from six.moves.configparser import ConfigParser, NoOptionError
+from configparser import ConfigParser, NoOptionError
 from . import captureOutput
 
 local_cfg = os.path.join(girder_worker.PACKAGE_DIR, 'worker.local.cfg')
@@ -35,8 +35,8 @@ class TestConfigScript(unittest.TestCase):
     def _runConfigScript(self, args):
         args = ['girder-worker-config'] + args
         rc = 0
-        with mock.patch.object(sys, 'argv', args),\
-                mock.patch('sys.exit', side_effect=SysExitException) as exit,\
+        with mock.patch.object(sys, 'argv', args), \
+                mock.patch('sys.exit', side_effect=SysExitException) as exit, \
                 captureOutput() as output:
             try:
                 girder_worker.configure.main()

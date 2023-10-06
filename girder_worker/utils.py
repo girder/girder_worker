@@ -5,8 +5,6 @@ from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
 import requests
 from requests import HTTPError
 
-import six
-
 # Disable urllib3 warnings about certificate validation. As they are printed in the console, the
 # messages are sent to Girder, creating an infinite loop.
 import urllib3
@@ -30,7 +28,7 @@ def is_builtin_celery_task(task):
 
 
 def _maybe_model_repr(obj):
-    if hasattr(obj, '_repr_model_') and six.callable(obj._repr_model_):
+    if hasattr(obj, '_repr_model_') and callable(obj._repr_model_):
         return obj._repr_model_()
     return obj
 
@@ -148,7 +146,7 @@ def girder_job(title=None, type='celery', public=False,
     return _girder_job
 
 
-class JobStatus(object):
+class JobStatus:
     INACTIVE = 0
     QUEUED = 1
     RUNNING = 2
@@ -169,12 +167,12 @@ class StateTransitionException(Exception):
 
 class TeeCustomWrite(Tee):
     def __init__(self, func, *args, **kwargs):
-        super(TeeCustomWrite, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._write_func = func
 
     def write(self, *args, **kwargs):
         self._write_func(*args, **kwargs)
-        super(TeeCustomWrite, self).write(*args, **kwargs)
+        super().write(*args, **kwargs)
 
 
 @tee_stdout
@@ -187,7 +185,7 @@ class TeeStdErrCustomWrite(TeeCustomWrite):
     pass
 
 
-class JobManager(object):
+class JobManager:
     """
     This class can be used to write log messages to Girder by capturing
     stdout/stderr printed within the context and sending them in a
@@ -281,7 +279,7 @@ class JobManager(object):
             server. Useful if you don't expect another update for some time.
         :type forceFlush: bool
         """
-        if isinstance(message, six.text_type):
+        if isinstance(message, str):
             message = message.encode('utf8')
 
         self._buf += message

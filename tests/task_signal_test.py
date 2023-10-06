@@ -11,7 +11,7 @@ from girder_worker.app import (
     gw_task_success)
 
 from girder_worker.utils import BUILTIN_CELERY_TASKS, JobStatus
-import mock
+from unittest import mock
 import pytest
 import requests
 
@@ -463,6 +463,7 @@ def test_girder_before_task_publish_celery_context_gc_fails(warn):
     with girder_not_importable():
         with mock.patch('girder_worker.context.nongirder_context.current_app') as mocked_app:
             mocked_app.current_task.request.id = 'id'
+            mocked_app.current_task.request.girder_api_url = 'url'
             inputs = dict(
                 body=[(), {}, {}],
                 sender='example.task',
@@ -585,5 +586,5 @@ def test_girder_before_task_publish_celery_context_no_parent_task_request_no_tok
                 }
             )
             girder_before_task_publish(**inputs)
-            m = str("Could not get token from parent task: Parent task's request is None")
+            m = "Could not get token from parent task: Parent task's request is None"
             warn.assert_called_with(m)

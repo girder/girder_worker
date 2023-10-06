@@ -13,7 +13,7 @@ from .docker import DockerTestEndpoints
 
 class CommonTestEndpoints(Resource):
     def __init__(self):
-        super(CommonTestEndpoints, self).__init__()
+        super().__init__()
 
         # POST because get_result is not idempotent.
         self.route('POST', ('result', ), self.get_result)

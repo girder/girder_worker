@@ -1,5 +1,5 @@
+import io
 import os
-import six
 import tempfile
 
 from girder.api import access
@@ -42,7 +42,7 @@ TEST_IMAGE = 'girder/girder_worker_test:ng'
 
 class DockerTestEndpoints(Resource):
     def __init__(self):
-        super(DockerTestEndpoints, self).__init__()
+        super().__init__()
         self.route('POST', ('test_docker_run', ),
                    self.test_docker_run)
         self.route('POST', ('test_docker_run_mount_volume', ),
@@ -274,7 +274,7 @@ class DockerTestEndpoints(Resource):
                     level=AccessType.READ, paramType='query')
         .param('delimiter', 'Delimiter to use when writing out chunks.'))
     def input_stream(self, item, delimiter):
-        chunks = six.BytesIO()
+        chunks = io.BytesIO()
         for chunk in iterBody(1):
             chunks.write(chunk)
             chunks.write(delimiter.encode('utf-8'))

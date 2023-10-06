@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 ###############################################################################
 #  Copyright Kitware Inc.
@@ -28,7 +27,7 @@ from ..celery import getCeleryApp
 
 class Worker(Resource):
     def __init__(self):
-        super(Worker, self).__init__()
+        super().__init__()
         self.resourceName = 'worker'
         self.route('GET', ('status',), self.getWorkerStatus)
 

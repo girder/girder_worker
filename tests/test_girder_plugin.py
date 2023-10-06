@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 ###############################################################################
 #  Copyright Kitware Inc.
@@ -17,10 +16,10 @@
 #  limitations under the License.
 ###############################################################################
 
+import io
 import json
-import mock
+from unittest import mock
 import pytest
-import six
 
 from girder.models.folder import Folder
 from girder.models.setting import Setting
@@ -45,19 +44,19 @@ def local_job(job):
     Job().updateJob(job, log='job ran', status=JobStatus.SUCCESS)
 
 
-class FakeAsyncResult(object):
+class FakeAsyncResult:
     def __init__(self):
         self.task_id = 'fake_id'
 
 
 @pytest.fixture
 def models(fsAssetstore, admin, user):
-    adminFolder = six.next(Folder().childFolders(
+    adminFolder = next(Folder().childFolders(
         parent=admin, parentType='user', user=admin))
     adminToken = Token().createToken(admin)
     sampleData = b'Hello world'
     sampleFile = Upload().uploadFromFile(
-        obj=six.BytesIO(sampleData), size=len(sampleData), name='Sample',
+        obj=io.BytesIO(sampleData), size=len(sampleData), name='Sample',
         parentType='folder', parent=adminFolder, user=admin)
 
     return {

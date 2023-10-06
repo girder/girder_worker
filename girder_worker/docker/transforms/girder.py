@@ -47,7 +47,7 @@ class GirderFileIdToStream(GirderClientTransform):
     :type _id: str or ObjectId
     """
     def __init__(self, _id, **kwargs):
-        super(GirderFileIdToStream, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.file_id = _id
 
     def transform(self, **kwargs):
@@ -70,7 +70,7 @@ class GirderFileIdToVolume(GirderClientTransform):
     :type filename: str
     """
     def __init__(self, _id, volume=TemporaryVolume.default, filename=None, **kwargs):
-        super(GirderFileIdToVolume, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._file_id = str(_id)
         self._volume = volume
         self._filename = filename
@@ -108,9 +108,9 @@ class GirderFileIdToVolume(GirderClientTransform):
 
     def _repr_model_(self):
         if self._filename:
-            template = u'<{module}.{cls}: File ID={id} -> "{fname}">'
+            template = '<{module}.{cls}: File ID={id} -> "{fname}">'
         else:
-            template = u'<{module}.{cls}: File ID={id}>'
+            template = '<{module}.{cls}: File ID={id}>'
         return template.format(
             module=self.__module__, cls=self.__class__.__name__, id=self._file_id,
             fname=self._filename)
@@ -129,7 +129,7 @@ class GirderFolderIdToVolume(GirderClientTransform):
     :type folder_name: str
     """
     def __init__(self, _id, volume=TemporaryVolume.default, folder_name=None, **kwargs):
-        super(GirderFolderIdToVolume, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._folder_id = str(_id)
         self._volume = volume
         self._folder_name = folder_name
@@ -181,7 +181,7 @@ class GirderItemIdToVolume(GirderClientTransform):
     :type item_name: str
     """
     def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
-        super(GirderItemIdToVolume, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._item_id = str(_id)
         self._volume = volume
         self._item_path = None
@@ -232,14 +232,14 @@ class GirderUploadVolumePathToItem(GirderUploadToItem):
     """
     def __init__(self, volumepath, item_id, delete_file=False, **kwargs):
         item_id = str(item_id)
-        super(GirderUploadVolumePathToItem, self).__init__(item_id, delete_file, **kwargs)
+        super().__init__(item_id, delete_file, **kwargs)
         self._volumepath = volumepath
 
     # We ignore the "result"
     def transform(self, *args, **kwargs):
         path = _maybe_transform(self._volumepath, *args, **kwargs)
 
-        return super(GirderUploadVolumePathToItem, self).transform(path)
+        return super().transform(path)
 
 
 class GirderUploadVolumePathToFolder(GirderUploadToFolder):
@@ -255,12 +255,12 @@ class GirderUploadVolumePathToFolder(GirderUploadToFolder):
     :type delete_file: bool
     """
     def __init__(self, volumepath, folder_id, delete_file=False, **kwargs):
-        super(GirderUploadVolumePathToFolder, self).__init__(str(folder_id), delete_file, **kwargs)
+        super().__init__(str(folder_id), delete_file, **kwargs)
         self._volumepath = volumepath
 
     def transform(self, *args, **kwargs):
         path = _maybe_transform(self._volumepath, *args, **kwargs)
-        return super(GirderUploadVolumePathToFolder, self).transform(path)
+        return super().transform(path)
 
 
 class GirderUploadVolumePathJobArtifact(GirderUploadJobArtifact):
@@ -287,13 +287,13 @@ class GirderUploadVolumePathJobArtifact(GirderUploadJobArtifact):
     def __init__(self, volumepath, job_id=None, name=None, upload_on_exception=False, **kwargs):
         if job_id is not None:
             job_id = str(job_id)
-        super(GirderUploadVolumePathJobArtifact, self).__init__(job_id, name, **kwargs)
+        super().__init__(job_id, name, **kwargs)
         self._volumepath = volumepath
         self._upload_on_exception = upload_on_exception
 
     def transform(self, *args, **kwargs):
         path = _maybe_transform(self._volumepath, *args, **kwargs)
-        return super(GirderUploadVolumePathJobArtifact, self).transform(path)
+        return super().transform(path)
 
     def exception(self):
         if self._upload_on_exception:

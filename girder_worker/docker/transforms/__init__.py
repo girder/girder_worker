@@ -2,7 +2,6 @@ import sys
 import uuid
 import os
 import tempfile
-import six
 import abc
 
 from girder_worker_utils.transform import Transform
@@ -12,7 +11,7 @@ TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
 
 def _maybe_transform(obj, *args, **kwargs):
-    if hasattr(obj, 'transform') and six.callable(obj.transform):
+    if hasattr(obj, 'transform') and callable(obj.transform):
         return obj.transform(*args, **kwargs)
 
     return obj
@@ -118,7 +117,7 @@ class _TemporaryVolumeMetaClass(abc.ABCMeta):
 
 class _TemporaryVolumeBase(BindMountVolume):
     def __init__(self, *arg, **kwargs):
-        super(_TemporaryVolumeBase, self).__init__(*arg, **kwargs)
+        super().__init__(*arg, **kwargs)
         self._transformed = False
 
     def _make_paths(self, host_dir=None, mode=0o755):
@@ -134,8 +133,7 @@ class _TemporaryVolumeBase(BindMountVolume):
         self._container_path = os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex)
 
 
-@six.add_metaclass(_TemporaryVolumeMetaClass)
-class TemporaryVolume(_TemporaryVolumeBase):
+class TemporaryVolume(_TemporaryVolumeBase, metaclass=_TemporaryVolumeMetaClass):
     """
     This is a class used to represent a temporary directory on the host that will
     be mounted into a docker container. girder_worker will automatically attach a default
@@ -153,7 +151,7 @@ class TemporaryVolume(_TemporaryVolumeBase):
     # Note that this mode is explicitly set with os.chmod. What you
     # set, is what you get - no os.makedirs umask shenanigans.
     def __init__(self, host_dir=None, mode=0o755):
-        super(TemporaryVolume, self).__init__(None, None)
+        super().__init__(None, None)
         self.host_dir = host_dir
         self._mode = mode
         self._instance = None
@@ -164,7 +162,7 @@ class TemporaryVolume(_TemporaryVolumeBase):
             self._transformed = True
             self._make_paths(self.host_dir, mode=self._mode)
 
-        return super(TemporaryVolume, self).transform(**kwargs)
+        return super().transform(**kwargs)
 
 
 class _DefaultTemporaryVolume(TemporaryVolume):
@@ -192,7 +190,7 @@ class _DefaultTemporaryVolume(TemporaryVolume):
 
 class NamedPipeBase(Transform):
     def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume.default):
-        super(NamedPipeBase, self).__init__()
+        super().__init__()
         self._container_path = None
         self._host_path = None
         self._volume = None
@@ -250,14 +248,14 @@ class NamedInputPipe(NamedPipeBase):
         :py:obj:`girder_worker.docker.transforms.TemporaryVolume.default`
     """
     def __init__(self, name,  container_path=None, host_path=None, volume=TemporaryVolume.default):
-        super(NamedInputPipe, self).__init__(name, container_path, host_path, volume)
+        super().__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeWriter
         )
-        super(NamedInputPipe, self).transform(**kwargs)
+        super().transform(**kwargs)
 
         pipe = NamedPipe(self.host_path)
         return NamedPipeWriter(pipe, self.container_path)
@@ -280,14 +278,14 @@ class NamedOutputPipe(NamedPipeBase):
         :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
     """
     def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume.default):
-        super(NamedOutputPipe, self).__init__(name, container_path, host_path, volume)
+        super().__init__(name, container_path, host_path, volume)
 
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             NamedPipe,
             NamedPipeReader
         )
-        super(NamedOutputPipe, self).transform(**kwargs)
+        super().transform(**kwargs)
 
         pipe = NamedPipe(self.host_path)
         return NamedPipeReader(pipe, self.container_path)
@@ -341,7 +339,7 @@ class Connect(Transform):
         :py:class:`girder_worker.docker.transforms.HostStdErr`
     """
     def __init__(self, input, output):
-        super(Connect, self).__init__()
+        super().__init__()
         self._input = input
         self._output = output
 
