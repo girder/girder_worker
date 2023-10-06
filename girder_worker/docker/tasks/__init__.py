@@ -227,6 +227,8 @@ def _run_select_loop(  # noqa: C901
 
         if task.canceled:
             try:
+                msg = 'Asking to stop container: %s' % container.id
+                logger.info(msg)
                 container.stop()
             # Catch the ReadTimeout from requests and wait for container to
             # exit. See https://github.com/docker/docker-py/issues/1374 for
