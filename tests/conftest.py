@@ -8,7 +8,7 @@ def stream():
     class MockFileStream(io.BytesIO):
         def __init__(self, fd, *args, **kwargs):
             self._fd = fd
-            super(MockFileStream, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def fileno(self):
             return self._fd

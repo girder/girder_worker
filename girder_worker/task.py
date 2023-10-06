@@ -6,13 +6,12 @@ from girder_worker.utils import is_builtin_celery_task, is_revoked
 
 from girder_worker_utils import _walk_obj
 from girder_worker_utils.decorators import describe_function
-import six
 
 
 class GirderAsyncResult(AsyncResult):
     def __init__(self, *args, **kwargs):
         self._job = None
-        super(GirderAsyncResult, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @property
     def job(self):
@@ -71,7 +70,7 @@ class Task(celery.Task):
                     link=None, link_error=None, shadow=None, **options):
 
         if is_builtin_celery_task(self.name):
-            return super(Task, self).apply_async(
+            return super().apply_async(
                 args=args, kwargs=kwargs, task_id=task_id, producer=producer,
                 link=link, link_error=link_error, shadow=shadow, **options)
 
@@ -107,7 +106,7 @@ class Task(celery.Task):
         else:
             options['headers'] = headers
 
-        return super(Task, self).apply_async(
+        return super().apply_async(
             args=args, kwargs=kwargs, task_id=task_id, producer=producer,
             link=link, link_error=link_error, shadow=shadow, serializer='girder_io', **options)
 
@@ -131,19 +130,19 @@ class Task(celery.Task):
         try:
             grh = self.request.girder_result_hooks[idx]
             if hasattr(grh, 'transform') and \
-               six.callable(grh.transform):
+               callable(grh.transform):
                 return grh.transform(result, **kwargs)
             return result
         except IndexError:
             return result
 
     def _maybe_transform_argument(self, arg, **kwargs):
-        if hasattr(arg, 'transform') and six.callable(arg.transform):
+        if hasattr(arg, 'transform') and callable(arg.transform):
             return arg.transform(**kwargs)
         return arg
 
     def _maybe_cleanup(self, arg, **kwargs):
-        if hasattr(arg, 'cleanup') and six.callable(arg.cleanup):
+        if hasattr(arg, 'cleanup') and callable(arg.cleanup):
             arg.cleanup(**kwargs)
 
     def __call__(self, *args, **kwargs):
@@ -151,7 +150,7 @@ class Task(celery.Task):
             _t_args = _walk_obj(args, self._maybe_transform_argument)
             _t_kwargs = _walk_obj(kwargs, self._maybe_transform_argument)
 
-            results = super(Task, self).__call__(*_t_args, **_t_kwargs)
+            results = super().__call__(*_t_args, **_t_kwargs)
 
             if hasattr(self.request, 'girder_result_hooks'):
                 if isinstance(results, tuple):

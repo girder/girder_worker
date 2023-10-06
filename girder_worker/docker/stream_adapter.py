@@ -2,7 +2,7 @@ import struct
 import json
 
 
-class StreamPushAdapter(object):
+class StreamPushAdapter:
     """
     This represents the interface that must be implemented by push adapters for
     IO modes that want to implement streaming output.
@@ -31,7 +31,7 @@ class JobProgressAdapter(StreamPushAdapter):
     """
 
     def __init__(self, job_manager):
-        super(JobProgressAdapter, self).__init__()
+        super().__init__()
 
         self.job_manager = job_manager
         self._buf = b''

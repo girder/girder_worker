@@ -9,7 +9,7 @@ from datetime import timedelta, datetime
 
 class GirderSession(BaseUrlSession):
     def __init__(self, *args, **kwargs):
-        super(GirderSession, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.wait_for_success = functools.partial(
             self.wait_for,

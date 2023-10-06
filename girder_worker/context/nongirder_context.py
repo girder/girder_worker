@@ -63,10 +63,10 @@ def create_task_job(job_defaults, sender=None, body=None,
                 headers['jobInfoSpec'] = response.json().get('jobInfoSpec')
                 return response.json()
         except requests.exceptions.RequestException as e:
-            logger.warn('Failed to post job: {}'.format(e))
+            logger.warn(f'Failed to post job: {e}')
 
     except MissingJobArguments as e:
-        logger.warn('Girder job not created: {}'.format(str(e)))
+        logger.warn(f'Girder job not created: {str(e)}')
 
 
 def attach_girder_api_url(sender=None, body=None, exchange=None,
@@ -83,7 +83,7 @@ def attach_girder_api_url(sender=None, body=None, exchange=None,
                 "Parent task's request does not contain girder_api_url")
         headers['girder_api_url'] = parent_task.request.girder_api_url
     except MissingJobArguments as e:
-        logger.warn('Could not get girder_api_url from parent task: {}'.format(str(e)))
+        logger.warn(f'Could not get girder_api_url from parent task: {str(e)}')
 
 
 def attach_girder_client_token(sender=None, body=None, exchange=None,
@@ -101,7 +101,7 @@ def attach_girder_client_token(sender=None, body=None, exchange=None,
 
         headers['girder_client_token'] = parent_task.request.girder_client_token
     except MissingJobArguments as e:
-        logger.warn('Could not get token from parent task: {}'.format(str(e)))
+        logger.warn(f'Could not get token from parent task: {str(e)}')
 
 
 def get_async_result_job_property(async_result):

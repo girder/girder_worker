@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 ###############################################################################
 #  Copyright Kitware Inc.
@@ -65,5 +64,5 @@ if _isGirder3:
             events.bind('model.job.save', 'worker', event_handlers.attachParentJob)
             Job().exposeFields(AccessType.SITE_ADMIN, {'celeryTaskId', 'celeryQueue'})
 else:
-    class WorkerPlugin(object):
+    class WorkerPlugin:
         pass

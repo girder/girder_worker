@@ -31,7 +31,7 @@ config.read([os.path.join(PACKAGE_DIR, f) for f in _cfgs])
 logger = log_utils.setupLogger(config)
 
 
-class GirderWorkerPluginABC(object):
+class GirderWorkerPluginABC:
     """
     Abstract base class for Girder Worker plugins. Plugins must descend from this
     class; see the :ref:`plugins` section for more information.

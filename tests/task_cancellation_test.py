@@ -1,6 +1,6 @@
 import unittest
 
-import mock
+from unittest import mock
 
 from girder_worker.utils import is_revoked
 

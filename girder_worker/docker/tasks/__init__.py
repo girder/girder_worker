@@ -288,7 +288,7 @@ def _handle_streaming_args(args):
 
 class _RequestDefaultTemporaryVolume(_TemporaryVolumeBase):
     def __init__(self):
-        super(_RequestDefaultTemporaryVolume, self).__init__(None, None)
+        super().__init__(None, None)
         self._make_paths()
 
     def transform(self, **kwargs):
@@ -298,11 +298,11 @@ class _RequestDefaultTemporaryVolume(_TemporaryVolumeBase):
 class DockerTask(Task):
 
     def _maybe_transform_argument(self, arg):
-        return super(DockerTask, self)._maybe_transform_argument(
+        return super()._maybe_transform_argument(
             arg, task=self, _default_temp_volume=self.request._default_temp_volume)
 
     def _maybe_transform_result(self, idx, result):
-        return super(DockerTask, self)._maybe_transform_result(
+        return super()._maybe_transform_result(
             idx, result, _default_temp_volume=self.request._default_temp_volume)
 
     def __call__(self, *args, **kwargs):
@@ -336,7 +336,7 @@ class DockerTask(Task):
 
         volumes.update(default_temp_volume._repr_json_())
 
-        super(DockerTask, self).__call__(*args, **kwargs)
+        super().__call__(*args, **kwargs)
         threading.Thread(
             target=self._cleanup_temp_volumes,
             args=(temp_volumes, default_temp_volume),

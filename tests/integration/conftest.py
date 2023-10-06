@@ -1,6 +1,6 @@
+import io
 import pytest
 import requests
-import six
 import os
 from .utilities import GirderSession
 from girder_client import GirderClient
@@ -63,7 +63,7 @@ def test_file(tmpdir_factory):
 def private_folder(girder_client):
     me = girder_client.get('user/me')
     try:
-        folder = six.next(
+        folder = next(
             girder_client.listFolder(
                 me['_id'], parentFolderType='user', name='Private'))
     except StopIteration:
@@ -101,7 +101,7 @@ def test_item(girder_client, private_folder):
 @pytest.fixture(scope='function')
 def test_multi_file_item(girder_client, test_item):
     for i in range(3):
-        girder_client.uploadFile(test_item['_id'], six.BytesIO(), 'test%d.txt' % i, 0)
+        girder_client.uploadFile(test_item['_id'], io.BytesIO(), 'test%d.txt' % i, 0)
     yield test_item
 
 

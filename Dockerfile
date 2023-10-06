@@ -1,4 +1,4 @@
-FROM ubuntu:bionic as base
+FROM ubuntu:22.04 as base
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qy tzdata && \
   apt-get install -qy software-properties-common python3-software-properties && \
@@ -15,7 +15,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qy tzdata 
   libpython3-dev && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://bootstrap.pypa.io/pip/3.6/get-pip.py && python3 get-pip.py
+RUN wget https://bootstrap.pypa.io/pip/get-pip.py && python3 get-pip.py
 
 
 FROM base as build
@@ -35,7 +35,7 @@ RUN pip3 install /*.tar.gz
 
 RUN useradd -D --shell=/bin/bash && useradd -m worker
 
-RUN chown -R worker:worker /usr/local/lib/python3.6/dist-packages/girder_worker/
+RUN chown -R worker:worker /usr/local/lib/python3.10/dist-packages/girder_worker/
 
 USER worker
 

@@ -1,5 +1,5 @@
 import json
-import mock
+from unittest import mock
 import os
 import pytest
 
@@ -154,8 +154,8 @@ def test_TemporaryVolume_transform_creates_container_path():
         tv = TemporaryVolume()
 
         assert tv.container_path is None
-        assert tv.transform() == '{}/SOME_UUID'.format(TEMP_VOLUME_MOUNT_PREFIX)
-        assert tv.container_path == '{}/SOME_UUID'.format(TEMP_VOLUME_MOUNT_PREFIX)
+        assert tv.transform() == f'{TEMP_VOLUME_MOUNT_PREFIX}/SOME_UUID'
+        assert tv.container_path == f'{TEMP_VOLUME_MOUNT_PREFIX}/SOME_UUID'
 
 
 def test_TemporaryVolume_host_path_is_temporary_directory():

@@ -1,5 +1,5 @@
 import os
-from six.moves import configparser
+import configparser
 import girder_worker
 
 accept_content = ['json', 'pickle', 'yaml', 'girder_io']

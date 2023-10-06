@@ -2,7 +2,7 @@ from girder_worker import entrypoint
 from girder_worker.__main__ import main
 from girder_worker.entrypoint import discover_tasks
 
-import mock
+from unittest import mock
 import pytest
 
 

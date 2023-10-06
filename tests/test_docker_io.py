@@ -1,5 +1,5 @@
 import itertools
-import mock
+from unittest import mock
 import os
 import pytest
 
@@ -17,7 +17,7 @@ from girder_worker.docker.io import (
 
 from girder_worker.docker.io.girder import GirderFileStreamReader
 from girder_client import GirderClient
-from six.moves import http_client as httplib
+from http import client as httplib
 
 
 def test_FDWriteStreamConnector_fileno_same_as_output_fileno(istream, ostream):

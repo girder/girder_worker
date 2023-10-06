@@ -1,5 +1,3 @@
-import six
-
 from . import StreamReader
 
 
@@ -12,7 +10,7 @@ class GirderFileStreamReader(StreamReader):
         :param client: The GirderClient instance to use.
         :type client: girder_client.GirderClient
         """
-        super(GirderFileStreamReader, self).__init__()
+        super().__init__()
         self._client = client
         self._file_id = file_id
         self._iter = None
@@ -28,6 +26,6 @@ class GirderFileStreamReader(StreamReader):
             self._iter = self._client.downloadFileAsIterator(self._file_id, buf_len)
 
         try:
-            return six.next(self._iter)
+            return next(self._iter)
         except StopIteration:
             return b''

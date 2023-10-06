@@ -17,7 +17,7 @@ from .utilities import wait_for_status
 # N.B. Module is named raw to avoid conflict with celery package
 class CeleryTestEndpoints(Resource):
     def __init__(self):
-        super(CeleryTestEndpoints, self).__init__()
+        super().__init__()
         self.route('POST', ('test_task_delay', ),
                    self.test_celery_task_delay)
         self.route('POST', ('test_task_delay_fails', ),

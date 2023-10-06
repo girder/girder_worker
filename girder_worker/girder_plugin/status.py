@@ -17,7 +17,7 @@
 from girder_jobs.constants import JobStatus
 
 
-class CustomJobStatus(object):
+class CustomJobStatus:
     """
     The custom job status flags for the worker.
     """

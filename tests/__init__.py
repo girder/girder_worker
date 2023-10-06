@@ -1,5 +1,5 @@
 import contextlib
-import six
+import io
 import sys
 
 
@@ -7,7 +7,7 @@ import sys
 def captureOutput():
     oldout, olderr = sys.stdout, sys.stderr
     try:
-        out = [six.StringIO(), six.StringIO()]
+        out = [io.StringIO(), io.StringIO()]
         sys.stdout, sys.stderr = out
         yield out
     finally:

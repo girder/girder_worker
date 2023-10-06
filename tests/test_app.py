@@ -8,7 +8,7 @@ from girder_worker.utils import (
     BUILTIN_CELERY_TASKS,
     _maybe_model_repr
 )
-import mock
+from unittest import mock
 import pytest
 
 
@@ -41,7 +41,7 @@ def _task_with_request(*args, **kwargs):
     return task
 
 
-class MockTrans(object):
+class MockTrans:
     def __init__(self, arg):
         self.arg = arg
 
@@ -49,7 +49,7 @@ class MockTrans(object):
         return self.arg
 
 
-class MockNonTrans(object):
+class MockNonTrans:
     pass
 
 
@@ -62,7 +62,7 @@ MockNonTransObj = MockNonTrans()
 # you added a reserved header to girder_worker.app.Task and not to
 # RESERVED_HEADERS
 def test_TASK_reserved_headers_same_as_test_reserved_headers():
-    assert set(Task.reserved_headers) == set([h for h, _ in RESERVED_HEADERS])
+    assert set(Task.reserved_headers) == {h for h, _ in RESERVED_HEADERS}
 
 
 # Note: This test checks whether the
@@ -71,7 +71,7 @@ def test_TASK_reserved_headers_same_as_test_reserved_headers():
 # you added a reserved options to girder_worker.app.Task and not to
 # RESERVED_OPTIONS
 def test_TASK_reserved_options_same_as_test_reserved_options():
-    assert set(Task.reserved_options) == set([h for h, _ in RESERVED_OPTIONS])
+    assert set(Task.reserved_options) == {h for h, _ in RESERVED_OPTIONS}
 
 
 def test_GirderAsyncResult_job_property_returns_None_on_ImportError():
@@ -318,7 +318,7 @@ def test_Task___call___transforms_or_passes_through_kwargs(kwargs, transformed):
         mock_call.assert_called_once_with('FIXME', **transformed)
 
 
-class MockResultTrans(object):
+class MockResultTrans:
     def __init__(self, func):
         self.func = func
 
@@ -348,7 +348,7 @@ def test_Task___call___transforms_or_passes_through_girder_result_hooks(
         assert task('ARG1', kwarg='KWARG1') == transformed
 
 
-class MockModelRepr(object):
+class MockModelRepr:
     def __init__(self, arg):
         self.arg = arg
 

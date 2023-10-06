@@ -36,8 +36,6 @@ from girder_worker_utils.transform import ResultTransform
 import jsonpickle
 from kombu.serialization import register
 
-import six
-
 
 @before_task_publish.connect  # noqa: C901
 def girder_before_task_publish(sender=None, body=None, exchange=None,
@@ -202,7 +200,7 @@ def gw_task_postrun(task=None, sender=None, task_id=None,
         # Release stdout/stderr
         if hasattr(task, 'job_manager') and \
            hasattr(task.job_manager, 'cleanup') and \
-           six.callable(task.job_manager.cleanup):
+           callable(task.job_manager.cleanup):
             task.job_manager.cleanup()
 
 

@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 
 from docker.api.client import APIClient
 

@@ -6,7 +6,6 @@ celery ; python_version >= "3.7"
 girder-client>=2
 pymongo>=3
 requests[security]>=2.20.0
-six
 setuptools_scm
 stevedore
 jsonpickle

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 ###############################################################################
 #  Copyright Kitware Inc.
@@ -25,7 +24,7 @@ DOCKER_SCRIPTS_VOLUME = '/mnt/girder_worker/scripts'
 
 
 # Settings where plugin information is stored
-class PluginSettings(object):
+class PluginSettings:
     BROKER = 'worker.broker'
     BACKEND = 'worker.backend'
     API_URL = 'worker.api_url'

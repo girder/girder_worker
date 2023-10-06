@@ -2,14 +2,13 @@ import os
 import errno
 import stat
 import abc
+import urllib
 import ssl
 import sys
-import six
-from six.moves import http_client as httplib, urllib
+from http import client as httplib
 
 
-@six.add_metaclass(abc.ABCMeta)
-class FDStreamConnector(object):
+class FDStreamConnector(metaclass=abc.ABCMeta):
     """
     FDStreamConnector is an abstract base class used to connect a read(input) and write(output)
     stream.
@@ -149,8 +148,7 @@ class FDReadStreamConnector(FDStreamConnector):
         self.output.close()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class StreamReader(object):
+class StreamReader(metaclass=abc.ABCMeta):
     """
     This represents the interface that must be implemented by a stream reader.
     """
@@ -171,8 +169,7 @@ class StreamReader(object):
         pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class StreamWriter(object):
+class StreamWriter(metaclass=abc.ABCMeta):
     """
     This represents the interface that must be implemented by a stream writer.
     """
@@ -239,7 +236,7 @@ class StdStreamWriter(StreamWriter):
         self._stream.flush()
 
 
-class NamedPipe(object):
+class NamedPipe:
     """
     A named pipe.
     """
@@ -271,7 +268,7 @@ class NamedPipeReader(FileDescriptorReader):
     Reader to read from a named pipe.
     """
     def __init__(self, pipe, container_path=None):
-        super(NamedPipeReader, self).__init__(None)
+        super().__init__(None)
         self._pipe = pipe
         self._container_path = container_path
 
@@ -294,7 +291,7 @@ class NamedPipeWriter(FileDescriptorWriter):
     Write to write to a named pipe.
     """
     def __init__(self, pipe, container_path=None):
-        super(NamedPipeWriter, self).__init__(None)
+        super().__init__(None)
         self._pipe = pipe
         self._container_path = container_path
 
