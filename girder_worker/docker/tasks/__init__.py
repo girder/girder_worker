@@ -4,6 +4,9 @@ import shutil
 import socket
 import sys
 import threading
+import time
+import drmaa
+
 try:
     import docker
     from docker.errors import DockerException, APIError, InvalidVersion
@@ -33,6 +36,7 @@ from girder_worker_utils import _walk_obj
 
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
+JOB_STATUS = utils.job_status_codes()
 
 
 def _pull_image(image):
@@ -359,6 +363,43 @@ class DockerTask(Task):
             shutil.rmtree(v.host_path)
 
 
+#Class for SingularityTask similar to DockerTask
+class SingularityTask(Task):
+    def __call__(self, image,*args,container_args,bind_paths,**kwargs):
+        image = image or kwargs.pop('image',None)
+        container_args = container_args or kwargs.pop('container_args',[])
+        bind_paths = bind_paths or kwargs.pop('bind_paths',{})
+        temporary_directory = os.getenv('TEMPORARY_DIRECTORY','/tmp')
+        log_file_path = os.getenv('SINGULARITY_LOG_FILE','/log')
+        
+        #check if the user has provided the image of the plugin.
+        if not image:
+            raise ValueError('Plugin Image required for Singularity')
+        
+        #Commnad to be called for executing Singularity Job
+        bind_paths[temporary_directory] = '/output'
+        super().__call__(*args,**kwargs)
+        
+        qos = kwargs.pop('qos', 'pinaki.sarder')
+        cpus = kwargs.pop('cpus', 4)
+        gpus = kwargs.pop('gpus', 1)
+        memory = kwargs.pop('memory', '4GB')
+        other_slurm_options = kwargs.pop('other_slurm_options', '')
+        
+        slurm_script = _generate_slurm_script(image, container_args, bind_paths, qos, cpus, gpus, memory, other_slurm_options)
+        
+        exit_status = _monitor_singularity_job(self,slurm_script=slurm_script, log_file_path=log_file_path,temp_directory=temporary_directory)
+        #Handling exit status based on the DRM package's expected exit status codes
+        
+        if exit_status == JOB_STATUS.SUCCESS:
+            logger.info(f"Singularity job completed Successfully.")
+        elif exit_status == JOB_STATUS.FAILURE:
+            logger.error(f"Singularity Job exited with error")
+        elif exit_status == JOB_STATUS.CANCELLED:
+            logger.info('Singularity Job cancelled by the user')
+            
+        
+
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                 volumes=None, remove_container=True, stream_connectors=None, **kwargs):
     volumes = volumes or {}
@@ -419,9 +460,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     results = []
     if hasattr(task.request, 'girder_result_hooks'):
         results = (None,) * len(task.request.girder_result_hooks)
-
     return results
-
 
 @app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
@@ -450,3 +489,80 @@ def docker_run(task, image, pull_image=True, entrypoint=None, container_args=Non
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
         remove_container, **kwargs)
+
+@app.task(base=SingularityTask, bind=True)
+def singularity_run(task, image, *args, container_args=None, bind_paths=None, **kwargs):
+    return task(image,*args,container_args,bind_paths,**kwargs)
+
+#This function is used to check whether we need to switch to singularity or not.
+def use_singularity():
+    runtime = os.environ.get('RUNTIME')
+    if runtime == 'SINGULARITY':
+        return True
+    if runtime == 'DOCKER':
+        return False
+    try:
+        #Check whether we are connected to a docker socket.
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            return s.connect_ex('/var/run/docker.sock') != 0
+    except socket.error:
+        return True
+    
+def _generate_slurm_script(image, container_args, bind_paths, qos, cpus, gpus, memory, other_slurm_options):
+    # Construct the bind option for the Singularity command
+    bind_option = ','.join([f"{host}:{container}" for host, container in bind_paths.items()])
+
+    # Construct the Singularity command
+    singularity_command = f'singularity exec --bind {bind_option} docker://{image} {" ".join(container_args)}'
+
+    # Generate the SLURM job script with the specified parameters
+    slurm_script = f"""#!/bin/bash
+#SBATCH --qos={qos}
+#SBATCH --cpus-per-task={cpus}
+#SBATCH --gres=gpu:{gpus}
+#SBATCH --mem={memory}
+# Add any other SLURM options here
+{other_slurm_options}
+
+{singularity_command}
+"""
+    return slurm_script
+
+def _monitor_singularity_job(task,slurm_script,log_file_path,temp_directory):
+    """Create a drmaa session and monitor the job accordingly"""
+    def job_monitor():
+        s = drmaa.Session()
+        s.initialize()
+        jt = s.createJobTemplate()
+        jt.remoteCommand = '/bin/bash'
+        jt.args = ['-c', slurm_script]
+        jt.workingDirectory = temp_directory
+        jt.outputPath = ':' + log_file_path
+        jt.errorPath = ':' + log_file_path
+        jobid = s.runJob(jt)
+        logger.log((f'Submitted singularity job with jobid {jobid}'))
+        while True:
+                job_info = s.jobStatus(jobid)
+                if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
+                    break
+
+                # Check if the task has been aborted by the user
+                if task.is_aborted:
+                    s.control(jobid, drmaa.JobControl.TERMINATE)
+                    logger.info(f'Job {jobid} was cancelled by user.')
+                    return JOB_STATUS.CANCELLED
+
+                time.sleep(5)  # Sleep to avoid busy waiting
+
+        exit_status = s.wait(jobid, drmaa.Session.TIMEOUT_WAIT_FOREVER).exitStatus
+        logger.info(f'Job {jobid} finished with exit status {exit_status}')
+
+        s.deleteJobTemplate(jt)
+        return JOB_STATUS.SUCCESS if exit_status == 0 else JOB_STATUS.FAILURE
+
+    # Start the job monitor in a new thread
+    monitor_thread = threading.Thread(target=job_monitor)
+    monitor_thread.start()
+    monitor_thread.join()
+
+    return job_monitor()

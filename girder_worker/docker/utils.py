@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 import select
 import uuid
 import os
@@ -103,3 +104,16 @@ def chmod_writable(host_paths):
     except DockerException:
         logger.exception('Error setting perms on docker volumes %s.' % host_paths)
         raise
+
+
+JOB_STATUS = {
+    'SUCCESS': 'Success',
+    'FAILURE': "Failure",
+    'CANCELLED': 'Cancelled'
+    }   
+
+def job_status_codes():
+    statusCodes = SimpleNamespace(JOB_STATUS)
+    return statusCodes
+
+
