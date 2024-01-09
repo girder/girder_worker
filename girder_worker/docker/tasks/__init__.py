@@ -374,7 +374,8 @@ class SingularityTask(Task):
         
         #check if the user has provided the image of the plugin.
         if not image:
-            raise ValueError('Plugin Image required for Singularity')
+            image = "sarderlab/histo-cloud:latest"
+            # raise ValueError('Plugin Image required for Singularity')
         
         #Commnad to be called for executing Singularity Job
         bind_paths[temporary_directory] = '/output'
@@ -462,33 +463,33 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
         results = (None,) * len(task.request.girder_result_hooks)
     return results
 
-@app.task(base=DockerTask, bind=True)
-def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
-               volumes=None, remove_container=True, **kwargs):
-    """
-    This task runs a docker container. For details on how to use this task, see the
-    :ref:`docker-run` guide.
+# @app.task(base=DockerTask, bind=True)
+# def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
+#                volumes=None, remove_container=True, **kwargs):
+#     """
+#     This task runs a docker container. For details on how to use this task, see the
+#     :ref:`docker-run` guide.
 
-    :param task: The bound task reference.
-    :type task: :py:class:`girder_worker.task.Task`
-    :param image: The docker image identifier.
-    :type image: str
-    :param pull_image: Whether to explicitly pull the image prior to running the container.
-    :type pull_image: bool
-    :param entrypoint: Alternative entrypoint to use when running the container.
-    :type entrypoint: str
-    :param container_args: Arguments to pass to the container.
-    :type container_args: list
-    :param volumes: Volumes to expose to the container.
-    :type volumes: dict
-    :param remove_container: Whether to delete the container after the task is done.
-    :type remove_container: bool
-    :return: Fulfilled result hooks.
-    :rtype: list
-    """
-    return _docker_run(
-        task, image, pull_image, entrypoint, container_args, volumes,
-        remove_container, **kwargs)
+#     :param task: The bound task reference.
+#     :type task: :py:class:`girder_worker.task.Task`
+#     :param image: The docker image identifier.
+#     :type image: str
+#     :param pull_image: Whether to explicitly pull the image prior to running the container.
+#     :type pull_image: bool
+#     :param entrypoint: Alternative entrypoint to use when running the container.
+#     :type entrypoint: str
+#     :param container_args: Arguments to pass to the container.
+#     :type container_args: list
+#     :param volumes: Volumes to expose to the container.
+#     :type volumes: dict
+#     :param remove_container: Whether to delete the container after the task is done.
+#     :type remove_container: bool
+#     :return: Fulfilled result hooks.
+#     :rtype: list
+#     """
+#     return _docker_run(
+#         task, image, pull_image, entrypoint, container_args, volumes,
+#         remove_container, **kwargs)
 
 @app.task(base=SingularityTask, bind=True)
 def singularity_run(task, image, *args, container_args=None, bind_paths=None, **kwargs):

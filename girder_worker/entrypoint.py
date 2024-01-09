@@ -61,8 +61,8 @@ def get_module_tasks(module_name):
         if not hasattr(func, '__call__'):
             # filter out objects that are not callable
             continue
-        if (use_singularity() and name == 'docker_run') or (not use_singularity() and name == 'singularity_run'):
-            continue
+        # if (use_singularity() and name == 'docker_run') or (not use_singularity() and name == 'singularity_run'):
+        #     continue
         try:
             decorators.get_description_attribute(func)
             tasks[full_name] = func
