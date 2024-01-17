@@ -130,6 +130,10 @@ class _TemporaryVolumeBase(BindMountVolume):
             # os.chmod.
             os.chmod(host_dir, mode)
         self._host_path = tempfile.mkdtemp(dir=host_dir)
+        try:
+            os.chmod(self._host_path, mode)
+        except Exception:
+            pass
         self._container_path = os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex)
 
 
