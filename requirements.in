@@ -11,3 +11,5 @@ stevedore
 jsonpickle
 girder_worker_utils>=0.8.4
 docker>=2.6.0
+drmaa
+
