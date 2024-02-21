@@ -5,7 +5,7 @@ import socket
 import sys
 import threading
 import time
-import drmaa
+import subprocess
 
 try:
     import docker
@@ -517,7 +517,7 @@ def _generate_slurm_script(image, container_args, bind_paths, qos, cpus, gpus, m
     bind_option = ','.join([f"{host}:{container}" for host, container in bind_paths.items()])
 
     # Construct the Singularity command
-    singularity_command = f'singularity exec --bind {bind_option} docker://{image} {" ".join(container_args)}'
+    singularity_command = f'singularity run --bind {bind_option} docker://{image} {" ".join(container_args)}'
 
     # Generate the SLURM job script with the specified parameters
     slurm_script = f"""#!/bin/bash
@@ -530,39 +530,51 @@ def _generate_slurm_script(image, container_args, bind_paths, qos, cpus, gpus, m
 
 {singularity_command}
 """
-    return slurm_script
+    return singularity_command
 
 def _monitor_singularity_job(task,slurm_script,log_file_path,temp_directory):
     """Create a drmaa session and monitor the job accordingly"""
     def job_monitor():
-        s = drmaa.Session()
-        s.initialize()
-        jt = s.createJobTemplate()
-        jt.remoteCommand = '/bin/bash'
-        jt.args = ['-c', slurm_script]
-        jt.workingDirectory = temp_directory
-        jt.outputPath = ':' + log_file_path
-        jt.errorPath = ':' + log_file_path
-        jobid = s.runJob(jt)
-        logger.log((f'Submitted singularity job with jobid {jobid}'))
-        while True:
-                job_info = s.jobStatus(jobid)
-                if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
-                    break
+        # s = drmaa.Session()
+        # s.initialize()
+        # jt = s.createJobTemplate()
+        # jt.remoteCommand = '/bin/bash'
+        # jt.args = ['-c', slurm_script]
+        # jt.workingDirectory = temp_directory
+        # jt.outputPath = ':' + log_file_path
+        # jt.errorPath = ':' + log_file_path
+        # jobid = s.runJob(jt)
+        # logger.log((f'Submitted singularity job with jobid {jobid}'))
+        # while True:
+        #         job_info = s.jobStatus(jobid)
+        #         if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
+        #             break
 
-                # Check if the task has been aborted by the user
-                if task.is_aborted:
-                    s.control(jobid, drmaa.JobControl.TERMINATE)
-                    logger.info(f'Job {jobid} was cancelled by user.')
-                    return JOB_STATUS.CANCELLED
+        #         # Check if the task has been aborted by the user
+        #         if task.is_aborted:
+        #             s.control(jobid, drmaa.JobControl.TERMINATE)
+        #             logger.info(f'Job {jobid} was cancelled by user.')
+        #             return JOB_STATUS.CANCELLED
 
-                time.sleep(5)  # Sleep to avoid busy waiting
+        #         time.sleep(5)  # Sleep to avoid busy waiting
 
-        exit_status = s.wait(jobid, drmaa.Session.TIMEOUT_WAIT_FOREVER).exitStatus
-        logger.info(f'Job {jobid} finished with exit status {exit_status}')
+        # exit_status = s.wait(jobid, drmaa.Session.TIMEOUT_WAIT_FOREVER).exitStatus
+        # logger.info(f'Job {jobid} finished with exit status {exit_status}')
 
-        s.deleteJobTemplate(jt)
-        return JOB_STATUS.SUCCESS if exit_status == 0 else JOB_STATUS.FAILURE
+        # s.deleteJobTemplate(jt)
+        # return JOB_STATUS.SUCCESS if exit_status == 0 else JOB_STATUS.FAILURE
+        '''
+        THis is just for testing. Need to repalce with DRMAA
+        '''
+        try:
+            res = subprocess.run(slurm_script,stdout=subprocess.PIPE,stderr=subprocess.PIPE, check=True)
+            if isinstance(res.stdout, bytes):
+                res = res.stdout.decode('utf-8')
+            logger.info(res)
+        except Exception as e:
+            logger.exception(f"Exception occured {e}")
+            
+            
 
     # Start the job monitor in a new thread
     monitor_thread = threading.Thread(target=job_monitor)
