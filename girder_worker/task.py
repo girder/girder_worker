@@ -123,14 +123,15 @@ class Task(celery.Task):
     def describe(self):
         return describe_function(self.run)
 
-    def call_item_task(self, inputs, outputs={}):
+    def call_item_task(self, inputs, outputs=None):
+        if outputs is None:
+            outputs = {}
         return self.run.call_item_task(inputs, outputs)
 
     def _maybe_transform_result(self, idx, result, **kwargs):
         try:
             grh = self.request.girder_result_hooks[idx]
-            if hasattr(grh, 'transform') and \
-               callable(grh.transform):
+            if hasattr(grh, 'transform') and callable(grh.transform):
                 return grh.transform(result, **kwargs)
             return result
         except IndexError:
