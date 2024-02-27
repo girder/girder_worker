@@ -342,11 +342,13 @@ class DockerTask(Task):
 
         volumes.update(default_temp_volume._repr_json_())
 
-        super().__call__(*args, **kwargs)
-        threading.Thread(
-            target=self._cleanup_temp_volumes,
-            args=(temp_volumes, default_temp_volume),
-            daemon=True).start()
+        try:
+            super().__call__(*args, **kwargs)
+        finally:
+            threading.Thread(
+                target=self._cleanup_temp_volumes,
+                args=(temp_volumes, default_temp_volume),
+                daemon=True).start()
 
     def _cleanup_temp_volumes(self, temp_volumes, default_temp_volume):
         # Set the permission to allow cleanup of temp directories
