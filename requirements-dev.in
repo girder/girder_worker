@@ -16,3 +16,4 @@ pytest-cov
 Sphinx
 sphinx-rtd-theme
 tox
+drmaa
