@@ -74,8 +74,8 @@ extras_require['girder'] = ['girder>=3.0.0a1', 'girder-jobs>=3.0.0a1']
 # perform the install
 setuptools.setup(
     name='girder-worker',
-    # use_scm_version={'local_scheme': prerelease_local_scheme},
-    version='0.12.1',
+    use_scm_version={'local_scheme': prerelease_local_scheme},
+    # version='0.12.1',
     setup_requires=['setuptools_scm'],
     description='Batch execution engine built on celery.',
     long_description=readme,
