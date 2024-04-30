@@ -6,6 +6,7 @@ import sys
 import threading
 import time
 import subprocess
+import drmaa
 
 try:
     import docker
@@ -478,8 +479,12 @@ class SingularityTask(Task):
         return super()._maybe_transform_result(
             idx, result, _default_temp_volume=self.request._default_temp_volume)
     
-    def __call__(self,container_args=None,bind_paths=None,**kwargs):
+    def __call__(self,*args,container_args=None,bind_paths=None,**kwargs):
         #image = image or kwargs.pop('image',None)
+        container_args = container_args or kwargs.pop('container_args') or []
+        container_args, read_streams, write_streams = _handle_streaming_args(container_args)
+
+        logger.info(f'Container Args = {container_args}' )
         default_temp_volume = _RequestDefaultTemporaryVolume()
         self.request._default_temp_volume = default_temp_volume
 
@@ -510,46 +515,34 @@ class SingularityTask(Task):
 
         volumes.update(default_temp_volume._repr_json_())
 
-
-
-        #image = kwargs.pop('image','suhaskc_histo-cloud_segmentation.sif')
-        image = 'suhaskc_histo-cloud_segmentation.sif'
-        container_args = container_args or kwargs.pop('container_args',[])
-        bind_paths = bind_paths or kwargs.pop('bind_paths',{})
-        temporary_directory = os.getenv('TEMPORARY_DIRECTORY','./tmp')
-        log_file_path = os.getenv('SINGULARITY_LOG_FILE','/log')
-        
-        #check if the user has provided the image of the plugin.
-        if not image:
-            raise ValueError('Plugin Image required for Singularity')
-        logger.info(f'Image {image}')
-        #Commnad to be called for executing Singularity Job
-        bind_paths[temporary_directory] = '/output'
-        #super().__call__(*args,**kwargs)
+        #Add Image checking later
         
         qos = kwargs.pop('qos', 'pinaki.sarder')
         cpus = kwargs.pop('cpus', 4)
         gpus = kwargs.pop('gpus', 1)
         memory = kwargs.pop('memory', '4GB')
         other_slurm_options = kwargs.pop('other_slurm_options', '')
-        
-        slurm_script = _generate_slurm_script(image, container_args, bind_paths, qos, cpus, gpus, memory, other_slurm_options)
-        print(f"{slurm_script}")
-        exit_status = _monitor_singularity_job(self,slurm_script=slurm_script, log_file_path=log_file_path,temp_directory=temporary_directory)
+        temp_directory = f"/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/tmp"
+        sif_directory = f"/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/SIF"
+        log_file_path = f"/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/tmp"
+        # slurm_script = _generate_slurm_script(container_args, bind_paths, qos, cpus, gpus, memory, other_slurm_options)
+        # exit_status = _monitor_singularity_job(self,slurm_script=slurm_script, log_file_path=log_file_path,temp_directory=temp_directory,sif_directory=sif_directory)
         #Handling exit status based on the DRM package's expected exit status codes
-        
-        if exit_status == JOB_STATUS['SUCCESS']:
-            logger.info(f"Singularity job completed Successfully.")
-            return JOB_STATUS['SUCCESS']
-        elif exit_status == JOB_STATUS['FAILURE']:
-            logger.error(f"Singularity Job exited with error")
-        elif exit_status == JOB_STATUS['CANCELLED']:
-            logger.info('Singularity Job cancelled by the user')
+        # exit_status = JOB_STATUS['SUCCESS']
+        # if exit_status == JOB_STATUS['SUCCESS']:
+        #     logger.info(f"Singularity job completed Successfully.")
+        # elif exit_status == JOB_STATUS['FAILURE']:
+        #     logger.error(f"Singularity Job exited with error")
+        # elif exit_status == JOB_STATUS['CANCELLED']:
+        #     logger.info('Singularity Job cancelled by the user')
 
 #Chaging base temorarily to 
 @app.task(base=SingularityTask, bind=True)
-def singularity_run(task, container_args=None, bind_paths=None, **kwargs):
-    return task(container_args,bind_paths,**kwargs)
+def singularity_run(task,*args, container_args=None, bind_paths=None, **kwargs):
+    logger.info(f'KWARGS = {kwargs}')
+    logger.info(f'ARGS = {args}')
+    logger.info(f'task = {task}')
+    return task(*args,container_args,bind_paths,**kwargs)
 
 #This function is used to check whether we need to switch to singularity or not.
 def use_singularity():
@@ -568,104 +561,73 @@ def use_singularity():
     # except socket.error:
         return True
     
-def _generate_slurm_script(image, container_args, bind_paths, qos, cpus, gpus, memory, other_slurm_options):
-    # Construct the bind option for the Singularity command
-    bind_option = ','.join([f"{host}:{container}" for host, container in bind_paths.items()])
-    logger.info(f'{container_args}')
-    # Construct the Singularity command
-    pwd = _get_last_workdir('suhaskc/histo-cloud:segmentation')
-    #container_args = str(container_args).replace('[','').replace(']','').replace(',', '').replace('<','').replace('>','')
-    container_args = ["SegmentWSI",
-    "--batch_size",
-    "1",
-    "--gpu",
-    "0",
-    "--heatmap_stride",
-    "2",
-    "--min_size",
-    "2000",
-    "--patch_size",
-    "2000",
-    "--remove_border",
-    "100",
-    "--save_heatmap",
-    "false",
-    "--simplify_contours",
-    "0.005",
-    "--tile_stride",
-    "1000",
-    "--wsi_downsample",
-    "2",
-    "/home/rc-svc-pinaki.sarder-web/digital_slide_archive/devops/singularity-minimal/tmp/18-142_PAS_1of6.svs",
-    "/home/rc-svc-pinaki.sarder-web/digital_slide_archive/devops/singularity-minimal/tmp/model-Glomeruli-11-13-20.zip",
-    "/home/rc-svc-pinaki.sarder-web/digital_slide_archive/devops/singularity-minimal/tmp/outputAnnotationFile.anot"]
-    #singularity_command = f'apptainer run --pwd {pwd} ./{image} {" ".join(container_args)}'
-    singularity_command = ['apptainer','run','--pwd',pwd,'--no-mount', '/cmsuf', image]
-    singularity_command.extend(container_args)
-    # Generate the SLURM job script with the specified parameters
-    slurm_script = f"""#!/bin/bash
-#SBATCH --qos={qos}
-#SBATCH --cpus-per-task={cpus}
-#SBATCH --gres=gpu:{gpus}
-#SBATCH --mem={memory}
-# Add any other SLURM options here
-{other_slurm_options}
+def _generate_slurm_script(container_args, bind_paths, qos, cpus, gpus, memory, other_slurm_options):
 
-{singularity_command}
-"""
-    return singularity_command
+    #IMPLEMENT LATER - TESTING WITH DEFAULT
 
-def _monitor_singularity_job(task,slurm_script,log_file_path,temp_directory):
+
+    # # Construct the bind option for the Singularity command
+    # bind_option = ','.join([f"{host}:{container}" for host, container in bind_paths.items()])
+    # logger.info(f'{container_args}')
+    # # Construct the Singularity command
+    # pwd = _get_last_workdir('suhaskc/histo-cloud:segmentation')
+    # #container_args = str(container_args).replace('[','').replace(']','').replace(',', '').replace('<','').replace('>','')
+    
+    # #singularity_command = f'apptainer run --pwd {pwd} ./{image} {" ".join(container_args)}'
+    # singularity_command = ['apptainer','run','--pwd',pwd,'--no-mount', '/cmsuf', image]
+    # singularity_command.extend(container_args)
+    # # Generate the SLURM job script with the specified parameters
+
+    slurm_script = "singularity run --nv --pwd HistomicsTK/histomicstk/cli /blue/pinaki.sarder/rc-svc-pinaki.sarder-web/SIF/suhaskc.sif SegmentWSI --batch_size 1 --gpu 0 --heatmap_stride 2 --min_size 2000 --patch_size 2000 --remove_border 100 --save_heatmap false --simplify_contours 0.005 --tile_stride 1000 --wsi_downsample 2 18-142_PAS_1of6.svs model-Glomeruli-11-13-20.zip outputFile.anot"
+    logger.info(f"USER - {os.getenv('USER')}, {os.getuid()}")
+    return slurm_script
+
+def _monitor_singularity_job(task,slurm_script,sif_directory,log_file_path,temp_directory):
     """Create a drmaa session and monitor the job accordingly"""
+    decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
+                        drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
+                        drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
+                        drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
+                        drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
+                        drmaa.JobState.RUNNING: 'job is running',
+                        drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
+                        drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
+                        drmaa.JobState.DONE: 'job finished normally',
+                        drmaa.JobState.FAILED: 'job finished, but failed'}
     def job_monitor():
-        # s = drmaa.Session()
-        # s.initialize()
-        # jt = s.createJobTemplate()
-        # jt.remoteCommand = '/bin/bash'
-        # jt.args = ['-c', slurm_script]
-        # jt.workingDirectory = temp_directory
-        # jt.outputPath = ':' + log_file_path
-        # jt.errorPath = ':' + log_file_path
-        # jobid = s.runJob(jt)
-        # logger.log((f'Submitted singularity job with jobid {jobid}'))
-        # while True:
-        #         job_info = s.jobStatus(jobid)
-        #         if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
-        #             break
-
-        #         # Check if the task has been aborted by the user
-        #         if task.is_aborted:
-        #             s.control(jobid, drmaa.JobControl.TERMINATE)
-        #             logger.info(f'Job {jobid} was cancelled by user.')
-        #             return JOB_STATUS.CANCELLED
-
-        #         time.sleep(5)  # Sleep to avoid busy waiting
-
-        # exit_status = s.wait(jobid, drmaa.Session.TIMEOUT_WAIT_FOREVER).exitStatus
-        # logger.info(f'Job {jobid} finished with exit status {exit_status}')
-
-        # s.deleteJobTemplate(jt)
-        # return JOB_STATUS.SUCCESS if exit_status == 0 else JOB_STATUS.FAILURE
-        '''
-        THis is just for testing. Need to repalce with DRMAA
-        '''
+        s = drmaa.Session()
+        s.initialize()
+        jt = s.createJobTemplate()
+        jt.workingDirectory = temp_directory
+        jt.remoteCommand = os.path.join(temp_directory , 'submit.sh')
+        jt.nativeSpecification = "--mem=16000 --ntasks=1 --time=00:15 --mincpus=4 --partition=gpu --gres=gres:gpu:1 --comment=SegmentWSI"
+        jt.args = [sif_directory,temp_directory]
+        jt.outputPath = ':' + log_file_path + '/output.log'
+        jt.errorPath = ':' + log_file_path + '/error.log'
         try:
-            switch_to_sif_image_folder()
-            logger.info(f"The current working direcrtory is {os.getcwd()}")
-            logger.info(f"Directory contents {os.listdir()}")
-            res = subprocess.run(slurm_script,stdout=subprocess.PIPE,stderr=subprocess.PIPE, check=True)
-            if isinstance(res.stdout, bytes):
-                res = res.stdout.decode('utf-8')
-            logger.info(res)
-            return JOB_STATUS['SUCCESS']
-        except Exception as e:
-            logger.exception(f"Exception occured {e}")
+            jobid = s.runJob(jt)
+            print((f'Submitted singularity job with jobid {jobid}'))
+            while True:
+                job_info = s.jobStatus(jobid)
+                print(f"Job is Still running")
+                if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
+                    s.deleteJobTemplate(jt)
+                    break
+                time.sleep(5)  # Sleep to avoid busy waiting
+            exit_status = s.jobStatus(jobid)
+            logger.info(decodestatus[exit_status])
+            s.exit()
+            return exit_status
+            
+            
+        except Exception as e: 
+            s.deleteJobTemplate(jt)
+            print(f"Error Occured {e}")
             
             
 
     # Start the job monitor in a new thread
     monitor_thread = threading.Thread(target=job_monitor)
     monitor_thread.start()
-    monitor_thread.join()
 
-    return job_monitor()
+    return job_monitor

@@ -108,24 +108,25 @@ setuptools.setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'girder-worker = girder_worker.__main__:main',
-            'girder-worker-config = girder_worker.configure:main'
+           # 'girder-worker = girder_worker.__main__:main',
+           # 'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [
-            'docker = girder_worker.docker:DockerPlugin [docker]'
+          #  'docker = girder_worker.docker:DockerPlugin [docker]',
+           # 'gwexample = girder_worker.examples.plugin_example.gwexample:GWExamplePlugin'
         ],
         'girder_worker._test_plugins.valid_plugins': [
-            'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
-            'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
+          #  'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
+          #  'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
         ],
         'girder_worker._test_plugins.invalid_plugins': [
-            'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
-            'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
-            'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
-            'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
+          #  'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
+          #  'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
+          #  'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
+          #  'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ],
         'girder.plugin': [
-            'worker = girder_worker.girder_plugin:WorkerPlugin'
+           #  'worker = girder_worker.girder_plugin:WorkerPlugin'
         ]
     }
 )
