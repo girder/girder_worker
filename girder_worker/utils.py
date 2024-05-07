@@ -79,7 +79,7 @@ def _job_manager(request=None, headers=None, kwargs=None):
 
     if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
-
+        jobSpec['url'] = jobSpec['url'].replace('girder:8080','0.0.0.0:8101')
     # We are being called from revoked signal
     elif headers is not None and \
             'jobInfoSpec' in headers:
