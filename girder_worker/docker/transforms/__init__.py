@@ -311,8 +311,9 @@ class VolumePath(Transform):
     def __init__(self, filename, volume=TemporaryVolume.default):
         if os.path.isabs(filename):
             raise Exception('VolumePath paths must be relative to a volume (%s).' % filename)
-
-        self.filename = filename
+        #Modify filename for cli_run
+        #self.filename = filename
+        self.filename = filename.replace(' ','_')
         self._volume = volume
 
     def transform(self, *pargs, **kwargs):
