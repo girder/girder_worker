@@ -76,6 +76,13 @@ def _job_manager(request=None, headers=None, kwargs=None):
     girder_client_session_kwargs = {}
     if hasattr(request, 'girder_client_session_kwargs'):
         girder_client_session_kwargs = request.girder_client_session_kwargs
+    
+    #Modify better later 
+    if hasattr(request,'girder_result_hooks'):
+        girder_result_hooks = request.girder_result_hooks
+        grh_object = girder_result_hooks[0]
+        grh_object['gc']['urlBase'] = grh_object['gc']['urlBase'].replace('girder:8080','0.0.0.0:8101')
+
 
     if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
