@@ -27,7 +27,7 @@ from girder_worker.docker.io import (
     FDStreamConnector,
     StdStreamWriter
 )
-from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
+
 from girder_worker.docker.transforms import (
     ContainerStdErr,
     ContainerStdOut,
@@ -560,11 +560,11 @@ def singularity_run(task,**kwargs):
     container_args = kwargs.pop('container_args',[])
     pull_image = kwargs['pull_image'] or False
     stream_connectors = kwargs['stream_connectors'] or []
-    image = kwargs['image'] or ''
+    image = kwargs.get('image') or ''
     entrypoint = None
-    if pull_image:
-        pass
-        #ADD some code
+    if not image:
+        logger.exception(f"Image name cannot be emptu")
+        raise Exception(f"Image name cannot be empty")
     
     run_kwargs = {
         'tty': False,
@@ -637,11 +637,10 @@ def _generate_slurm_script(container_args,kwargs):
     try:
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index+1])
-        kwargs['--gres'] = f"gres:gpu:{gpus}" if gpus > 1 else f"gres:gpu:1"
-        kwargs['--partition'] = 'gpu'
-        singularity_command.append('--nv')
+        nvidia.set_nvidia_params(kwargs,singularity_command,gpus)
     except ValueError as e:
-        kwargs['gpu'] = None
+        if kwargs['nvidia']:
+            nvidia.set_nvidia_params(kwargs,singularity_command) 
     try: 
         pwd = kwargs['pwd'] 
         if not pwd:
@@ -746,7 +745,7 @@ def _get_slurm_config(kwargs):
         '--time': os.getenv("SLURM_TIME",'00:30'),
         '--partition':os.getenv('SLURM_PARTITION','hpg2-compute'),
         '--gres':os.getenv('SLURM_GRES_CONFIG'),
-        '--cpus-per-task':os.getenv('SLURM_CPUS','2')
+        '--cpus-per-task':os.getenv('SLURM_CPUS','4')
     }
 
     config = {k:kwargs.get(k,config_defaults[k]) for k in config_defaults}
