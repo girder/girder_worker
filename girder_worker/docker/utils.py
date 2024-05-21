@@ -1,9 +1,18 @@
+import importlib.metadata
+import os
 import select
 import uuid
-import os
+
 import docker
 from docker.errors import DockerException
+
 from girder_worker import logger
+
+if (importlib.metadata.version('docker') == '7.0.0' and
+        not hasattr(docker.transport.basehttpadapter.BaseHTTPAdapter, '_get_connection')):
+    docker.transport.basehttpadapter.BaseHTTPAdapter._get_connection = (
+        lambda self, request, *args, proxies=None, **kwargs: self.get_connection(
+            request.url, proxies))
 
 
 def select_loop(exit_condition=lambda: True, readers=None, writers=None):
