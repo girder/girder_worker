@@ -6,37 +6,31 @@ import socket
 import sys
 import threading
 import time
-import subprocess
-import drmaa
+
+# import drmaa
 
 try:
     import docker
-    from docker.errors import DockerException, APIError, InvalidVersion
-    from girder_worker.docker import nvidia
+    from docker.errors import APIError, DockerException, InvalidVersion
     from requests.exceptions import ReadTimeout
+
+    from girder_worker.docker import nvidia
 except ImportError:
     # These imports will not be available on the girder side.
     pass
-from girder_worker.app import app, Task
-from girder_worker import logger
-from girder_worker.docker import utils
-from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
-from girder_worker.docker.io import (
-    FileDescriptorReader,
-    FDWriteStreamConnector,
-    FDReadStreamConnector,
-    FDStreamConnector,
-    StdStreamWriter
-)
-
-from girder_worker.docker.transforms import (
-    ContainerStdErr,
-    ContainerStdOut,
-    _TemporaryVolumeBase,
-    TemporaryVolume
-)
 from girder_worker_utils import _walk_obj
+# from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
 
+from girder_worker import logger
+from girder_worker.app import Task, app
+from girder_worker.docker import utils
+from girder_worker.docker.io import (FDReadStreamConnector, FDStreamConnector,
+                                     FDWriteStreamConnector,
+                                     FileDescriptorReader, StdStreamWriter)
+from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
+from girder_worker.docker.transforms import (ContainerStdErr, ContainerStdOut,
+                                             TemporaryVolume,
+                                             _TemporaryVolumeBase)
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach', 'volumes']
 
@@ -150,6 +144,7 @@ class _SocketReader(FileDescriptorReader):
     with python 2 attach_socket(...) returns a socket like object, with python 3
     it returns an instance of SocketIO.
     """
+
     def __init__(self, socket):
         self._socket = socket
 
@@ -483,16 +478,16 @@ def docker_run(task, image, pull_image=True, entrypoint=None, container_args=Non
         remove_container, **kwargs)
 
 
-#Class for SingularityTask similar to DockerTask
+# Class for SingularityTask similar to DockerTask
 class SingularityTask(Task):
     def _maybe_transform_argument(self, arg):
         return super()._maybe_transform_argument(
             arg, task=self, _default_temp_volume=self.request._default_temp_volume)
-     
+
     def _maybe_transform_result(self, idx, result):
         return super()._maybe_transform_result(
             idx, result, _default_temp_volume=self.request._default_temp_volume)
-    
+
     def __call__(self, *args, **kwargs):
         default_temp_volume = _RequestDefaultTemporaryVolume()
         self.request._default_temp_volume = default_temp_volume
@@ -535,64 +530,68 @@ class SingularityTask(Task):
     def _cleanup_temp_volumes(self, temp_volumes, default_temp_volume):
         # Set the permission to allow cleanup of temp directories
         temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
+        to_chmod = temp_volumes[:]
+        # If our default_temp_volume instance has been transformed then we
+        # know it has been used and we have to clean it up.
         if default_temp_volume._transformed:
+            to_chmod.append(default_temp_volume)
             temp_volumes.append(default_temp_volume)
-        
-        for v in temp_volumes:
-            utils.remove_tmp_folder_apptainer(v.host_path)
-        
+
+        # if len(to_chmod) > 0:
+        #     utils.chmod_writable([v.host_path for v in to_chmod])
+
+        # for v in temp_volumes:
+        #     shutil.rmtree(v.host_path)
 
 
-def _run_singularity_container(container_args=None,**kwargs):
+def _run_singularity_container(container_args=None, **kwargs):
     image = kwargs['image']
     container_args = container_args or kwargs['container_args'] or []
     try:
         container_args = _process_container_args(container_args, kwargs)
-    
+
         logger.info('Running container: image: %s args: %s kwargs: %s'
                     % (image, container_args, kwargs))
-        
-        slurm_run_command = _generate_slurm_script(container_args,kwargs)
+
+        slurm_run_command = _generate_slurm_script(container_args, kwargs)
 
         slurm_config = _get_slurm_config(kwargs)
 
-        return [slurm_run_command,slurm_config]
+        return [slurm_run_command, slurm_config]
     except Exception as e:
         logger.exception(e)
         raise Exception(e)
 
-    
-    
 
-def singularity_run(task,**kwargs):
-    volumes = kwargs.pop('volumes',{})
-    container_args = kwargs.pop('container_args',[])
+def singularity_run(task, **kwargs):
+    volumes = kwargs.pop('volumes', {})
+    container_args = kwargs.pop('container_args', [])
     pull_image = kwargs['pull_image'] or False
     stream_connectors = kwargs['stream_connectors'] or []
-    image = kwargs.get('image') or ''
+    image = kwargs['image'] or ''
     entrypoint = None
-    if not image:
-        logger.exception(f"Image name cannot be emptu")
-        raise Exception(f"Image name cannot be empty")
-    
+    if pull_image:
+        pass
+        # ADD some code
+
     run_kwargs = {
         'tty': False,
         'volumes': volumes
     }
 
-      # Allow run args to be overridden,filter out any we don't want to override
+    # Allow run args to be overridden,filter out any we don't want to override
     extra_run_kwargs = {k: v for k, v in kwargs.items() if k not in BLACKLISTED_DOCKER_RUN_ARGS}
     run_kwargs.update(extra_run_kwargs)
 
-    #Make entrypoint as pwd
+    # Make entrypoint as pwd
     if entrypoint is not None:
         run_kwargs['entrypoint'] = entrypoint
-    
+
     log_file_name = kwargs['log_file']
-    
-    container_args,read_streams,write_streams = _handle_streaming_args(container_args)
-    #MODIFIED FOR SINGULARITY (CHANGE CODE OF SINGULARITY CONTAINER)
-    slurm_run_command,slurm_config = _run_singularity_container(container_args,**run_kwargs)
+
+    container_args, read_streams, write_streams = _handle_streaming_args(container_args)
+    # MODIFIED FOR SINGULARITY (CHANGE CODE OF SINGULARITY CONTAINER)
+    slurm_run_command, slurm_config = _run_singularity_container(container_args, **run_kwargs)
     for connector in stream_connectors:
         if isinstance(connector, FDReadStreamConnector):
             read_streams.append(connector)
@@ -603,25 +602,29 @@ def singularity_run(task,**kwargs):
                 "Expected 'FDReadStreamConnector' or 'FDWriterStreamConnector', received '%s'"
                 % type(connector))
     try:
-        monitor_thread = _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name)
+        monitor_thread = _monitor_singularity_job(
+            task, slurm_run_command, slurm_config, log_file_name)
+
         def singularity_exit_condition():
             return not monitor_thread.is_alive()
-        utils.select_loop(exit_condition = singularity_exit_condition,
-                          readers= read_streams,
-                          writers = write_streams )
+        utils.select_loop(exit_condition=singularity_exit_condition,
+                          readers=read_streams,
+                          writers=write_streams)
     finally:
         logger.info('DONE')
 
     results = []
-    if hasattr(task.request,'girder_result_hooks'):
+    if hasattr(task.request, 'girder_result_hooks'):
         results = (None,) * len(task.request.girder_result_hooks)
 
     return results
-#This function is used to check whether we need to switch to singularity or not.
+
+
+# This function is used to check whether we need to switch to singularity or not.
 def use_singularity():
-        '''
-        #This needs to be uncommented. Only for testing purposes. 
-        '''
+    '''
+    #This needs to be uncommented. Only for testing purposes.
+    '''
     # runtime = os.environ.get('RUNTIME')
     # if runtime == 'SINGULARITY':
     #     return True
@@ -632,56 +635,66 @@ def use_singularity():
     #     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
     #         return s.connect_ex('/var/run/docker.sock') != 0
     # except socket.error:
-        return True
-    
-def _generate_slurm_script(container_args,kwargs):
+    return False
+    # return True
+
+
+@app.task
+def container_backend(**kwargs):
+    return use_singularity()
+
+
+def _generate_slurm_script(container_args, kwargs):
     container_args = container_args or []
-    image = kwargs.pop('image',None)
+    image = kwargs.pop('image', None)
     singularity_command = []
     if not image:
         raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available')
     SIF_DIRECTORY = os.getenv('SIF_IMAGE_PATH')
-    image_full_path = os.path.join(SIF_DIRECTORY,image)
-    #Code to check for allocating multiple gpus. 
+    image_full_path = os.path.join(SIF_DIRECTORY, image)
+    # Code to check for allocating multiple gpus.
     try:
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index+1])
-        nvidia.set_nvidia_params(kwargs,singularity_command,gpus)
-    except ValueError as e:
-        if kwargs['nvidia']:
-            nvidia.set_nvidia_params(kwargs,singularity_command)
-    try: 
-        pwd = kwargs['pwd'] 
+        kwargs['--gres'] = f'gres:gpu:{gpus}' if gpus > 1 else 'gres:gpu:1'
+        kwargs['--partition'] = 'gpu'
+        singularity_command.append('--nv')
+    except ValueError:
+        kwargs['gpu'] = None
+    try:
+        pwd = kwargs['pwd']
         if not pwd:
-            raise Exception("PWD cannot be empty")
-        singularity_command.extend(['--pwd',pwd])
+            raise Exception('PWD cannot be empty')
+        singularity_command.extend(['--pwd', pwd])
         singularity_command.append(image_full_path)
         singularity_command.extend(container_args)
     except Exception as e:
-        logger.info(f"Error occured - {e}")
-        raise Exception(f"Error Occured - {e}")
+        logger.info(f'Error occured - {e}')
+        raise Exception(f'Error Occured - {e}')
     return singularity_command
 
-def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
+
+def _monitor_singularity_job(task, slurm_run_command, slurm_config, log_file_name):
     """Create a drmaa session and monitor the job accordingly"""
     decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
-                        drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
-                        drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
-                        drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
-                        drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
-                        drmaa.JobState.RUNNING: 'job is running',
-                        drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
-                        drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
-                        drmaa.JobState.DONE: 'job finished normally',
-                        drmaa.JobState.FAILED: 'job finished, but failed'}
+                    drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
+                    drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
+                    drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
+                    drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
+                    drmaa.JobState.RUNNING: 'job is running',
+                    drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
+                    drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
+                    drmaa.JobState.DONE: 'job finished normally',
+                    drmaa.JobState.FAILED: 'job finished, but failed'}
     temp_directory = os.getenv('TMPDIR')
     submit_dir = '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission'
+
     def job_monitor():
         s = drmaa.Session()
         s.initialize()
         jt = s.createJobTemplate()
         jt.workingDirectory = temp_directory
-        jt.remoteCommand = os.path.join(submit_dir , 'submit.sh')
+        jt.remoteCommand = os.path.join(submit_dir, 'submit.sh')
         jt.nativeSpecification = slurm_config
         jt.args = slurm_run_command
         jt.outputPath = ':' + log_file_name
@@ -689,20 +702,20 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
         try:
             jobid = s.runJob(jt)
             logger.info((f'Submitted singularity job with jobid {jobid}'))
-            with open(log_file_name,'r') as f:
+            with open(log_file_name, 'r') as f:
                 while True:
                     job_info = s.jobStatus(jobid)
                     where = f.tell()
                     line = f.readlines()
                     if line:
-                        print(''.join(line),end='')
+                        print(''.join(line), end='')
                     else:
                         f.seek(where)
                     if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
                         s.deleteJobTemplate(jt)
                         break
                     elif task.canceled:
-                        s.control(jobid,drmaa.JobControlAction.TERMINATE)
+                        s.control(jobid, drmaa.JobControlAction.TERMINATE)
                         s.deleteJobTemplate(jt)
                         break
                     time.sleep(5)  # Sleep to avoid busy waiting
@@ -710,57 +723,57 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
             logger.info(decodestatus[exit_status])
             s.exit()
             return exit_status
-            
-            
-        except Exception as e: 
+
+        except Exception as e:
             s.deleteJobTemplate(jt)
-            print(f"Error Occured {e}")
-            
-            
+            print(f'Error Occured {e}')
 
     # Start the job monitor in a new thread
-    monitor_thread = threading.Thread(target=job_monitor,daemon=False)
+    monitor_thread = threading.Thread(target=job_monitor, daemon=True)
     monitor_thread.start()
 
     return monitor_thread
 
 
-def _process_container_args(container_args,kwargs):
+def _process_container_args(container_args, kwargs):
     volumes = kwargs['volumes'] or {}
+
     def find_matching_volume_key(path):
         for key, value in volumes.items():
             if path.startswith(value['bind']):
-                # Append the suffix from the original path that isn't part of the 'bind' path 
+                # Append the suffix from the original path that isn't part of the 'bind'
+                # path #Replace bind path later
                 suffix = path[len(value['bind']):] if value['bind'] != path else ''
                 if 'assetstore' in key:
                     key = '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web' + key
-                new_key = key + suffix.replace(" ", "_")  # Replace spaces in suffix with underscores
+                # Replace spaces in suffix with underscores
+                new_key = key + suffix.replace(' ', '_')
                 return new_key
         return path  # Replace spaces in paths that don't match any volume
     try:
-    # Replace paths in container_args with their corresponding volume keys
+        # Replace paths in container_args with their corresponding volume keys
         updated_container_args = [str(find_matching_volume_key(arg)) for arg in container_args]
     except Exception as e:
-        logger.info(f"error {e}")
+        logger.info(f'error {e}')
     return updated_container_args
-        
+
+
 def _get_slurm_config(kwargs):
-    #Use this function to add or modify any configuration parameters for the SLURM job
+    # Use this function to add or modify any configuration parameters for the SLURM job
     config_defaults = {
         '--qos': os.getenv('SLURM_QOS'),
         '--account': os.getenv('SLURM_ACCOUNT'),
-        '--mem':os.getenv('SLURM_MEMORY','16000'),
-        '--ntasks': os.getenv("SLURM_NTASKS",'1'),
-        '--time': os.getenv("SLURM_TIME",'72:00'),
-        '--partition':os.getenv('SLURM_PARTITION','hpg2-compute'),
-        '--gres':os.getenv('SLURM_GRES_CONFIG'),
-        '--cpus-per-task':os.getenv('SLURM_CPUS','4')
+        '--mem': os.getenv('SLURM_MEMORY', '16000'),
+        '--ntasks': os.getenv('SLURM_NTASKS', '2'),
+        '--time': os.getenv('SLURM_TIME', '00:30'),
+        '--partition': os.getenv('SLURM_PARTITION', 'hpg2-compute'),
+        '--gres': os.getenv('SLURM_GRES_CONFIG'),
+        '--cpus-per-task': os.getenv('SLURM_CPUS', '2')
     }
 
-    config = {k:kwargs.get(k,config_defaults[k]) for k in config_defaults}
+    config = {k: kwargs.get(k, config_defaults[k]) for k in config_defaults}
 
-    slurm_config = ' '.join(f"{k}={v}" for k,v in config.items() if v is not None)
+    slurm_config = ' '.join(f'{k}={v}' for k, v in config.items() if v is not None)
 
-    logger.info(f"SLURM CONFIG = {slurm_config}")
+    logger.info(f'SLURM CONFIG = {slurm_config}')
     return slurm_config
-    

@@ -19,8 +19,8 @@
 
 import os
 import shutil
-import setuptools
 
+import setuptools
 from setuptools.command.install import install
 
 
@@ -73,7 +73,7 @@ extras_require['girder'] = ['girder>=3.0.1,<5', 'girder-jobs>=3.0.1,<5']
 setuptools.setup(
     name='girder-worker',
     use_scm_version={'local_scheme': prerelease_local_scheme},
-    version='0.12.1',
+    # version='0.12.1',
     setup_requires=['setuptools_scm'],
     description='Batch execution engine built on celery.',
     long_description=readme,
@@ -110,8 +110,8 @@ setuptools.setup(
            # 'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [
-          #  'docker = girder_worker.docker:DockerPlugin [docker]',
-           # 'gwexample = girder_worker.examples.plugin_example.gwexample:GWExamplePlugin'
+            'docker = girder_worker.docker:DockerPlugin [docker]',
+            # 'gwexample = girder_worker.examples.plugin_example.gwexample:GWExamplePlugin'
         ],
         'girder_worker._test_plugins.valid_plugins': [
           #  'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',

@@ -1,6 +1,10 @@
-from girder_worker.app import app
+import os
+import subprocess
+
 from girder_worker_utils import types
 from girder_worker_utils.decorators import argument
+
+from girder_worker.app import app
 
 
 @app.task
@@ -14,7 +18,6 @@ def fibonacci(n):
 @app.task
 # @argument('image_name', 'slide_name', 'path')
 def nuclei(image_name, slide_name, path):
-    "running nuclei"
     print(app, '++++++++++')
     if path:
         print('using arg path !!')
