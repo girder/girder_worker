@@ -4,6 +4,7 @@ import shutil
 import socket
 import sys
 import threading
+import time
 try:
     import docker
     from docker.errors import DockerException, APIError, InvalidVersion
@@ -239,6 +240,8 @@ def _run_select_loop(  # noqa: C901
                     container.reload()
                     if container.status == 'exited':
                         break
+                    tries -= 1
+                    time.sleep(1)
 
                 if container.status != 'exited':
                     msg = 'Unable to stop container: %s' % container.id
