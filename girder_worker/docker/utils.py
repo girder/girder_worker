@@ -1,11 +1,12 @@
 import os
 import select
 import uuid
-
+import os
 import docker
 from docker.errors import DockerException
-
 from girder_worker import logger
+import re
+import subprocess
 
 
 def select_loop(exit_condition=lambda: True, readers=None, writers=None):
@@ -105,3 +106,19 @@ def chmod_writable(host_paths):
     except DockerException:
         logger.exception('Error setting perms on docker volumes %s.' % host_paths)
         raise
+
+
+def remove_tmp_folder_apptainer(host_path=None):
+    '''
+    This function will run after the slurm job completes and returns. If a temp folder is created in the temp directory to 
+    do file I/O operations before/while the job was run, we need to clean up by removing the folder. 
+    '''
+    if not host_path:
+        return
+    temp_path = os.getenv("TMPIR")
+    #Cautious checking host path before removing it from the filesystem.  
+    if temp_path in host_path:
+        if os.path.exists(host_path):
+            subprocess.call(['rm','-rf',host_path])
+
+

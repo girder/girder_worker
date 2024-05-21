@@ -15,48 +15,48 @@
     # via -r requirements-dev.in
 alabaster==0.7.13
     # via sphinx
-amqp==5.2.0
+amqp==5.1.1
     # via kombu
-attrs==24.2.0
+annotated-types==0.5.0
+    # via pydantic
+attrs==23.1.0
     # via
     #   jsonschema
     #   referencing
 autocommand==2.2.2
     # via jaraco-text
-babel==2.16.0
+babel==2.13.0
     # via sphinx
-backports-tarfile==1.2.0
-    # via jaraco-context
 backports-zoneinfo[tzdata]==0.2.1
     # via
     #   celery
     #   kombu
-bcrypt==4.2.0
+bcrypt==4.0.1
     # via passlib
-billiard==4.2.0
+billiard==4.1.0
     # via celery
-boto3==1.35.20
+boto3==1.28.61
     # via girder
-botocore==1.35.20
+botocore==1.31.61
     # via
     #   boto3
     #   girder
     #   s3transfer
-cachetools==5.5.0
+cachetools==5.3.1
     # via tox
-celery==5.4.0
+celery==5.3.4 ; python_version >= "3.7"
     # via -r requirements.in
-certifi==2024.8.30
+certifi==2023.7.22
     # via requests
 cffi==1.17.1
     # via cryptography
 chardet==5.2.0
     # via tox
-charset-normalizer==3.3.2
+charset-normalizer==3.3.0
     # via requests
-cheroot==10.0.1
+cheroot==10.0.0
     # via cherrypy
-cherrypy==18.10.0
+cherrypy==18.8.0
     # via girder
 click==8.1.7
     # via
@@ -66,7 +66,7 @@ click==8.1.7
     #   click-repl
     #   girder
     #   girder-client
-click-didyoumean==0.3.1
+click-didyoumean==0.3.0
     # via celery
 click-plugins==1.1.1
     # via
@@ -76,14 +76,14 @@ click-repl==0.3.0
     # via celery
 colorama==0.4.6
     # via tox
-coverage[toml]==7.6.1
+coverage[toml]==6.5.0
     # via
     #   -r requirements-dev.in
     #   coveralls
     #   pytest-cov
-coveralls==4.0.1
+coveralls==3.3.1
     # via -r requirements-dev.in
-cryptography==43.0.1
+cryptography==41.0.4
     # via
     #   passlib
     #   pyopenssl
@@ -91,28 +91,26 @@ decorator==5.1.1
     # via dogpile-cache
 diskcache==5.6.3
     # via girder-client
-distlib==0.3.8
+distlib==0.3.7
     # via virtualenv
-dnspython==2.6.1
-    # via pymongo
-docker==7.1.0
+docker==6.1.3
     # via -r requirements.in
 docopt==0.6.2
     # via coveralls
-docutils==0.20.1
+docutils==0.18.1
     # via
     #   sphinx
     #   sphinx-rtd-theme
-dogpile-cache==1.3.3
+dogpile-cache==1.2.2
     # via girder
-exceptiongroup==1.2.2
+exceptiongroup==1.1.3
     # via pytest
-filelock==3.16.0
+filelock==3.12.4
     # via
     #   girder
     #   tox
     #   virtualenv
-flake8==7.1.1
+flake8==6.1.0
     # via
     #   -r requirements-dev.in
     #   flake8-docstrings
@@ -121,41 +119,43 @@ flake8-blind-except==0.2.1
     # via -r requirements-dev.in
 flake8-docstrings==1.7.0
     # via -r requirements-dev.in
-flake8-quotes==3.4.0
+flake8-quotes==3.3.2
     # via -r requirements-dev.in
-girder-client==3.2.5
+girder-client==3.1.24
     # via
     #   -r requirements.in
     #   girder-worker-utils
-girder-worker-utils==0.9.1
+girder-worker-utils==0.8.7
     # via -r requirements.in
 httmock==1.4.0
     # via -r requirements-dev.in
-idna==3.10
+idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.5.0
+importlib-metadata==6.8.0
     # via sphinx
-importlib-resources==6.4.5
+importlib-resources==6.1.0
     # via
     #   jaraco-text
     #   jsonschema
     #   jsonschema-specifications
+inflect==7.0.0
+    # via jaraco-text
 iniconfig==2.0.0
     # via pytest
-jaraco-collections==5.1.0
+jaraco-collections==4.3.0
     # via cherrypy
-jaraco-context==6.0.1
+jaraco-context==4.3.0
     # via jaraco-text
-jaraco-functools==4.0.2
+jaraco-functools==3.9.0
     # via
     #   cheroot
     #   jaraco-text
     #   tempora
-jaraco-text==4.0.0
+jaraco-text==3.11.1
     # via jaraco-collections
-jinja2==3.1.4
+jinja2==3.1.2
     # via
     #   -r requirements.in
     #   sphinx
@@ -163,21 +163,21 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-jsonpickle==3.3.0
+jsonpickle==3.0.2
     # via
     #   -r requirements.in
     #   girder-worker-utils
-jsonschema==4.23.0
+jsonschema==4.19.1
     # via girder
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2023.7.1
     # via jsonschema
-kombu==5.4.1
+kombu==5.3.2
     # via celery
-lxml==5.3.0
+lxml==4.9.3
     # via -r requirements-dev.in
-mako==1.3.5
+mako==1.2.4
     # via girder
-markupsafe==2.1.5
+markupsafe==2.1.3
     # via
     #   jinja2
     #   mako
@@ -187,13 +187,13 @@ mock==5.1.0
     # via -r requirements-dev.in
 mongomock==4.2.0.post1
     # via pytest-girder
-more-itertools==10.5.0
+more-itertools==10.1.0
     # via
     #   cheroot
     #   cherrypy
     #   jaraco-functools
     #   jaraco-text
-packaging==24.1
+packaging==23.2
     # via
     #   mongomock
     #   pyproject-api
@@ -203,61 +203,64 @@ packaging==24.1
     #   tox
 passlib[bcrypt,totp]==1.7.4
     # via girder
-pbr==6.1.0
+pbr==5.11.1
     # via stevedore
 pkgutil-resolve-name==1.3.10
     # via jsonschema
-platformdirs==4.3.4
+platformdirs==3.11.0
     # via
     #   tox
     #   virtualenv
-pluggy==1.5.0
+pluggy==1.3.0
     # via
     #   pytest
     #   tox
 portend==3.2.0
     # via cherrypy
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.39
     # via click-repl
-psutil==6.0.0
+psutil==5.9.5
     # via girder
-pycodestyle==2.12.1
+pycodestyle==2.11.0
     # via flake8
-pycparser==2.22
+pycparser==2.21
     # via cffi
+pydantic==2.4.2
+    # via inflect
+pydantic-core==2.10.1
+    # via pydantic
 pydocstyle==6.3.0
     # via
     #   -r requirements-dev.in
     #   flake8-docstrings
-pyflakes==3.2.0
+pyflakes==3.1.0
     # via flake8
-pygments==2.18.0
+pygments==2.16.1
     # via sphinx
 pymongo==4.8.0
     # via
     #   -r requirements.in
     #   girder
     #   pytest-girder
-pyopenssl==24.2.1
+pyopenssl==23.2.0
     # via girder
 pyproject-api==1.7.1
     # via tox
-pytest==8.3.3
+pytest==7.4.2
     # via
     #   -r requirements-dev.in
     #   pytest-cov
     #   pytest-girder
-pytest-cov==5.0.0
+pytest-cov==4.1.0
     # via
     #   -r requirements-dev.in
     #   pytest-girder
-python-dateutil==2.9.0.post0
+python-dateutil==2.8.2
     # via
     #   botocore
     #   celery
     #   girder
-    #   tempora
-pytz==2024.2
+pytz==2023.3.post1
     # via
     #   babel
     #   girder
@@ -266,11 +269,11 @@ pyyaml==6.0.2
     # via
     #   -r requirements.in
     #   girder
-referencing==0.35.1
+referencing==0.30.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests[security]==2.32.3
+requests[security]==2.31.0
     # via
     #   -r requirements.in
     #   coveralls
@@ -283,20 +286,22 @@ requests[security]==2.32.3
     #   sphinx
 requests-toolbelt==1.0.0
     # via girder-client
-rpds-py==0.20.0
+rpds-py==0.10.4
     # via
     #   jsonschema
     #   referencing
-s3transfer==0.10.2
+s3transfer==0.7.0
     # via boto3
 sentinels==1.0.0
     # via mongomock
-setuptools-scm==8.1.0
+setuptools-scm==8.0.4
     # via
     #   -r requirements.in
     #   girder-worker-utils
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   girder-worker-utils
+    #   python-dateutil
 snowballstemmer==2.2.0
     # via
     #   pydocstyle
@@ -306,7 +311,7 @@ sphinx==7.1.2
     #   -r requirements-dev.in
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
-sphinx-rtd-theme==2.0.0
+sphinx-rtd-theme==1.3.0
     # via -r requirements-dev.in
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
@@ -322,11 +327,11 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-stevedore==5.3.0
+stevedore==5.1.0
     # via
     #   -r requirements.in
     #   dogpile-cache
-tempora==5.7.0
+tempora==5.5.0
     # via portend
 tomli==2.0.1
     # via
@@ -335,39 +340,47 @@ tomli==2.0.1
     #   pytest
     #   setuptools-scm
     #   tox
-tox==4.18.1
+tox==4.11.3
     # via -r requirements-dev.in
-typing-extensions==4.12.2
+typing-extensions==4.8.0
     # via
+    #   annotated-types
     #   dogpile-cache
+    #   inflect
+    #   jaraco-functools
     #   kombu
+    #   pydantic
+    #   pydantic-core
     #   setuptools-scm
-tzdata==2024.1
+tzdata==2023.3
     # via
     #   backports-zoneinfo
     #   celery
-urllib3==1.26.20
+urllib3==1.26.17
     # via
     #   -r requirements.in
     #   botocore
     #   docker
     #   girder-worker-utils
     #   requests
-vine==5.1.0
+vine==5.0.0
     # via
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.26.4
+virtualenv==20.24.5
     # via tox
-wcwidth==0.2.13
+wcwidth==0.2.8
     # via prompt-toolkit
+websocket-client==1.6.3
+    # via docker
 zc-lockfile==3.0.post1
     # via cherrypy
-zipp==3.20.2
+zipp==3.17.0
     # via
     #   importlib-metadata
     #   importlib-resources
+drmaa
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

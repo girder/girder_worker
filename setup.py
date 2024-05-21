@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#############################################################################
+###############################################################################
 #  Copyright 2015 Kitware Inc.
 #
 #  Licensed under the Apache License, Version 2.0 ( the "License" );
@@ -15,11 +15,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#############################################################################
+###############################################################################
 
 import os
+import re
 import shutil
 import setuptools
+
 
 from setuptools.command.install import install
 
@@ -67,12 +69,13 @@ with open('requirements.in') as f:
     install_reqs = f.readlines()
 
 extras_require = {}
-extras_require['girder'] = ['girder>=3.0.1,<5', 'girder-jobs>=3.0.1,<5']
+extras_require['girder'] = ['girder>=3.0.0a1', 'girder-jobs>=3.0.0a1']
 
 # perform the install
 setuptools.setup(
     name='girder-worker',
     use_scm_version={'local_scheme': prerelease_local_scheme},
+    version='0.12.1',
     setup_requires=['setuptools_scm'],
     description='Batch execution engine built on celery.',
     long_description=readme,
@@ -90,7 +93,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
+
     ],
     extras_require=extras_require,
     packages=setuptools.find_packages(
@@ -105,24 +108,25 @@ setuptools.setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'girder-worker = girder_worker.__main__:main',
-            'girder-worker-config = girder_worker.configure:main'
+           # 'girder-worker = girder_worker.__main__:main',
+           # 'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [
-            'docker = girder_worker.docker:DockerPlugin [docker]'
+          #  'docker = girder_worker.docker:DockerPlugin [docker]',
+           # 'gwexample = girder_worker.examples.plugin_example.gwexample:GWExamplePlugin'
         ],
         'girder_worker._test_plugins.valid_plugins': [
-            'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
-            'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
+          #  'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
+          #  'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
         ],
         'girder_worker._test_plugins.invalid_plugins': [
-            'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
-            'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
-            'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
-            'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
+          #  'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
+          #  'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
+          #  'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
+          #  'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ],
         'girder.plugin': [
-            'worker = girder_worker.girder_plugin:WorkerPlugin'
+           #  'worker = girder_worker.girder_plugin:WorkerPlugin'
         ]
     }
 )

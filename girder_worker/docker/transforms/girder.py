@@ -11,30 +11,6 @@ from girder_worker_utils.transforms.girder_io import (
 from . import TemporaryVolume, Connect, NamedOutputPipe, _maybe_transform
 
 
-def setPermissions(path, dirmode=0o777, filemode=0o644):
-    """
-    Set permissions on download assets so that workers can have full read
-    access to them regardless of user.  For directories, they have full general
-    access.
-    """
-    if os.path.isfile(path):
-        try:
-            os.chmod(path, filemode)
-        except Exception:
-            pass
-    else:
-        for dirpath, _, filenames in os.walk(path):
-            try:
-                os.chmod(dirpath, dirmode)
-            except Exception:
-                pass
-            for filename in filenames:
-                try:
-                    os.chmod(os.path.join(dirpath, filename), filemode)
-                except Exception:
-                    pass
-
-
 class ProgressPipe(Transform):
     """
     This can be used to stream progress information out of a running docker container as
@@ -122,7 +98,6 @@ class GirderFileIdToVolume(GirderClientTransform):
         rel_path, self._file_path = self._create_file_path(dir)
 
         self.gc.downloadFile(self._file_id, self._file_path)
-        setPermissions(self._file_path)
 
         # Return the path inside the container
         return os.path.join(self._volume.container_path, rel_path)
@@ -180,7 +155,6 @@ class GirderFolderIdToVolume(GirderClientTransform):
         rel_path, self._folder_path = self._create_folder_path(dir)
 
         self.gc.downloadFolderRecursive(self._folder_id, self._folder_path)
-        setPermissions(self._folder_path)
 
         # Return the path inside the container
         return os.path.join(self._volume.container_path, rel_path)
@@ -227,7 +201,6 @@ class GirderItemIdToVolume(GirderClientTransform):
         rel_path, self._item_path = self._create_item_path(self._volume.host_path)
 
         self.gc.downloadItem(self._item_id, self._item_path)
-        setPermissions(self._item_path)
 
         # downloadItem always puts the item underneath the dest at its transformed name,
         # so we find where it placed it with listdir

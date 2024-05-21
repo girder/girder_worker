@@ -1,11 +1,11 @@
-import abc
-import os
-import stat
 import sys
-import tempfile
 import uuid
+import os
+import tempfile
+import abc
 
 from girder_worker_utils.transform import Transform
+
 
 TEMP_VOLUME_MOUNT_PREFIX = '/mnt/girder_worker'
 
@@ -130,12 +130,6 @@ class _TemporaryVolumeBase(BindMountVolume):
             # os.chmod.
             os.chmod(host_dir, mode)
         self._host_path = tempfile.mkdtemp(dir=host_dir)
-        try:
-            # this is permissive as a worker may be running as a different user
-            # and could otherwise not read or create files.
-            os.chmod(self._host_path, 0o777 | stat.S_ISGID)
-        except Exception:
-            pass
         self._container_path = os.path.join(TEMP_VOLUME_MOUNT_PREFIX, uuid.uuid4().hex)
 
 
@@ -156,7 +150,7 @@ class TemporaryVolume(_TemporaryVolumeBase, metaclass=_TemporaryVolumeMetaClass)
     """
     # Note that this mode is explicitly set with os.chmod. What you
     # set, is what you get - no os.makedirs umask shenanigans.
-    def __init__(self, host_dir=None, mode=0o777):
+    def __init__(self, host_dir=None, mode=0o755):
         super().__init__(None, None)
         self.host_dir = host_dir
         self._mode = mode
@@ -311,8 +305,9 @@ class VolumePath(Transform):
     def __init__(self, filename, volume=TemporaryVolume.default):
         if os.path.isabs(filename):
             raise Exception('VolumePath paths must be relative to a volume (%s).' % filename)
-
-        self.filename = filename
+        #Modify filename for cli_run
+        #self.filename = filename
+        self.filename = filename.replace(' ','_')
         self._volume = volume
 
     def transform(self, *pargs, **kwargs):

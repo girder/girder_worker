@@ -76,10 +76,9 @@ def _job_manager(request=None, headers=None, kwargs=None):
     girder_client_session_kwargs = {}
     if hasattr(request, 'girder_client_session_kwargs'):
         girder_client_session_kwargs = request.girder_client_session_kwargs
-
+    
     if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
-
     # We are being called from revoked signal
     elif headers is not None and \
             'jobInfoSpec' in headers:
