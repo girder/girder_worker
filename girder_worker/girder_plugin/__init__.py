@@ -25,6 +25,7 @@
 # First ensure girder is installed, otherwise it doesn't make sense to import
 # this module at all.
 import logging
+from pathlib import Path
 
 import girder  # noqa
 
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Detect if girder>=3 is installed by checking an import that was added in 3.0.
 _isGirder3 = False
 try:
-    from girder.plugin import getPlugin, GirderPlugin
+    from girder.plugin import getPlugin, GirderPlugin, registerPluginStaticContent
     _isGirder3 = True
 except ImportError:
     logger.info('Girder 2.x is detected skipping incompatible entrypoint definition.')
@@ -51,12 +52,19 @@ if _isGirder3:
 
     class WorkerPlugin(GirderPlugin):
         DISPLAY_NAME = 'Worker'
-        CLIENT_SOURCE_PATH = 'web_client'
 
         def load(self, info):
             getPlugin('jobs').load(info)
 
             info['apiRoot'].worker = Worker()
+
+            registerPluginStaticContent(
+                plugin='worker',
+                js=['/girder-plugin-worker.umd.cjs'],
+                css=['/style.css'],
+                staticDir=Path(__file__).parent / 'web_client' / 'dist',
+                tree=info['serverRoot'],
+            )
 
             events.bind('jobs.schedule', 'worker', event_handlers.schedule)
             events.bind('jobs.status.validate', 'worker', event_handlers.validateJobStatus)

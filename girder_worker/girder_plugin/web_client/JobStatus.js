@@ -1,4 +1,4 @@
-import JobStatus from '@girder/jobs/JobStatus';
+const JobStatus = girder.plugins.jobs.JobStatus;
 
 JobStatus.registerStatus({
     WORKER_FETCHING_INPUT: {

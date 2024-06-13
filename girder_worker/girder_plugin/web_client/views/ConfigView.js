@@ -1,10 +1,10 @@
-import PluginConfigBreadcrumbWidget from '@girder/core/views/widgets/PluginConfigBreadcrumbWidget';
-import View from '@girder/core/views/View';
-import events from '@girder/core/events';
-import { restRequest } from '@girder/core/rest';
-import router from '@girder/core/router';
-
 import ConfigViewTemplate from '../templates/configView.pug';
+
+const PluginConfigBreadcrumbWidget = girder.views.widgets.PluginConfigBreadcrumbWidget;
+const View = girder.views.View;
+const events = girder.events;
+const { restRequest } = girder.rest;
+const router = girder.router;
 
 var ConfigView = View.extend({
     events: {

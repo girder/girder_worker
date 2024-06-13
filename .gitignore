@@ -11,3 +11,5 @@ __pycache__/
 .tox/
 .cache/
 htmlcov/
+node_modules/
+dist/
