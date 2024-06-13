@@ -13,9 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ###############################################################################
+import logging
 
-
-from girder import logger
 from girder.exceptions import ValidationException
 from girder.utility import setting_utilities
 from girder_jobs.constants import JobStatus
@@ -27,6 +26,8 @@ from .celery import getCeleryApp
 from .constants import PluginSettings
 from .status import CustomJobStatus
 from .utils import getWorkerApiUrl, jobInfoSpec
+
+logger = logging.getLogger(__name__)
 
 
 @setting_utilities.validator({

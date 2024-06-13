@@ -24,9 +24,11 @@
 
 # First ensure girder is installed, otherwise it doesn't make sense to import
 # this module at all.
+import logging
+
 import girder  # noqa
 
-from girder_worker import logger
+logger = logging.getLogger(__name__)
 
 # Detect if girder>=3 is installed by checking an import that was added in 3.0.
 _isGirder3 = False
