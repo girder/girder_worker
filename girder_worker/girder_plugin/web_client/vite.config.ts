@@ -28,9 +28,5 @@ export default defineConfig({
       name: 'GirderPluginWorker',
       fileName: 'girder-plugin-worker',
     },
-  },
-  define: {
-    __BUILD_TIMESTAMP__: `${+new Date()}`,
-    'process.env': {},  // for legacy Vue 2
-  },
+  }
 });

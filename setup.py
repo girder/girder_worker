@@ -67,7 +67,7 @@ with open('requirements.in') as f:
     install_reqs = f.readlines()
 
 extras_require = {}
-extras_require['girder'] = ['girder>=3.0.1', 'girder-jobs>=3.0.1']
+extras_require['girder'] = ['girder>=5', 'girder-jobs>=5']
 
 # perform the install
 setuptools.setup(

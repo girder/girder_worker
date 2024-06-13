@@ -4,14 +4,14 @@
 #
 #    pip-compile --output-file=requirements.txt requirements-dev.in requirements.in
 #
--e git+https://github.com/girder/girder.git@master#egg=girder
+-e git+https://github.com/girder/girder.git@v4-integration#egg=girder
     # via
     #   -r requirements-dev.in
     #   girder-jobs
     #   pytest-girder
--e git+https://github.com/girder/girder.git@master#egg=girder-jobs&subdirectory=plugins/jobs
+-e git+https://github.com/girder/girder.git@v4-integration#egg=girder-jobs&subdirectory=plugins/jobs
     # via -r requirements-dev.in
--e git+https://github.com/girder/girder.git@master#egg=pytest-girder&subdirectory=pytest_girder
+-e git+https://github.com/girder/girder.git@v4-integration#egg=pytest-girder&subdirectory=pytest_girder
     # via -r requirements-dev.in
 alabaster==0.7.13
     # via sphinx

@@ -1,6 +1,7 @@
 *.pyc
 /.coverage
 /.coverage.pytest
+/build/
 /docs/_build/
 /tmp/
 __pycache__/
