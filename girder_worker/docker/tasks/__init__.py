@@ -40,15 +40,6 @@ from girder_worker_utils import _walk_obj
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
 
-# JOB_STATUS = utils.job_status_codes()
-
-
-JOB_STATUS = {
-    'SUCCESS': 'Success',
-    'FAILURE': "Failure",
-    'CANCELLED': 'Cancelled'
-    }   
-
 
 def _pull_image(image):
     """
