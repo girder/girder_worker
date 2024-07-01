@@ -631,7 +631,7 @@ def _generate_slurm_script(container_args,kwargs):
         nvidia.set_nvidia_params(kwargs,singularity_command,gpus)
     except ValueError as e:
         if kwargs['nvidia']:
-            nvidia.set_nvidia_params(kwargs,singularity_command) 
+            nvidia.set_nvidia_params(kwargs,singularity_command)
     try: 
         pwd = kwargs['pwd'] 
         if not pwd:
@@ -701,7 +701,7 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
             
 
     # Start the job monitor in a new thread
-    monitor_thread = threading.Thread(target=job_monitor,daemon=True)
+    monitor_thread = threading.Thread(target=job_monitor,daemon=False)
     monitor_thread.start()
 
     return monitor_thread
@@ -712,7 +712,7 @@ def _process_container_args(container_args,kwargs):
     def find_matching_volume_key(path):
         for key, value in volumes.items():
             if path.startswith(value['bind']):
-                # Append the suffix from the original path that isn't part of the 'bind' path #Replace bind path later
+                # Append the suffix from the original path that isn't part of the 'bind' path 
                 suffix = path[len(value['bind']):] if value['bind'] != path else ''
                 if 'assetstore' in key:
                     key = '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web' + key
