@@ -511,18 +511,12 @@ class SingularityTask(Task):
     def _cleanup_temp_volumes(self, temp_volumes, default_temp_volume):
         # Set the permission to allow cleanup of temp directories
         temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
-        to_chmod = temp_volumes[:]
-        # If our default_temp_volume instance has been transformed then we
-        # know it has been used and we have to clean it up.
         if default_temp_volume._transformed:
-            to_chmod.append(default_temp_volume)
             temp_volumes.append(default_temp_volume)
-
-        # if len(to_chmod) > 0:
-        #     utils.chmod_writable([v.host_path for v in to_chmod])
-
-        # for v in temp_volumes:
-        #     shutil.rmtree(v.host_path)
+        
+        for v in temp_volumes:
+            utils.remove_tmp_folder_apptainer(v.host_path)
+        
 
 
 def _run_singularity_container(container_args=None,**kwargs):
@@ -732,8 +726,8 @@ def _get_slurm_config(kwargs):
         '--qos': os.getenv('SLURM_QOS'),
         '--account': os.getenv('SLURM_ACCOUNT'),
         '--mem':os.getenv('SLURM_MEMORY','16000'),
-        '--ntasks': os.getenv("SLURM_NTASKS",'2'),
-        '--time': os.getenv("SLURM_TIME",'00:30'),
+        '--ntasks': os.getenv("SLURM_NTASKS",'1'),
+        '--time': os.getenv("SLURM_TIME",'72:00'),
         '--partition':os.getenv('SLURM_PARTITION','hpg2-compute'),
         '--gres':os.getenv('SLURM_GRES_CONFIG'),
         '--cpus-per-task':os.getenv('SLURM_CPUS','4')
