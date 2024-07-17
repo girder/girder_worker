@@ -7,6 +7,10 @@ from girder_worker_utils import decorators
 # from girder_worker.docker.tasks import use_singularity
 from stevedore import extension
 
+#Delete after testing
+from girder_jobs.models.job import Job
+
+
 #: Defines the namespace used for plugin entrypoints
 NAMESPACE = 'girder_worker_plugins'
 
@@ -60,13 +64,12 @@ def get_module_tasks(module_name):
 
     for name, func in vars(module).items():
         full_name = '%s.%s' % (module_name, name)
-        # Just for debugging
-        # job = Job().
+        #Just for debugging
         job = Job().updateJob(
             job,
-            log=f'The fullname of function is {full_name} and func is {func}',
-            status='Error',
-            )
+            log=f"The fullname of function is {full_name} and func is {func}",
+            status="Error",
+        )
         if not hasattr(func, '__call__'):
             # filter out objects that are not callable
             continue
@@ -78,13 +81,13 @@ def get_module_tasks(module_name):
             decorators.get_description_attribute(func)
             tasks[full_name] = func
         except decorators.MissingDescriptionException:
-            # Just for testing
+            #Just for testing
             job = Job().updateJob(
                 job,
-                log=f'The fullname of function is {full_name} and func is {func}',
-                status='Error',
-                )
-            # pass
+                log=f"The fullname of function is {full_name} and func is {func}",
+                status="Error",
+            )
+            #pass
     return tasks
 
 

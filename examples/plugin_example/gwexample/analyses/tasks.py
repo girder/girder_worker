@@ -18,6 +18,7 @@ def fibonacci(n):
 @app.task
 # @argument('image_name', 'slide_name', 'path')
 def nuclei(image_name, slide_name, path):
+    # "running nuclei"
     print(app, '++++++++++')
     if path:
         print('using arg path !!')

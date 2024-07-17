@@ -132,7 +132,8 @@ def gw_task_prerun(task=None, sender=None, task_id=None,
             raise
 
     try:
-        task.girder_client = GirderClient(apiUrl=task.request.girder_api_url)
+        #task.girder_client = GirderClient(apiUrl=task.request.girder_api_url)
+        task.girder_client = GirderClient(apiUrl='http://0.0.0.0:8101/api/v1')
         task.girder_client.token = task.request.girder_client_token
     except AttributeError:
         task.girder_client = None
