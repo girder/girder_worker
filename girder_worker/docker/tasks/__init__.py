@@ -390,9 +390,6 @@ class DockerTask(Task):
             shutil.rmtree(v.host_path)
 
 
-            
-        
-
 def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,
                 volumes=None, remove_container=True, stream_connectors=None, **kwargs):
     volumes = volumes or {}
@@ -578,7 +575,7 @@ def singularity_run(task,**kwargs):
         'volumes': volumes
     }
 
-      # Allow run args to be overridden,filter out any we don't want to override
+    # Allow run args to be overridden,filter out any we don't want to override
     extra_run_kwargs = {k: v for k, v in kwargs.items() if k not in BLACKLISTED_DOCKER_RUN_ARGS}
     run_kwargs.update(extra_run_kwargs)
 
@@ -617,9 +614,9 @@ def singularity_run(task,**kwargs):
     return results
 #This function is used to check whether we need to switch to singularity or not.
 def use_singularity():
-        '''
-        #This needs to be uncommented. Only for testing purposes.
-        '''
+    '''
+    #This needs to be uncommented. Only for testing purposes.
+    '''
     # runtime = os.environ.get('RUNTIME')
     # if runtime == 'SINGULARITY':
     #     return True
@@ -630,8 +627,8 @@ def use_singularity():
     #     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
     #         return s.connect_ex('/var/run/docker.sock') != 0
     # except socket.error:
-    return False
-    # return True
+    # return False
+    return True
 
 
 @app.task
@@ -647,7 +644,7 @@ def _generate_slurm_script(container_args, kwargs):
         raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available')
     SIF_DIRECTORY = os.getenv('SIF_IMAGE_PATH')
     image_full_path = os.path.join(SIF_DIRECTORY,image)
-    #Code to check for allocating multiple gpus. 
+    #Code to check for allocating multiple gpus.
     try:
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index+1])
@@ -655,8 +652,8 @@ def _generate_slurm_script(container_args, kwargs):
     except ValueError as e:
         if kwargs['nvidia']:
             nvidia.set_nvidia_params(kwargs,singularity_command)
-    try: 
-        pwd = kwargs['pwd'] 
+    try:
+        pwd = kwargs['pwd']
         if not pwd:
             raise Exception("PWD cannot be empty")
         singularity_command.extend(['--pwd',pwd])
@@ -670,15 +667,15 @@ def _generate_slurm_script(container_args, kwargs):
 def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
     """Create a drmaa session and monitor the job accordingly"""
     decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
-                        drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
-                        drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
-                        drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
-                        drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
-                        drmaa.JobState.RUNNING: 'job is running',
-                        drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
-                        drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
-                        drmaa.JobState.DONE: 'job finished normally',
-                        drmaa.JobState.FAILED: 'job finished, but failed'}
+                    drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
+                    drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
+                    drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
+                    drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
+                    drmaa.JobState.RUNNING: 'job is running',
+                    drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
+                    drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
+                    drmaa.JobState.DONE: 'job finished normally',
+                    drmaa.JobState.FAILED: 'job finished, but failed'}
     temp_directory = os.getenv('TMPDIR')
     submit_dir = '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission'
     def job_monitor():
