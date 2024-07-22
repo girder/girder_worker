@@ -68,6 +68,9 @@ with open('requirements.in') as f:
 
 extras_require = {}
 extras_require['girder'] = ['girder>=3.0.1,<5', 'girder-jobs>=3.0.1,<5']
+# TODO: handle package discovery for singularity
+extras_require['singularity'] = ['girder-worker-singularity']
+
 
 # perform the install
 setuptools.setup(
@@ -106,8 +109,8 @@ setuptools.setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-           # 'girder-worker = girder_worker.__main__:main',
-           # 'girder-worker-config = girder_worker.configure:main'
+           'girder-worker = girder_worker.__main__:main',
+           'girder-worker-config = girder_worker.configure:main'
         ],
         'girder_worker_plugins': [
             'docker = girder_worker.docker:DockerPlugin [docker]',
@@ -124,7 +127,7 @@ setuptools.setup(
           #  'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ],
         'girder.plugin': [
-           #  'worker = girder_worker.girder_plugin:WorkerPlugin'
+            'worker = girder_worker.girder_plugin:WorkerPlugin'
         ]
-    }
+    },
 )

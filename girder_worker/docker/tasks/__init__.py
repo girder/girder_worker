@@ -635,8 +635,8 @@ def use_singularity():
     #     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
     #         return s.connect_ex('/var/run/docker.sock') != 0
     # except socket.error:
-    return False
-    # return True
+    # return False
+    return True
 
 
 @app.task
@@ -651,16 +651,15 @@ def _generate_slurm_script(container_args, kwargs):
     if not image:
         raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available')
     SIF_DIRECTORY = os.getenv('SIF_IMAGE_PATH')
-    image_full_path = os.path.join(SIF_DIRECTORY, image)
-    # Code to check for allocating multiple gpus.
+    image_full_path = os.path.join(SIF_DIRECTORY,image)
+    #Code to check for allocating multiple gpus.
     try:
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index+1])
-        kwargs['--gres'] = f'gres:gpu:{gpus}' if gpus > 1 else 'gres:gpu:1'
-        kwargs['--partition'] = 'gpu'
-        singularity_command.append('--nv')
-    except ValueError:
-        kwargs['gpu'] = None
+        nvidia.set_nvidia_params(kwargs,singularity_command,gpus)
+    except ValueError as e:
+        if kwargs['nvidia']:
+            nvidia.set_nvidia_params(kwargs,singularity_command)
     try:
         pwd = kwargs['pwd']
         if not pwd:

@@ -4,7 +4,7 @@
 /docs/_build/
 /tmp/
 __pycache__/
-/girder_worker.egg-info/
+*.egg-info/
 /girder-worker-*.tar.gz
 *.retry
 .vagrant
