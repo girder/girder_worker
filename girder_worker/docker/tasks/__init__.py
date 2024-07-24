@@ -499,7 +499,6 @@ class SingularityTask(Task):
             kwargs['volumes'] = volumes
 
         volumes.update(default_temp_volume._repr_json_())
-
         try:
             super().__call__(*args, **kwargs)
         finally:
@@ -514,8 +513,8 @@ class SingularityTask(Task):
         if default_temp_volume._transformed:
             temp_volumes.append(default_temp_volume)
         
-        for v in temp_volumes:
-            utils.remove_tmp_folder_apptainer(v.host_path)
+        # for v in temp_volumes:
+        #     utils.remove_tmp_folder_apptainer(v.host_path)
         
 
 
@@ -543,12 +542,11 @@ def _run_singularity_container(container_args=None,**kwargs):
 def singularity_run(task,**kwargs):
     volumes = kwargs.pop('volumes',{})
     container_args = kwargs.pop('container_args',[])
-    pull_image = kwargs['pull_image'] or False
     stream_connectors = kwargs['stream_connectors'] or []
     image = kwargs.get('image') or ''
     entrypoint = None
     if not image:
-        logger.exception(f"Image name cannot be emptu")
+        logger.exception(f"Image name cannot be empty")
         raise Exception(f"Image name cannot be empty")
     
     run_kwargs = {
@@ -581,17 +579,28 @@ def singularity_run(task,**kwargs):
     try:
         monitor_thread = _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name)
         def singularity_exit_condition():
+            '''
+            This function is used to handle task cancellation and also enable exit condition to stop logging. 
+            '''
+            #Check if the cancel event is called and the jobId is set for the current job thread we are intending to cancel. 
+            if task.canceled and monitor_thread.jobId:
+                try:
+                    returnCode = subprocess.call(utils.apptainer_cancel_cmd(monitor_thread.jobId))
+                    if returnCode != 0:
+                        raise Exception(f"Failed to Cancel job with jobID {monitor_thread.jobId}")
+                except Exception as e:
+                    logger.info(f'Error Occured {e}')
             return not monitor_thread.is_alive()
         utils.select_loop(exit_condition = singularity_exit_condition,
                           readers= read_streams,
                           writers = write_streams )
     finally:
         logger.info('DONE')
+        utils.remove_tmp_folder_apptainer(container_args)
 
     results = []
     if hasattr(task.request,'girder_result_hooks'):
         results = (None,) * len(task.request.girder_result_hooks)
-
     return results
 #This function is used to check whether we need to switch to singularity or not.
 def use_singularity():
@@ -664,6 +673,8 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
         jt.errorPath = ':' + log_file_name
         try:
             jobid = s.runJob(jt)
+            #Set the jobID for the current thread so we can access it outside this thread incase we need to cancel the job. 
+            threading.current_thread().jobId = jobid
             logger.info((f'Submitted singularity job with jobid {jobid}'))
             with open(log_file_name,'r') as f:
                 while True:
@@ -677,10 +688,7 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
                     if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
                         s.deleteJobTemplate(jt)
                         break
-                    elif task.canceled:
-                        s.control(jobid,drmaa.JobControlAction.TERMINATE)
-                        s.deleteJobTemplate(jt)
-                        break
+                    
                     time.sleep(5)  # Sleep to avoid busy waiting
             exit_status = s.jobStatus(jobid)
             logger.info(decodestatus[exit_status])
@@ -695,7 +703,7 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
             
 
     # Start the job monitor in a new thread
-    monitor_thread = threading.Thread(target=job_monitor,daemon=False)
+    monitor_thread = utils.SingularityThread(target=job_monitor,daemon=False)
     monitor_thread.start()
 
     return monitor_thread

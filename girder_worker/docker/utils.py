@@ -7,7 +7,7 @@ from docker.errors import DockerException
 from girder_worker import logger
 import re
 import subprocess
-
+import threading
 
 def select_loop(exit_condition=lambda: True, readers=None, writers=None):
     """
@@ -108,17 +108,48 @@ def chmod_writable(host_paths):
         raise
 
 
-def remove_tmp_folder_apptainer(host_path=None):
+def remove_tmp_folder_apptainer(container_args=[]):
     '''
     This function will run after the slurm job completes and returns. If a temp folder is created in the temp directory to 
     do file I/O operations before/while the job was run, we need to clean up by removing the folder. 
     '''
-    if not host_path:
+    if not container_args:
+        logger.info("Host path not found. ")
         return
-    temp_path = os.getenv("TMPIR")
     #Cautious checking host path before removing it from the filesystem.  
-    if temp_path in host_path:
-        if os.path.exists(host_path):
-            subprocess.call(['rm','-rf',host_path])
+    pattern = r"\/tmp\/tmp[^/]+"
+    for arg in container_args:
+        if re.search(pattern,arg):
+            if os.path.exists(arg):
+                subprocess.call(['rm','-rf',arg])
+                return
+
+class SingularityThread(threading.Thread):
+    '''
+    This is a custom Thread class in order to handle cancelling a slurm job outside of the thread since the task context object is not available inside the thread.
+    Methods:
+
+    __init__(self,target, daemon) - Initialize the thread similar to threading.Thread class, requires a jobId param to keep track of the jobId
+
+    run(self) - This method is used to run the target function. This is essentially called when you do thread.start()
+    '''
+    def __init__(self,target,daemon=False):
+        super().__init__(daemon=daemon)
+        self.target = target
+        self.jobId = None
+    
+    def run(self):
+        if self.target:
+            self.target()
+
+def apptainer_cancel_cmd(jobID,slurm=True):
+    if not jobID:
+        raise Exception("Please provide jobID for the job that needs to be cancelled")
+    cmd = []
+    #If any other type of mechanism is used to interact with HPG, use that. 
+    if slurm:
+        cmd.append('scancel')
+    cmd.append(jobID)
+    return cmd
 
 

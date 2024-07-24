@@ -126,7 +126,7 @@ setuptools.setup(
           #  'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ],
         'girder.plugin': [
-           #  'worker = girder_worker.girder_plugin:WorkerPlugin'
+           'worker = girder_worker.girder_plugin:WorkerPlugin'
         ]
     }
 )
