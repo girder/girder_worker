@@ -1,9 +1,8 @@
-import _ from 'underscore';
-
-import View from '@girder/core/views/View';
-import { restRequest } from '@girder/core/rest';
-
 import taskStatusViewTemplate from '../templates/taskStatusView.pug';
+
+const _ = girder._;
+const View = girder.views.View;
+const { restRequest } = girder.rest;
 
 var taskStatusView = View.extend({
     events: {
