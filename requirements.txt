@@ -375,7 +375,6 @@ zipp==3.18.2
     # via
     #   importlib-metadata
     #   importlib-resources
-drmaa
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

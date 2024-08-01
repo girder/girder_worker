@@ -1,5 +1,9 @@
 from setuptools import setup, find_packages
 
+
+with open('requirements.txt') as f:
+    install_reqs = f.readlines()
+
 setup(
     name='girder-worker-singularity',
     version='0.0.0',
@@ -19,6 +23,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
     ],
+    install_requires=install_reqs,
     entry_points={
         'girder_worker_plugins': [
             'singularity = girder_worker_singularity:SingularityPlugin',
