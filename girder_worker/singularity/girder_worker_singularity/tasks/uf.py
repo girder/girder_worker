@@ -2,8 +2,10 @@ import drmaa
 import time
 import threading
 import os
+import subprocess
 from girder_worker.docker import utils
 from girder_worker import logger
+from .utils import remove_tmp_folder_apptainer
 
 try:
     from girder_worker.docker import nvidia
@@ -16,12 +18,24 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
     try:
         monitor_thread = _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name)
         def singularity_exit_condition():
+            '''
+            This function is used to handle task cancellation and also enable exit condition to stop logging.
+            '''
+            #Check if the cancel event is called and the jobId is set for the current job thread we are intending to cancel.
+            if task.canceled and monitor_thread.jobId:
+                try:
+                    returnCode = subprocess.call(apptainer_cancel_cmd(monitor_thread.jobId))
+                    if returnCode != 0:
+                        raise Exception(f"Failed to Cancel job with jobID {monitor_thread.jobId}")
+                except Exception as e:
+                    logger.info(f'Error Occured {e}')
             return not monitor_thread.is_alive()
         utils.select_loop(exit_condition=singularity_exit_condition,
                           readers=read_streams,
                           writers=write_streams)
     finally:
         logger.info('DONE')
+        remove_tmp_folder_apptainer(container_args)
 
 
 def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
@@ -50,6 +64,8 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
         jt.errorPath = ':' + log_file_name
         try:
             jobid = s.runJob(jt)
+            #Set the jobID for the current thread so we can access it outside this thread incase we need to cancel the job.
+            threading.current_thread().jobId = jobid
             logger.info((f'Submitted singularity job with jobid {jobid}'))
             with open(log_file_name, 'r') as f:
                 while True:
@@ -78,7 +94,7 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
             print(f'Error Occured {e}')
 
     # Start the job monitor in a new thread
-    monitor_thread = threading.Thread(target=job_monitor, daemon=True)
+    monitor_thread = SingularityThread(target=job_monitor, daemon=True)
     monitor_thread.start()
 
     return monitor_thread
@@ -171,3 +187,31 @@ def _get_slurm_config(kwargs):
 
     logger.info(f"SLURM CONFIG = {slurm_config}")
     return slurm_config
+
+
+class SingularityThread(threading.Thread):
+    '''
+    This is a custom Thread class in order to handle cancelling a slurm job outside of the thread since the task context object is not available inside the thread.
+    Methods:
+    __init__(self,target, daemon) - Initialize the thread similar to threading.Thread class, requires a jobId param to keep track of the jobId
+    run(self) - This method is used to run the target function. This is essentially called when you do thread.start()
+    '''
+    def __init__(self, target, daemon=False):
+        super().__init__(daemon=daemon)
+        self.target = target
+        self.jobId = None
+
+    def run(self):
+        if self.target:
+            self.target()
+
+
+def apptainer_cancel_cmd(jobID, slurm=True):
+    if not jobID:
+        raise Exception("Please provide jobID for the job that needs to be cancelled")
+    cmd = []
+    #If any other type of mechanism is used to interact with HPG, use that.
+    if slurm:
+        cmd.append('scancel')
+    cmd.append(jobID)
+    return cmd

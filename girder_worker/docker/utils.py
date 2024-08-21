@@ -2,14 +2,11 @@ import importlib.metadata
 import os
 import select
 import uuid
-from types import SimpleNamespace
 
 import docker
 from docker.errors import DockerException
 
 from girder_worker import logger
-import re
-import subprocess
 
 if (importlib.metadata.version('docker') == '7.0.0' and
         not hasattr(docker.transport.basehttpadapter.BaseHTTPAdapter, '_get_connection')):
@@ -115,14 +112,3 @@ def chmod_writable(host_paths):
     except DockerException:
         logger.exception('Error setting perms on docker volumes %s.' % host_paths)
         raise
-
-
-# JOB_STATUS = {
-#     'SUCCESS': 'Success',
-#     'FAILURE': "Failure",
-#     'CANCELLED': 'Cancelled'
-#     }
-
-# def job_status_codes():
-#     statusCodes = SimpleNamespace(JOB_STATUS)
-#     return statusCodes
