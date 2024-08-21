@@ -23,7 +23,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
     ],
-    install_requires=install_reqs,
+    install_requires=['girder-worker', *install_reqs],
     entry_points={
         'girder_worker_plugins': [
             'singularity = girder_worker_singularity:SingularityPlugin',

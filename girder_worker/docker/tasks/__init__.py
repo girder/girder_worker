@@ -6,7 +6,6 @@ import socket
 import sys
 import threading
 import time
-import subprocess
 
 try:
     import docker
@@ -478,62 +477,3 @@ def docker_run(task, image, pull_image=True, entrypoint=None, container_args=Non
     return _docker_run(
         task, image, pull_image, entrypoint, container_args, volumes,
         remove_container, **kwargs)
-
-
-# Class for SingularityTask similar to DockerTask
-class SingularityTask(Task):
-    def _maybe_transform_argument(self, arg):
-        return super()._maybe_transform_argument(
-            arg, task=self, _default_temp_volume=self.request._default_temp_volume)
-
-    def _maybe_transform_result(self, idx, result):
-        return super()._maybe_transform_result(
-            idx, result, _default_temp_volume=self.request._default_temp_volume)
-
-    def __call__(self, *args, **kwargs):
-        default_temp_volume = _RequestDefaultTemporaryVolume()
-        self.request._default_temp_volume = default_temp_volume
-
-        volumes = kwargs.setdefault('volumes', {})
-        # If we have a list of volumes, the user provide a list of Volume objects,
-        # we need to transform them.
-        temp_volumes = []
-        if isinstance(volumes, list):
-            # See if we have been passed any TemporaryVolume instances.
-            for v in volumes:
-                if isinstance(v, TemporaryVolume):
-                    temp_volumes.append(v)
-
-            # First call the transform method, this we replace default temp volumes
-            # with the instance associated with this task create above. That is any
-            # reference to TemporaryVolume.default
-            _walk_obj(volumes, self._maybe_transform_argument)
-
-            # Now convert them to JSON
-            def _json(volume):
-                return volume._repr_json_()
-
-            volumes = _walk_obj(volumes, _json)
-            # We then need to merge them into a single dict and it will be ready
-            # for docker-py.
-            volumes = {k: v for volume in volumes for k, v in volume.items()}
-            kwargs['volumes'] = volumes
-
-        volumes.update(default_temp_volume._repr_json_())
-
-        try:
-            super().__call__(*args, **kwargs)
-        finally:
-            threading.Thread(
-                target=self._cleanup_temp_volumes,
-                args=(temp_volumes, default_temp_volume),
-                daemon=False).start()
-
-    def _cleanup_temp_volumes(self, temp_volumes, default_temp_volume):
-        # Set the permission to allow cleanup of temp directories
-        temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
-        if default_temp_volume._transformed:
-            temp_volumes.append(default_temp_volume)
-
-        for v in temp_volumes:
-            utils.remove_tmp_folder_apptainer(v.host_path)

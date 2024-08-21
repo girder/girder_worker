@@ -3,18 +3,16 @@ import threading
 
 from girder_worker_utils import _walk_obj
 # from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
+from .utils import remove_tmp_folder_apptainer
 
 from girder_worker import logger
 from girder_worker.app import Task, app
-from girder_worker.docker import utils
 from girder_worker.docker.io import FDReadStreamConnector, FDWriteStreamConnector, FDWriteStreamConnector, FDReadStreamConnector
 from girder_worker.docker.tasks import _RequestDefaultTemporaryVolume, _handle_streaming_args
 from girder_worker.docker.transforms import TemporaryVolume
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
-
-print('!!!!!!!!!!!!!!')
 
 # Class for SingularityTask similar to DockerTask
 class SingularityTask(Task):
@@ -67,23 +65,21 @@ class SingularityTask(Task):
 
     def _cleanup_temp_volumes(self, temp_volumes, default_temp_volume):
         # Set the permission to allow cleanup of temp directories
-        temp_volumes = [v for v in temp_volumes if os.path.exists(v.host_path)]
+        temp_volumes = [v.host_path for v in temp_volumes if os.path.exists(v.host_path)]
         if default_temp_volume._transformed:
-            temp_volumes.append(default_temp_volume)
+            temp_volumes.append(default_temp_volume.host_path)
 
-        for v in temp_volumes:
-            utils.remove_tmp_folder_apptainer(v.host_path)
+        remove_tmp_folder_apptainer(temp_volumes)
 
 
 def singularity_run(task,**kwargs):
     volumes = kwargs.pop('volumes',{})
     container_args = kwargs.pop('container_args',[])
-    pull_image = kwargs['pull_image'] or False
     stream_connectors = kwargs['stream_connectors'] or []
     image = kwargs.get('image') or ''
     entrypoint = None
     if not image:
-        logger.exception(f"Image name cannot be emptu")
+        logger.exception(f"Image name cannot be empty")
         raise Exception(f"Image name cannot be empty")
 
     run_kwargs = {
@@ -115,16 +111,6 @@ def singularity_run(task,**kwargs):
 
     from uf import slurm_dispatch
     slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name)
-    # slurm_run_command,slurm_config = _run_singularity_container(container_args,**run_kwargs)
-    # try:
-    #     monitor_thread = _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name)
-    #     def singularity_exit_condition():
-    #         return not monitor_thread.is_alive()
-    #     utils.select_loop(exit_condition = singularity_exit_condition,
-    #                       readers= read_streams,
-    #                       writers = write_streams )
-    # finally:
-    #     logger.info('DONE')
 
     results = []
     if hasattr(task.request,'girder_result_hooks'):
