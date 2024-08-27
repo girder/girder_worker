@@ -5,7 +5,7 @@ import os
 import subprocess
 from girder_worker.docker import utils
 from girder_worker import logger
-from .utils import remove_tmp_folder_apptainer
+from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
 
 try:
     from girder_worker.docker import nvidia
@@ -14,9 +14,9 @@ except ImportError:
 
 
 def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name):
-    slurm_run_command,slurm_config = _run_singularity_container(container_args,**run_kwargs)
+    singularity_run_command, slurm_config = _slurm_singularity_config(container_args, **run_kwargs)
     try:
-        monitor_thread = _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name)
+        monitor_thread = _monitor_singularity_job(task, singularity_run_command, slurm_config, log_file_name)
         def singularity_exit_condition():
             '''
             This function is used to handle task cancellation and also enable exit condition to stop logging.
@@ -30,6 +30,7 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
                 except Exception as e:
                     logger.info(f'Error Occured {e}')
             return not monitor_thread.is_alive()
+
         utils.select_loop(exit_condition=singularity_exit_condition,
                           readers=read_streams,
                           writers=write_streams)
@@ -38,7 +39,7 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
         remove_tmp_folder_apptainer(container_args)
 
 
-def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
+def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
     """Create a drmaa session and monitor the job accordingly"""
     decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
                     drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
@@ -51,15 +52,16 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
                     drmaa.JobState.DONE: 'job finished normally',
                     drmaa.JobState.FAILED: 'job finished, but failed'}
     temp_directory = os.getenv('TMPDIR')
-    submit_dir = '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission'
+    submit_script = os.getenv('GIRDER_WORKER_SLURM_SUBMIT_SCRIPT') # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission/submit.sh'
+    # TODO: check for validity ^
     def job_monitor():
         s = drmaa.Session()
         s.initialize()
         jt = s.createJobTemplate()
         jt.workingDirectory = temp_directory
-        jt.remoteCommand = os.path.join(submit_dir, 'submit.sh')
+        jt.remoteCommand = submit_script
         jt.nativeSpecification = slurm_config
-        jt.args = slurm_run_command
+        jt.args = slurm_command
         jt.outputPath = ':' + log_file_name
         jt.errorPath = ':' + log_file_name
         try:
@@ -100,7 +102,7 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
     return monitor_thread
 
 
-def _run_singularity_container(container_args=None,**kwargs):
+def _slurm_singularity_config(container_args=None, **kwargs):
     image = kwargs['image']
     container_args = container_args or kwargs['container_args'] or []
     try:
@@ -109,25 +111,25 @@ def _run_singularity_container(container_args=None,**kwargs):
         logger.info('Running container: image: %s args: %s kwargs: %s'
                     % (image, container_args, kwargs))
 
-        slurm_run_command = _generate_slurm_script(container_args,kwargs)
-
+        singularity_run_command = _generate_singularity_command(container_args, kwargs)
         slurm_config = _get_slurm_config(kwargs)
 
-        return [slurm_run_command, slurm_config]
+        return singularity_run_command, slurm_config
     except Exception as e:
         logger.exception(e)
         raise Exception(e)
 
 
-def _process_container_args(container_args,kwargs):
+def _process_container_args(container_args, kwargs):
     volumes = kwargs['volumes'] or {}
+    prefix = os.getenv('GIRDER_WORKER_SLURM_MOUNT_PREFIX') # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web'
     def find_matching_volume_key(path):
         for key, value in volumes.items():
             if path.startswith(value['bind']):
                 # Append the suffix from the original path that isn't part of the 'bind' path
                 suffix = path[len(value['bind']):] if value['bind'] != path else ''
                 if 'assetstore' in key:
-                    key = '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web' + key
+                    key = prefix + key
                 new_key = key + suffix.replace(" ", "_")  # Replace spaces in suffix with underscores
                 return new_key
         return path  # Replace spaces in paths that don't match any volume
@@ -139,7 +141,7 @@ def _process_container_args(container_args,kwargs):
     return updated_container_args
 
 
-def _generate_slurm_script(container_args, kwargs):
+def _generate_singularity_command(container_args, kwargs):
     container_args = container_args or []
     image = kwargs.pop('image', None)
     singularity_command = []
@@ -150,7 +152,7 @@ def _generate_slurm_script(container_args, kwargs):
     #Code to check for allocating multiple gpus.
     try:
         gpu_index = container_args.index('--gpu')
-        gpus = int(container_args[gpu_index+1])
+        gpus = int(container_args[gpu_index + 1])
         nvidia.set_nvidia_params(kwargs, singularity_command, gpus)
     except ValueError as e:
         if kwargs['nvidia']:

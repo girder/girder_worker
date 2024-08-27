@@ -1,7 +1,11 @@
 from setuptools import setup, find_packages
 
+
+with open('requirements.txt') as f:
+    install_reqs = f.readlines()
+
 setup(
-    name='girder-worker-singularity',
+    name='girder-worker-slurm',
     version='0.0.0',
     description='An example girder worker extension',
     author='Kitware, Inc.',
@@ -19,7 +23,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
     ],
-    install_requires=['girder-worker'],
+    install_requires=['girder-worker', 'girder-worker-singularity', *install_reqs],
     entry_points={
         'girder_worker_plugins': [
             'singularity = girder_worker_singularity:SingularityPlugin',

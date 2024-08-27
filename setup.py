@@ -68,8 +68,8 @@ with open('requirements.in') as f:
 
 extras_require = {}
 extras_require['girder'] = ['girder>=3.0.1,<5', 'girder-jobs>=3.0.1,<5']
-# TODO: handle package discovery for singularity
 extras_require['singularity'] = ['girder-worker-singularity']
+extras_require['slurm'] = ['girder-worker-slurm']
 
 
 # perform the install
