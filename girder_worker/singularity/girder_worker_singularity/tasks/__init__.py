@@ -109,7 +109,7 @@ def singularity_run(task,**kwargs):
                 "Expected 'FDReadStreamConnector' or 'FDWriterStreamConnector', received '%s'"
                 % type(connector))
 
-    from uf import slurm_dispatch
+    from girder_worker_slurm import slurm_dispatch
     slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name)
 
     results = []
