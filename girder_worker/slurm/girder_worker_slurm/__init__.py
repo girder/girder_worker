@@ -1,32 +1,34 @@
-import drmaa
-import time
-import threading
 import os
 import subprocess
-from girder_worker.docker import utils
-from girder_worker import logger
+import threading
+import time
+
+import drmaa
 from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
 
-try:
-    from girder_worker.docker import nvidia
-except ImportError:
-    pass
+from girder.models.setting import Setting
+from girder_worker import logger
+from girder_worker.docker import utils
+from girder_worker.girder_plugin.constants import PluginSettings
 
 
 def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name):
     singularity_run_command, slurm_config = _slurm_singularity_config(container_args, **run_kwargs)
     try:
-        monitor_thread = _monitor_singularity_job(task, singularity_run_command, slurm_config, log_file_name)
+        monitor_thread = _monitor_singularity_job(
+            task, singularity_run_command, slurm_config, log_file_name)
+
         def singularity_exit_condition():
-            '''
+            """
             This function is used to handle task cancellation and also enable exit condition to stop logging.
-            '''
-            #Check if the cancel event is called and the jobId is set for the current job thread we are intending to cancel.
+            """
+            # Check if the cancel event is called and the jobId is set for the current
+            # job thread we are intending to cancel.
             if task.canceled and monitor_thread.jobId:
                 try:
                     returnCode = subprocess.call(apptainer_cancel_cmd(monitor_thread.jobId))
                     if returnCode != 0:
-                        raise Exception(f"Failed to Cancel job with jobID {monitor_thread.jobId}")
+                        raise Exception(f'Failed to Cancel job with jobID {monitor_thread.jobId}')
                 except Exception as e:
                     logger.info(f'Error Occured {e}')
             return not monitor_thread.is_alive()
@@ -52,8 +54,10 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
                     drmaa.JobState.DONE: 'job finished normally',
                     drmaa.JobState.FAILED: 'job finished, but failed'}
     temp_directory = os.getenv('TMPDIR')
-    submit_script = os.getenv('GIRDER_WORKER_SLURM_SUBMIT_SCRIPT') # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission/submit.sh'
+    # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission/submit.sh'
+    submit_script = os.getenv('GIRDER_WORKER_SLURM_SUBMIT_SCRIPT')
     # TODO: check for validity ^
+
     def job_monitor():
         s = drmaa.Session()
         s.initialize()
@@ -66,7 +70,8 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
         jt.errorPath = ':' + log_file_name
         try:
             jobid = s.runJob(jt)
-            #Set the jobID for the current thread so we can access it outside this thread incase we need to cancel the job.
+            # Set the jobID for the current thread so we can access it outside this
+            # thread incase we need to cancel the job.
             threading.current_thread().jobId = jobid
             logger.info((f'Submitted singularity job with jobid {jobid}'))
             with open(log_file_name, 'r') as f:
@@ -122,7 +127,9 @@ def _slurm_singularity_config(container_args=None, **kwargs):
 
 def _process_container_args(container_args, kwargs):
     volumes = kwargs['volumes'] or {}
-    prefix = os.getenv('GIRDER_WORKER_SLURM_MOUNT_PREFIX') # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web'
+    # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web'
+    prefix = os.getenv('GIRDER_WORKER_SLURM_MOUNT_PREFIX')
+
     def find_matching_volume_key(path):
         for key, value in volumes.items():
             if path.startswith(value['bind']):
@@ -130,14 +137,15 @@ def _process_container_args(container_args, kwargs):
                 suffix = path[len(value['bind']):] if value['bind'] != path else ''
                 if 'assetstore' in key:
                     key = prefix + key
-                new_key = key + suffix.replace(" ", "_")  # Replace spaces in suffix with underscores
+                # Replace spaces in suffix with underscores
+                new_key = key + suffix.replace(' ', '_')
                 return new_key
         return path  # Replace spaces in paths that don't match any volume
     try:
-    # Replace paths in container_args with their corresponding volume keys
+        # Replace paths in container_args with their corresponding volume keys
         updated_container_args = [str(find_matching_volume_key(arg)) for arg in container_args]
     except Exception as e:
-        logger.info(f"error {e}")
+        logger.info(f'error {e}')
     return updated_container_args
 
 
@@ -149,55 +157,81 @@ def _generate_singularity_command(container_args, kwargs):
         raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available')
     SIF_DIRECTORY = os.getenv('SIF_IMAGE_PATH')
     image_full_path = os.path.join(SIF_DIRECTORY, image)
-    #Code to check for allocating multiple gpus.
+    # Code to check for allocating multiple gpus.
     try:
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index + 1])
-        nvidia.set_nvidia_params(kwargs, singularity_command, gpus)
+        set_nvidia_params(kwargs, singularity_command, gpus)
     except ValueError as e:
         if kwargs['nvidia']:
-            nvidia.set_nvidia_params(kwargs, singularity_command)
+            set_nvidia_params(kwargs, singularity_command)
     try:
         pwd = kwargs['pwd']
         if not pwd:
-            raise Exception("PWD cannot be empty")
+            raise Exception('PWD cannot be empty')
         singularity_command.extend(['--pwd', pwd])
         singularity_command.append(image_full_path)
         singularity_command.extend(container_args)
     except Exception as e:
-        logger.info(f"Error occured - {e}")
-        raise Exception(f"Error Occured - {e}")
+        logger.info(f'Error occured - {e}')
+        raise Exception(f'Error Occured - {e}')
     return singularity_command
 
 
 def _get_slurm_config(kwargs):
-    #Use this function to add or modify any configuration parameters for the SLURM job
+    # Use this function to add or modify any configuration parameters for the SLURM job
     config_defaults = {
-        '--qos': os.getenv('SLURM_QOS'),
-        '--account': os.getenv('SLURM_ACCOUNT'),
-        '--mem':os.getenv('SLURM_MEMORY','16000'),
-        '--ntasks': os.getenv("SLURM_NTASKS",'1'),
-        '--time': os.getenv("SLURM_TIME",'72:00'),
-        '--partition':os.getenv('SLURM_PARTITION','hpg2-compute'),
-        '--gres':os.getenv('SLURM_GRES_CONFIG'),
-        '--cpus-per-task':os.getenv('SLURM_CPUS','4')
+        '--qos': Setting().get(PluginSettings.SLURM_QOS),
+        '--account': Setting().get(PluginSettings.SLURM_ACCOUNT),
+        '--mem': Setting().get(PluginSettings.SLURM_MEM),
+        '--ntasks': Setting().get(PluginSettings.SLURM_NTASKS),
+        '--time': Setting().get(PluginSettings.SLURM_TIME),
+        '--partition': Setting().get(PluginSettings.SLURM_PARTITION),
+        '--gres': Setting().get(PluginSettings.SLURM_GRES_CONFIG),
+        '--cpus-per-task': Setting().get(PluginSettings.SLURM_CPUS)
     }
 
-    config = {k:kwargs.get(k,config_defaults[k]) for k in config_defaults}
+    config = {k: kwargs.get(k, config_defaults[k]) for k in config_defaults}
 
-    slurm_config = ' '.join(f"{k}={v}" for k,v in config.items() if v is not None)
+    slurm_config = ' '.join(f'{k}={v}' for k, v in config.items() if v is not None)
 
-    logger.info(f"SLURM CONFIG = {slurm_config}")
+    logger.info(f'SLURM CONFIG = {slurm_config}')
     return slurm_config
 
 
+def set_nvidia_params(kwargs: dict, singularity_command: list, gpus: int = 1):
+    """
+    This function is used to set the gpu parameters based on the user input and plugin job.
+
+    Parameters:
+    kwargs (dict, required): The keyword arguments dictionary sent to the celery task as an input,
+    part of the request
+
+    singularity_command (list, required): A list that container all the arguments to construct a
+    singularity command that will be sent to the HPC job
+
+    gps (int, optional): If the plugin doesn't have a --gpu parameter in contianer_args, then a
+    default of 1 gpu is allocated, else the user specified number of gpus is allocated.
+
+    Returns:
+    None
+    """
+    kwargs['--gres'] = f'gres:gpu:a100:{gpus}' if gpus > 1 else f'gres:gpu:a100:1'
+    kwargs['--partition'] = Setting().get(PluginSettings.SLURM_GPU_PARTITION) # 'gpu'
+    kwargs['--mem'] = Setting().get(PluginSettings.SLURM_GPU_MEM) #'32000'
+    # Reducing CPU count for gpu-based job for resource conservation
+    # kwargs['--cpus-per-task'] = '8'
+    singularity_command.append('--nv')
+
+
 class SingularityThread(threading.Thread):
-    '''
+    """
     This is a custom Thread class in order to handle cancelling a slurm job outside of the thread since the task context object is not available inside the thread.
     Methods:
     __init__(self,target, daemon) - Initialize the thread similar to threading.Thread class, requires a jobId param to keep track of the jobId
     run(self) - This method is used to run the target function. This is essentially called when you do thread.start()
-    '''
+    """
+
     def __init__(self, target, daemon=False):
         super().__init__(daemon=daemon)
         self.target = target
@@ -210,9 +244,9 @@ class SingularityThread(threading.Thread):
 
 def apptainer_cancel_cmd(jobID, slurm=True):
     if not jobID:
-        raise Exception("Please provide jobID for the job that needs to be cancelled")
+        raise Exception('Please provide jobID for the job that needs to be cancelled')
     cmd = []
-    #If any other type of mechanism is used to interact with HPG, use that.
+    # If any other type of mechanism is used to interact with HPG, use that.
     if slurm:
         cmd.append('scancel')
     cmd.append(jobID)
