@@ -11,9 +11,9 @@ def remove_tmp_folder_apptainer(container_args=[]):
     do file I/O operations before/while the job was run, we need to clean up by removing the folder.
     '''
     if not container_args:
-        logger.info("Host path not found.")
-    #Cautious checking host path before removing it from the filesystem.
-    pattern = r"\/tmp\/tmp[^/]+"
+        logger.info('Host path not found.')
+    # Cautious checking host path before removing it from the filesystem.
+    pattern = r'\/tmp\/tmp[^/]+'
     for arg in container_args:
         if re.search(pattern, arg):
             if os.path.exists(arg):

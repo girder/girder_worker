@@ -45,6 +45,7 @@ class ProgressPipe(Transform):
     :param volume: The bind mount volume where the underlying named pipe will reside.
     :type volume: :py:class:`girder_worker.docker.transforms.BindMountVolume`
     """
+
     def __init__(self, name='.girder_progress', volume=TemporaryVolume.default):
         self.name = name
         self._volume = volume
@@ -70,6 +71,7 @@ class GirderFileIdToStream(GirderClientTransform):
     :param _id: The Girder file ID.
     :type _id: str or ObjectId
     """
+
     def __init__(self, _id, **kwargs):
         super().__init__(**kwargs)
         self.file_id = _id
@@ -93,6 +95,7 @@ class GirderFileIdToVolume(GirderClientTransform):
     :param filename: Alternate name for the file. Default is to use the name from Girder.
     :type filename: str
     """
+
     def __init__(self, _id, volume=TemporaryVolume.default, filename=None, **kwargs):
         super().__init__(**kwargs)
         self._file_id = str(_id)
@@ -153,6 +156,7 @@ class GirderFolderIdToVolume(GirderClientTransform):
     :param folder_name: Alternate name for the directory. Default is to use the name from Girder.
     :type folder_name: str
     """
+
     def __init__(self, _id, volume=TemporaryVolume.default, folder_name=None, **kwargs):
         super().__init__(**kwargs)
         self._folder_id = str(_id)
@@ -206,6 +210,7 @@ class GirderItemIdToVolume(GirderClientTransform):
     :param item_name: Alternate name for the file. Default is to use the name from Girder.
     :type item_name: str
     """
+
     def __init__(self, _id, volume=TemporaryVolume.default, **kwargs):
         super().__init__(**kwargs)
         self._item_id = str(_id)
@@ -257,6 +262,7 @@ class GirderUploadVolumePathToItem(GirderUploadToItem):
     :param delete_file: Whether to delete the file afterward.
     :type delete_file: bool
     """
+
     def __init__(self, volumepath, item_id, delete_file=False, **kwargs):
         item_id = str(item_id)
         super().__init__(item_id, delete_file, **kwargs)
@@ -281,6 +287,7 @@ class GirderUploadVolumePathToFolder(GirderUploadToFolder):
     :param delete_file: Whether to delete the data afterward.
     :type delete_file: bool
     """
+
     def __init__(self, volumepath, folder_id, delete_file=False, **kwargs):
         super().__init__(str(folder_id), delete_file, **kwargs)
         self._volumepath = volumepath
@@ -311,6 +318,7 @@ class GirderUploadVolumePathJobArtifact(GirderUploadJobArtifact):
         fails. This can be used to debug failed ``docker_run`` tasks.
     :type upload_on_exception: bool
     """
+
     def __init__(self, volumepath, job_id=None, name=None, upload_on_exception=False, **kwargs):
         if job_id is not None:
             job_id = str(job_id)

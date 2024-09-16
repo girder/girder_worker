@@ -191,6 +191,7 @@ class FileDescriptorReader(StreamReader):
     """
     Reader to read from a file descriptor.
     """
+
     def __init__(self, fd):
         self._fd = fd
 
@@ -208,6 +209,7 @@ class FileDescriptorWriter(StreamWriter):
     """
     Writer to write to a file descriptor.
     """
+
     def __init__(self, fd):
         self._fd = fd
 
@@ -225,6 +227,7 @@ class StdStreamWriter(StreamWriter):
     """
     Writer for write to stdout and stderr.
     """
+
     def __init__(self, stream):
         self._stream = stream
 
@@ -240,6 +243,7 @@ class NamedPipe:
     """
     A named pipe.
     """
+
     def __init__(self, path):
         self.path = path
         self._fd = None
@@ -267,6 +271,7 @@ class NamedPipeReader(FileDescriptorReader):
     """
     Reader to read from a named pipe.
     """
+
     def __init__(self, pipe, container_path=None):
         super().__init__(None)
         self._pipe = pipe
@@ -290,6 +295,7 @@ class NamedPipeWriter(FileDescriptorWriter):
     """
     Write to write to a named pipe.
     """
+
     def __init__(self, pipe, container_path=None):
         super().__init__(None)
         self._pipe = pipe

@@ -58,7 +58,6 @@ if (importlib.metadata.version('docker') == '7.0.0' and
 #     }
 
 
-
 def _pull_image(image):
     """
     Pulls the specified Docker image onto this worker.
@@ -449,6 +448,7 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     if hasattr(task.request, 'girder_result_hooks'):
         results = (None,) * len(task.request.girder_result_hooks)
     return results
+
 
 @app.task(base=DockerTask, bind=True)
 def docker_run(task, image, pull_image=True, entrypoint=None, container_args=None,

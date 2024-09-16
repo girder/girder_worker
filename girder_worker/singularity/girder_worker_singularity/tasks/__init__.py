@@ -2,14 +2,17 @@ import os
 import threading
 
 from girder_worker_utils import _walk_obj
-# from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
-from .utils import remove_tmp_folder_apptainer
 
 from girder_worker import logger
 from girder_worker.app import Task, app
-from girder_worker.docker.io import FDReadStreamConnector, FDWriteStreamConnector, FDWriteStreamConnector, FDReadStreamConnector
-from girder_worker.docker.tasks import _RequestDefaultTemporaryVolume, _handle_streaming_args
+from girder_worker.docker.io import (FDReadStreamConnector,
+                                     FDWriteStreamConnector)
+from girder_worker.docker.tasks import (_handle_streaming_args,
+                                        _RequestDefaultTemporaryVolume)
 from girder_worker.docker.transforms import TemporaryVolume
+
+# from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
+from .utils import remove_tmp_folder_apptainer
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
@@ -72,15 +75,15 @@ class SingularityTask(Task):
         remove_tmp_folder_apptainer(temp_volumes)
 
 
-def singularity_run(task,**kwargs):
-    volumes = kwargs.pop('volumes',{})
-    container_args = kwargs.pop('container_args',[])
+def singularity_run(task, **kwargs):
+    volumes = kwargs.pop('volumes', {})
+    container_args = kwargs.pop('container_args', [])
     stream_connectors = kwargs['stream_connectors'] or []
     image = kwargs.get('image') or ''
     entrypoint = None
     if not image:
-        logger.exception(f"Image name cannot be empty")
-        raise Exception(f"Image name cannot be empty")
+        logger.exception(f'Image name cannot be empty')
+        raise Exception(f'Image name cannot be empty')
 
     run_kwargs = {
         'tty': False,
@@ -91,14 +94,14 @@ def singularity_run(task,**kwargs):
     extra_run_kwargs = {k: v for k, v in kwargs.items() if k not in BLACKLISTED_DOCKER_RUN_ARGS}
     run_kwargs.update(extra_run_kwargs)
 
-    #Make entrypoint as pwd
+    # Make entrypoint as pwd
     if entrypoint is not None:
         run_kwargs['entrypoint'] = entrypoint
 
     log_file_name = kwargs['log_file']
 
-    container_args,read_streams,write_streams = _handle_streaming_args(container_args)
-    #MODIFIED FOR SINGULARITY (CHANGE CODE OF SINGULARITY CONTAINER)
+    container_args, read_streams, write_streams = _handle_streaming_args(container_args)
+    # MODIFIED FOR SINGULARITY (CHANGE CODE OF SINGULARITY CONTAINER)
     for connector in stream_connectors:
         if isinstance(connector, FDReadStreamConnector):
             read_streams.append(connector)
@@ -113,12 +116,14 @@ def singularity_run(task,**kwargs):
     slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name)
 
     results = []
-    if hasattr(task.request,'girder_result_hooks'):
+    if hasattr(task.request, 'girder_result_hooks'):
         results = (None,) * len(task.request.girder_result_hooks)
 
     return results
 
-#This function is used to check whether we need to switch to singularity or not.
+# This function is used to check whether we need to switch to singularity or not.
+
+
 def use_singularity():
     '''
     #This needs to be uncommented. Only for testing purposes.

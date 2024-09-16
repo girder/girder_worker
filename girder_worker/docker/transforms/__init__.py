@@ -22,6 +22,7 @@ class HostStdOut(Transform):
     Represents the standard output stream on the host machine. Can be used with
     :py:class:`girder_worker.docker.transforms.Connect` to write text to stdout.
     """
+
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             StdStreamWriter
@@ -34,6 +35,7 @@ class HostStdErr(Transform):
     Represents the standard error stream on the host machine. Can be used with
     :py:class:`girder_worker.docker.transforms.Connect` to write text to stderr.
     """
+
     def transform(self, **kwargs):
         from girder_worker.docker.io import (
             StdStreamWriter
@@ -47,6 +49,7 @@ class ContainerStdOut(Transform):
     :py:class:`girder_worker.docker.transforms.Connect` to redirect the containers
     standard output to another stream.
     """
+
     def transform(self, **kwargs):
         return self
 
@@ -61,6 +64,7 @@ class ContainerStdErr(Transform):
     :py:class:`girder_worker.docker.transforms.Connect` to redirect the containers
     standard error to another stream.
     """
+
     def transform(self, **kwargs):
         return self
 
@@ -81,6 +85,7 @@ class BindMountVolume(Transform):
     :param mode: The mounting mode
     :type mode: str
     """
+
     def __init__(self, host_path, container_path, mode='rw'):
         self._host_path = host_path
         self._container_path = container_path
@@ -156,6 +161,7 @@ class TemporaryVolume(_TemporaryVolumeBase, metaclass=_TemporaryVolumeMetaClass)
     """
     # Note that this mode is explicitly set with os.chmod. What you
     # set, is what you get - no os.makedirs umask shenanigans.
+
     def __init__(self, host_dir=None, mode=0o777):
         super().__init__(None, None)
         self.host_dir = host_dir
@@ -179,6 +185,7 @@ class _DefaultTemporaryVolume(TemporaryVolume):
     containing information about the actual default temporary volume associated with the
     task. The place holder then delegates all functionality to this instance.
     """
+
     def transform(self, _default_temp_volume=None, **kwargs):
         self._instance = _default_temp_volume
         self._transformed = True
@@ -253,6 +260,7 @@ class NamedInputPipe(NamedPipeBase):
         the volume will be used when creating the pipe. The default location is
         :py:obj:`girder_worker.docker.transforms.TemporaryVolume.default`
     """
+
     def __init__(self, name,  container_path=None, host_path=None, volume=TemporaryVolume.default):
         super().__init__(name, container_path, host_path, volume)
 
@@ -283,6 +291,7 @@ class NamedOutputPipe(NamedPipeBase):
         the volume will be use when creating the pipe. The default location is
         :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
     """
+
     def __init__(self, name, container_path=None, host_path=None, volume=TemporaryVolume.default):
         super().__init__(name, container_path, host_path, volume)
 
@@ -308,12 +317,13 @@ class VolumePath(Transform):
         :py:attr:`girder_worker.docker.transforms.TemporaryVolume.default`
     :type volume: :py:class:`girder_worker.docker.transforms.BindMountVolume`
     """
+
     def __init__(self, filename, volume=TemporaryVolume.default):
         if os.path.isabs(filename):
             raise Exception('VolumePath paths must be relative to a volume (%s).' % filename)
-        #Modify filename for cli_run
-        #self.filename = filename
-        self.filename = filename.replace(' ','_')
+        # Modify filename for cli_run
+        # self.filename = filename
+        self.filename = filename.replace(' ', '_')
         self._volume = volume
 
     def transform(self, *pargs, **kwargs):
@@ -345,6 +355,7 @@ class Connect(Transform):
         :py:class:`girder_worker.docker.transforms.HostStdOut` or
         :py:class:`girder_worker.docker.transforms.HostStdErr`
     """
+
     def __init__(self, input, output):
         super().__init__()
         self._input = input
@@ -381,6 +392,7 @@ class ChunkedTransferEncodingStream(Transform):
     :param headers: HTTP headers to send.
     :type header: dict
     """
+
     def __init__(self, url, headers={}, **kwargs):
         self.url = url
         self.headers = headers
