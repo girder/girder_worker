@@ -58,6 +58,27 @@ def _validateAutoCompute(doc):
         raise ValidationException('The direct path setting must be true or false.')
 
 
+@setting_utilities.validator({
+    PluginSettings.SLURM_ACCOUNT,
+    PluginSettings.SLURM_QOS,
+    PluginSettings.SLURM_MEM,
+    PluginSettings.SLURM_CPUS,
+    PluginSettings.SLURM_NTASKS,
+    PluginSettings.SLURM_PARTITION,
+    PluginSettings.SLURM_TIME,
+    PluginSettings.SLURM_GRES_CONFIG,
+    PluginSettings.SLURM_GPU,
+    PluginSettings.SLURM_GPU_PARTITION,
+    PluginSettings.SLURM_GPU_MEM
+})
+def validateSlurmSettings(doc):
+    """
+    Validate the SLURM settings.
+    """
+    # TODO: add validation
+    pass
+
+
 def validateJobStatus(event):
     """Allow our custom job status values."""
     if CustomJobStatus.isValid(event.info):
