@@ -1,5 +1,4 @@
 import datetime
-import importlib.metadata
 import os
 import shutil
 import socket
@@ -44,18 +43,6 @@ from girder_worker_utils import _walk_obj
 
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
-
-# Work around an issue with docker and requests
-if (importlib.metadata.version('docker') == '7.0.0' and
-        not hasattr(docker.transport.basehttpadapter.BaseHTTPAdapter, '_get_connection')):
-    docker.transport.basehttpadapter.BaseHTTPAdapter._get_connection = (
-        lambda self, request, *args, proxies=None, **kwargs: self.get_connection(
-            request.url, proxies))
-# JOB_STATUS = {
-#     'SUCCESS': 'Success',
-#     'FAILURE': "Failure",
-#     'CANCELLED': 'Cancelled'
-#     }
 
 
 def _pull_image(image):
