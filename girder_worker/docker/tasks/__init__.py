@@ -16,15 +16,10 @@ try:
 except ImportError:
     # These imports will not be available on the girder side.
     pass
-from girder_worker_utils import _walk_obj
-# from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
 
 from girder_worker import logger
 from girder_worker.app import Task, app
 from girder_worker.docker import utils
-from girder_worker.docker.io import (FDReadStreamConnector, FDStreamConnector,
-                                     FDWriteStreamConnector,
-                                     FileDescriptorReader, StdStreamWriter)
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 from girder_worker.docker.transforms import (ContainerStdErr, ContainerStdOut,
                                              TemporaryVolume,

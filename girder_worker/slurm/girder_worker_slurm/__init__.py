@@ -4,9 +4,9 @@ import threading
 import time
 
 import drmaa
+from girder.models.setting import Setting
 from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
 
-from girder.models.setting import Setting
 from girder_worker import logger
 from girder_worker.docker import utils
 from girder_worker.girder_plugin.constants import PluginSettings
@@ -19,9 +19,6 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
             task, singularity_run_command, slurm_config, log_file_name)
 
         def singularity_exit_condition():
-            """
-            This function is used to handle task cancellation and also enable exit condition to stop logging.
-            """
             # Check if the cancel event is called and the jobId is set for the current
             # job thread we are intending to cancel.
             if task.canceled and monitor_thread.jobId:
@@ -162,7 +159,7 @@ def _generate_singularity_command(container_args, kwargs):
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index + 1])
         set_nvidia_params(kwargs, singularity_command, gpus)
-    except ValueError as e:
+    except ValueError:
         if kwargs['nvidia']:
             set_nvidia_params(kwargs, singularity_command)
     try:
@@ -216,9 +213,8 @@ def set_nvidia_params(kwargs: dict, singularity_command: list, gpus: int = 1):
     Returns:
     None
     """
-    kwargs['--gres'] = f'gres:gpu:a100:{gpus}' if gpus > 1 else f'gres:gpu:a100:1'
-    kwargs['--partition'] = Setting().get(PluginSettings.SLURM_GPU_PARTITION) # 'gpu'
-    kwargs['--mem'] = Setting().get(PluginSettings.SLURM_GPU_MEM) #'32000'
+    kwargs['--gres'] = f'gres:gpu:a100:{gpus}' if gpus > 1 else 'gres:gpu:a100:1'
+    kwargs['--partition'] = Setting().get(PluginSettings.SLURM_GPU_PARTITION)
     # Reducing CPU count for gpu-based job for resource conservation
     # kwargs['--cpus-per-task'] = '8'
     singularity_command.append('--nv')
@@ -226,10 +222,13 @@ def set_nvidia_params(kwargs: dict, singularity_command: list, gpus: int = 1):
 
 class SingularityThread(threading.Thread):
     """
-    This is a custom Thread class in order to handle cancelling a slurm job outside of the thread since the task context object is not available inside the thread.
+    This is a custom Thread class in order to handle cancelling a slurm job outside of the thread
+    since the task context object is not available inside the thread.
     Methods:
-    __init__(self,target, daemon) - Initialize the thread similar to threading.Thread class, requires a jobId param to keep track of the jobId
-    run(self) - This method is used to run the target function. This is essentially called when you do thread.start()
+    __init__(self,target, daemon) - Initialize the thread similar to threading. Thread class,
+                                    requires a jobId param to keep track of the jobId
+    run(self) - This method is used to run the target function. This is essentially called when
+                you do thread.start()
     """
 
     def __init__(self, target, daemon=False):
