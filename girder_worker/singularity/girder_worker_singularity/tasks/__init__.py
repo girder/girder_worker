@@ -4,7 +4,7 @@ import threading
 from girder_worker_utils import _walk_obj
 
 from girder_worker import logger
-from girder_worker.app import Task, app
+from girder_worker.app import Task
 from girder_worker.docker.io import (FDReadStreamConnector,
                                      FDWriteStreamConnector)
 from girder_worker.docker.tasks import (_handle_streaming_args,
@@ -82,8 +82,8 @@ def singularity_run(task, **kwargs):
     image = kwargs.get('image') or ''
     entrypoint = None
     if not image:
-        logger.exception(f'Image name cannot be empty')
-        raise Exception(f'Image name cannot be empty')
+        logger.exception('Image name cannot be empty')
+        raise Exception('Image name cannot be empty')
 
     run_kwargs = {
         'tty': False,
@@ -120,28 +120,3 @@ def singularity_run(task, **kwargs):
         results = (None,) * len(task.request.girder_result_hooks)
 
     return results
-
-# This function is used to check whether we need to switch to singularity or not.
-
-
-def use_singularity():
-    '''
-    #This needs to be uncommented. Only for testing purposes.
-    '''
-    # runtime = os.environ.get('RUNTIME')
-    # if runtime == 'SINGULARITY':
-    #     return True
-    # if runtime == 'DOCKER':
-    #     return False
-    # try:
-    #     #Check whether we are connected to a docker socket.
-    #     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-    #         return s.connect_ex('/var/run/docker.sock') != 0
-    # except socket.error:
-    # return False
-    return True
-
-
-@app.task
-def container_backend(**kwargs):
-    return use_singularity()
