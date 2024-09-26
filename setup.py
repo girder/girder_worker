@@ -117,14 +117,14 @@ setuptools.setup(
             # 'gwexample = girder_worker.examples.plugin_example.gwexample:GWExamplePlugin'
         ],
         'girder_worker._test_plugins.valid_plugins': [
-          #  'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
-          #  'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
+           'plugin1 = girder_worker._test_plugins.plugins:TestPlugin1',
+           'plugin2 = girder_worker._test_plugins.plugins:TestPlugin2'
         ],
         'girder_worker._test_plugins.invalid_plugins': [
-          #  'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
-          #  'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
-          #  'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
-          #  'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
+           'exception1 = girder_worker._test_plugins.plugins:TestPluginException1', # noqa
+           'exception2 = girder_worker._test_plugins.plugins:TestPluginException2', # noqa
+           'import = girder_worker._test_plugins.plugins:TestPluginInvalidModule', # noqa
+           'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ],
         'girder.plugin': [
             'worker = girder_worker.girder_plugin:WorkerPlugin'
