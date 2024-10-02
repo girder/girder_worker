@@ -76,7 +76,6 @@ extras_require['slurm'] = ['girder-worker-slurm']
 setuptools.setup(
     name='girder-worker',
     use_scm_version={'local_scheme': prerelease_local_scheme},
-    # version='0.12.1',
     setup_requires=['setuptools_scm'],
     description='Batch execution engine built on celery.',
     long_description=readme,
