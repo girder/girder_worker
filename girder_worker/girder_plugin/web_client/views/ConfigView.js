@@ -24,39 +24,6 @@ var ConfigView = View.extend({
             }, {
                 key: 'worker.direct_path',
                 value: this.$('#g-worker-direct-path').is(':checked')
-            }, {
-                key: 'worker.slurm_account',
-                value: this.$('#g-worker-slurm-account').val().trim()
-            }, {
-                key: 'worker.slurm_qos',
-                value: this.$('#g-worker-slurm-qos').val().trim()
-            }, {
-                key: 'worker.slurm_mem',
-                value: this.$('#g-worker-slurm-mem').val().trim()
-            }, {
-                key: 'worker.slurm_cpus',
-                value: this.$('#g-worker-slurm-cpu').val().trim()
-            }, {
-                key: 'worker.slurm_ntasks',
-                value: this.$('#g-worker-slurm-ntasks').val().trim()
-            }, {
-                key: 'worker.slurm_partition',
-                value: this.$('#g-worker-slurm-partition').val().trim()
-            }, {
-                key: 'worker.slurm_time',
-                value: this.$('#g-worker-slurm-time').val().trim()
-            }, {
-                key: 'worker.slurm_gres_config',
-                value: this.$('#g-worker-slurm-gres-config').val().trim()
-            }, {
-                key: 'worker.slurm_gpu',
-                value: this.$('#g-worker-slurm-gpu').val().trim()
-            }, {
-                key: 'worker.slurm_gpu_partition',
-                value: this.$('#g-worker-slurm-gpu-partition').val().trim()
-            }, {
-                key: 'worker.slurm_gpu_mem',
-                value: this.$('#g-worker-slurm-gpu-mem').val().trim()
             }]);
         },
 
@@ -75,17 +42,6 @@ var ConfigView = View.extend({
                     'worker.broker',
                     'worker.backend',
                     'worker.direct_path',
-                    'worker.slurm_account',
-                    'worker.slurm_qos',
-                    'worker.slurm_mem',
-                    'worker.slurm_cpus',
-                    'worker.slurm_ntasks',
-                    'worker.slurm_partition',
-                    'worker.slurm_time',
-                    'worker.slurm_gres_config',
-                    'worker.slurm_gpu',
-                    'worker.slurm_gpu_partition',
-                    'worker.slurm_gpu_mem'
                 ])
             }
         }).done((resp) => {
@@ -94,17 +50,6 @@ var ConfigView = View.extend({
             this.$('#g-worker-broker').val(resp['worker.broker']);
             this.$('#g-worker-backend').val(resp['worker.backend']);
             this.$('#g-worker-direct-path').prop('checked', resp['worker.direct_path']);
-            this.$('#g-worker-slurm-account').val(resp['worker.slurm_account']);
-            this.$('#g-worker-slurm-qos').val(resp['worker.slurm_qos']);
-            this.$('#g-worker-slurm-mem').val(resp['worker.slurm_mem']);
-            this.$('#g-worker-slurm-cpu').val(resp['worker.slurm_cpus']);
-            this.$('#g-worker-slurm-ntasks').val(resp['worker.slurm_ntasks']);
-            this.$('#g-worker-slurm-partition').val(resp['worker.slurm_partition']);
-            this.$('#g-worker-slurm-time').val(resp['worker.slurm_time']);
-            this.$('#g-worker-slurm-gres-config').val(resp['worker.slurm_gres_config']);
-            this.$('#g-worker-slurm-gpu').val(resp['worker.slurm_gpu']);
-            this.$('#g-worker-slurm-gpu-partition').val(resp['worker.slurm_gpu_partition']);
-            this.$('#g-worker-slurm-gpu-mem').val(resp['worker.slurm_gpu_mem']);
         });
     },
 

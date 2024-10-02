@@ -9,7 +9,7 @@ from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
 
 from girder_worker import logger
 from girder_worker.docker import utils
-from girder_worker.girder_plugin.constants import PluginSettings
+from .girder_plugin import PluginSettings
 
 
 def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name):

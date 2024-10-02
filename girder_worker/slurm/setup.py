@@ -24,9 +24,9 @@ setup(
     ],
     install_requires=['girder-worker', 'girder-worker-singularity', *install_reqs],
     entry_points={
-        'girder_worker_plugins': [
-            'singularity = girder_worker_singularity:SingularityPlugin',
-        ]
+        'girder.plugin': [
+            'worker_slurm = girder_worker_slurm.girder_plugin:WorkerSlurmPlugin',
+        ],
     },
     packages=find_packages(),
     zip_safe=False

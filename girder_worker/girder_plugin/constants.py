@@ -29,16 +29,3 @@ class PluginSettings:
     BACKEND = 'worker.backend'
     API_URL = 'worker.api_url'
     DIRECT_PATH = 'worker.direct_path'
-    # Slurm Settings
-    SLURM_ACCOUNT = 'worker.slurm_account'
-    SLURM_QOS = 'worker.slurm_qos'
-    SLURM_MEM = 'worker.slurm_mem'
-    SLURM_CPUS = 'worker.slurm_cpus'
-    SLURM_NTASKS = 'worker.slurm_ntasks',
-    SLURM_PARTITION = 'worker.slurm_partition'
-    SLURM_TIME = 'worker.slurm_time'
-    SLURM_GRES_CONFIG = 'worker.slurm_gres_config'
-    # GPU Settings
-    SLURM_GPU = 'worker.slurm_gpu'
-    SLURM_GPU_PARTITION = 'worker.slurm_gpu_partition'
-    SLURM_GPU_MEM = 'worker.slurm_gpu_mem'
