@@ -3,12 +3,12 @@ import subprocess
 import threading
 import time
 
-import drmaa
 from girder.models.setting import Setting
 from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
 
 from girder_worker import logger
 from girder_worker.docker import utils
+
 from .girder_plugin import PluginSettings
 
 
@@ -39,62 +39,77 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
 
 
 def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
-    """Create a drmaa session and monitor the job accordingly"""
-    decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
-                    drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
-                    drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
-                    drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
-                    drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
-                    drmaa.JobState.RUNNING: 'job is running',
-                    drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
-                    drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
-                    drmaa.JobState.DONE: 'job finished normally',
-                    drmaa.JobState.FAILED: 'job finished, but failed'}
+    # decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
+    #                 drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
+    #                 drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
+    #                 drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
+    #                 drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
+    #                 drmaa.JobState.RUNNING: 'job is running',
+    #                 drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
+    #                 drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
+    #                 drmaa.JobState.DONE: 'job finished normally',
+    #                 drmaa.JobState.FAILED: 'job finished, but failed'}
     temp_directory = os.getenv('TMPDIR')
-    # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web/submission/submit.sh'
     submit_script = os.getenv('GIRDER_WORKER_SLURM_SUBMIT_SCRIPT')
     # TODO: check for validity ^
 
+    # def job_monitor():
+        # s = drmaa.Session()
+        # s.initialize()
+        # jt = s.createJobTemplate()
+        # jt.workingDirectory = temp_directory
+        # jt.remoteCommand = submit_script
+        # jt.nativeSpecification = slurm_config
+        # jt.args = slurm_command
+        # jt.outputPath = ':' + log_file_name
+        # jt.errorPath = ':' + log_file_name
+        # try:
+        #     jobid = s.runJob(jt)
+        #     # Set the jobID for the current thread so we can access it outside this
+        #     # thread incase we need to cancel the job.
+        #     threading.current_thread().jobId = jobid
+        #     logger.info((f'Submitted singularity job with jobid {jobid}'))
+        #     with open(log_file_name, 'r') as f:
+        #         while True:
+        #             job_info = s.jobStatus(jobid)
+        #             where = f.tell()
+        #             line = f.readlines()
+        #             if line:
+        #                 print(''.join(line), end='')
+        #             else:
+        #                 f.seek(where)
+        #             if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
+        #                 s.deleteJobTemplate(jt)
+        #                 break
+        #             elif task.canceled:
+        #                 s.control(jobid, drmaa.JobControlAction.TERMINATE)
+        #                 s.deleteJobTemplate(jt)
+        #                 break
+        #             time.sleep(5)  # Sleep to avoid busy waiting
+        #     exit_status = s.jobStatus(jobid)
+        #     logger.info(decodestatus[exit_status])
+        #     s.exit()
+        #     return exit_status
+
+        # except Exception as e:
+        #     s.deleteJobTemplate(jt)
+        #     print(f'Error Occured {e}')
+
     def job_monitor():
-        s = drmaa.Session()
-        s.initialize()
-        jt = s.createJobTemplate()
-        jt.workingDirectory = temp_directory
-        jt.remoteCommand = submit_script
-        jt.nativeSpecification = slurm_config
-        jt.args = slurm_command
-        jt.outputPath = ':' + log_file_name
-        jt.errorPath = ':' + log_file_name
+        # convert from drmaa to calling slurm commands with subprocess
+        submit_command = ['sbatch', f'--error={log_file_name}', f'--output={log_file_name}', submit_script]
+        submit_command.extend(slurm_command)
+
         try:
-            jobid = s.runJob(jt)
-            # Set the jobID for the current thread so we can access it outside this
-            # thread incase we need to cancel the job.
-            threading.current_thread().jobId = jobid
-            logger.info((f'Submitted singularity job with jobid {jobid}'))
-            with open(log_file_name, 'r') as f:
-                while True:
-                    job_info = s.jobStatus(jobid)
-                    where = f.tell()
-                    line = f.readlines()
-                    if line:
-                        print(''.join(line), end='')
-                    else:
-                        f.seek(where)
-                    if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
-                        s.deleteJobTemplate(jt)
-                        break
-                    elif task.canceled:
-                        s.control(jobid, drmaa.JobControlAction.TERMINATE)
-                        s.deleteJobTemplate(jt)
-                        break
-                    time.sleep(5)  # Sleep to avoid busy waiting
-            exit_status = s.jobStatus(jobid)
-            logger.info(decodestatus[exit_status])
-            s.exit()
-            return exit_status
+            # Submit the job to the HPC
+            print('running', submit_command)
+            process = subprocess.run(submit_command)
+            if process.returncode != 0:
+                raise Exception(f'Failed to submit job with error code {process.returncode}')
+
+            # TODO: monitor the job
 
         except Exception as e:
-            s.deleteJobTemplate(jt)
             print(f'Error Occured {e}')
 
     # Start the job monitor in a new thread
@@ -178,14 +193,14 @@ def _generate_singularity_command(container_args, kwargs):
 def _get_slurm_config(kwargs):
     # Use this function to add or modify any configuration parameters for the SLURM job
     config_defaults = {
-        '--qos': Setting().get(PluginSettings.SLURM_QOS),
-        '--account': Setting().get(PluginSettings.SLURM_ACCOUNT),
-        '--mem': Setting().get(PluginSettings.SLURM_MEM),
+        # '--qos': Setting().get(PluginSettings.SLURM_QOS),
+        # '--account': Setting().get(PluginSettings.SLURM_ACCOUNT),
+        # '--mem': Setting().get(PluginSettings.SLURM_MEM),
         '--ntasks': Setting().get(PluginSettings.SLURM_NTASKS),
-        '--time': Setting().get(PluginSettings.SLURM_TIME),
-        '--partition': Setting().get(PluginSettings.SLURM_PARTITION),
+        # '--time': Setting().get(PluginSettings.SLURM_TIME),
+        # '--partition': Setting().get(PluginSettings.SLURM_PARTITION),
         '--gres': Setting().get(PluginSettings.SLURM_GRES_CONFIG),
-        '--cpus-per-task': Setting().get(PluginSettings.SLURM_CPUS)
+        # '--cpus-per-task': Setting().get(PluginSettings.SLURM_CPUS)
     }
 
     config = {k: kwargs.get(k, config_defaults[k]) for k in config_defaults}
