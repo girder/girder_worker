@@ -1,4 +1,3 @@
-from girder_worker.app import app
 from girder_worker_utils import types
 from girder_worker_utils.decorators import argument
 

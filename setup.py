@@ -19,8 +19,8 @@
 
 import os
 import shutil
-import setuptools
 
+import setuptools
 from setuptools.command.install import install
 
 
@@ -68,6 +68,9 @@ with open('requirements.in') as f:
 
 extras_require = {}
 extras_require['girder'] = ['girder>=3.0.1,<5', 'girder-jobs>=3.0.1,<5']
+extras_require['singularity'] = ['girder-worker-singularity']
+extras_require['slurm'] = ['girder-worker-slurm']
+
 
 # perform the install
 setuptools.setup(
@@ -122,7 +125,7 @@ setuptools.setup(
             'invalid = girder_worker._test_plugins.plugins:NotAValidClass'
         ],
         'girder.plugin': [
-            'worker = girder_worker.girder_plugin:WorkerPlugin'
+             'worker = girder_worker.girder_plugin:WorkerPlugin'
         ]
-    }
+    },
 )
