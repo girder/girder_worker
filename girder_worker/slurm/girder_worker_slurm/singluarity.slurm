@@ -6,7 +6,9 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
 
-$@
+echo 'apptainer exec "$@"'
+
+apptainer exec "$@"
 
 # SBATCH --output=dummy_job.out
 # SBATCH --error=dummy_job.err

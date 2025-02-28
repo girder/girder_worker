@@ -103,11 +103,24 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
         try:
             # Submit the job to the HPC
             print('running', submit_command)
-            process = subprocess.run(submit_command)
+            process = subprocess.run(submit_command, capture_output=True)
             if process.returncode != 0:
                 raise Exception(f'Failed to submit job with error code {process.returncode}')
 
-            # TODO: monitor the job
+            # TODO: capture the job id
+            stdout = process.stdout.decode('utf-8').strip()
+
+            # Expecting output like 'Submitted batch job {job_id}'
+            if 'Submitted batch job' not in stdout:
+                raise Exception(f'Expected job_id, got: `{stdout}`')
+
+            job_id = stdout.split(' ')[-1]
+            logger.info(f'Job submitted with job id {job_id}')
+
+            # TODO: find how to monitor slurm job status
+
+            # TODO: monitor celery task, if cancelled, cancel slurm job
+
 
         except Exception as e:
             print(f'Error Occured {e}')
@@ -182,7 +195,20 @@ def _generate_singularity_command(container_args, kwargs):
         if not pwd:
             raise Exception('PWD cannot be empty')
         singularity_command.extend(['--pwd', pwd])
+
+        singularity_command.append('--bind')
+        volumes = ''
+        for key, value in kwargs.get('volumes').items():
+            # TODO: make this robust
+            # volumes += f'{value["bind"]}:{key},'
+            volumes += f'{key},'
+        volumes = volumes[:-1] # remove trailing comma
+        singularity_command.append(volumes)
+
         singularity_command.append(image_full_path)
+        # missing docker-entrypoint.sh
+        # TODO: revisit girder_worker_singularity/tasks/__init__.py:singularity_run (entrypoint variable)
+        singularity_command.append('./docker-entrypoint.sh')
         singularity_command.extend(container_args)
     except Exception as e:
         logger.info(f'Error occured - {e}')

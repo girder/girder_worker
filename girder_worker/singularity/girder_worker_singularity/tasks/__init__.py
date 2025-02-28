@@ -11,12 +11,11 @@ from girder_worker.docker.tasks import (_handle_streaming_args,
                                         _RequestDefaultTemporaryVolume)
 from girder_worker.docker.transforms import TemporaryVolume
 
-# from slicer_cli_web.singularity.utils import switch_to_sif_image_folder
 from .utils import remove_tmp_folder_apptainer
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach']
 
-
+#TODO: this is identical to DockerTask except for _cleanup_temp_volumes. refactor/inherit
 # Class for SingularityTask similar to DockerTask
 class SingularityTask(Task):
     def _maybe_transform_argument(self, arg):
@@ -72,7 +71,8 @@ class SingularityTask(Task):
         if default_temp_volume._transformed:
             temp_volumes.append(default_temp_volume.host_path)
 
-        remove_tmp_folder_apptainer(temp_volumes)
+        # TODO: this looks janky, idk why we need this?
+        # remove_tmp_folder_apptainer(temp_volumes)
 
 
 def singularity_run(task, **kwargs):
@@ -95,6 +95,7 @@ def singularity_run(task, **kwargs):
     run_kwargs.update(extra_run_kwargs)
 
     # Make entrypoint as pwd
+    # TODO: this doesn't do anything
     if entrypoint is not None:
         run_kwargs['entrypoint'] = entrypoint
 
