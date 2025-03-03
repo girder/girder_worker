@@ -95,6 +95,24 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
         #     s.deleteJobTemplate(jt)
         #     print(f'Error Occured {e}')
 
+    def get_status(job_id):
+        process = subprocess.run(['scontrol', 'show', 'job', job_id], capture_output=True)
+        if process.returncode != 0:
+            logger.error(f'Failed to get job status with error code {process.returncode}')
+            return 'INVALID'
+
+        result = process.stdout.decode('utf-8')
+        if 'JobState' not in result:
+            logger.error(f'Expected JobState, got: `{result}`')
+            return 'INVALID'
+
+        values = result.split()
+        for value in values:
+            if 'JobState' in value:
+                return value.split('=')[-1]
+
+        return 'INVALID'
+
     def job_monitor():
         # convert from drmaa to calling slurm commands with subprocess
         submit_command = ['sbatch', f'--error={log_file_name}', f'--output={log_file_name}', submit_script]
@@ -117,10 +135,25 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
             job_id = stdout.split(' ')[-1]
             logger.info(f'Job submitted with job id {job_id}')
 
-            # TODO: find how to monitor slurm job status
+            while True:
+                # TODO: read log files, print to stdout (or handle)
 
-            # TODO: monitor celery task, if cancelled, cancel slurm job
+                # TODO: find how to monitor slurm job status
+                status = get_status(job_id)
 
+                if status in ['COMPLETED', 'FAILED']:
+                    break
+
+                if status in ['BOOT_FAIL', 'CANCELLED', 'DEADLINE', 'NODE_FAIL', 'OUT_OF_MEMORY', 'PREEMPTED', 'TIMEOUT']:
+                    logger.error(f'Job failed with status {status}')
+                    break
+
+                # TODO: monitor celery task, if cancelled, cancel slurm job
+                if task.canceled:
+                    process = subprocess.run(apptainer_cancel_cmd(job_id))
+                    break
+
+                time.sleep(10)
 
         except Exception as e:
             print(f'Error Occured {e}')
