@@ -19,13 +19,13 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
             task, singularity_run_command, slurm_config, log_file_name)
 
         def singularity_exit_condition():
-            # Check if the cancel event is called and the jobId is set for the current
+            # Check if the cancel event is called and the job_id is set for the current
             # job thread we are intending to cancel.
-            if task.canceled and monitor_thread.jobId:
+            if task.canceled and monitor_thread.job_id:
                 try:
-                    returnCode = subprocess.call(apptainer_cancel_cmd(monitor_thread.jobId))
+                    returnCode = subprocess.call(apptainer_cancel_cmd(monitor_thread.job_id))
                     if returnCode != 0:
-                        raise Exception(f'Failed to Cancel job with jobID {monitor_thread.jobId}')
+                        raise Exception(f'Failed to Cancel job with jobID {monitor_thread.job_id}')
                 except Exception as e:
                     logger.info(f'Error Occured {e}')
             return not monitor_thread.is_alive()
@@ -135,25 +135,30 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
             job_id = stdout.split(' ')[-1]
             logger.info(f'Job submitted with job id {job_id}')
 
-            while True:
-                # TODO: read log files, print to stdout (or handle)
+            threading.current_thread().job_id = job_id # TODO: refactor this holdover from UF
 
-                # TODO: find how to monitor slurm job status
-                status = get_status(job_id)
+            with open(log_file_name, 'r') as log_file:
+                while True:
+                    lines = log_file.readlines()
+                    if lines:
+                        print(''.join(lines), end='')
 
-                if status in ['COMPLETED', 'FAILED']:
-                    break
+                    status = get_status(job_id)
 
-                if status in ['BOOT_FAIL', 'CANCELLED', 'DEADLINE', 'NODE_FAIL', 'OUT_OF_MEMORY', 'PREEMPTED', 'TIMEOUT']:
-                    logger.error(f'Job failed with status {status}')
-                    break
+                    if status in ['COMPLETED', 'FAILED', 'CANCELLED']:
+                        logger.info(f'Job finished with status {status}')
+                        break
 
-                # TODO: monitor celery task, if cancelled, cancel slurm job
-                if task.canceled:
-                    process = subprocess.run(apptainer_cancel_cmd(job_id))
-                    break
+                    if status in ['BOOT_FAIL', 'DEADLINE', 'NODE_FAIL', 'OUT_OF_MEMORY', 'PREEMPTED', 'TIMEOUT']:
+                        logger.error(f'Job failed with status {status}')
+                        break
 
-                time.sleep(10)
+                    # TODO: monitor celery task, if cancelled, cancel slurm job
+                    if task.canceled: # TODO: this condition isn't being caught, is it even needed if we're using singularity_exit_condition() to kill?
+                        process = subprocess.run(apptainer_cancel_cmd(job_id))
+                        break
+
+                    time.sleep(10)
 
         except Exception as e:
             print(f'Error Occured {e}')
@@ -300,7 +305,7 @@ class SingularityThread(threading.Thread):
     since the task context object is not available inside the thread.
     Methods:
     __init__(self,target, daemon) - Initialize the thread similar to threading. Thread class,
-                                    requires a jobId param to keep track of the jobId
+                                    requires a job_id param to keep track of the job_id
     run(self) - This method is used to run the target function. This is essentially called when
                 you do thread.start()
     """
@@ -308,19 +313,14 @@ class SingularityThread(threading.Thread):
     def __init__(self, target, daemon=False):
         super().__init__(daemon=daemon)
         self.target = target
-        self.jobId = None
+        self.job_id = None
 
     def run(self):
         if self.target:
             self.target()
 
 
-def apptainer_cancel_cmd(jobID, slurm=True):
-    if not jobID:
-        raise Exception('Please provide jobID for the job that needs to be cancelled')
-    cmd = []
-    # If any other type of mechanism is used to interact with HPG, use that.
-    if slurm:
-        cmd.append('scancel')
-    cmd.append(jobID)
+# TODO: remove? unneccessary?
+def apptainer_cancel_cmd(job_id):
+    cmd = ['scancel', job_id]
     return cmd
