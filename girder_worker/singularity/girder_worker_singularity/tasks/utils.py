@@ -5,6 +5,7 @@ import subprocess
 from girder_worker import logger
 
 
+# TODO: this looks janky, idk why we need this?
 def remove_tmp_folder_apptainer(container_args=[]):
     """
     This function will run after the slurm job completes and returns. If a temp folder is created

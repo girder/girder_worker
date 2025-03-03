@@ -23,7 +23,7 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
             # job thread we are intending to cancel.
             if task.canceled and monitor_thread.job_id:
                 try:
-                    returnCode = subprocess.call(apptainer_cancel_cmd(monitor_thread.job_id))
+                    returnCode = subprocess.call(['scancel', monitor_thread.job_id])
                     if returnCode != 0:
                         raise Exception(f'Failed to Cancel job with jobID {monitor_thread.job_id}')
                 except Exception as e:
@@ -114,7 +114,7 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
         return 'INVALID'
 
     def job_monitor():
-        # convert from drmaa to calling slurm commands with subprocess
+        # TODO: apply slurm_config to submit_command (probably use some list comprehension)
         submit_command = ['sbatch', f'--error={log_file_name}', f'--output={log_file_name}', submit_script]
         submit_command.extend(slurm_command)
 
@@ -125,14 +125,13 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
             if process.returncode != 0:
                 raise Exception(f'Failed to submit job with error code {process.returncode}')
 
-            # TODO: capture the job id
-            stdout = process.stdout.decode('utf-8').strip()
+            sbatch_cli_stdout = process.stdout.decode('utf-8').strip()
 
             # Expecting output like 'Submitted batch job {job_id}'
-            if 'Submitted batch job' not in stdout:
-                raise Exception(f'Expected job_id, got: `{stdout}`')
+            if 'Submitted batch job' not in sbatch_cli_stdout:
+                raise Exception(f'Expected job_id, got: `{sbatch_cli_stdout}`')
 
-            job_id = stdout.split(' ')[-1]
+            job_id = sbatch_cli_stdout.split(' ')[-1]
             logger.info(f'Job submitted with job id {job_id}')
 
             threading.current_thread().job_id = job_id # TODO: refactor this holdover from UF
@@ -153,10 +152,10 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
                         logger.error(f'Job failed with status {status}')
                         break
 
-                    # TODO: monitor celery task, if cancelled, cancel slurm job
-                    if task.canceled: # TODO: this condition isn't being caught, is it even needed if we're using singularity_exit_condition() to kill?
-                        process = subprocess.run(apptainer_cancel_cmd(job_id))
-                        break
+                    # # TODO: monitor celery task, if cancelled, cancel slurm job
+                    # if task.canceled: # TODO: this condition isn't being caught, is it even needed if we're using singularity_exit_condition() to kill?
+                    #     process = subprocess.run(apptainer_cancel_cmd(job_id))
+                    #     break
 
                     time.sleep(10)
 
@@ -237,7 +236,8 @@ def _generate_singularity_command(container_args, kwargs):
         singularity_command.append('--bind')
         volumes = ''
         for key, value in kwargs.get('volumes').items():
-            # TODO: make this robust
+            # TODO: make this robust, currently only works for tmp volume mount
+            # TODO: ^ when do things get mounted to docker like this?
             # volumes += f'{value["bind"]}:{key},'
             volumes += f'{key},'
         volumes = volumes[:-1] # remove trailing comma
@@ -318,9 +318,3 @@ class SingularityThread(threading.Thread):
     def run(self):
         if self.target:
             self.target()
-
-
-# TODO: remove? unneccessary?
-def apptainer_cancel_cmd(job_id):
-    cmd = ['scancel', job_id]
-    return cmd
