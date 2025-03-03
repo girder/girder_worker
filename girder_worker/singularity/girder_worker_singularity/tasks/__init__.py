@@ -71,8 +71,7 @@ class SingularityTask(Task):
         if default_temp_volume._transformed:
             temp_volumes.append(default_temp_volume.host_path)
 
-        # TODO: this looks janky, idk why we need this?
-        # remove_tmp_folder_apptainer(temp_volumes)
+        remove_tmp_folder_apptainer(temp_volumes)
 
 
 def singularity_run(task, **kwargs):
