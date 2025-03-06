@@ -12,12 +12,11 @@ from .girder_plugin import PluginSettings
 
 
 def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams, log_file_name):
-    singularity_run_command, slurm_config = _slurm_singularity_config(container_args, **run_kwargs)
+    apptainer_command, slurm_config = _slurm_apptainer_config(container_args, **run_kwargs)
     try:
-        monitor_thread = _monitor_singularity_job(
-            task, singularity_run_command, slurm_config, log_file_name)
+        monitor_thread = _monitor_apptainer_job(apptainer_command, slurm_config, log_file_name)
 
-        def singularity_exit_condition():
+        def check_job_cancellation():
             # Check if the cancel event is called and the job_id is set for the current
             # job thread we are intending to cancel.
             if task.canceled and monitor_thread.job_id:
@@ -29,7 +28,7 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
                     logger.info(f'Error Occured {e}')
             return not monitor_thread.is_alive()
 
-        utils.select_loop(exit_condition=singularity_exit_condition,
+        utils.select_loop(exit_condition=check_job_cancellation,
                           readers=read_streams,
                           writers=write_streams)
     finally:
@@ -40,32 +39,34 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
         # TODO: ^ is this even necessary?
 
 
-def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
+def get_job_status(job_id):
+    process = subprocess.run(['scontrol', 'show', 'job', job_id], capture_output=True)
+    if process.returncode != 0:
+        logger.error(f'Failed to get job status with error code {process.returncode}')
+        return 'INVALID'
+
+    result = process.stdout.decode('utf-8')
+    if 'JobState' not in result:
+        logger.error(f'Expected JobState, got: `{result}`')
+        return 'INVALID'
+
+    scontrol_values = result.split()
+    for value in scontrol_values:
+        if 'JobState' in value:
+            return value.split('=')[-1]
+
+    return 'INVALID'
+
+
+def _monitor_apptainer_job(apptainer_command, slurm_config, log_file_name):
     submit_script = os.getenv('GIRDER_WORKER_SLURM_SUBMIT_SCRIPT')
     # TODO: check for validity ^
 
-    def get_status(job_id):
-        process = subprocess.run(['scontrol', 'show', 'job', job_id], capture_output=True)
-        if process.returncode != 0:
-            logger.error(f'Failed to get job status with error code {process.returncode}')
-            return 'INVALID'
-
-        result = process.stdout.decode('utf-8')
-        if 'JobState' not in result:
-            logger.error(f'Expected JobState, got: `{result}`')
-            return 'INVALID'
-
-        scontrol_values = result.split()
-        for value in scontrol_values:
-            if 'JobState' in value:
-                return value.split('=')[-1]
-
-        return 'INVALID'
-
-    def job_monitor():
-        # TODO: apply slurm_config to submit_command (probably use some list comprehension)
-        submit_command = ['sbatch', f'--error={log_file_name}', f'--output={log_file_name}', submit_script]
-        submit_command.extend(slurm_command)
+    def submit_job_and_monitor_status():
+        submit_command = ['sbatch', f'--error={log_file_name}', f'--output={log_file_name}']
+        submit_command.extend(slurm_config)
+        submit_command.append(submit_script)
+        submit_command.extend(apptainer_command)
 
         try:
             # Submit the job to the HPC
@@ -91,7 +92,7 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
                     if lines:
                         print(''.join(lines), end='')
 
-                    status = get_status(job_id)
+                    status = get_job_status(job_id)
 
                     if status in ['COMPLETED', 'FAILED', 'CANCELLED']:
                         logger.info(f'Job finished with status {status}')
@@ -109,13 +110,13 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
             print(f'Error Occured {e}')
 
     # Start the job monitor in a new thread
-    monitor_thread = SingularityThread(target=job_monitor, daemon=True)
+    monitor_thread = SlurmThread(target=submit_job_and_monitor_status, daemon=True)
     monitor_thread.start()
 
     return monitor_thread
 
 
-def _slurm_singularity_config(container_args=None, **kwargs):
+def _slurm_apptainer_config(container_args=None, **kwargs):
     image = kwargs['image']
     container_args = container_args or kwargs['container_args'] or []
     try:
@@ -124,10 +125,10 @@ def _slurm_singularity_config(container_args=None, **kwargs):
         logger.info('Running container: image: %s args: %s kwargs: %s'
                     % (image, container_args, kwargs))
 
-        singularity_run_command = _generate_singularity_command(container_args, kwargs)
+        apptainer_command = _generate_apptainer_command(container_args, kwargs)
         slurm_config = _get_slurm_config(kwargs)
 
-        return singularity_run_command, slurm_config
+        return apptainer_command, slurm_config
     except Exception as e:
         logger.exception(e)
         raise Exception(e)
@@ -156,29 +157,31 @@ def _process_container_args(container_args, kwargs):
     return updated_container_args
 
 
-def _generate_singularity_command(container_args, kwargs):
+def _generate_apptainer_command(container_args, kwargs):
     container_args = container_args or []
     image = kwargs.pop('image', None)
-    singularity_command = []
+    apptainer_command = []
     if not image:
-        raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available')
-    SIF_DIRECTORY = os.getenv('SIF_IMAGE_PATH')
-    image_full_path = os.path.join(SIF_DIRECTORY, image)
+        raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available') # TODO: remove
+
+    sif_directory = os.getenv('SIF_IMAGE_PATH')
+    image_full_path = os.path.join(sif_directory, image)
+
     # Code to check for allocating multiple gpus.
     try:
         gpu_index = container_args.index('--gpu')
         gpus = int(container_args[gpu_index + 1])
-        set_nvidia_params(kwargs, singularity_command, gpus)
+        set_nvidia_params(kwargs, apptainer_command, gpus)
     except ValueError:
         if kwargs['nvidia']:
-            set_nvidia_params(kwargs, singularity_command)
+            set_nvidia_params(kwargs, apptainer_command)
     try:
         pwd = kwargs['pwd']
         if not pwd:
             raise Exception('PWD cannot be empty')
-        singularity_command.extend(['--pwd', pwd])
+        apptainer_command.extend(['--pwd', pwd])
 
-        singularity_command.append('--bind')
+        apptainer_command.append('--bind')
         volumes = ''
         for key, value in kwargs.get('volumes').items():
             # TODO: make this robust, currently only works for tmp volume mount
@@ -186,17 +189,15 @@ def _generate_singularity_command(container_args, kwargs):
             # volumes += f'{value["bind"]}:{key},'
             volumes += f'{key},'
         volumes = volumes[:-1] # remove trailing comma
-        singularity_command.append(volumes)
+        apptainer_command.append(volumes)
 
-        singularity_command.append(image_full_path)
-        # missing docker-entrypoint.sh
-        # TODO: revisit girder_worker_singularity/tasks/__init__.py:singularity_run (entrypoint variable)
-        singularity_command.append('./docker-entrypoint.sh')
-        singularity_command.extend(container_args)
+        apptainer_command.append(image_full_path)
+        apptainer_command.append(kwargs.get('entrypoint', './docker-entrypoint.sh'))
+        apptainer_command.extend(container_args)
     except Exception as e:
         logger.info(f'Error occured - {e}')
         raise Exception(f'Error Occured - {e}')
-    return singularity_command
+    return apptainer_command
 
 
 def _get_slurm_config(kwargs):
@@ -214,13 +215,13 @@ def _get_slurm_config(kwargs):
 
     config = {k: kwargs.get(k, config_defaults[k]) for k in config_defaults}
 
-    slurm_config = ' '.join(f'{k}={v}' for k, v in config.items() if v is not None)
+    slurm_config = [f'{k}={v}' for k, v in config.items() if v is not None]
 
     logger.info(f'SLURM CONFIG = {slurm_config}')
     return slurm_config
 
 
-def set_nvidia_params(kwargs: dict, singularity_command: list, gpus: int = 1):
+def set_nvidia_params(kwargs: dict, apptainer_command: list, gpus: int = 1):
     """
     This function is used to set the gpu parameters based on the user input and plugin job.
 
@@ -228,8 +229,8 @@ def set_nvidia_params(kwargs: dict, singularity_command: list, gpus: int = 1):
     kwargs (dict, required): The keyword arguments dictionary sent to the celery task as an input,
     part of the request
 
-    singularity_command (list, required): A list that container all the arguments to construct a
-    singularity command that will be sent to the HPC job
+    apptainer_command (list, required): A list that container all the arguments to construct an
+    apptainer command that will be sent to the HPC job
 
     gps (int, optional): If the plugin doesn't have a --gpu parameter in contianer_args, then a
     default of 1 gpu is allocated, else the user specified number of gpus is allocated.
@@ -241,10 +242,10 @@ def set_nvidia_params(kwargs: dict, singularity_command: list, gpus: int = 1):
     kwargs['--partition'] = Setting().get(PluginSettings.SLURM_GPU_PARTITION)
     # Reducing CPU count for gpu-based job for resource conservation
     # kwargs['--cpus-per-task'] = '8'
-    singularity_command.append('--nv')
+    apptainer_command.append('--nv')
 
 
-class SingularityThread(threading.Thread):
+class SlurmThread(threading.Thread):
     """
     This is a custom Thread class in order to handle cancelling a slurm job outside of the thread
     since the task context object is not available inside the thread.
