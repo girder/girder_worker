@@ -4,7 +4,6 @@ import threading
 import time
 
 from girder.models.setting import Setting
-from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
 
 from girder_worker import logger
 from girder_worker.docker import utils
@@ -35,65 +34,15 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
                           writers=write_streams)
     finally:
         logger.info('DONE')
-        remove_tmp_folder_apptainer(container_args)
+        # from girder_worker_singularity.tasks.utils import remove_tmp_folder_apptainer
+        # TODO: removing the below line. remove_tmp_folder_apptainer's argument should be a list of paths
+        # remove_tmp_folder_apptainer(container_args) # TODO: need to replace?
+        # TODO: ^ is this even necessary?
 
 
 def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
-    # decodestatus = {drmaa.JobState.UNDETERMINED: 'process status cannot be determined',
-    #                 drmaa.JobState.QUEUED_ACTIVE: 'job is queued and active',
-    #                 drmaa.JobState.SYSTEM_ON_HOLD: 'job is queued and in system hold',
-    #                 drmaa.JobState.USER_ON_HOLD: 'job is queued and in user hold',
-    #                 drmaa.JobState.USER_SYSTEM_ON_HOLD: 'job is queued and in user and system hold',
-    #                 drmaa.JobState.RUNNING: 'job is running',
-    #                 drmaa.JobState.SYSTEM_SUSPENDED: 'job is system suspended',
-    #                 drmaa.JobState.USER_SUSPENDED: 'job is user suspended',
-    #                 drmaa.JobState.DONE: 'job finished normally',
-    #                 drmaa.JobState.FAILED: 'job finished, but failed'}
-    temp_directory = os.getenv('TMPDIR')
     submit_script = os.getenv('GIRDER_WORKER_SLURM_SUBMIT_SCRIPT')
     # TODO: check for validity ^
-
-    # def job_monitor():
-        # s = drmaa.Session()
-        # s.initialize()
-        # jt = s.createJobTemplate()
-        # jt.workingDirectory = temp_directory
-        # jt.remoteCommand = submit_script
-        # jt.nativeSpecification = slurm_config
-        # jt.args = slurm_command
-        # jt.outputPath = ':' + log_file_name
-        # jt.errorPath = ':' + log_file_name
-        # try:
-        #     jobid = s.runJob(jt)
-        #     # Set the jobID for the current thread so we can access it outside this
-        #     # thread incase we need to cancel the job.
-        #     threading.current_thread().jobId = jobid
-        #     logger.info((f'Submitted singularity job with jobid {jobid}'))
-        #     with open(log_file_name, 'r') as f:
-        #         while True:
-        #             job_info = s.jobStatus(jobid)
-        #             where = f.tell()
-        #             line = f.readlines()
-        #             if line:
-        #                 print(''.join(line), end='')
-        #             else:
-        #                 f.seek(where)
-        #             if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
-        #                 s.deleteJobTemplate(jt)
-        #                 break
-        #             elif task.canceled:
-        #                 s.control(jobid, drmaa.JobControlAction.TERMINATE)
-        #                 s.deleteJobTemplate(jt)
-        #                 break
-        #             time.sleep(5)  # Sleep to avoid busy waiting
-        #     exit_status = s.jobStatus(jobid)
-        #     logger.info(decodestatus[exit_status])
-        #     s.exit()
-        #     return exit_status
-
-        # except Exception as e:
-        #     s.deleteJobTemplate(jt)
-        #     print(f'Error Occured {e}')
 
     def get_status(job_id):
         process = subprocess.run(['scontrol', 'show', 'job', job_id], capture_output=True)
@@ -106,8 +55,8 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
             logger.error(f'Expected JobState, got: `{result}`')
             return 'INVALID'
 
-        values = result.split()
-        for value in values:
+        scontrol_values = result.split()
+        for value in scontrol_values:
             if 'JobState' in value:
                 return value.split('=')[-1]
 
@@ -152,10 +101,7 @@ def _monitor_singularity_job(task, slurm_command, slurm_config, log_file_name):
                         logger.error(f'Job failed with status {status}')
                         break
 
-                    # # TODO: monitor celery task, if cancelled, cancel slurm job
-                    # if task.canceled: # TODO: this condition isn't being caught, is it even needed if we're using singularity_exit_condition() to kill?
-                    #     process = subprocess.run(apptainer_cancel_cmd(job_id))
-                    #     break
+                    # TODO: add more robust exit conditions (e.g. 'INVALID')
 
                     time.sleep(10)
 
@@ -189,7 +135,6 @@ def _slurm_singularity_config(container_args=None, **kwargs):
 
 def _process_container_args(container_args, kwargs):
     volumes = kwargs['volumes'] or {}
-    # '/blue/pinaki.sarder/rc-svc-pinaki.sarder-web'
     prefix = os.getenv('GIRDER_WORKER_SLURM_MOUNT_PREFIX')
 
     def find_matching_volume_key(path):
@@ -200,7 +145,7 @@ def _process_container_args(container_args, kwargs):
                 if 'assetstore' in key:
                     key = prefix + key
                 # Replace spaces in suffix with underscores
-                new_key = key + suffix.replace(' ', '_')
+                new_key = key + suffix.replace(' ', '_') # TODO: causing file name bug???
                 return new_key
         return path  # Replace spaces in paths that don't match any volume
     try:
