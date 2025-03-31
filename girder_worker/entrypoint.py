@@ -1,7 +1,7 @@
 from importlib import import_module
+
 import celery
 from girder_worker_utils import decorators
-
 from stevedore import extension
 
 

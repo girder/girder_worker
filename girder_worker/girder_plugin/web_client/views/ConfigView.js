@@ -41,7 +41,7 @@ var ConfigView = View.extend({
                     'worker.api_url',
                     'worker.broker',
                     'worker.backend',
-                    'worker.direct_path'
+                    'worker.direct_path',
                 ])
             }
         }).done((resp) => {

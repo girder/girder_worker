@@ -1,3 +1,4 @@
+-e girder_worker/singularity
 -e git+https://github.com/girder/girder.git@master#egg=girder
 -e git+https://github.com/girder/girder.git@master#egg=girder-jobs&subdirectory=plugins/jobs
 -e git+https://github.com/girder/girder.git@master#egg=pytest-girder&subdirectory=pytest_girder

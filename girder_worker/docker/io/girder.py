@@ -5,6 +5,7 @@ class GirderFileStreamReader(StreamReader):
     """
     Stream a file from Girder.
     """
+
     def __init__(self, client, file_id):
         """
         :param client: The GirderClient instance to use.

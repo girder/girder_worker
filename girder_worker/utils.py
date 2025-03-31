@@ -1,13 +1,12 @@
 import time
 
-from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
-
 import requests
-from requests import HTTPError
-
 # Disable urllib3 warnings about certificate validation. As they are printed in the console, the
 # messages are sent to Girder, creating an infinite loop.
 import urllib3
+from girder_worker_utils.tee import Tee, tee_stderr, tee_stdout
+from requests import HTTPError
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -79,7 +78,6 @@ def _job_manager(request=None, headers=None, kwargs=None):
 
     if hasattr(request, 'jobInfoSpec'):
         jobSpec = request.jobInfoSpec
-
     # We are being called from revoked signal
     elif headers is not None and \
             'jobInfoSpec' in headers:
