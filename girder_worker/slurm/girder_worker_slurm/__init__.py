@@ -63,6 +63,7 @@ def _monitor_apptainer_job(apptainer_command, slurm_config, log_file_name):
     # TODO: check for validity ^
 
     def submit_job_and_monitor_status():
+        # TODO: cleanup log files
         submit_command = ['sbatch', f'--error={log_file_name}', f'--output={log_file_name}']
         submit_command.extend(slurm_config)
         submit_command.append(submit_script)
@@ -120,13 +121,13 @@ def _slurm_apptainer_config(container_args=None, **kwargs):
     image = kwargs['image']
     container_args = container_args or kwargs['container_args'] or []
     try:
+        slurm_config = _get_slurm_config(container_args, kwargs)
         container_args = _process_container_args(container_args, kwargs)
 
         logger.info('Running container: image: %s args: %s kwargs: %s'
                     % (image, container_args, kwargs))
 
         apptainer_command = _generate_apptainer_command(container_args, kwargs)
-        slurm_config = _get_slurm_config(kwargs)
 
         return apptainer_command, slurm_config
     except Exception as e:
@@ -151,10 +152,13 @@ def _process_container_args(container_args, kwargs):
         return path  # Replace spaces in paths that don't match any volume
     try:
         # Replace paths in container_args with their corresponding volume keys
-        updated_container_args = [str(find_matching_volume_key(arg)) for arg in container_args]
+        container_args = [str(find_matching_volume_key(arg)) for arg in container_args]
     except Exception as e:
         logger.info(f'error {e}')
-    return updated_container_args
+
+    # Remove any arguments that start with '--slurm_' from container_args
+    container_args = [arg for arg in container_args if not arg.startswith('--slurm_')]
+    return container_args
 
 
 def _generate_apptainer_command(container_args, kwargs):
@@ -167,14 +171,6 @@ def _generate_apptainer_command(container_args, kwargs):
     sif_directory = os.getenv('SIF_IMAGE_PATH')
     image_full_path = os.path.join(sif_directory, image)
 
-    # Code to check for allocating multiple gpus.
-    try:
-        gpu_index = container_args.index('--gpu')
-        gpus = int(container_args[gpu_index + 1])
-        set_nvidia_params(kwargs, apptainer_command, gpus)
-    except ValueError:
-        if kwargs['nvidia']:
-            set_nvidia_params(kwargs, apptainer_command)
     try:
         pwd = kwargs['pwd']
         if not pwd:
@@ -200,49 +196,35 @@ def _generate_apptainer_command(container_args, kwargs):
     return apptainer_command
 
 
-def _get_slurm_config(kwargs):
-    # Use this function to add or modify any configuration parameters for the SLURM job
-    config_defaults = {
-        # '--qos': Setting().get(PluginSettings.SLURM_QOS),
-        # '--account': Setting().get(PluginSettings.SLURM_ACCOUNT),
-        # '--mem': Setting().get(PluginSettings.SLURM_MEM),
-        '--ntasks': Setting().get(PluginSettings.SLURM_NTASKS),
-        # '--time': Setting().get(PluginSettings.SLURM_TIME),
-        # '--partition': Setting().get(PluginSettings.SLURM_PARTITION),
-        '--gres': Setting().get(PluginSettings.SLURM_GRES_CONFIG),
-        # '--cpus-per-task': Setting().get(PluginSettings.SLURM_CPUS)
-    }
+def _get_slurm_config(container_args, kwargs):
+    # # Use this function to add or modify any configuration parameters for the SLURM job
+    # config_defaults = {
+    #     # '--qos': Setting().get(PluginSettings.SLURM_QOS),
+    #     # '--account': Setting().get(PluginSettings.SLURM_ACCOUNT),
+    #     # '--mem': Setting().get(PluginSettings.SLURM_MEM),
+    #     '--ntasks': Setting().get(PluginSettings.SLURM_NTASKS),
+    #     # '--time': Setting().get(PluginSettings.SLURM_TIME),
+    #     # '--partition': Setting().get(PluginSettings.SLURM_PARTITION),
+    #     '--gres': Setting().get(PluginSettings.SLURM_GRES_CONFIG),
+    #     # '--cpus-per-task': Setting().get(PluginSettings.SLURM_CPUS)
+    # }
 
-    config = {k: kwargs.get(k, config_defaults[k]) for k in config_defaults}
+    # config = {k: kwargs.get(k, config_defaults[k]) for k in config_defaults}
 
-    slurm_config = [f'{k}={v}' for k, v in config.items() if v is not None]
+    # slurm_config = [f'{k}={v}' for k, v in config.items() if v is not None]
+    slurm_config = []
+    for i, arg in enumerate(container_args):
+        if arg.startswith('--slurm_'):
+            # Extract the slurm config argument and its value
+            arg_name = arg.lstrip('--slurm_')
+            if i + 1 < len(container_args):
+                arg_value = container_args[i + 1]
+                slurm_config.append(f'--{arg_name}={arg_value}')
+            else:
+                logger.error(f'Missing value for {arg}, skipping.')
 
     logger.info(f'SLURM CONFIG = {slurm_config}')
     return slurm_config
-
-
-def set_nvidia_params(kwargs: dict, apptainer_command: list, gpus: int = 1):
-    """
-    This function is used to set the gpu parameters based on the user input and plugin job.
-
-    Parameters:
-    kwargs (dict, required): The keyword arguments dictionary sent to the celery task as an input,
-    part of the request
-
-    apptainer_command (list, required): A list that container all the arguments to construct an
-    apptainer command that will be sent to the HPC job
-
-    gps (int, optional): If the plugin doesn't have a --gpu parameter in contianer_args, then a
-    default of 1 gpu is allocated, else the user specified number of gpus is allocated.
-
-    Returns:
-    None
-    """
-    kwargs['--gres'] = f'gres:gpu:a100:{gpus}' if gpus > 1 else 'gres:gpu:a100:1'
-    kwargs['--partition'] = Setting().get(PluginSettings.SLURM_GPU_PARTITION)
-    # Reducing CPU count for gpu-based job for resource conservation
-    # kwargs['--cpus-per-task'] = '8'
-    apptainer_command.append('--nv')
 
 
 class SlurmThread(threading.Thread):
