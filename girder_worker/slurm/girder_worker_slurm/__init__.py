@@ -156,9 +156,16 @@ def _process_container_args(container_args, kwargs):
     except Exception as e:
         logger.info(f'error {e}')
 
-    # Remove any arguments that start with '--slurm_' from container_args
-    container_args = [arg for arg in container_args if not arg.startswith('--slurm_')]
-    return container_args
+    # Remove all arguments that start with '--slurm_' & their values from container_args
+    filtered_args = []
+    it = iter(container_args)
+    for arg in it:
+        if arg.startswith('--slurm_'):
+            next(it, None)
+        else:
+            filtered_args.append(arg)
+
+    return filtered_args
 
 
 def _generate_apptainer_command(container_args, kwargs):
