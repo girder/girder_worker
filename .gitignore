@@ -1,6 +1,7 @@
 *.pyc
 /.coverage
 /.coverage.pytest
+/build/
 /docs/_build/
 /tmp/
 __pycache__/
@@ -11,3 +12,5 @@ __pycache__/
 .tox/
 .cache/
 htmlcov/
+node_modules/
+dist/
