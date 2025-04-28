@@ -639,12 +639,15 @@ def _generate_slurm_script(container_args,kwargs):
         pwd = kwargs['pwd'] 
         if not pwd:
             raise Exception("PWD cannot be empty")
+        singularity_command.append('--cleanenv')
+        singularity_command.extend(['--home', os.getenv('TMPDIR','/tmp')])
         singularity_command.extend(['--pwd',pwd])
         singularity_command.append(image_full_path)
         singularity_command.extend(container_args)
     except Exception as e:
         logger.info(f"Error occured - {e}")
         raise Exception(f"Error Occured - {e}")
+    logger.info(f"Singularity Command = {singularity_command}")
     return singularity_command
 
 def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
@@ -677,6 +680,7 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
             threading.current_thread().jobId = jobid
             logger.info((f'Submitted singularity job with jobid {jobid}'))
             with open(log_file_name,'r') as f:
+                s.deleteJobTemplate(jt)
                 while True:
                     job_info = s.jobStatus(jobid)
                     where = f.tell()
@@ -686,7 +690,6 @@ def _monitor_singularity_job(task,slurm_run_command,slurm_config,log_file_name):
                     else:
                         f.seek(where)
                     if job_info in [drmaa.JobState.DONE, drmaa.JobState.FAILED]:
-                        s.deleteJobTemplate(jt)
                         break
                     
                     time.sleep(5)  # Sleep to avoid busy waiting
@@ -738,7 +741,8 @@ def _get_slurm_config(kwargs):
         '--time': os.getenv("SLURM_TIME",'72:00'),
         '--partition':os.getenv('SLURM_PARTITION','hpg2-compute'),
         '--gres':os.getenv('SLURM_GRES_CONFIG'),
-        '--cpus-per-task':os.getenv('SLURM_CPUS','4')
+        '--cpus-per-task':os.getenv('SLURM_CPUS','4'),
+        '--exclude':'c0906a-s17'
     }
 
     config = {k:kwargs.get(k,config_defaults[k]) for k in config_defaults}

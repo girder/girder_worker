@@ -18,7 +18,7 @@ def set_nvidia_params(kwargs:dict,singularity_command:list,gpus:int=1):
     '''
     kwargs['--gres'] = f"gres:gpu:a100:{gpus}" if gpus > 1 else f"gres:gpu:a100:1"
     kwargs['--partition'] = 'gpu'
-    kwargs['--mem'] = '32000'
+    #kwargs['--mem'] = '48000'
     #Reducing CPU count for gpu-based job for resource conservation 
-    kwargs['--cpus-per-task'] = '8'
+    #kwargs['--cpus-per-task'] = '8'
     singularity_command.append('--nv')
