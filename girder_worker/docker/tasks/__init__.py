@@ -21,9 +21,22 @@ from girder_worker import logger
 from girder_worker.app import Task, app
 from girder_worker.docker import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
-from girder_worker.docker.transforms import (ContainerStdErr, ContainerStdOut,
-                                             TemporaryVolume,
-                                             _TemporaryVolumeBase)
+from girder_worker.docker.io import (
+    FileDescriptorReader,
+    FDWriteStreamConnector,
+    FDReadStreamConnector,
+    FDStreamConnector,
+    StdStreamWriter
+)
+
+from girder_worker.docker.transforms import (
+    ContainerStdErr,
+    ContainerStdOut,
+    _TemporaryVolumeBase,
+    TemporaryVolume
+)
+from girder_worker_utils import _walk_obj
+
 
 BLACKLISTED_DOCKER_RUN_ARGS = ['tty', 'detach', 'volumes']
 
