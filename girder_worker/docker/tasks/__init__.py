@@ -529,7 +529,7 @@ def _run_singularity_container(container_args=None,**kwargs):
         
         slurm_run_command = _generate_slurm_script(container_args,kwargs)
 
-        slurm_config = _get_slurm_config(kwargs)
+        slurm_config = _get_slurm_config(container_args)
 
         return [slurm_run_command,slurm_config]
     except Exception as e:
@@ -627,14 +627,10 @@ def _generate_slurm_script(container_args,kwargs):
         raise Exception(' Issue with Slicer_Cli_Plugin_Image. Plugin Not available')
     SIF_DIRECTORY = os.getenv('SIF_IMAGE_PATH')
     image_full_path = os.path.join(SIF_DIRECTORY,image)
-    #Code to check for allocating multiple gpus. 
-    try:
-        gpu_index = container_args.index('--gpu')
-        gpus = int(container_args[gpu_index+1])
-        nvidia.set_nvidia_params(kwargs,singularity_command,gpus)
-    except ValueError as e:
-        if kwargs['nvidia']:
-            nvidia.set_nvidia_params(kwargs,singularity_command)
+    #Code to check for a gpu based job. 
+    if kwargs['nvidia']:
+        container_args.extend('--gpu','1')
+        singularity_command.append('--nv')
     try: 
         pwd = kwargs['pwd'] 
         if not pwd:
@@ -730,24 +726,105 @@ def _process_container_args(container_args,kwargs):
     except Exception as e:
         logger.info(f"error {e}")
     return updated_container_args
-        
-def _get_slurm_config(kwargs):
+    
+
+
+def _get_slurm_config(container_args):
     #Use this function to add or modify any configuration parameters for the SLURM job
-    config_defaults = {
+    flags = {
         '--qos': os.getenv('SLURM_QOS'),
         '--account': os.getenv('SLURM_ACCOUNT'),
         '--mem':os.getenv('SLURM_MEMORY','16000'),
         '--ntasks': os.getenv("SLURM_NTASKS",'1'),
         '--time': os.getenv("SLURM_TIME",'72:00'),
-        '--partition':os.getenv('SLURM_PARTITION','hpg2-compute'),
-        '--gres':os.getenv('SLURM_GRES_CONFIG'),
+        '--partition':os.getenv('SLURM_PARTITION','hpg-default'),
+        '--gpu': None,
+        '--gpu_type': os.getenv('GPU_TYPE', 'a100'),
         '--cpus-per-task':os.getenv('SLURM_CPUS','4'),
+        '--cpu': os.getenv('SLURM_CPUS','4'),
         '--exclude':'c0906a-s17'
     }
 
-    config = {k:kwargs.get(k,config_defaults[k]) for k in config_defaults}
+    allowed_gpu_types = {"Q":"quadro", "G": "geforce","A":"a100"}
+    allowed_accounts = set(os.getenv('ALLOWED_SLURM_ACCOUNTS').split(','))
 
-    slurm_config = ' '.join(f"{k}={v}" for k,v in config.items() if v is not None)
+    if not len(allowed_accounts):
+        raise Exception("Please set the ALLOWED_SLURM_ACCOUNTS env")
+    
+
+    it = iter(container_args)
+    while True:
+        try:
+            arg = next(it)
+            if arg == '--gpu':
+                value = int(next(it))
+                #Maintain the number of gpus between [1,4]
+                value = max(1, min(4, value))
+                flags['--gpu'] = value
+            elif arg == '--gpu_type':
+                value = next(it).lower()
+                if value not in allowed_gpu_types.values():
+                    value = allowed_gpu_types["A"]
+                flags['--gpu_type'] = value
+            elif arg == '--partition':
+                flags['--partition'] = next(it)
+            elif arg == '--cpu':
+                value = int(next(it))
+                #Maintain the number of cpus between [4,16]
+                value = max(4, min(16, value))
+                flags['--cpu'] = value
+                flags['--cpus-per-task'] = value
+            elif arg == '--mem':
+                value = int(next(it))
+                #Maintain the memory between 16GB and 128GB
+                value = max(16000, min(128000, value))
+                flags['--mem'] = value
+            elif arg == '--account':
+                value = next(it)
+                if value not in allowed_accounts:
+                    continue
+                flags['--account'] = value
+                flags['--qos'] = value
+        except StopIteration:
+            break
+
+    # Handle interdependent defaults and checks
+    if flags['--gpu_type']:
+        if not flags['--gpu']:
+            flags['--gpu'] = 1  # If gpu_type is set but gpu isn't, set gpu=1
+    if flags['--gpu']:
+        flags['--partition'] = 'gpu'
+        if flags['--cpu'] is None:
+            flags['--cpu'] = 4
+            flags['--cpus-per-task'] = 4
+        if flags['--gpu_type'] is None:
+            flags['--gpu_type'] = 'a100'
+    else:
+        if flags['--partition'] is None:
+            flags['--partition'] = 'hpg-default'
+        if flags['--cpu'] is None:
+            flags['--cpu'] = 8
+            flags['--cpus-per-task'] = 8
+
+    # Construct final flags
+    final_flags = {}
+
+    for k, v in flags.items():
+        if v is None:
+            continue
+        if k in ('--gpu', '--gpu_type', '--cpu'):
+            continue  # We handle these separately
+
+        final_flags[k] = v
+
+    gpu = flags.get('--gpu')
+    gpu_type = flags.get('--gpu_type')
+
+    if gpu is not None and gpu_type is not None:
+        final_flags['--gres'] = f"gpu:{gpu_type}:{gpu}"
+
+    # Generate output
+    slurm_config = ' '.join(f"{k}={v}" for k, v in final_flags.items())
 
     logger.info(f"SLURM CONFIG = {slurm_config}")
     return slurm_config
