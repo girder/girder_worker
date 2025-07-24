@@ -103,7 +103,9 @@ def _monitor_apptainer_job(apptainer_command, slurm_config, log_file_name):
                         logger.error(f'Job failed with status {status}')
                         break
 
-                    # TODO: add more robust exit conditions (e.g. 'INVALID')
+                    if status == 'INVALID':
+                        logger.error(f'Job status is invalid: {status}')
+                        break
 
                     time.sleep(10)
 
