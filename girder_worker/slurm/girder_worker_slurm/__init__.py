@@ -39,7 +39,7 @@ def slurm_dispatch(task, container_args, run_kwargs, read_streams, write_streams
         # TODO: ^ is this even necessary?
 
 
-def get_job_status(job_id):
+def get_slurm_job_status(job_id):
     process = subprocess.run(['scontrol', 'show', 'job', job_id], capture_output=True)
     if process.returncode != 0:
         logger.error(f'Failed to get job status with error code {process.returncode}')
@@ -93,10 +93,13 @@ def _monitor_apptainer_job(apptainer_command, slurm_config, log_file_name):
                     if lines:
                         print(''.join(lines), end='')
 
-                    status = get_job_status(job_id)
+                    status = get_slurm_job_status(job_id)
 
                     if status in ['COMPLETED', 'FAILED', 'CANCELLED']:
                         logger.info(f'Job finished with status {status}')
+                        # TODO: handle girder job status updates
+                        if status == 'FAILED':
+                            raise Exception(f'Slurm job {job_id} exited as {status}')
                         break
 
                     if status in ['BOOT_FAIL', 'DEADLINE', 'NODE_FAIL', 'OUT_OF_MEMORY', 'PREEMPTED', 'TIMEOUT']:
@@ -104,7 +107,7 @@ def _monitor_apptainer_job(apptainer_command, slurm_config, log_file_name):
                         break
 
                     if status == 'INVALID':
-                        logger.error(f'Job status is invalid: {status}')
+                        logger.error(f'Job status is invalid: {status}, exiting.')
                         break
 
                     time.sleep(10)
