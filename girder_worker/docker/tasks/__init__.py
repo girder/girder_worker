@@ -6,16 +6,19 @@ import socket
 import sys
 import threading
 import time
+
 try:
     import docker
-    from docker.errors import DockerException, APIError, InvalidVersion
-    from girder_worker.docker import nvidia
+    from docker.errors import APIError, DockerException, InvalidVersion
     from requests.exceptions import ReadTimeout
+
+    from girder_worker.docker import nvidia
 except ImportError:
     # These imports will not be available on the girder side.
     pass
-from girder_worker.app import app, Task
+
 from girder_worker import logger
+from girder_worker.app import Task, app
 from girder_worker.docker import utils
 from girder_worker.docker.stream_adapter import DockerStreamPushAdapter
 from girder_worker.docker.io import (
@@ -25,6 +28,7 @@ from girder_worker.docker.io import (
     FDStreamConnector,
     StdStreamWriter
 )
+
 from girder_worker.docker.transforms import (
     ContainerStdErr,
     ContainerStdOut,
@@ -146,6 +150,7 @@ class _SocketReader(FileDescriptorReader):
     with python 2 attach_socket(...) returns a socket like object, with python 3
     it returns an instance of SocketIO.
     """
+
     def __init__(self, socket):
         self._socket = socket
 
@@ -448,7 +453,6 @@ def _docker_run(task, image, pull_image=True, entrypoint=None, container_args=No
     results = []
     if hasattr(task.request, 'girder_result_hooks'):
         results = (None,) * len(task.request.girder_result_hooks)
-
     return results
 
 
