@@ -71,10 +71,10 @@ jobs:
     working_directory: /home/circleci/project
     steps:
       - run:
-          name: Set up Python 3.9
+          name: Set up Python 3.10
           command: |
-             pyenv install 3.9 || true
-             pyenv global 3.9
+             pyenv install 3.10 || true
+             pyenv global 3.10
 
       - *ssh-keys
       - checkout
@@ -87,7 +87,7 @@ jobs:
 
   unit_tests:
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.10
     steps:
       - checkout
       - *virtual-env
@@ -95,12 +95,12 @@ jobs:
       - *ci-deps
       - run:
           name: Run unit tests
-          command: tox -e py39
+          command: tox -e py310
       - *upload-coverage
 
-  unit_tests_311:
+  unit_tests_314:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.14
     steps:
       - checkout
       - *virtual-env
@@ -108,12 +108,12 @@ jobs:
       - *ci-deps
       - run:
           name: Run unit tests
-          command: tox -e py311
+          command: tox -e py314
       - *upload-coverage
 
   lint:
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.10
     steps:
       - checkout
       - *virtual-env
@@ -125,7 +125,7 @@ jobs:
 
   release:
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.10
     steps:
       - checkout
       - *virtual-env
@@ -163,7 +163,7 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - unit_tests_311:
+      - unit_tests_314:
           filters:
             tags:
               only: /^v.*/

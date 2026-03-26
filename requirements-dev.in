@@ -1,6 +1,6 @@
--e git+https://github.com/girder/girder.git@master#egg=girder
--e git+https://github.com/girder/girder.git@master#egg=girder-jobs&subdirectory=plugins/jobs
--e git+https://github.com/girder/girder.git@master#egg=pytest-girder&subdirectory=pytest_girder
+girder>3,<5
+girder-jobs>3,<5
+pytest-girder>3,<5
 coverage
 coveralls
 flake8
