@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as base
+FROM ubuntu:22.04 AS base
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qy tzdata && \
   apt-get install -qy software-properties-common python3-software-properties && \
@@ -18,15 +18,14 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qy tzdata 
 RUN wget https://bootstrap.pypa.io/pip/get-pip.py && python3 get-pip.py
 
 
-FROM base as build
+FROM base AS build
 
 RUN apt-get update && apt-get install -qy git
 
 COPY ./ /girder_worker/
 WORKDIR /girder_worker
 
-RUN rm -rf ./dist && python3 setup.py sdist
-
+RUN pip install build && rm -rf ./dist && python3 -m build --sdist
 
 FROM base
 COPY --from=build /girder_worker/dist/*.tar.gz /
