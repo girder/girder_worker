@@ -11,8 +11,11 @@ and from various data sources, including Girder.
 
 Visit the `documentation <http://girder-worker.readthedocs.org>`_ for more details and API documentation.
 
-We'd love for you to `contribute to Girder Worker <CONTRIBUTING.md>`_.
+Girder Version Support
+----------------------
 
+This repository is for Girder version 3.  Girder Worker is now part of Girder 5 directly, and this repo is
+only for older version maintenance.
 
 .. |logo| image:: docs/static/favicon.png
 
