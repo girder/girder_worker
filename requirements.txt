@@ -4,362 +4,94 @@
 #
 #    pip-compile --output-file=requirements.txt requirements-dev.in requirements.in
 #
-alabaster==1.0.0
-    # via sphinx
 amqp==5.3.1
     # via kombu
-annotated-doc==0.0.4
-    # via typer
-attrs==26.1.0
-    # via
-    #   jsonschema
-    #   referencing
-babel==2.18.0
-    # via sphinx
-backports-tarfile==1.2.0
-    # via jaraco-context
-bcrypt==5.0.0
-    # via girder
 billiard==4.2.4
     # via celery
-boto3==1.42.77
-    # via girder
-botocore==1.42.77
-    # via
-    #   boto3
-    #   girder
-    #   s3transfer
-cachetools==7.0.5
-    # via tox
 celery==5.6.3
     # via -r requirements.in
 certifi==2026.2.25
     # via requests
-cffi==2.0.0
-    # via cryptography
 charset-normalizer==3.4.6
     # via requests
-cheroot==11.1.2
-    # via
-    #   cherrypy
-    #   girder
-cherrypy==18.10.0
-    # via girder
 click==8.3.1
     # via
     #   celery
     #   click-didyoumean
     #   click-plugins
     #   click-repl
-    #   girder
     #   girder-client
-    #   typer
 click-didyoumean==0.3.1
     # via celery
 click-plugins==1.1.1.2
-    # via
-    #   celery
-    #   girder
+    # via celery
 click-repl==0.3.0
     # via celery
-colorama==0.4.6
-    # via tox
-coverage[toml]==7.13.5
-    # via
-    #   -r requirements-dev.in
-    #   coveralls
-    #   pytest-cov
-coveralls==4.1.0
-    # via -r requirements-dev.in
-cryptography==46.0.6
-    # via pyopenssl
-decorator==5.2.1
-    # via dogpile-cache
 diskcache==5.6.3
     # via girder-client
-distlib==0.4.0
-    # via virtualenv
 dnspython==2.8.0
     # via pymongo
 docker==7.1.0
     # via -r requirements.in
-docutils==0.21.2
-    # via
-    #   sphinx
-    #   sphinx-rtd-theme
-dogpile-cache==1.3.4
-    # via girder
 exceptiongroup==1.3.1
-    # via
-    #   celery
-    #   pytest
-filelock==3.25.2
-    # via
-    #   girder
-    #   python-discovery
-    #   tox
-    #   virtualenv
-flake8==7.3.0
-    # via
-    #   -r requirements-dev.in
-    #   flake8-docstrings
-    #   flake8-quotes
-flake8-blind-except==0.2.1
-    # via -r requirements-dev.in
-flake8-docstrings==1.7.0
-    # via -r requirements-dev.in
-flake8-quotes==3.4.0
-    # via -r requirements-dev.in
-girder==3.2.13
-    # via
-    #   -r requirements-dev.in
-    #   girder-jobs
-    #   pytest-girder
+    # via celery
 girder-client==3.2.13
     # via
     #   -r requirements.in
     #   girder-worker-utils
-girder-jobs==3.2.13
-    # via -r requirements-dev.in
 girder-worker-utils==0.9.5
     # via -r requirements.in
-httmock==1.4.0
-    # via -r requirements-dev.in
 idna==3.11
     # via requests
-imagesize==2.0.0
-    # via sphinx
-iniconfig==2.3.0
-    # via pytest
-jaraco-collections==5.2.1
-    # via cherrypy
-jaraco-context==6.1.2
-    # via jaraco-text
-jaraco-functools==4.4.0
-    # via
-    #   cheroot
-    #   jaraco-text
-    #   tempora
-jaraco-text==4.2.0
-    # via jaraco-collections
 jinja2==3.1.6
-    # via
-    #   -r requirements.in
-    #   sphinx
-jmespath==1.1.0
-    # via
-    #   boto3
-    #   botocore
+    # via -r requirements.in
 jsonpickle==4.1.1
     # via
     #   -r requirements.in
     #   girder-worker-utils
-jsonschema==4.26.0
-    # via girder
-jsonschema-specifications==2025.9.1
-    # via jsonschema
 kombu==5.6.2
     # via celery
-lxml==6.0.2
-    # via -r requirements-dev.in
-mako==1.3.10
-    # via girder
-markdown-it-py==4.0.0
-    # via rich
 markupsafe==3.0.3
-    # via
-    #   jinja2
-    #   mako
-mccabe==0.7.0
-    # via flake8
-mdurl==0.1.2
-    # via markdown-it-py
-mock==5.2.0
-    # via -r requirements-dev.in
-mongomock==4.3.0
-    # via pytest-girder
-more-itertools==10.8.0
-    # via
-    #   cheroot
-    #   cherrypy
-    #   jaraco-functools
-    #   jaraco-text
+    # via jinja2
 packaging==26.0
     # via
-    #   girder
     #   kombu
-    #   mongomock
-    #   pyproject-api
-    #   pytest
     #   setuptools-scm
-    #   sphinx
-    #   tox
     #   vcs-versioning
-platformdirs==4.9.4
-    # via
-    #   python-discovery
-    #   tox
-    #   virtualenv
-pluggy==1.6.0
-    # via
-    #   pytest
-    #   pytest-cov
-    #   tox
-portend==3.2.1
-    # via cherrypy
 prompt-toolkit==3.0.52
     # via click-repl
-psutil==7.2.2
-    # via girder
-pycodestyle==2.14.0
-    # via flake8
-pycparser==3.0
-    # via cffi
-pydocstyle==6.3.0
-    # via
-    #   -r requirements-dev.in
-    #   flake8-docstrings
-pyflakes==3.4.0
-    # via flake8
-pygments==2.19.2
-    # via
-    #   pytest
-    #   rich
-    #   sphinx
 pymongo==4.16.0
-    # via
-    #   -r requirements.in
-    #   girder
-    #   pytest-girder
-pyopenssl==26.0.0
-    # via girder
-pyotp==2.9.0
-    # via girder
-pyproject-api==1.10.0
-    # via tox
-pytest==9.0.2
-    # via
-    #   -r requirements-dev.in
-    #   pytest-cov
-    #   pytest-girder
-pytest-cov==7.1.0
-    # via
-    #   -r requirements-dev.in
-    #   pytest-girder
-pytest-girder==3.2.13
-    # via -r requirements-dev.in
+    # via -r requirements.in
 python-dateutil==2.9.0.post0
-    # via
-    #   botocore
-    #   celery
-    #   girder
-    #   tempora
-python-discovery==1.2.0
-    # via virtualenv
-pytz==2026.1.post1
-    # via
-    #   girder
-    #   mongomock
+    # via celery
 pyyaml==6.0.3
-    # via
-    #   -r requirements.in
-    #   girder
-referencing==0.37.0
-    # via
-    #   jsonschema
-    #   jsonschema-specifications
+    # via -r requirements.in
 requests[security]==2.33.0
     # via
     #   -r requirements.in
-    #   coveralls
     #   docker
-    #   girder
     #   girder-client
     #   girder-worker-utils
-    #   httmock
     #   requests-toolbelt
-    #   sphinx
 requests-toolbelt==1.0.0
     # via girder-client
-rich==14.3.3
-    # via typer
-rpds-py==0.30.0
-    # via
-    #   jsonschema
-    #   referencing
-s3transfer==0.16.0
-    # via boto3
-sentinels==1.1.1
-    # via mongomock
 setuptools-scm==10.0.3
     # via
     #   -r requirements.in
     #   girder-worker-utils
-shellingham==1.5.4
-    # via typer
 six==1.17.0
     # via python-dateutil
-snowballstemmer==3.0.1
-    # via
-    #   pydocstyle
-    #   sphinx
-sphinx==8.1.3
-    # via
-    #   -r requirements-dev.in
-    #   sphinx-rtd-theme
-    #   sphinxcontrib-jquery
-sphinx-rtd-theme==3.1.0
-    # via -r requirements-dev.in
-sphinxcontrib-applehelp==2.0.0
-    # via sphinx
-sphinxcontrib-devhelp==2.0.0
-    # via sphinx
-sphinxcontrib-htmlhelp==2.1.0
-    # via sphinx
-sphinxcontrib-jquery==4.1
-    # via sphinx-rtd-theme
-sphinxcontrib-jsmath==1.0.1
-    # via sphinx
-sphinxcontrib-qthelp==2.0.0
-    # via sphinx
-sphinxcontrib-serializinghtml==2.0.0
-    # via sphinx
 stevedore==5.7.0
-    # via
-    #   -r requirements.in
-    #   dogpile-cache
-tempora==5.8.1
-    # via portend
+    # via -r requirements.in
 tomli==2.4.1
     # via
-    #   coverage
-    #   pyproject-api
-    #   pytest
     #   setuptools-scm
-    #   sphinx
-    #   tox
     #   vcs-versioning
-tomli-w==1.2.0
-    # via tox
-tox==4.50.3
-    # via -r requirements-dev.in
-typer==0.24.1
-    # via
-    #   coveralls
-    #   typer-slim
-typer-slim==0.24.0
-    # via jaraco-text
 typing-extensions==4.15.0
     # via
-    #   cryptography
-    #   dogpile-cache
     #   exceptiongroup
-    #   pyopenssl
-    #   referencing
     #   setuptools-scm
-    #   tox
     #   vcs-versioning
-    #   virtualenv
 tzdata==2025.3
     # via kombu
 tzlocal==5.3.1
@@ -367,7 +99,6 @@ tzlocal==5.3.1
 urllib3==2.6.3
     # via
     #   -r requirements.in
-    #   botocore
     #   docker
     #   girder-worker-utils
     #   requests
@@ -378,12 +109,8 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.2.0
-    # via tox
 wcwidth==0.6.0
     # via prompt-toolkit
-zc-lockfile==4.0
-    # via cherrypy
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
