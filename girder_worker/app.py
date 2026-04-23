@@ -34,6 +34,9 @@ from girder_worker.utils import (
 from girder_worker_utils.transform import ResultTransform
 
 import jsonpickle
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_numpy.register_handlers()
+
 from kombu.serialization import register
 
 
