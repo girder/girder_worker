@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 integration_steps:
   ssh-keys:  &ssh-keys
