@@ -12,6 +12,7 @@ from celery.signals import (
     task_prerun,
     task_revoked,
     task_success,
+    worker_init,
     worker_ready)
 
 
@@ -35,6 +36,8 @@ from girder_worker_utils.transform import ResultTransform
 
 import jsonpickle
 from kombu.serialization import register
+
+CeleryAppInfo = {'threads_pool': False}
 
 
 @before_task_publish.connect  # noqa: C901
@@ -94,6 +97,17 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
     except Exception:
         logger.exception('An error occurred in girder_before_task_publish.')
         raise
+
+
+@worker_init.connect
+def _capture_celery_pool(sender, **kwargs):
+    # sender is the celery.worker.worker.Worker instance
+    pool_cls = getattr(sender, 'pool_cls', None)
+    if pool_cls:
+        # pool_cls can be a class or string representing the pool
+        name = getattr(pool_cls, '__name__', str(pool_cls)).lower()
+        if 'thread' in name:
+            CeleryAppInfo['threads_pool'] = True
 
 
 @worker_ready.connect
