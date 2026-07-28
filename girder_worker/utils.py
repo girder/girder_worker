@@ -211,8 +211,9 @@ class JobManager:
         """
         from .app import CeleryAppInfo
 
-        # When we are using a threads pool, tee-ing the workers can lead to
-        # the logs being written to multiple threads.
+        # When we are using a threads pool, tee-ing stdout and stderr to
+        # logPrint can lead to the logs being written to multiple threads and
+        # therefore multiple workers.
         if CeleryAppInfo['threads_pool']:
             logPrint = None
         self.logPrint = logPrint
