@@ -12,7 +12,6 @@ from celery.signals import (
     task_prerun,
     task_revoked,
     task_success,
-    worker_init,
     worker_ready)
 
 
@@ -99,15 +98,23 @@ def girder_before_task_publish(sender=None, body=None, exchange=None,
         raise
 
 
-@worker_init.connect
+@worker_ready.connect
 def _capture_celery_pool(sender, **kwargs):
-    # sender is the celery.worker.worker.Worker instance
-    pool_cls = getattr(sender, 'pool_cls', None)
-    if pool_cls:
-        # pool_cls can be a class or string representing the pool
-        name = getattr(pool_cls, '__name__', str(pool_cls)).lower()
-        if 'thread' in name:
+    """
+    Determine if the celery task pool is thread based; we use this to govern
+    some logging choices.
+
+    :param sender:  a celery.worker.worker.Worker instance
+    """
+    pool = getattr(sender, 'pool', None)
+    try:
+        if pool and 'thread' in type(pool).__module__.lower():
             CeleryAppInfo['threads_pool'] = True
+            logger.info('Using a threads pool')
+        else:
+            logger.info('Not using a threads pool')
+    except Exception:
+        logger.exception('Failed to determine pool type')
 
 
 @worker_ready.connect
